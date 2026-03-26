@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>StudyOS — Class 10 Study Command Center</title>
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3R1ZHlPUyIsInNob3J0X25hbWUiOiJTdHVkeU9TIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwYTBhMWEiLCJ0aGVtZV9jb2xvciI6IiM2MzY2ZjEiLCJpY29ucyI6W119">
     <style>
@@ -142,7 +142,8 @@
         .ch-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
         .ch-btn:hover{background:var(--bg-card-hover);color:var(--text-primary);border-color:var(--border-hover)}
 
-        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px}
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+        @media(max-width:480px){.modal-overlay{padding:10px;align-items:flex-start;padding-top:40px}}
         .modal-overlay.show{display:flex;animation:fadeIn .2s ease}
         @keyframes fadeIn{from{opacity:0}to{opacity:1}}
         .modal{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow);animation:slideUp .3s ease}
@@ -227,29 +228,171 @@
         .rev-info h4{font-size:.85rem;font-weight:600}
         .rev-info p{font-size:.72rem;color:var(--text-muted)}
 
-        .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(17,17,40,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:6px 10px;z-index:100;transition:background .3s}
+        .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(17,17,40,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:6px 10px env(safe-area-inset-bottom);z-index:100;transition:background .3s}
         [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.95)}
         .mobile-nav-items{display:flex;justify-content:space-around}
         .mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;cursor:pointer;color:var(--text-muted);font-size:.6rem;font-weight:600;transition:all .2s;border-radius:8px}
         .mob-nav-item .mob-icon{font-size:1.2rem}
         .mob-nav-item.active{color:var(--accent-light)}
+        .hide-mobile{display:inline}
+        @media(max-width:600px){.hide-mobile{display:none}}
 
         #menu-toggle{display:none;width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:1.1rem;align-items:center;justify-content:center}
         @media(max-width:900px){
-            #sidebar{transform:translateX(-100%)}
-            #sidebar.open{transform:translateX(0)}
-            #main{margin-left:0}
-            #menu-toggle{display:flex}
-            .mobile-nav{display:block}
-            .grid-4,.grid-5{grid-template-columns:repeat(2,1fr)}
-            .grid-3{grid-template-columns:1fr}
-            .grid-2{grid-template-columns:1fr}
-            #content{padding:18px 16px 100px}
-            #topbar{padding:14px 16px}
+        #sidebar{transform:translateX(-100%)}
+        #sidebar.open{transform:translateX(0)}
+        #main{margin-left:0}
+        #menu-toggle{display:flex}
+        .mobile-nav{display:block}
+        .grid-4,.grid-5{grid-template-columns:repeat(2,1fr)}
+        .grid-3{grid-template-columns:1fr}
+        .grid-2{grid-template-columns:1fr}
+        #content{padding:18px 16px 100px}
+        #topbar{padding:12px 14px}
+        .topbar-left h1{font-size:1.1rem}
+        .topbar-left p{font-size:.7rem}
+        .topbar-actions{gap:6px}
+        .topbar-actions .btn{padding:7px 12px;font-size:.75rem}
+        .topbar-actions .search-box input{width:120px!important;padding:6px 10px 6px 28px!important;font-size:.75rem!important}
+        .topbar-actions .search-box::before{left:8px;font-size:.75rem}
+        .modal{max-width:95vw;max-height:90vh;margin:10px}
+        .modal-header{padding:16px 18px 0}
+        .modal-header h2{font-size:1rem}
+        .modal-body{padding:14px 18px}
+        .modal-footer{padding:0 18px 16px}
+        .card{padding:16px}
+        .stat-info h3{font-size:1.2rem}
+        .stat-icon{width:38px;height:38px;font-size:1rem}
+        .countdown-big{font-size:2.5rem}
+        .pomodoro-time{font-size:2.8rem}
+        .stopwatch-time{font-size:2.5rem}
+        .welcome-card{padding:24px 18px}
+        .welcome-card h1{font-size:1.5rem}
+        .heatmap-cell{width:11px;height:11px}
+        .chapter-item{padding:10px 12px;gap:10px;flex-wrap:nowrap}
+        .chapter-name{font-size:.82rem}
+        .chapter-meta{gap:6px}
+        .chapter-actions{gap:4px}
+        .ch-btn{width:28px;height:28px;font-size:.75rem}
+        .plan-card{padding:10px 12px;gap:10px}
+        .plan-emoji{font-size:1.2rem}
+        .plan-info h4{font-size:.8rem}
+        .plan-info p{font-size:.68rem}
+        .plan-time{font-size:.7rem}
+        .badge-card{padding:14px 10px}
+        .badge-icon{font-size:1.8rem}
+        .badge-name{font-size:.78rem}
+        .badge-desc{font-size:.65rem}
+        .streak-days{gap:3px;flex-wrap:wrap}
+        .streak-dot{width:24px;height:24px;font-size:.55rem}
+        .subject-tabs{gap:4px;padding-bottom:6px;margin-bottom:14px}
+        .subject-tab{padding:6px 14px;font-size:.75rem}
+        .week-graph{height:90px;gap:4px}
+        .bar-label{font-size:.58rem}
+        .bar-value{font-size:.58rem}
+        .mood-picker{gap:6px}
+        .mood-btn{font-size:1.5rem;padding:5px}
+        .exercise-grid{gap:4px}
+        .exercise-chip{padding:3px 8px;font-size:.68rem}
+        .doubt-item{padding:10px}
+        .doubt-actions{flex-wrap:wrap;gap:4px}
+        .doubt-actions .btn{font-size:.7rem;padding:4px 8px}
+        .resource-item{padding:10px;gap:8px;flex-wrap:wrap}
+        .coach-msg{padding:12px}
+        .coach-msg h4{font-size:.8rem}
+        .coach-msg p{font-size:.75rem}
+        .challenge-card{padding:14px}
+        .rev-item{padding:10px;flex-wrap:wrap;gap:8px}
+        .rev-info h4{font-size:.8rem}
+        .task-item{padding:8px 10px;gap:8px}
+        .task-text{font-size:.78rem}
+        .nav-item{padding:10px 12px;font-size:.85rem}
+        .nav-section{padding:14px 12px 6px;font-size:.6rem}
+        .sidebar-profile{padding:12px}
+        .profile-card{padding:10px}
+        .empty-state{padding:30px 20px}
+        .empty-icon{font-size:2.5rem}
+        .empty-title{font-size:.95rem}
+        .empty-desc{font-size:.78rem}
+        .quick-log{gap:6px}
+        .quick-chip{padding:5px 10px;font-size:.72rem}
+        .form-group{margin-bottom:12px}
+        .form-label{font-size:.75rem;margin-bottom:4px}
+        .form-input,.form-select,.form-textarea{padding:8px 12px;font-size:.85rem}
+        .tag{font-size:.65rem;padding:2px 8px}
+        .btn{padding:7px 14px;font-size:.78rem}
+        .btn-sm{padding:5px 10px;font-size:.7rem}
+        .pomodoro-controls{flex-wrap:wrap}
+        .pomodoro-controls .btn{font-size:.78rem;padding:7px 14px}
+        #toast-container{bottom:80px;right:12px;left:12px}
+        .toast{min-width:auto;width:100%;font-size:.8rem;padding:10px 14px}
+        .subject-progress{margin-bottom:10px}
+        .sp-name{font-size:.8rem}
+        .sp-pct{font-size:.72rem}
+        .progress-bar{height:6px}
         }
-        @media(max-width:600px){
-            .grid-4,.grid-5{grid-template-columns:1fr 1fr}
-            .form-row{grid-template-columns:1fr}
+
+        @media(max-width:480px){
+        .grid-4,.grid-5,.grid-3,.grid-2{grid-template-columns:1fr}
+        #topbar{flex-direction:column;align-items:stretch;gap:10px}
+        .topbar-left{text-align:left}
+        .topbar-actions{justify-content:space-between;width:100%}
+        .topbar-actions .search-box{flex:1}
+        .topbar-actions .search-box input{width:100%!important}
+        .countdown-big{font-size:2rem}
+        .readiness-ring svg{width:90px;height:90px}
+        .readiness-value{font-size:1.3rem}
+        .pomodoro-time{font-size:2.2rem}
+        .stopwatch-time{font-size:2rem}
+        .pomodoro-display svg{width:150px;height:150px}
+        .form-row{grid-template-columns:1fr}
+        .card{padding:14px}
+        .stat-card{gap:10px}
+        .stat-info h3{font-size:1rem}
+        .stat-info p{font-size:.68rem}
+        .stat-icon{width:34px;height:34px;border-radius:10px;font-size:.9rem}
+        .heatmap-cell{width:9px;height:9px;border-radius:2px}
+        .heatmap{gap:2px}
+        .chapter-item{padding:8px 10px}
+        .chapter-actions{position:absolute;right:10px;top:10px}
+        .chapter-item{position:relative;padding-right:70px}
+        .week-graph{height:70px;gap:3px}
+        .streak-dot{width:20px;height:20px;font-size:.5rem;border-radius:4px}
+        .streak-days{gap:2px}
+        .badge-card{padding:10px 6px}
+        .badge-icon{font-size:1.5rem;margin-bottom:4px}
+        .badge-name{font-size:.7rem}
+        .badge-desc{font-size:.6rem;display:none}
+        .modal{border-radius:12px}
+        .modal-header h2{font-size:.95rem}
+        .logo{padding:18px 16px}
+        .logo-icon{width:34px;height:34px;font-size:1.1rem;border-radius:10px}
+        .logo-text{font-size:1.1rem}
+        .mobile-nav-items{padding:0 4px}
+        .mob-nav-item{font-size:.55rem;padding:5px 4px}
+        .mob-nav-item .mob-icon{font-size:1.1rem}
+        .plan-card{padding:8px 10px;gap:8px}
+        .plan-emoji{font-size:1rem}
+        .welcome-card{padding:20px 14px}
+        .welcome-card h1{font-size:1.3rem}
+        .welcome-card p{font-size:.82rem}
+        .level-up-card h2{font-size:1.4rem}
+        .level-up-card .lu-icon{font-size:3rem}
+        .level-up-card p{font-size:.8rem}
+        .mood-btn{font-size:1.3rem;padding:4px}
+        h2[style*="font-size:1.5rem"]{font-size:1.2rem!important}
+        }
+
+        @media(max-width:360px){
+        #content{padding:12px 10px 90px}
+        .card{padding:10px}
+        .grid{gap:10px}
+        .topbar-actions .btn span:not(.mob-icon){display:none}
+        .btn{padding:6px 10px;font-size:.72rem;gap:4px}
+        .stat-info h3{font-size:.9rem}
+        .chapter-name{font-size:.76rem;max-width:150px}
+        .heatmap-cell{width:7px;height:7px}
+        .mobile-nav{padding:4px 6px}
         }
 
         .celebration{position:fixed;inset:0;z-index:400;pointer-events:none;display:none}
@@ -308,7 +451,10 @@
         /* SEARCH */
         .search-box{position:relative}
         .search-box input{padding-left:36px}
-        .search-box::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.85rem}
+        .search-box::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.85rem;z-index:1}
+        @media(max-width:480px){
+            #search-dropdown{left:-50px!important;right:auto!important;width:80vw!important}
+        }
         .search-results{max-height:300px;overflow-y:auto}
 
         /* THEME TOGGLE */
@@ -358,6 +504,47 @@
 
         /* RADAR CHART via CSS */
         .radar-container{position:relative;width:220px;height:220px;margin:0 auto}
+        
+        /* Touch-friendly improvements */
+    @media(hover:none) and (pointer:coarse){
+        .ch-btn{width:34px;height:34px}
+        .chapter-check{width:26px;height:26px}
+        .task-check{width:22px;height:22px}
+        .nav-item{padding:13px 14px}
+        .btn{padding:10px 18px;min-height:40px}
+        .btn-sm{padding:8px 14px;min-height:34px}
+        .form-input,.form-select,.form-textarea{padding:12px 14px;min-height:44px}
+        .quick-chip{padding:8px 14px;min-height:36px}
+        .subject-tab{padding:10px 18px;min-height:38px}
+        .exercise-chip{padding:6px 12px;min-height:32px}
+        .plan-card{padding:12px 14px;min-height:48px}
+        .chapter-item{min-height:52px}
+        .doubt-actions .btn{min-height:32px}
+        .star{font-size:1.6rem}
+        .mood-btn{min-width:44px;min-height:44px}
+    }
+
+        /* Prevent text overflow everywhere */
+        h1,h2,h3,h4,.card-title,.chapter-name,.plan-info h4,.badge-name,.rev-info h4,.task-text,.doubt-item h4{
+            overflow:hidden;text-overflow:ellipsis;word-break:break-word
+        }
+
+        /* Fix iOS input zoom */
+        @media(max-width:480px){
+            input[type="text"],input[type="number"],input[type="date"],input[type="url"],select,textarea{font-size:16px!important}
+        }
+
+        /* Safe area padding for notched phones */
+        @supports(padding:max(0px)){
+            .mobile-nav{padding-bottom:max(6px,env(safe-area-inset-bottom))}
+            #content{padding-bottom:max(100px,calc(80px + env(safe-area-inset-bottom)))}
+        }
+
+        /* Smooth scrolling on touch */
+        #content,.nav,.modal{-webkit-overflow-scrolling:touch}
+
+        /* Prevent pull-to-refresh interfering */
+        body{overscroll-behavior-y:contain}
     </style>
 </head>
 <body>
@@ -437,10 +624,10 @@
         <div id="topbar">
             <div class="topbar-left"><div style="display:flex;align-items:center;gap:12px"><button id="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button><div><h1 id="page-title">Dashboard</h1><p id="page-subtitle"></p></div></div></div>
             <div class="topbar-actions">
-                <div class="search-box" style="position:relative"><input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 14px 7px 32px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)"><div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);margin-top:4px;display:none;z-index:60;max-height:250px;overflow-y:auto"></div></div>
-                <button class="btn btn-primary" onclick="App.openQuickLog()">⚡ Quick Log</button>
-                <button class="btn btn-secondary" onclick="App.openAddChapterModal()">+ Chapter</button>
-            </div>
+    <div class="search-box" style="position:relative"><input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 14px 7px 32px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)"><div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);margin-top:4px;display:none;z-index:60;max-height:250px;overflow-y:auto"></div></div>
+    <button class="btn btn-primary" onclick="App.openQuickLog()"><span>⚡</span><span class="hide-mobile">Quick Log</span></button>
+    <button class="btn btn-secondary" onclick="App.openAddChapterModal()"><span>+</span><span class="hide-mobile">Chapter</span></button>
+</div>
         </div>
 
         <div id="content">
@@ -742,7 +929,7 @@ const App={
         const pred=this.getPredictedCompletion();
 
         let html=`<div style="margin-bottom:24px"><h2 style="font-size:1.5rem;font-weight:700">Good ${this.getGreeting()}, ${this.state.profile.name} 👋</h2><p style="color:var(--text-secondary);font-size:.9rem;margin-top:4px">${this.getMotivation()}</p></div>`;
-
+    
         // Mood picker if not set today
         const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
         if(!todayMood){
@@ -751,7 +938,7 @@ const App={
 
         // Exam countdown + Readiness
         if(dte!==null&&dte>0){
-            html+=`<div class="grid grid-2" style="margin-bottom:20px"><div class="card" style="text-align:center"><div class="countdown-big">${dte}</div><div class="countdown-label">days to Board Exams</div><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">${this.state.profile.examDate}</p>${pred?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Predicted completion: ${pred.date} (${pred.rate} ch/day)</p>`:''}</div><div class="card" style="text-align:center"><div class="readiness-ring"><svg width="120" height="120" viewBox="0 0 120 120"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}" stroke-width="8" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52*(1-rs/100)}" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center"/></svg><div class="readiness-value" style="color:${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}">${rs}%</div></div><p style="font-size:.85rem;font-weight:600;margin-top:8px">Board Readiness</p><p style="font-size:.72rem;color:var(--text-muted)">Syllabus + Revisions + Scores + Streak</p></div></div>`;
+            html+=`<div class="grid grid-2" style="margin-bottom:20px"><div class="card" style="text-align:center"><div class="countdown-big">${dte}</div><div class="countdown-label">days to Board Exams</div><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">${this.state.profile.examDate}</p>${pred?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Predicted completion: ${pred.date} (${pred.rate} ch/day)</p>`:''}</div><div class="card" style="text-align:center"><div class="readiness-ring"><svg width="120" height="120" viewBox="0 0 120 120" style="max-width:100%;height:auto"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}" stroke-width="8" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52*(1-rs/100)}" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center"/></svg><div class="readiness-value" style="color:${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}">${rs}%</div></div><p style="font-size:.85rem;font-weight:600;margin-top:8px">Board Readiness</p><p style="font-size:.72rem;color:var(--text-muted)">Syllabus + Revisions + Scores + Streak</p></div></div>`;
         }
 
         // Daily Challenge
@@ -975,7 +1162,7 @@ const App={
         const unresolved=doubts.filter(d=>d.status==='unresolved');
         const asked=doubts.filter(d=>d.status==='asked');
         const understood=doubts.filter(d=>d.status==='understood');
-        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div class="grid grid-3" style="gap:10px;flex:1;margin-right:12px"><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(239,68,68,0.12);width:36px;height:36px;font-size:1rem">❓</div><div class="stat-info"><h3 style="font-size:1.2rem">${unresolved.length}</h3><p>Unresolved</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(245,158,11,0.12);width:36px;height:36px;font-size:1rem">🙋</div><div class="stat-info"><h3 style="font-size:1.2rem">${asked.length}</h3><p>Asked</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(16,185,129,0.12);width:36px;height:36px;font-size:1rem">✅</div><div class="stat-info"><h3 style="font-size:1.2rem">${understood.length}</h3><p>Understood</p></div></div></div><button class="btn btn-primary" onclick="App.openDoubtModal()" style="align-self:flex-start">+ Add Doubt</button></div>`;
+        let h=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;margin-bottom:18px;gap:12px"><div class="grid grid-3" style="gap:10px;flex:1;min-width:0"><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(239,68,68,0.12);width:36px;height:36px;font-size:1rem">❓</div><div class="stat-info"><h3 style="font-size:1.2rem">${unresolved.length}</h3><p>Unresolved</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(245,158,11,0.12);width:36px;height:36px;font-size:1rem">🙋</div><div class="stat-info"><h3 style="font-size:1.2rem">${asked.length}</h3><p>Asked</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(16,185,129,0.12);width:36px;height:36px;font-size:1rem">✅</div><div class="stat-info"><h3 style="font-size:1.2rem">${understood.length}</h3><p>Understood</p></div></div></div><button class="btn btn-primary" onclick="App.openDoubtModal()" style="align-self:flex-start">+ Add Doubt</button></div>`;
 
         const renderDoubtList=(title,list,emoji)=>{
             if(list.length===0)return'';
@@ -1105,7 +1292,7 @@ const App={
         el.innerHTML=`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">⏱</div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>This week</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">📆</div><div class="stat-info"><h3>${ds}/7</h3><p>Days studied</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">📅</div><div class="stat-info"><h3>${this.formatMin(tmMin)}</h3><p>This month</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)">📊</div><div class="stat-info"><h3>${avgSession}m</h3><p>Avg session</p></div></div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">📊 Daily Study Time</span></div><div class="week-graph">${dd.map(d=>{const pc=d.minutes/mx*100;const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T12:00').getDay()];return`<div class="bar-col"><div class="bar-value">${d.minutes>0?this.formatMin(d.minutes):''}</div><div class="bar" style="height:${Math.max(2,pc)}%;${d.date===this.today()?'background:var(--gradient-3)':''}"></div><div class="bar-label">${dn}</div></div>`}).join('')}</div></div><div class="card"><div class="card-header"><span class="card-title">📚 Subject Split (This Week)</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">📊 Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--success)':'var(--danger)'};font-weight:600">${tmMin>=lmMin?'📈':'📉'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'Improving!':'Study more!'}</p></div><div class="card"><div class="card-header"><span class="card-title">🕐 Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">📅</span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">⏱</span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">📊 Subject Balance (All Time)</span></div><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">${this.state.subjects.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);const isLow=pc<(100/Math.max(1,this.state.subjects.length))*0.5;return`<div style="text-align:center;min-width:80px"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ${s.color};display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.5rem;${isLow?'opacity:.5':''}">${s.icon}</div><p style="font-size:.78rem;font-weight:600">${s.name}</p><p style="font-size:.72rem;color:${isLow?'var(--danger)':s.color}">${pc}%</p>${isLow?'<p style="font-size:.6rem;color:var(--danger)">⚠️ Low</p>':''}`}).join('')}</div></div>`;
+        <div class="card"><div class="card-header"><span class="card-title">📊 Subject Balance (All Time)</span></div><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">${this.state.subjects.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);const isLow=pc<(100/Math.max(1,this.state.subjects.length))*0.5;return`<div style="text-align:center;min-width:60px;flex:0 0 auto"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ${s.color};display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.5rem;${isLow?'opacity:.5':''}">${s.icon}</div><p style="font-size:.78rem;font-weight:600">${s.name}</p><p style="font-size:.72rem;color:${isLow?'var(--danger)':s.color}">${pc}%</p>${isLow?'<p style="font-size:.6rem;color:var(--danger)">⚠️ Low</p>':''}`}).join('')}</div></div>`;
     },
 
     // POMODORO + STOPWATCH
@@ -1115,8 +1302,7 @@ const App={
         const tt=(p.mode==='work'?set.workMin:(p.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin))*60;
         const prog=((tt-p.timeLeft)/tt)*100;
         const sw=this.state.stopwatch;
-
-        el.innerHTML=`<div class="grid grid-2"><div class="card"><div class="pomodoro-display"><svg width="200" height="200" viewBox="0 0 200 200"><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="rgba(128,128,128,0.1)"/><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="${p.mode==='work'?'url(#pg)':'var(--success)'}" stroke-dasharray="${2*Math.PI*90}" stroke-dashoffset="${2*Math.PI*90*(1-prog/100)}" stroke-linecap="round"/><defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><div class="pomodoro-time">${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}</div><div class="pomodoro-label">${p.mode==='work'?'🎯 Focus':'☕ Break'} — Session ${p.session}</div><div class="pomodoro-controls">${p.running?`<button class="btn btn-secondary" onclick="App.pausePomodoro()">⏸ Pause</button>`:`<button class="btn btn-primary" onclick="App.startPomodoro()">▶ Start</button>`}<button class="btn btn-secondary" onclick="App.resetPomodoro()">↺</button><button class="btn btn-ghost" onclick="App.skipPomodoro()">⏭</button></div></div></div><div class="card"><div class="card-header"><span class="card-title">⏱ Stopwatch</span></div><div style="text-align:center;padding:20px"><div class="stopwatch-time">${this.formatSec(sw.elapsed||0)}</div><p style="font-size:.8rem;color:var(--text-secondary);margin:12px 0">${sw.running?'🔴 Recording...':'Ready'}</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${sw.running?`<button class="btn btn-danger" onclick="App.stopStopwatch()">⏹ Stop & Log</button>`:`<div style="width:100%"><select id="sw-subject" class="form-select" style="margin-bottom:8px">${this.state.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select><button class="btn btn-primary" onclick="App.startStopwatch()" style="width:100%">▶ Start Timer</button></div>`}</div></div><hr style="border-color:var(--border);margin:16px 0"><div class="card-header"><span class="card-title">⚙️ Pomodoro Settings</span></div><div class="form-row"><div class="form-group"><label class="form-label">Focus (min)</label><input type="number" class="form-input" value="${set.workMin}" min="1" max="120" onchange="App.updatePomodoroSetting('workMin',this.value)"></div><div class="form-group"><label class="form-label">Break (min)</label><input type="number" class="form-input" value="${set.breakMin}" min="1" max="30" onchange="App.updatePomodoroSetting('breakMin',this.value)"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Long Break (min)</label><input type="number" class="form-input" value="${set.longBreakMin}" min="1" max="60" onchange="App.updatePomodoroSetting('longBreakMin',this.value)"></div><div class="form-group"><label class="form-label">Sessions before long</label><input type="number" class="form-input" value="${set.sessionsBeforeLong}" min="2" max="8" onchange="App.updatePomodoroSetting('sessionsBeforeLong',this.value)"></div></div></div></div>`;
+        el.innerHTML=`<div class="grid grid-2"><div class="card"><div class="pomodoro-display"><svg width="200" height="200" viewBox="0 0 200 200" style="max-width:100%;height:auto"><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="rgba(128,128,128,0.1)"/><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="${p.mode==='work'?'url(#pg)':'var(--success)'}" stroke-dasharray="${2*Math.PI*90}" stroke-dashoffset="${2*Math.PI*90*(1-prog/100)}" stroke-linecap="round"/><defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><div class="pomodoro-time">${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}</div><div class="pomodoro-label">${p.mode==='work'?'🎯 Focus':'☕ Break'} — Session ${p.session}</div><div class="pomodoro-controls">${p.running?`<button class="btn btn-secondary" onclick="App.pausePomodoro()">⏸ Pause</button>`:`<button class="btn btn-primary" onclick="App.startPomodoro()">▶ Start</button>`}<button class="btn btn-secondary" onclick="App.resetPomodoro()">↺</button><button class="btn btn-ghost" onclick="App.skipPomodoro()">⏭</button></div></div></div><div class="card"><div class="card-header"><span class="card-title">⏱ Stopwatch</span></div><div style="text-align:center;padding:20px"><div class="stopwatch-time">${this.formatSec(sw.elapsed||0)}</div><p style="font-size:.8rem;color:var(--text-secondary);margin:12px 0">${sw.running?'🔴 Recording...':'Ready'}</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${sw.running?`<button class="btn btn-danger" onclick="App.stopStopwatch()">⏹ Stop & Log</button>`:`<div style="width:100%"><select id="sw-subject" class="form-select" style="margin-bottom:8px">${this.state.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select><button class="btn btn-primary" onclick="App.startStopwatch()" style="width:100%">▶ Start Timer</button></div>`}</div></div><hr style="border-color:var(--border);margin:16px 0"><div class="card-header"><span class="card-title">⚙️ Pomodoro Settings</span></div><div class="form-row"><div class="form-group"><label class="form-label">Focus (min)</label><input type="number" class="form-input" value="${set.workMin}" min="1" max="120" onchange="App.updatePomodoroSetting('workMin',this.value)"></div><div class="form-group"><label class="form-label">Break (min)</label><input type="number" class="form-input" value="${set.breakMin}" min="1" max="30" onchange="App.updatePomodoroSetting('breakMin',this.value)"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Long Break (min)</label><input type="number" class="form-input" value="${set.longBreakMin}" min="1" max="60" onchange="App.updatePomodoroSetting('longBreakMin',this.value)"></div><div class="form-group"><label class="form-label">Sessions before long</label><input type="number" class="form-input" value="${set.sessionsBeforeLong}" min="2" max="8" onchange="App.updatePomodoroSetting('sessionsBeforeLong',this.value)"></div></div></div></div>`;
     },
     startPomodoro(){if(this.pomodoro.running)return;this.pomodoro.running=true;this.pomodoro.interval=setInterval(()=>{this.pomodoro.timeLeft--;if(this.pomodoro.timeLeft<=0)this.pomodoroComplete();if(this.state.currentPage==='pomodoro')this.renderPomodoro()},1000);this.renderPomodoro()},
     pausePomodoro(){this.pomodoro.running=false;clearInterval(this.pomodoro.interval);this.renderPomodoro()},
