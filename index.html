@@ -47,7 +47,7 @@
         ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.2);border-radius:3px}
         input,select,textarea,button{font-family:inherit;font-size:inherit}
         a{color:inherit;text-decoration:none}
-
+        
         #app{display:flex;min-height:100vh;position:relative;z-index:1}
         #sidebar{width:var(--sidebar-w);height:100vh;position:fixed;left:0;top:0;background:rgba(17,17,40,0.9);backdrop-filter:blur(20px);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s ease,background .3s}
         .logo{padding:24px 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
@@ -98,7 +98,7 @@
 
         .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:all .25s}
         .card:hover{border-color:var(--border-hover)}
-        .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px}
+        .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px;flex-wrap:wrap}
         .card-title{font-size:1rem;font-weight:600}
         .card-subtitle{font-size:.75rem;color:var(--text-muted)}
 
@@ -131,13 +131,13 @@
         .tag-asked{background:rgba(245,158,11,0.12);color:var(--warning)}
         .tag-understood{background:rgba(16,185,129,0.12);color:var(--success)}
 
-        .chapter-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s;cursor:pointer;background:var(--bg-card)}
+        .chapter-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s;cursor:pointer;background:var(--bg-card);max-width:100%;box-sizing:border-box;overflow:hidden}
         .chapter-item:hover{border-color:var(--border-hover);background:var(--bg-card-hover);transform:translateX(4px)}
         .chapter-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:.7rem}
         .chapter-check.done{background:var(--success);border-color:var(--success);color:#fff}
-        .chapter-info{flex:1;min-width:0}
+        .chapter-info{flex:1;min-width:0;overflow:hidden}
         .chapter-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-        .chapter-meta{font-size:.72rem;color:var(--text-muted);display:flex;gap:12px;margin-top:3px;flex-wrap:wrap}
+        .chapter-meta{font-size:.72rem;color:var(--text-muted);display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;max-width:100%}
         .chapter-actions{display:flex;gap:6px;flex-shrink:0}
         .ch-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
         .ch-btn:hover{background:var(--bg-card-hover);color:var(--text-primary);border-color:var(--border-hover)}
@@ -330,6 +330,13 @@
         .sp-name{font-size:.8rem}
         .sp-pct{font-size:.72rem}
         .progress-bar{height:6px}
+        .chapter-item{padding:10px;gap:8px}
+        .chapter-actions{gap:3px;flex-shrink:0}
+        .ch-btn{width:26px;height:26px;font-size:.7rem}
+        .chapter-check{width:20px;height:20px;flex-shrink:0}
+        .chapter-name{font-size:.8rem}
+        .chapter-meta{gap:4px}
+        .chapter-meta .tag{font-size:.6rem;padding:2px 6px}
         }
 
         @media(max-width:480px){
@@ -353,9 +360,11 @@
         .stat-icon{width:34px;height:34px;border-radius:10px;font-size:.9rem}
         .heatmap-cell{width:9px;height:9px;border-radius:2px}
         .heatmap{gap:2px}
-        .chapter-item{padding:8px 10px}
-        .chapter-actions{position:absolute;right:10px;top:10px}
-        .chapter-item{position:relative;padding-right:70px}
+        .chapter-item{padding:8px;gap:6px;position:relative}
+        .chapter-actions{position:static;display:flex;flex-shrink:0;gap:2px}
+        .ch-btn{width:24px;height:24px;font-size:.65rem}
+        .chapter-check{width:18px;height:18px}
+        .chapter-name{font-size:.78rem;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
         .week-graph{height:70px;gap:3px}
         .streak-dot{width:20px;height:20px;font-size:.5rem;border-radius:4px}
         .streak-days{gap:2px}
@@ -545,6 +554,16 @@
 
         /* Prevent pull-to-refresh interfering */
         body{overscroll-behavior-y:contain}
+
+        /* FIX: Prevent horizontal overflow */
+        #app{max-width:100vw;overflow-x:hidden}
+        #main{max-width:100%;overflow-x:hidden}
+        #content{max-width:100%;overflow-x:hidden}
+        .page{max-width:100%;overflow-x:hidden}
+        .card{max-width:100%;overflow:hidden}
+        .chapter-item{max-width:100%;overflow:hidden}
+        .subject-tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+        .subject-tabs::-webkit-scrollbar{display:none}
     </style>
 </head>
 <body>
@@ -974,7 +993,7 @@ const App={
         else{flt.forEach(s=>{
             const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;
             const trophyIcon=pc>=100?'🥇':pc>=75?'🥈':pc>=50?'🥉':'';
-            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header"><div><span class="card-title" style="font-size:1.1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.75rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+ Ch</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">🗑</button></div></div><div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';return`<div class="chapter-item"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span>🔄×${c.revisionCount}</span>`:''}${ov?'<span class="tag tag-overdue">Overdue</span>':''}</div></div><div class="chapter-actions"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise">🔄</button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete">🗑</button></div></div>`}).join('')}</div></div>`})}
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">🗑</button></div></div><div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';return`<div class="chapter-item" style="box-sizing:border-box"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span style="font-size:.65rem">🔄${c.revisionCount}</span>`:''}${ov?'<span class="tag tag-overdue">!</span>':''}</div></div><div class="chapter-actions" style="flex-shrink:0"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise">🔄</button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete">🗑</button></div></div>`}).join('')}</div></div>`})}
         el.innerHTML=h;
     },
     filterSubject(id){this.state.selectedSubjectFilter=id;this.renderSubjects()},
