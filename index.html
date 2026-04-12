@@ -226,7 +226,7 @@
         .coach-msg p{font-size:.8rem;color:var(--text-secondary)}
 
         #welcome-overlay{position:fixed;inset:0;background:var(--bg-primary);z-index:500;display:flex;align-items:center;justify-content:center}
-        #welcome-overlay.hidden{display:none}
+        #welcome-overlay.hidden{display:none!important}
         .welcome-card{text-align:center;max-width:480px;width:100%;padding:40px}
         .welcome-card h1{font-size:2rem;font-weight:800;margin-bottom:8px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
         .welcome-card p{color:var(--text-secondary);margin-bottom:28px;font-size:.95rem}
@@ -968,12 +968,14 @@ const App={
     // DASHBOARD
     renderDashboard(){
         const el=document.getElementById('page-dashboard');
-        const tm=this.getTodayMinutes(),gm=this.state.profile.dailyGoalMinutes,gp=Math.min(100,Math.round(tm/gm*100));
+        if(!el)return;
+        try{
+        const tm=this.getTodayMinutes(),gm=this.state.profile.dailyGoalMinutes||120,gp=Math.min(100,Math.round(tm/gm*100));
         const comp=this.getCompletedCount(),tot=this.getTotalChapters(),sp=tot>0?Math.round(comp/tot*100):0;
-        const od=this.getOverdueChapters(),rd=this.getRevisionsDue(),ts=this.getTodaySessions(),st=this.state.profile.streak;
+        const od=this.getOverdueChapters(),rd=this.getRevisionsDue(),ts=this.getTodaySessions(),st=this.state.profile.streak||0;
         const wd=this.getWeekSessions(),plan=this.getTomorrowPlan(),dte=this.getDaysToExam(),rs=this.getReadinessScore();
         const hm=this.getHeatmapData();
-        const dc=this.state.dailyChallenges;
+        const dc=this.state.dailyChallenges||{date:'',challenges:[],completed:[]};
         const pred=this.getPredictedCompletion();
 
         let html=`<div style="margin-bottom:24px"><h2 style="font-size:1.5rem;font-weight:700">Good ${this.getGreeting()}, ${this.state.profile.name} 👋</h2><p style="color:var(--text-secondary);font-size:.9rem;margin-top:4px">${this.getMotivation()}</p></div>`;
@@ -1011,6 +1013,15 @@ const App={
         html+=`<div class="grid grid-2"><div class="card"><div class="card-header"><span class="card-title">📚 Subjects</span></div>${this.state.subjects.length===0?'<p style="color:var(--text-muted);font-size:.85rem">No subjects yet</p>':this.state.subjects.map(s=>{const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${s.icon} ${s.name}</span><span class="sp-pct" style="color:${s.color}">${pc}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div></div>`}).join('')}</div><div class="card"><div class="card-header"><span class="card-title">⚠️ Alerts</span></div>${od.length===0&&rd.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All clear! ✨</p>':''}${od.slice(0,3).map(c=>`<div class="plan-card" style="border-color:rgba(239,68,68,0.2)"><div class="plan-emoji">⚠️</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}${rd.slice(0,3).map(c=>`<div class="plan-card" style="border-color:rgba(99,102,241,0.2)"><div class="plan-emoji">🔄</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • Revise</p></div></div>`).join('')}</div></div>`;
 
         el.innerHTML=html;
+        }catch(err){
+            console.error('Dashboard render error:',err);
+            el.innerHTML=`<div style="padding:40px;text-align:center">
+                <div style="font-size:3rem;margin-bottom:16px">📚</div>
+                <h2 style="font-size:1.3rem;margin-bottom:8px">Welcome to StudyOS!</h2>
+                <p style="color:var(--text-secondary);margin-bottom:20px">Start by loading your syllabus or adding subjects.</p>
+                <button class="btn btn-primary" onclick="App.navigate('subjects')">Go to Subjects →</button>
+            </div>`;
+        }
     },
 
     // SUBJECTS
