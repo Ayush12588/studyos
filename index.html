@@ -1,0 +1,1885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>StudyOS — Class 10 Study Command Center</title>
+    <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3R1ZHlPUyIsInNob3J0X25hbWUiOiJTdHVkeU9TIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwYTBhMWEiLCJ0aGVtZV9jb2xvciI6IiM2MzY2ZjEiLCJpY29ucyI6W119">
+    <style>
+        *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+        :root{
+            --bg-primary:#0a0a1a;--bg-secondary:#111128;--bg-card:rgba(255,255,255,0.04);
+            --bg-card-hover:rgba(255,255,255,0.07);--border:rgba(255,255,255,0.08);
+            --border-hover:rgba(255,255,255,0.15);--text-primary:#f0f0ff;--text-secondary:rgba(240,240,255,0.65);
+            --text-muted:rgba(240,240,255,0.45);--accent:#6366f1;--accent-light:#818cf8;
+            --gradient-1:linear-gradient(135deg,#6366f1,#8b5cf6);--gradient-2:linear-gradient(135deg,#06b6d4,#3b82f6);
+            --gradient-3:linear-gradient(135deg,#10b981,#06b6d4);--gradient-4:linear-gradient(135deg,#f59e0b,#ef4444);
+            --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#06b6d4;
+            --radius:14px;--radius-sm:10px;--radius-xs:7px;
+            --shadow:0 4px 24px rgba(0,0,0,0.3);--sidebar-w:260px;
+        }
+        [data-theme="light"]{
+            --bg-primary:#faf8f5;--bg-secondary:#ffffff;--bg-card:rgba(0,0,0,0.03);
+            --bg-card-hover:rgba(0,0,0,0.06);--border:rgba(0,0,0,0.1);
+            --border-hover:rgba(0,0,0,0.18);--text-primary:#1a1a2e;--text-secondary:rgba(26,26,46,0.65);
+            --text-muted:rgba(26,26,46,0.45);--shadow:0 4px 24px rgba(0,0,0,0.08);
+        }
+        [data-theme="warm-dark"]{
+            --bg-primary:#1a1512;--bg-secondary:#211c17;--bg-card:rgba(255,235,205,0.04);
+            --bg-card-hover:rgba(255,235,205,0.07);--border:rgba(255,235,205,0.08);
+            --border-hover:rgba(255,235,205,0.15);--text-primary:#f5ede4;--text-secondary:rgba(245,237,228,0.65);
+            --text-muted:rgba(245,237,228,0.45);--shadow:0 4px 24px rgba(0,0,0,0.4);
+        }
+        [data-theme="light"] body::before{background:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(139,92,246,0.04) 0%,transparent 60%)}
+        [data-theme="light"] #sidebar{background:rgba(255,255,255,0.95)}
+        [data-theme="light"] #topbar{background:rgba(250,248,245,0.9)}
+        [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.95)}
+        [data-theme="light"] .modal{background:#fff}
+        [data-theme="light"] .toast{background:#fff}
+        [data-theme="light"] .logo-icon{box-shadow:0 4px 15px rgba(99,102,241,0.2)}
+        [data-theme="warm-dark"] body::before{background:radial-gradient(ellipse at 20% 0%,rgba(245,158,11,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(239,68,68,0.04) 0%,transparent 60%)}
+        [data-theme="warm-dark"] #sidebar{background:rgba(33,28,23,0.9)}
+        [data-theme="warm-dark"] #topbar{background:rgba(26,21,18,0.8)}
+        [data-theme="warm-dark"] .mobile-nav{background:rgba(33,28,23,0.95)}
+        html{font-size:15px;scroll-behavior:smooth}
+        body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden;line-height:1.5;transition:background .3s,color .3s}
+        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(139,92,246,0.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+        ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.2);border-radius:3px}
+        input,select,textarea,button{font-family:inherit;font-size:inherit}
+        @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+        /* --- Attachment styles --- */
+        .attach-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;transition:all .2s;margin-top:4px}
+        .attach-zone:hover,.attach-zone.drag-over{border-color:var(--accent);background:rgba(99,102,241,0.06)}
+        .attach-zone p{font-size:.82rem;color:var(--text-muted);margin-top:6px}
+        .attach-preview{display:flex;flex-wrap:wrap;gap:10px;margin-top:10px}
+        .attach-thumb{position:relative;border-radius:var(--radius-xs);overflow:hidden;border:1px solid var(--border);background:var(--bg-card)}
+        .attach-thumb img{width:90px;height:90px;object-fit:cover;display:block}
+        .attach-thumb .pdf-thumb{width:90px;height:90px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.8rem;gap:4px}
+        .attach-thumb .pdf-thumb span{font-size:.6rem;color:var(--text-muted);text-align:center;padding:0 4px;word-break:break-all;max-width:86px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+        .attach-remove{position:absolute;top:3px;right:3px;width:18px;height:18px;background:rgba(239,68,68,.85);border-radius:50%;border:none;color:#fff;font-size:.7rem;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+        .note-attachments{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+        .note-attach-item{border-radius:var(--radius-xs);overflow:hidden;border:1px solid var(--border);cursor:pointer;transition:border-color .2s}
+        .note-attach-item:hover{border-color:var(--accent)}
+        .note-attach-item img{width:80px;height:80px;object-fit:cover;display:block}
+        .note-attach-pdf{width:80px;height:80px;display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--bg-card);font-size:1.6rem;gap:3px}
+        .note-attach-pdf span{font-size:.58rem;color:var(--text-muted);text-align:center;padding:0 3px;word-break:break-all;max-width:76px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+        /* lightbox */
+        #lb-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.88);z-index:9999;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+        #lb-overlay.show{display:flex}
+        #lb-overlay img{max-width:90vw;max-height:80vh;border-radius:var(--radius);box-shadow:0 8px 40px rgba(0,0,0,.6)}
+        #lb-overlay iframe{width:90vw;height:80vh;border:none;border-radius:var(--radius);background:#fff}
+        #lb-close{position:fixed;top:18px;right:22px;background:rgba(255,255,255,.12);border:none;color:#fff;font-size:1.4rem;width:38px;height:38px;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center}
+        a{color:inherit;text-decoration:none}
+        
+        #app{display:flex;min-height:100vh;position:relative;z-index:1}
+        #sidebar{width:var(--sidebar-w);height:100vh;position:fixed;left:0;top:0;background:rgba(17,17,40,0.9);backdrop-filter:blur(20px);border-right:1px solid var(--border);display:flex;flex-direction:column;z-index:100;transition:transform .3s ease,background .3s}
+        .logo{padding:24px 22px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border)}
+        .logo-icon{width:40px;height:40px;background:var(--gradient-1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:#fff;box-shadow:0 4px 15px rgba(99,102,241,0.3)}
+        .logo-text{font-size:1.25rem;font-weight:700;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .logo-sub{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
+        .nav{flex:1;padding:16px 12px;overflow-y:auto}
+        .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-secondary);font-size:.9rem;font-weight:500;margin-bottom:2px;position:relative}
+        .nav-item:hover{background:var(--bg-card-hover);color:var(--text-primary)}
+        .nav-item.active{background:rgba(99,102,241,0.12);color:#818cf8}
+        .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--gradient-1);border-radius:0 3px 3px 0}
+        .nav-icon{font-size:1.15rem;width:24px;text-align:center}
+        .nav-label{white-space:nowrap}
+        .nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:.65rem;padding:2px 7px;border-radius:10px;font-weight:600}
+        .nav-section{font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);padding:18px 14px 8px;font-weight:600}
+        .sidebar-profile{padding:16px;border-top:1px solid var(--border)}
+        .profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
+        .profile-level{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+        .profile-name{font-weight:600;font-size:.85rem}
+        .profile-lvl{font-size:.7rem;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;font-weight:700}
+        .xp-bar{height:4px;background:rgba(128,128,128,0.12);border-radius:2px;overflow:hidden}
+        .xp-fill{height:100%;background:var(--gradient-1);border-radius:2px;transition:width .5s ease}
+        .xp-text{font-size:.65rem;color:var(--text-muted);margin-top:4px;text-align:right}
+
+        #main{margin-left:var(--sidebar-w);flex:1;min-height:100vh;display:flex;flex-direction:column}
+        #topbar{padding:18px 30px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);background:rgba(10,10,26,0.8);backdrop-filter:blur(10px);position:sticky;top:0;z-index:50;transition:background .3s}
+        .topbar-left h1{font-size:1.35rem;font-weight:700}
+        .topbar-left p{font-size:.8rem;color:var(--text-secondary);margin-top:2px}
+        .topbar-actions{display:flex;gap:8px;align-items:center}
+
+        .btn{padding:9px 18px;border-radius:var(--radius-xs);border:none;cursor:pointer;font-weight:600;font-size:.82rem;transition:all .2s;display:inline-flex;align-items:center;gap:7px;white-space:nowrap}
+        .btn-primary{background:var(--gradient-1);color:#fff;box-shadow:0 4px 15px rgba(99,102,241,0.25)}
+        .btn-primary:hover{transform:translateY(-1px);box-shadow:0 6px 20px rgba(99,102,241,0.35)}
+        .btn-secondary{background:var(--bg-card);color:var(--text-primary);border:1px solid var(--border)}
+        .btn-secondary:hover{border-color:var(--border-hover);background:var(--bg-card-hover)}
+        .btn-ghost{background:transparent;color:var(--text-secondary);padding:9px 12px}
+        .btn-ghost:hover{color:var(--text-primary);background:var(--bg-card)}
+        .btn-sm{padding:6px 12px;font-size:.75rem}
+        .btn-danger{background:rgba(239,68,68,0.12);color:var(--danger);border:1px solid rgba(239,68,68,0.2)}
+        .btn-danger:hover{background:rgba(239,68,68,0.2)}
+        .btn-success{background:rgba(16,185,129,0.12);color:var(--success);border:1px solid rgba(16,185,129,0.2)}
+        .btn-warning{background:rgba(245,158,11,0.12);color:var(--warning);border:1px solid rgba(245,158,11,0.2)}
+
+        #content{flex:1;padding:24px 30px 40px;overflow-y:auto}
+        .page{display:none;animation:fadeUp .3s ease}
+        .page.active{display:block}
+        @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+
+        .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:22px;transition:all .25s}
+        .card:hover{border-color:var(--border-hover)}
+        .card-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;gap:8px;flex-wrap:wrap}
+        .card-title{font-size:1rem;font-weight:600}
+        .card-subtitle{font-size:.75rem;color:var(--text-muted)}
+
+        .grid{display:grid;gap:18px}
+        .grid-2{grid-template-columns:repeat(2,1fr)}
+        .grid-3{grid-template-columns:repeat(3,1fr)}
+        .grid-4{grid-template-columns:repeat(4,1fr)}
+        .grid-5{grid-template-columns:repeat(5,1fr)}
+
+        .stat-card{display:flex;align-items:flex-start;gap:14px}
+        .stat-icon{width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0}
+        .stat-info h3{font-size:1.5rem;font-weight:700;line-height:1.2}
+        .stat-info p{font-size:.75rem;color:var(--text-secondary);margin-top:2px}
+
+        .progress-bar{height:8px;background:rgba(128,128,128,0.12);border-radius:4px;overflow:hidden;position:relative}
+        .progress-fill{height:100%;border-radius:4px;transition:width .6s ease;position:relative}
+        .progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 2s infinite}
+        @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+        .tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;gap:4px}
+        .tag-not-started{background:rgba(128,128,128,0.1);color:var(--text-muted)}
+        .tag-in-progress{background:rgba(245,158,11,0.12);color:var(--warning)}
+        .tag-completed{background:rgba(16,185,129,0.12);color:var(--success)}
+        .tag-revised{background:rgba(99,102,241,0.12);color:var(--accent-light)}
+        .tag-overdue{background:rgba(239,68,68,0.12);color:var(--danger)}
+        .tag-easy{background:rgba(16,185,129,0.1);color:var(--success)}
+        .tag-medium{background:rgba(245,158,11,0.1);color:var(--warning)}
+        .tag-hard{background:rgba(239,68,68,0.1);color:var(--danger)}
+        .tag-unresolved{background:rgba(239,68,68,0.12);color:var(--danger)}
+        .tag-asked{background:rgba(245,158,11,0.12);color:var(--warning)}
+        .tag-understood{background:rgba(16,185,129,0.12);color:var(--success)}
+
+        .chapter-item{display:flex;align-items:center;gap:14px;padding:14px 16px;border-radius:var(--radius-sm);border:1px solid var(--border);transition:all .2s;cursor:pointer;background:var(--bg-card);max-width:100%;box-sizing:border-box;overflow:hidden}
+        .chapter-item:hover{border-color:var(--border-hover);background:var(--bg-card-hover);transform:translateX(4px)}
+        .chapter-check{width:22px;height:22px;border-radius:6px;border:2px solid var(--border);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all .2s;flex-shrink:0;font-size:.7rem}
+        .chapter-check.done{background:var(--success);border-color:var(--success);color:#fff}
+        .chapter-info{flex:1;min-width:0;overflow:hidden}
+        .chapter-name{font-weight:600;font-size:.88rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+        .chapter-meta{font-size:.72rem;color:var(--text-muted);display:flex;gap:6px;margin-top:3px;flex-wrap:wrap;max-width:100%}
+        .chapter-actions{display:flex;gap:6px;flex-shrink:0}
+        .ch-btn{width:30px;height:30px;border-radius:8px;border:1px solid var(--border);background:transparent;color:var(--text-secondary);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.8rem;transition:all .2s}
+        .ch-btn:hover{background:var(--bg-card-hover);color:var(--text-primary);border-color:var(--border-hover)}
+
+        .modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(8px);z-index:200;display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+        @media(max-width:480px){.modal-overlay{padding:10px;align-items:flex-start;padding-top:40px}}
+        .modal-overlay.show{display:flex;animation:fadeIn .2s ease}
+        @keyframes fadeIn{from{opacity:0}to{opacity:1}}
+        .modal{background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius);width:100%;max-width:520px;max-height:85vh;overflow-y:auto;box-shadow:var(--shadow);animation:slideUp .3s ease}
+        @keyframes slideUp{from{transform:translateY(20px);opacity:0}to{transform:translateY(0);opacity:1}}
+        .modal-header{padding:22px 24px 0;display:flex;align-items:center;justify-content:space-between}
+        .modal-header h2{font-size:1.15rem;font-weight:700}
+        .modal-close{width:32px;height:32px;border-radius:8px;border:none;background:var(--bg-card);color:var(--text-secondary);cursor:pointer;font-size:1.1rem;display:flex;align-items:center;justify-content:center;transition:all .2s}
+        .modal-close:hover{background:var(--bg-card-hover);color:var(--text-primary)}
+        .modal-body{padding:20px 24px}
+        .modal-footer{padding:0 24px 22px;display:flex;justify-content:flex-end;gap:10px}
+
+        .form-group{margin-bottom:16px}
+        .form-label{display:block;font-size:.8rem;font-weight:600;margin-bottom:6px;color:var(--text-secondary)}
+        .form-input,.form-select,.form-textarea{width:100%;padding:10px 14px;border-radius:var(--radius-xs);border:1px solid var(--border);background:var(--bg-card);color:var(--text-primary);transition:all .2s;outline:none}
+        .form-input:focus,.form-select:focus,.form-textarea:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(99,102,241,0.1)}
+        .form-textarea{resize:vertical;min-height:70px}
+        .form-select{cursor:pointer}
+        .form-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+        .form-hint{font-size:.7rem;color:var(--text-muted);margin-top:4px}
+
+        .star-rating{display:flex;gap:4px}
+        .star{font-size:1.4rem;cursor:pointer;transition:all .15s;opacity:.3}
+        .star.active{opacity:1}
+        .star:hover{transform:scale(1.15)}
+
+        #toast-container{position:fixed;bottom:24px;right:24px;z-index:300;display:flex;flex-direction:column;gap:8px}
+        .toast{padding:14px 20px;border-radius:var(--radius-sm);background:var(--bg-secondary);border:1px solid var(--border);box-shadow:var(--shadow);display:flex;align-items:center;gap:10px;animation:toastIn .3s ease;min-width:280px;font-size:.85rem}
+        .toast.toast-out{animation:toastOut .3s ease forwards}
+        @keyframes toastIn{from{transform:translateX(100px);opacity:0}to{transform:translateX(0);opacity:1}}
+        @keyframes toastOut{to{transform:translateX(100px);opacity:0}}
+        .toast-icon{font-size:1.2rem}
+        .toast-success{border-left:3px solid var(--success)}
+        .toast-warning{border-left:3px solid var(--warning)}
+        .toast-error{border-left:3px solid var(--danger)}
+        .toast-info{border-left:3px solid var(--info)}
+        .toast-xp{border-left:3px solid var(--accent);color:var(--accent-light)}
+
+        .badge-card{text-align:center;padding:20px;position:relative;overflow:hidden}
+        .badge-card.locked{opacity:.4;filter:grayscale(.8)}
+        .badge-icon{font-size:2.2rem;margin-bottom:8px;display:block}
+        .badge-name{font-weight:700;font-size:.85rem}
+        .badge-desc{font-size:.7rem;color:var(--text-muted);margin-top:4px}
+        .badge-earned{position:absolute;top:8px;right:8px;font-size:.6rem;color:var(--success);font-weight:600}
+
+        .streak-days{display:flex;gap:4px;margin-top:12px}
+        .streak-dot{width:28px;height:28px;border-radius:6px;background:rgba(128,128,128,0.08);border:1px solid var(--border);display:flex;align-items:center;justify-content:center;font-size:.6rem;color:var(--text-muted)}
+        .streak-dot.active{background:var(--gradient-1);border-color:var(--accent);color:#fff;font-weight:600}
+        .streak-dot.today{border-color:var(--accent);box-shadow:0 0 8px rgba(99,102,241,0.3)}
+
+        .empty-state{text-align:center;padding:50px 30px}
+        .empty-icon{font-size:3.5rem;margin-bottom:16px;opacity:.5}
+        .empty-title{font-size:1.1rem;font-weight:600;margin-bottom:6px}
+        .empty-desc{font-size:.85rem;color:var(--text-secondary);max-width:320px;margin:0 auto 20px}
+
+        .coach-msg{padding:16px;border-radius:var(--radius-sm);border-left:3px solid;margin-bottom:12px}
+        .coach-msg h4{font-size:.85rem;font-weight:600;margin-bottom:4px}
+        .coach-msg p{font-size:.8rem;color:var(--text-secondary)}
+
+        #welcome-overlay{position:fixed;inset:0;background:var(--bg-primary);z-index:500;display:flex;align-items:center;justify-content:center}
+        #welcome-overlay.hidden{display:none}
+        .welcome-card{text-align:center;max-width:480px;width:100%;padding:40px}
+        .welcome-card h1{font-size:2rem;font-weight:800;margin-bottom:8px;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .welcome-card p{color:var(--text-secondary);margin-bottom:28px;font-size:.95rem}
+        .welcome-step{display:none}
+        .welcome-step.active{display:block;animation:fadeUp .4s ease}
+
+        .quick-log{display:flex;gap:8px;flex-wrap:wrap}
+        .quick-chip{padding:6px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:.78rem;transition:all .2s;font-weight:500}
+        .quick-chip:hover,.quick-chip.selected{border-color:var(--accent);background:rgba(99,102,241,0.12);color:var(--accent-light)}
+
+        .subject-tabs{display:flex;gap:6px;overflow-x:auto;padding-bottom:8px;margin-bottom:18px}
+        .subject-tab{padding:8px 18px;border-radius:20px;border:1px solid var(--border);background:var(--bg-card);cursor:pointer;font-size:.82rem;font-weight:600;white-space:nowrap;transition:all .2s}
+        .subject-tab:hover{border-color:var(--border-hover)}
+        .subject-tab.active{border-color:var(--accent);background:rgba(99,102,241,0.12);color:var(--accent-light)}
+
+        .subject-progress{margin-bottom:14px}
+        .sp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+        .sp-name{font-weight:600;font-size:.85rem;display:flex;align-items:center;gap:8px}
+        .sp-pct{font-size:.75rem;font-weight:700}
+
+        .rev-item{display:flex;align-items:center;justify-content:space-between;padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border);margin-bottom:8px;background:var(--bg-card)}
+        .rev-info h4{font-size:.85rem;font-weight:600}
+        .rev-info p{font-size:.72rem;color:var(--text-muted)}
+
+        .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(17,17,40,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:6px 10px env(safe-area-inset-bottom);z-index:100;transition:background .3s}
+        [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.95)}
+        .mobile-nav-items{display:flex;justify-content:space-around}
+        .mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;cursor:pointer;color:var(--text-muted);font-size:.6rem;font-weight:600;transition:all .2s;border-radius:8px}
+        .mob-nav-item .mob-icon{font-size:1.2rem}
+        .mob-nav-item.active{color:var(--accent-light)}
+        .hide-mobile{display:inline}
+        @media(max-width:600px){.hide-mobile{display:none}}
+
+        #menu-toggle{display:none;width:36px;height:36px;border:1px solid var(--border);border-radius:8px;background:var(--bg-card);color:var(--text-primary);cursor:pointer;font-size:1.1rem;align-items:center;justify-content:center}
+        @media(max-width:900px){
+        #sidebar{transform:translateX(-100%)}
+        #sidebar.open{transform:translateX(0)}
+        #main{margin-left:0}
+        #menu-toggle{display:flex}
+        .mobile-nav{display:block}
+        .grid-4,.grid-5{grid-template-columns:repeat(2,1fr)}
+        .grid-3{grid-template-columns:1fr}
+        .grid-2{grid-template-columns:1fr}
+        #content{padding:18px 16px 100px}
+        #topbar{padding:12px 14px}
+        .topbar-left h1{font-size:1.1rem}
+        .topbar-left p{font-size:.7rem}
+        .topbar-actions{gap:6px}
+        .topbar-actions .btn{padding:7px 12px;font-size:.75rem}
+        .topbar-actions .search-box input{width:120px!important;padding:6px 10px 6px 28px!important;font-size:.75rem!important}
+        .topbar-actions .search-box::before{left:8px;font-size:.75rem}
+        .modal{max-width:95vw;max-height:90vh;margin:10px}
+        .modal-header{padding:16px 18px 0}
+        .modal-header h2{font-size:1rem}
+        .modal-body{padding:14px 18px}
+        .modal-footer{padding:0 18px 16px}
+        .card{padding:16px}
+        .stat-info h3{font-size:1.2rem}
+        .stat-icon{width:38px;height:38px;font-size:1rem}
+        .countdown-big{font-size:2.5rem}
+        .pomodoro-time{font-size:2.8rem}
+        .stopwatch-time{font-size:2.5rem}
+        .welcome-card{padding:24px 18px}
+        .welcome-card h1{font-size:1.5rem}
+        .heatmap-cell{width:11px;height:11px}
+        .chapter-item{padding:10px 12px;gap:10px;flex-wrap:nowrap}
+        .chapter-name{font-size:.82rem}
+        .chapter-meta{gap:6px}
+        .chapter-actions{gap:4px}
+        .ch-btn{width:28px;height:28px;font-size:.75rem}
+        .plan-card{padding:10px 12px;gap:10px}
+        .plan-emoji{font-size:1.2rem}
+        .plan-info h4{font-size:.8rem}
+        .plan-info p{font-size:.68rem}
+        .plan-time{font-size:.7rem}
+        .badge-card{padding:14px 10px}
+        .badge-icon{font-size:1.8rem}
+        .badge-name{font-size:.78rem}
+        .badge-desc{font-size:.65rem}
+        .streak-days{gap:3px;flex-wrap:wrap}
+        .streak-dot{width:24px;height:24px;font-size:.55rem}
+        .subject-tabs{gap:4px;padding-bottom:6px;margin-bottom:14px}
+        .subject-tab{padding:6px 14px;font-size:.75rem}
+        .week-graph{height:90px;gap:4px}
+        .bar-label{font-size:.58rem}
+        .bar-value{font-size:.58rem}
+        .mood-picker{gap:6px}
+        .mood-btn{font-size:1.5rem;padding:5px}
+        .exercise-grid{gap:4px}
+        .exercise-chip{padding:3px 8px;font-size:.68rem}
+        .doubt-item{padding:10px}
+        .doubt-actions{flex-wrap:wrap;gap:4px}
+        .doubt-actions .btn{font-size:.7rem;padding:4px 8px}
+        .resource-item{padding:10px;gap:8px;flex-wrap:wrap}
+        .coach-msg{padding:12px}
+        .coach-msg h4{font-size:.8rem}
+        .coach-msg p{font-size:.75rem}
+        .challenge-card{padding:14px}
+        .rev-item{padding:10px;flex-wrap:wrap;gap:8px}
+        .rev-info h4{font-size:.8rem}
+        .task-item{padding:8px 10px;gap:8px}
+        .task-text{font-size:.78rem}
+        .nav-item{padding:10px 12px;font-size:.85rem}
+        .nav-section{padding:14px 12px 6px;font-size:.6rem}
+        .sidebar-profile{padding:12px}
+        .profile-card{padding:10px}
+        .empty-state{padding:30px 20px}
+        .empty-icon{font-size:2.5rem}
+        .empty-title{font-size:.95rem}
+        .empty-desc{font-size:.78rem}
+        .quick-log{gap:6px}
+        .quick-chip{padding:5px 10px;font-size:.72rem}
+        .form-group{margin-bottom:12px}
+        .form-label{font-size:.75rem;margin-bottom:4px}
+        .form-input,.form-select,.form-textarea{padding:8px 12px;font-size:.85rem}
+        .tag{font-size:.65rem;padding:2px 8px}
+        .btn{padding:7px 14px;font-size:.78rem}
+        .btn-sm{padding:5px 10px;font-size:.7rem}
+        .pomodoro-controls{flex-wrap:wrap}
+        .pomodoro-controls .btn{font-size:.78rem;padding:7px 14px}
+        #toast-container{bottom:80px;right:12px;left:12px}
+        .toast{min-width:auto;width:100%;font-size:.8rem;padding:10px 14px}
+        .subject-progress{margin-bottom:10px}
+        .sp-name{font-size:.8rem}
+        .sp-pct{font-size:.72rem}
+        .progress-bar{height:6px}
+        .chapter-item{padding:10px;gap:8px}
+        .chapter-actions{gap:3px;flex-shrink:0}
+        .ch-btn{width:26px;height:26px;font-size:.7rem}
+        .chapter-check{width:20px;height:20px;flex-shrink:0}
+        .chapter-name{font-size:.8rem}
+        .chapter-meta{gap:4px}
+        .chapter-meta .tag{font-size:.6rem;padding:2px 6px}
+        }
+
+        @media(max-width:480px){
+        .grid-4,.grid-5,.grid-3,.grid-2{grid-template-columns:1fr}
+        #topbar{flex-direction:column;align-items:stretch;gap:10px}
+        .topbar-left{text-align:left}
+        .topbar-actions{justify-content:space-between;width:100%}
+        .topbar-actions .search-box{flex:1}
+        .topbar-actions .search-box input{width:100%!important}
+        .countdown-big{font-size:2rem}
+        .readiness-ring svg{width:90px;height:90px}
+        .readiness-value{font-size:1.3rem}
+        .pomodoro-time{font-size:2.2rem}
+        .stopwatch-time{font-size:2rem}
+        .pomodoro-display svg{width:150px;height:150px}
+        .form-row{grid-template-columns:1fr}
+        .card{padding:14px}
+        .stat-card{gap:10px}
+        .stat-info h3{font-size:1rem}
+        .stat-info p{font-size:.68rem}
+        .stat-icon{width:34px;height:34px;border-radius:10px;font-size:.9rem}
+        .heatmap-cell{width:9px;height:9px;border-radius:2px}
+        .heatmap{gap:2px}
+        .chapter-item{padding:8px;gap:6px;position:relative}
+        .chapter-actions{position:static;display:flex;flex-shrink:0;gap:2px}
+        .ch-btn{width:24px;height:24px;font-size:.65rem}
+        .chapter-check{width:18px;height:18px}
+        .chapter-name{font-size:.78rem;white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+        .week-graph{height:70px;gap:3px}
+        .streak-dot{width:20px;height:20px;font-size:.5rem;border-radius:4px}
+        .streak-days{gap:2px}
+        .badge-card{padding:10px 6px}
+        .badge-icon{font-size:1.5rem;margin-bottom:4px}
+        .badge-name{font-size:.7rem}
+        .badge-desc{font-size:.6rem;display:none}
+        .modal{border-radius:12px}
+        .modal-header h2{font-size:.95rem}
+        .logo{padding:18px 16px}
+        .logo-icon{width:34px;height:34px;font-size:1.1rem;border-radius:10px}
+        .logo-text{font-size:1.1rem}
+        .mobile-nav-items{padding:0 4px}
+        .mob-nav-item{font-size:.55rem;padding:5px 4px}
+        .mob-nav-item .mob-icon{font-size:1.1rem}
+        .plan-card{padding:8px 10px;gap:8px}
+        .plan-emoji{font-size:1rem}
+        .welcome-card{padding:20px 14px}
+        .welcome-card h1{font-size:1.3rem}
+        .welcome-card p{font-size:.82rem}
+        .level-up-card h2{font-size:1.4rem}
+        .level-up-card .lu-icon{font-size:3rem}
+        .level-up-card p{font-size:.8rem}
+        .mood-btn{font-size:1.3rem;padding:4px}
+        h2[style*="font-size:1.5rem"]{font-size:1.2rem!important}
+        }
+
+        @media(max-width:360px){
+        #content{padding:12px 10px 90px}
+        .card{padding:10px}
+        .grid{gap:10px}
+        .topbar-actions .btn span:not(.mob-icon){display:none}
+        .btn{padding:6px 10px;font-size:.72rem;gap:4px}
+        .stat-info h3{font-size:.9rem}
+        .chapter-name{font-size:.76rem;max-width:150px}
+        .heatmap-cell{width:7px;height:7px}
+        .mobile-nav{padding:4px 6px}
+        }
+
+        .celebration{position:fixed;inset:0;z-index:400;pointer-events:none;display:none}
+        .celebration.show{display:block}
+        .confetti{position:absolute;width:10px;height:10px;border-radius:2px;animation:fall linear forwards}
+        @keyframes fall{to{transform:translateY(100vh) rotate(720deg);opacity:0}}
+
+        .level-up-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:350;display:none;align-items:center;justify-content:center}
+        .level-up-overlay.show{display:flex}
+        .level-up-card{text-align:center;animation:scaleIn .5s ease}
+        @keyframes scaleIn{from{transform:scale(.5);opacity:0}to{transform:scale(1);opacity:1}}
+        .level-up-card .lu-icon{font-size:4rem;margin-bottom:12px}
+        .level-up-card h2{font-size:1.8rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+        .level-up-card p{color:var(--text-secondary);margin-top:6px;font-size:.9rem}
+
+        .week-graph{display:flex;align-items:flex-end;gap:8px;height:120px;padding-top:10px}
+        .bar-col{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px}
+        .bar{width:100%;border-radius:4px 4px 0 0;background:var(--gradient-1);min-height:2px;transition:height .5s ease}
+        .bar-label{font-size:.65rem;color:var(--text-muted)}
+        .bar-value{font-size:.65rem;font-weight:600;color:var(--accent-light)}
+
+        .plan-card{display:flex;align-items:center;gap:14px;padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:8px;background:var(--bg-card);cursor:pointer;transition:all .2s}
+        .plan-card:hover{border-color:var(--border-hover);transform:translateX(4px)}
+        .plan-emoji{font-size:1.5rem}
+        .plan-info h4{font-size:.85rem;font-weight:600}
+        .plan-info p{font-size:.72rem;color:var(--text-muted)}
+        .plan-time{margin-left:auto;font-size:.75rem;color:var(--text-muted);font-weight:600}
+
+        .pomodoro-display{text-align:center;padding:30px}
+        .pomodoro-time{font-size:4rem;font-weight:800;font-variant-numeric:tabular-nums;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:8px}
+        .pomodoro-label{font-size:.85rem;color:var(--text-secondary);margin-bottom:20px}
+        .pomodoro-controls{display:flex;gap:10px;justify-content:center}
+        .pomodoro-ring{fill:none;stroke-width:6;transform:rotate(-90deg);transform-origin:center}
+
+        /* HEATMAP */
+        .heatmap{display:flex;gap:3px;flex-wrap:wrap;justify-content:flex-start}
+        .heatmap-cell{width:14px;height:14px;border-radius:3px;background:rgba(128,128,128,0.08);border:1px solid transparent;cursor:pointer;transition:all .15s}
+        .heatmap-cell:hover{border-color:var(--border-hover);transform:scale(1.3)}
+        .heatmap-cell.l1{background:rgba(99,102,241,0.2)}
+        .heatmap-cell.l2{background:rgba(99,102,241,0.4)}
+        .heatmap-cell.l3{background:rgba(99,102,241,0.6)}
+        .heatmap-cell.l4{background:rgba(99,102,241,0.85)}
+
+        /* EXAM COUNTDOWN */
+        .countdown-big{font-size:3.5rem;font-weight:800;background:var(--gradient-4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;line-height:1}
+        .countdown-label{font-size:.85rem;color:var(--text-secondary);margin-top:4px}
+
+        /* READINESS */
+        .readiness-ring{position:relative;display:inline-flex;align-items:center;justify-content:center}
+        .readiness-ring svg{transform:rotate(-90deg)}
+        .readiness-value{position:absolute;font-size:1.8rem;font-weight:800}
+
+        /* STOPWATCH */
+        .stopwatch-time{font-size:3.5rem;font-weight:800;font-variant-numeric:tabular-nums;background:var(--gradient-2);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+
+        /* SEARCH */
+        .search-box{position:relative}
+        .search-box input{padding-left:36px}
+        .search-box::before{content:'🔍';position:absolute;left:12px;top:50%;transform:translateY(-50%);font-size:.85rem;z-index:1}
+        @media(max-width:480px){
+            #search-dropdown{left:-50px!important;right:auto!important;width:80vw!important}
+        }
+        .search-results{max-height:300px;overflow-y:auto}
+
+        /* THEME TOGGLE */
+        .theme-toggle{width:44px;height:24px;border-radius:12px;background:var(--bg-card);border:1px solid var(--border);cursor:pointer;position:relative;transition:all .3s}
+        .theme-toggle::after{content:'';position:absolute;width:18px;height:18px;border-radius:50%;background:var(--accent);top:2px;left:2px;transition:transform .3s}
+        .theme-toggle.light::after{transform:translateX(20px)}
+
+        /* TASK */
+        .task-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--radius-xs);border:1px solid var(--border);margin-bottom:6px;background:var(--bg-card)}
+        .task-check{width:18px;height:18px;border-radius:5px;border:2px solid var(--border);cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.6rem;flex-shrink:0;transition:all .2s}
+        .task-check.done{background:var(--success);border-color:var(--success);color:#fff}
+        .task-text{flex:1;font-size:.82rem}
+        .task-text.done{text-decoration:line-through;opacity:.5}
+
+        /* DAILY CHALLENGE */
+        .challenge-card{background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.08));border:1px solid rgba(99,102,241,0.2);border-radius:var(--radius);padding:18px;margin-bottom:18px}
+        .challenge-card h4{font-size:.9rem;font-weight:700;margin-bottom:6px;display:flex;align-items:center;gap:8px}
+        .challenge-card p{font-size:.8rem;color:var(--text-secondary)}
+        .challenge-progress{display:flex;align-items:center;gap:10px;margin-top:10px}
+        .challenge-xp{font-size:.75rem;font-weight:700;color:var(--accent-light)}
+
+        /* EXERCISE TRACKER */
+        .exercise-grid{display:flex;gap:6px;flex-wrap:wrap;margin-top:8px}
+        .exercise-chip{padding:4px 10px;border-radius:var(--radius-xs);border:1px solid var(--border);font-size:.72rem;cursor:pointer;transition:all .2s;background:var(--bg-card)}
+        .exercise-chip:hover{border-color:var(--border-hover)}
+        .exercise-chip.done{background:rgba(16,185,129,0.12);border-color:var(--success);color:var(--success)}
+
+        /* DOUBT TRACKER */
+        .doubt-item{padding:14px;border-radius:var(--radius-sm);border:1px solid var(--border);margin-bottom:8px;background:var(--bg-card)}
+        .doubt-item h4{font-size:.85rem;font-weight:600;margin-bottom:4px}
+        .doubt-item p{font-size:.75rem;color:var(--text-muted)}
+        .doubt-actions{display:flex;gap:6px;margin-top:8px}
+
+        /* RESOURCE LINKS */
+        .resource-item{display:flex;align-items:center;gap:12px;padding:12px;border-radius:var(--radius-xs);border:1px solid var(--border);margin-bottom:6px;background:var(--bg-card)}
+        .resource-item a{color:var(--accent-light);font-size:.82rem;word-break:break-all}
+
+        /* MOOD TRACKER */
+        .mood-picker{display:flex;gap:12px;justify-content:center}
+        .mood-btn{font-size:2rem;cursor:pointer;padding:8px;border-radius:12px;border:2px solid transparent;transition:all .2s;background:none}
+        .mood-btn:hover,.mood-btn.selected{border-color:var(--accent);background:rgba(99,102,241,0.08);transform:scale(1.1)}
+
+        /* WEEKLY PLAN */
+        .plan-day{margin-bottom:16px}
+        .plan-day-header{font-size:.85rem;font-weight:700;margin-bottom:8px;display:flex;align-items:center;gap:8px}
+        .plan-slot{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:var(--radius-xs);border:1px solid var(--border);margin-bottom:4px;background:var(--bg-card);font-size:.82rem}
+
+        /* RADAR CHART via CSS */
+        .radar-container{position:relative;width:220px;height:220px;margin:0 auto}
+        
+        /* Touch-friendly improvements */
+    @media(hover:none) and (pointer:coarse){
+        .ch-btn{width:34px;height:34px}
+        .chapter-check{width:26px;height:26px}
+        .task-check{width:22px;height:22px}
+        .nav-item{padding:13px 14px}
+        .btn{padding:10px 18px;min-height:40px}
+        .btn-sm{padding:8px 14px;min-height:34px}
+        .form-input,.form-select,.form-textarea{padding:12px 14px;min-height:44px}
+        .quick-chip{padding:8px 14px;min-height:36px}
+        .subject-tab{padding:10px 18px;min-height:38px}
+        .exercise-chip{padding:6px 12px;min-height:32px}
+        .plan-card{padding:12px 14px;min-height:48px}
+        .chapter-item{min-height:52px}
+        .doubt-actions .btn{min-height:32px}
+        .star{font-size:1.6rem}
+        .mood-btn{min-width:44px;min-height:44px}
+    }
+
+        /* Prevent text overflow everywhere */
+        h1,h2,h3,h4,.card-title,.chapter-name,.plan-info h4,.badge-name,.rev-info h4,.task-text,.doubt-item h4{
+            overflow:hidden;text-overflow:ellipsis;word-break:break-word
+        }
+
+        /* Fix iOS input zoom */
+        @media(max-width:480px){
+            input[type="text"],input[type="number"],input[type="date"],input[type="url"],select,textarea{font-size:16px!important}
+        }
+
+        /* Safe area padding for notched phones */
+        @supports(padding:max(0px)){
+            .mobile-nav{padding-bottom:max(6px,env(safe-area-inset-bottom))}
+            #content{padding-bottom:max(100px,calc(80px + env(safe-area-inset-bottom)))}
+        }
+
+        /* Smooth scrolling on touch */
+        #content,.nav,.modal{-webkit-overflow-scrolling:touch}
+
+        /* Prevent pull-to-refresh interfering */
+        body{overscroll-behavior-y:contain}
+
+        /* FIX: Prevent horizontal overflow */
+        #app{max-width:100vw;overflow-x:hidden}
+        #main{max-width:100%;overflow-x:hidden}
+        #content{max-width:100%;overflow-x:hidden}
+        .page{max-width:100%;overflow-x:hidden}
+        .card{max-width:100%;overflow:hidden}
+        .chapter-item{max-width:100%;overflow:hidden}
+        .subject-tabs{max-width:100%;overflow-x:auto;-webkit-overflow-scrolling:touch;scrollbar-width:none}
+        .subject-tabs::-webkit-scrollbar{display:none}
+    </style>
+</head>
+<body>
+
+<div id="welcome-overlay" class="hidden">
+    <div class="welcome-card">
+        <div class="welcome-step active" data-step="1">
+            <div style="font-size:3.5rem;margin-bottom:18px">🚀</div>
+            <h1>Welcome to StudyOS</h1>
+            <p>Your Class 10 study command center. Let's set you up in under a minute.</p>
+            <div class="form-group" style="text-align:left;max-width:300px;margin:0 auto 20px">
+                <label class="form-label">What's your name?</label>
+                <input type="text" id="welcome-name" class="form-input" placeholder="Enter your name" autocomplete="off">
+            </div>
+            <button class="btn btn-primary" onclick="App.welcomeNext(2)">Continue →</button>
+        </div>
+        <div class="welcome-step" data-step="2">
+            <div style="font-size:3.5rem;margin-bottom:18px">📚</div>
+            <h1>Load Your Syllabus</h1>
+            <p>We'll set up CBSE Class 10 subjects & chapters automatically.</p>
+            <div style="display:flex;flex-direction:column;gap:10px;max-width:300px;margin:0 auto 20px">
+                <button class="btn btn-primary" onclick="App.loadCBSE()" style="justify-content:center">✨ Load CBSE Class 10 Syllabus</button>
+                <button class="btn btn-secondary" onclick="App.welcomeNext(3)" style="justify-content:center">I'll add subjects manually</button>
+            </div>
+        </div>
+        <div class="welcome-step" data-step="3">
+            <div style="font-size:3.5rem;margin-bottom:18px">🎯</div>
+            <h1>Set Your Exam Date & Goal</h1>
+            <p>When are your board exams?</p>
+            <div class="form-group" style="text-align:left;max-width:300px;margin:0 auto 10px">
+                <label class="form-label">Board Exam Date</label>
+                <input type="date" id="welcome-exam-date" class="form-input">
+            </div>
+            <div class="form-group" style="text-align:left;max-width:300px;margin:0 auto 20px">
+                <label class="form-label">Daily Study Goal</label>
+                <select id="welcome-goal" class="form-select">
+                    <option value="60">1 hour</option><option value="90">1.5 hours</option>
+                    <option value="120" selected>2 hours</option><option value="150">2.5 hours</option>
+                    <option value="180">3 hours</option><option value="240">4 hours</option>
+                    <option value="300">5 hours</option>
+                </select>
+            </div>
+            <button class="btn btn-primary" onclick="App.completeWelcome()">🚀 Start Studying!</button>
+        </div>
+    </div>
+</div>
+
+<div id="app">
+    <aside id="sidebar">
+        <div class="logo"><div class="logo-icon">S</div><div><div class="logo-text">StudyOS</div><div class="logo-sub">Class 10 Tracker</div></div></div>
+        <nav class="nav">
+            <div class="nav-section">Main</div>
+            <div class="nav-item active" data-page="dashboard" onclick="App.navigate('dashboard')"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></div>
+            <div class="nav-item" data-page="subjects" onclick="App.navigate('subjects')"><span class="nav-icon">📚</span><span class="nav-label">Subjects</span></div>
+            <div class="nav-item" data-page="log" onclick="App.navigate('log')"><span class="nav-icon">✏️</span><span class="nav-label">Study Log</span></div>
+            <div class="nav-section">Plan & Track</div>
+            <div class="nav-item" data-page="tasks" onclick="App.navigate('tasks')"><span class="nav-icon">☑️</span><span class="nav-label">Daily Tasks</span></div>
+            <div class="nav-item" data-page="revisions" onclick="App.navigate('revisions')"><span class="nav-icon">🔄</span><span class="nav-label">Revisions</span><span class="nav-badge" id="rev-badge" style="display:none">0</span></div>
+            <div class="nav-item" data-page="exams" onclick="App.navigate('exams')"><span class="nav-icon">📝</span><span class="nav-label">Exam Scores</span></div>
+            <div class="nav-item" data-page="doubts" onclick="App.navigate('doubts')"><span class="nav-icon">❓</span><span class="nav-label">Doubts</span><span class="nav-badge" id="doubt-badge" style="display:none">0</span></div>
+            <div class="nav-item" data-page="exercises" onclick="App.navigate('exercises')"><span class="nav-icon">🔢</span><span class="nav-label">Exercises</span></div>
+            <div class="nav-item" data-page="planning" onclick="App.navigate('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning</span><span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
+            <div class="nav-item" data-page="weekly" onclick="App.navigate('weekly')"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></div>
+            <div class="nav-section">Tools</div>
+            <div class="nav-item" data-page="pomodoro" onclick="App.navigate('pomodoro')"><span class="nav-icon">🍅</span><span class="nav-label">Focus Timer</span></div>
+            <div class="nav-item" data-page="notes" onclick="App.navigate('notes')"><span class="nav-icon">📓</span><span class="nav-label">Notes & Formulas</span></div>
+            <div class="nav-item" data-page="resources" onclick="App.navigate('resources')"><span class="nav-icon">🔗</span><span class="nav-label">Resources</span></div>
+            <div class="nav-item" data-page="coach" onclick="App.navigate('coach')"><span class="nav-icon">🤖</span><span class="nav-label">AI Coach</span></div>
+            <div class="nav-item" data-page="rewards" onclick="App.navigate('rewards')"><span class="nav-icon">🏆</span><span class="nav-label">Rewards</span></div>
+            <div class="nav-section">System</div>
+            <div class="nav-item" data-page="settings" onclick="App.navigate('settings')"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
+        </nav>
+        <div class="sidebar-profile"><div class="profile-card"><div class="profile-level"><span class="profile-name" id="sb-name">Student</span><span class="profile-lvl" id="sb-level">LVL 1</span></div><div class="xp-bar"><div class="xp-fill" id="sb-xp-fill" style="width:0%"></div></div><div class="xp-text" id="sb-xp-text">0 / 50 XP</div></div></div>
+    </aside>
+
+    <main id="main">
+        <div id="topbar">
+            <div class="topbar-left"><div style="display:flex;align-items:center;gap:12px"><button id="menu-toggle" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button><div><h1 id="page-title">Dashboard</h1><p id="page-subtitle"></p></div></div></div>
+            <div class="topbar-actions">
+    <div class="search-box" style="position:relative"><input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 14px 7px 32px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)"><div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);margin-top:4px;display:none;z-index:60;max-height:250px;overflow-y:auto"></div></div>
+    <button class="btn btn-primary" onclick="App.openQuickLog()"><span>⚡</span><span class="hide-mobile">Quick Log</span></button>
+    <button class="btn btn-secondary" onclick="App.openAddChapterModal()"><span>+</span><span class="hide-mobile">Chapter</span></button>
+</div>
+        </div>
+
+        <div id="content">
+            <div class="page active" id="page-dashboard"></div>
+            <div class="page" id="page-subjects"></div>
+            <div class="page" id="page-log"></div>
+            <div class="page" id="page-tasks"></div>
+            <div class="page" id="page-revisions"></div>
+            <div class="page" id="page-exams"></div>
+            <div class="page" id="page-doubts"></div>
+            <div class="page" id="page-exercises"></div>
+            <div class="page" id="page-planning"></div>
+            <div class="page" id="page-weekly"></div>
+            <div class="page" id="page-pomodoro"></div>
+            <div class="page" id="page-notes"></div>
+            <div class="page" id="page-resources"></div>
+            <div class="page" id="page-coach"></div>
+            <div class="page" id="page-rewards"></div>
+            <div class="page" id="page-settings"></div>
+        </div>
+    </main>
+</div>
+
+<div class="mobile-nav"><div class="mobile-nav-items">
+    <div class="mob-nav-item active" onclick="App.navigate('dashboard')"><span class="mob-icon">📊</span>Home</div>
+    <div class="mob-nav-item" onclick="App.navigate('subjects')"><span class="mob-icon">📚</span>Subjects</div>
+    <div class="mob-nav-item" onclick="App.openQuickLog()"><span class="mob-icon" style="font-size:1.6rem">⚡</span>Log</div>
+    <div class="mob-nav-item" onclick="App.navigate('tasks')"><span class="mob-icon">☑️</span>Tasks</div>
+    <div class="mob-nav-item" onclick="App.navigate('rewards')"><span class="mob-icon">🏆</span>Rewards</div>
+</div></div>
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-log"><div class="modal"><div class="modal-header"><h2>📝 Log Study Session</h2><button class="modal-close" onclick="App.closeModal('modal-log')">×</button></div><div class="modal-body" id="log-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-log')">Cancel</button><button class="btn btn-primary" onclick="App.saveStudyLog()">Save Session</button></div></div></div>
+
+<div class="modal-overlay" id="modal-chapter"><div class="modal"><div class="modal-header"><h2>📖 Add Chapter</h2><button class="modal-close" onclick="App.closeModal('modal-chapter')">×</button></div><div class="modal-body" id="chapter-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-chapter')">Cancel</button><button class="btn btn-primary" onclick="App.saveChapter()">Save Chapter</button></div></div></div>
+
+<div class="modal-overlay" id="modal-subject"><div class="modal"><div class="modal-header"><h2>📚 Add Subject</h2><button class="modal-close" onclick="App.closeModal('modal-subject')">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Subject Name</label><input type="text" id="new-subject-name" class="form-input" placeholder="e.g., Mathematics"></div><div class="form-group"><label class="form-label">Emoji Icon</label><input type="text" id="new-subject-icon" class="form-input" placeholder="📐" maxlength="4"></div><div class="form-group"><label class="form-label">Color</label><div class="quick-log" id="color-pick"><div class="quick-chip selected" data-color="#6366f1" style="border-color:#6366f1;color:#818cf8" onclick="App.pickColor(this)">Indigo</div><div class="quick-chip" data-color="#10b981" style="border-color:#10b981;color:#34d399" onclick="App.pickColor(this)">Green</div><div class="quick-chip" data-color="#f59e0b" style="border-color:#f59e0b;color:#fbbf24" onclick="App.pickColor(this)">Amber</div><div class="quick-chip" data-color="#ef4444" style="border-color:#ef4444;color:#f87171" onclick="App.pickColor(this)">Red</div><div class="quick-chip" data-color="#06b6d4" style="border-color:#06b6d4;color:#22d3ee" onclick="App.pickColor(this)">Cyan</div><div class="quick-chip" data-color="#ec4899" style="border-color:#ec4899;color:#f472b6" onclick="App.pickColor(this)">Pink</div><div class="quick-chip" data-color="#8b5cf6" style="border-color:#8b5cf6;color:#a78bfa" onclick="App.pickColor(this)">Purple</div><div class="quick-chip" data-color="#14b8a6" style="border-color:#14b8a6;color:#2dd4bf" onclick="App.pickColor(this)">Teal</div><div class="quick-chip" data-color="#f97316" style="border-color:#f97316;color:#fb923c" onclick="App.pickColor(this)">Orange</div><div class="quick-chip" data-color="#84cc16" style="border-color:#84cc16;color:#a3e635" onclick="App.pickColor(this)">Lime</div></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-subject')">Cancel</button><button class="btn btn-primary" onclick="App.saveSubject()">Add Subject</button></div></div></div>
+
+<div class="modal-overlay" id="modal-detail"><div class="modal"><div class="modal-header"><h2>📖 Chapter Details</h2><button class="modal-close" onclick="App.closeModal('modal-detail')">×</button></div><div class="modal-body" id="detail-body"></div><div class="modal-footer" id="detail-footer"></div></div></div>
+
+<div class="modal-overlay" id="modal-exam"><div class="modal"><div class="modal-header"><h2>📝 Log Exam Score</h2><button class="modal-close" onclick="App.closeModal('modal-exam')">×</button></div><div class="modal-body" id="exam-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-exam')">Cancel</button><button class="btn btn-primary" onclick="App.saveExamScore()">Save Score</button></div></div></div>
+
+<div class="modal-overlay" id="modal-doubt"><div class="modal"><div class="modal-header"><h2>❓ Add Doubt</h2><button class="modal-close" onclick="App.closeModal('modal-doubt')">×</button></div><div class="modal-body" id="doubt-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-doubt')">Cancel</button><button class="btn btn-primary" onclick="App.saveDoubt()">Save Doubt</button></div></div></div>
+
+<div class="modal-overlay" id="modal-resource"><div class="modal"><div class="modal-header"><h2>🔗 Add Resource</h2><button class="modal-close" onclick="App.closeModal('modal-resource')">×</button></div><div class="modal-body" id="resource-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-resource')">Cancel</button><button class="btn btn-primary" onclick="App.saveResource()">Save Resource</button></div></div></div>
+
+<div class="modal-overlay" id="modal-note-edit"><div class="modal"><div class="modal-header"><h2>📓 Add Note</h2><button class="modal-close" onclick="App.closeModal('modal-note-edit')">×</button></div><div class="modal-body" id="note-edit-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-note-edit')">Cancel</button><button class="btn btn-primary" onclick="App.saveNoteFromModal()">Save Note</button></div></div></div>
+
+<!-- Lightbox -->
+<div id="lb-overlay" onclick="if(event.target===this)App.closeLightbox()">
+  <button id="lb-close" onclick="App.closeLightbox()">×</button>
+  <img id="lb-img" src="" alt="" style="display:none">
+  <iframe id="lb-pdf" src="" style="display:none"></iframe>
+</div>
+<div id="toast-container"></div>
+<div class="celebration" id="celebration"></div>
+<div class="level-up-overlay" id="level-up"><div class="level-up-card"><div class="lu-icon">⚡</div><h2 id="lu-text">Level Up!</h2><p id="lu-sub">You reached a new level!</p><button class="btn btn-primary" style="margin-top:20px" onclick="document.getElementById('level-up').classList.remove('show')">Awesome! 🎉</button></div></div>
+
+<script>
+const App={
+    state:{
+        profile:{name:'Student',xp:0,level:1,streak:0,lastStudyDate:null,dailyGoalMinutes:120,maxDailyMinutes:0,examDate:'',targetScore:90,mood:'',moodHistory:[]},
+        subjects:[],sessions:[],earnedBadges:[],currentPage:'dashboard',selectedSubjectFilter:'all',
+        pomodoroSettings:{workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4},
+        examScores:[],tasks:[],notes:[],resources:[],doubts:[],exercises:{},
+        theme:'dark',autoTheme:false,
+        stopwatch:{running:false,elapsed:0,subjectId:'',chapterId:''},
+        dailyChallenges:{date:'',challenges:[],completed:[]},
+        weeklyPlan:{}
+    },
+    pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null},
+    swInterval:null,
+
+    BADGES:[
+        {id:'first-step',name:'First Step',desc:'Log your first study session',icon:'🌟'},
+        {id:'bookworm',name:'Bookworm',desc:'Study for 10 hours total',icon:'📚'},
+        {id:'marathon',name:'Marathon Runner',desc:'Study 4+ hours in one day',icon:'🏃'},
+        {id:'streak-3',name:'On Fire',desc:'3 day study streak',icon:'🔥'},
+        {id:'streak-7',name:'Unstoppable',desc:'7 day study streak',icon:'⚡'},
+        {id:'streak-14',name:'Two Weeks Strong',desc:'14 day study streak',icon:'💪'},
+        {id:'streak-30',name:'Monthly Legend',desc:'30 day study streak',icon:'👑'},
+        {id:'ch-1',name:'Chapter Down',desc:'Complete first chapter',icon:'✅'},
+        {id:'ch-10',name:'Knowledge Seeker',desc:'Complete 10 chapters',icon:'🎯'},
+        {id:'ch-25',name:'Halfway Hero',desc:'Complete 25 chapters',icon:'🦸'},
+        {id:'ch-50',name:'Chapter Champion',desc:'Complete 50 chapters',icon:'🏅'},
+        {id:'rev-1',name:'Reviser',desc:'Do your first revision',icon:'🔄'},
+        {id:'rev-10',name:'Memory Master',desc:'Do 10 revisions',icon:'🧠'},
+        {id:'sub-complete',name:'Subject Expert',desc:'Complete all chapters in a subject',icon:'🏆'},
+        {id:'level-5',name:'Rising Star',desc:'Reach Level 5',icon:'⭐'},
+        {id:'level-10',name:'Scholar',desc:'Reach Level 10',icon:'🎓'},
+        {id:'allround',name:'All-Rounder',desc:'Study all subjects in one day',icon:'🌈'},
+        {id:'perfect-week',name:'Perfect Week',desc:'7 day streak',icon:'💎'},
+        {id:'pomodoro-10',name:'Focus Master',desc:'Complete 10 Pomodoros',icon:'🍅'},
+        {id:'scorer-90',name:'Top Scorer',desc:'Score 90%+ in any exam',icon:'💯'},
+        {id:'task-master',name:'Task Master',desc:'Complete 50 tasks',icon:'📋'},
+        {id:'doubt-clear',name:'Doubt Slayer',desc:'Resolve 10 doubts',icon:'🗡️'},
+        {id:'note-taker',name:'Note Taker',desc:'Create 20 notes',icon:'📝'},
+        {id:'resource-king',name:'Resource King',desc:'Save 15 resources',icon:'📎'}
+    ],
+
+    CBSE_DATA:[
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Real Numbers','Polynomials','Linear Equations in Two Variables','Quadratic Equations','Arithmetic Progressions','Triangles','Coordinate Geometry','Intro to Trigonometry','Applications of Trigonometry','Circles','Areas Related to Circles','Surface Areas & Volumes','Statistics','Probability']},
+        {name:'Science',icon:'🔬',color:'#10b981',chapters:['Chemical Reactions & Equations','Acids, Bases & Salts','Metals & Non-metals','Carbon & its Compounds','Life Processes','Control & Coordination','How do Organisms Reproduce','Heredity & Evolution','Light: Reflection & Refraction','Human Eye & Colourful World','Electricity','Magnetic Effects of Current','Our Environment']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['A Letter to God','Nelson Mandela','Two Stories about Flying','Anne Frank Diary','Glimpses of India','The Hundred Dresses I','The Hundred Dresses II','Animals (Poem)','The Ball Poem','Amanda (Poem)','The Tale of Custard Dragon','For Anne Gregory']},
+        {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:['Rise of Nationalism in Europe','Nationalism in India','Making of a Global World','Age of Industrialisation','Print Culture & Modern World','Resources & Development','Forest & Wildlife Resources','Water Resources','Agriculture','Minerals & Energy Resources','Manufacturing Industries','Lifelines of National Economy','Power Sharing','Federalism','Political Parties','Outcomes of Democracy','Development','Sectors of Indian Economy','Money & Credit','Globalisation & Indian Economy']},
+        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:['सूरदास के पद','राम-लक्ष्मण-परशुराम संवाद','आत्मकथ्य','उत्साह & अट नहीं रही','यह दंतुरहित मुस्कान','फसल','छाया मत छूना','कन्यादान','संगतकार','नेताजी का चश्मा','बालगोबिन भगत','लखनवी अंदाज़','मानवीय करुणा की दिव्य चमक']}
+    ],
+
+    DAILY_CHALLENGES:[
+        {text:'Study 3 different subjects today',check:s=>{const t=new Set(s.sessions.filter(x=>x.date===s.today).map(x=>x.subjectId));return t.size>=3},xp:30},
+        {text:'Complete 2 chapters today',check:s=>s.chaptersCompletedToday>=2,xp:40},
+        {text:'Study for 3 hours total',check:s=>s.todayMinutes>=180,xp:35},
+        {text:'Do 3 revisions today',check:s=>s.revisionsToday>=3,xp:30},
+        {text:'Log 4 study sessions',check:s=>s.sessions.filter(x=>x.date===s.today).length>=4,xp:25},
+        {text:'Complete all daily tasks',check:s=>{const t=s.tasks.filter(x=>x.date===s.today);return t.length>0&&t.every(x=>x.done)},xp:35},
+        {text:'Study for 1 hour without break',check:s=>s.sessions.filter(x=>x.date===s.today).some(x=>x.timeSpent>=60),xp:30},
+        {text:'Clear 2 doubts',check:s=>s.doubtsResolvedToday>=2,xp:25},
+        {text:'Add notes for 2 chapters',check:s=>s.notesAddedToday>=2,xp:20},
+        {text:'Score 80%+ on practice test',check:s=>s.examScores.filter(x=>x.date===s.today).some(x=>x.scored/x.total>=0.8),xp:40}
+    ],
+
+    init(){
+        this.load();
+        if(!this.state.profile.name||this.state.profile.name==='Student'){
+            if(this.state.subjects.length===0)document.getElementById('welcome-overlay').classList.remove('hidden');
+        }
+        // Ensure new state fields
+        if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
+        if(!this.state.examScores)this.state.examScores=[];
+        if(!this.state.tasks)this.state.tasks=[];
+        if(!this.state.notes)this.state.notes=[];
+        if(!this.state.resources)this.state.resources=[];
+        if(!this.state.doubts)this.state.doubts=[];
+        if(!this.state.exercises)this.state.exercises={};
+        if(!this.state.theme)this.state.theme='dark';
+        if(!this.state.stopwatch)this.state.stopwatch={running:false,elapsed:0,subjectId:'',chapterId:''};
+        if(!this.state.dailyChallenges)this.state.dailyChallenges={date:'',challenges:[],completed:[]};
+        if(!this.state.weeklyPlan)this.state.weeklyPlan={};
+        if(!this.state.profile.mood)this.state.profile.mood='';
+        if(!this.state.profile.moodHistory)this.state.profile.moodHistory=[];
+        if(this.state.autoTheme===undefined)this.state.autoTheme=false;
+
+        this.applyTheme();
+        this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
+        this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();this.checkBadges();
+        setInterval(()=>{this.updatePageSubtitle();if(this.state.autoTheme)this.autoThemeCheck()},60000);
+        this.updatePageSubtitle();
+        if(this.state.autoTheme)this.autoThemeCheck();
+        if(this.state.stopwatch.running)this.startStopwatchTimer();
+    },
+
+    load(){try{const d=localStorage.getItem('studyos_data');if(d){const p=JSON.parse(d);Object.assign(this.state,p)}}catch(e){console.error(e)}},
+    save(){try{localStorage.setItem('studyos_data',JSON.stringify(this.state))}catch(e){console.error(e)}},
+
+    applyTheme(){document.documentElement.setAttribute('data-theme',this.state.theme)},
+    toggleTheme(theme){
+        if(theme){this.state.theme=theme}
+        else{const themes=['dark','light','warm-dark'];const ci=themes.indexOf(this.state.theme);this.state.theme=themes[(ci+1)%themes.length]}
+        this.state.autoTheme=false;this.applyTheme();this.save();
+        const labels={dark:'🌙 Dark mode',light:'☀️ Light mode','warm-dark':'🌅 Warm dark mode'};
+        this.toast(labels[this.state.theme]||'Theme changed','info');
+        if(this.state.currentPage==='settings')this.renderSettings();
+    },
+    autoThemeCheck(){
+        const h=new Date().getHours();
+        const newTheme=(h>=7&&h<19)?'light':'dark';
+        if(this.state.theme!==newTheme){this.state.theme=newTheme;this.applyTheme();this.save()}
+    },
+    toggleAutoTheme(){
+        this.state.autoTheme=!this.state.autoTheme;
+        if(this.state.autoTheme)this.autoThemeCheck();
+        this.save();this.toast(this.state.autoTheme?'🕐 Auto theme enabled':'🕐 Auto theme disabled','info');
+        if(this.state.currentPage==='settings')this.renderSettings();
+    },
+
+    uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)},
+    today(){return new Date().toISOString().split('T')[0]},
+    daysBetween(d1,d2){return Math.floor((new Date(d2)-new Date(d1))/864e5)},
+    formatMin(m){const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}m`:`${min}m`},
+    formatSec(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`},
+    getAllChapters(){const c=[];this.state.subjects.forEach(s=>s.chapters.forEach(ch=>c.push({...ch,subjectName:s.name,subjectColor:s.color,subjectIcon:s.icon,subjectId:s.id})));return c},
+    getSubjectById(id){return this.state.subjects.find(s=>s.id===id)},
+    getChapter(sId,cId){const s=this.getSubjectById(sId);return s?s.chapters.find(c=>c.id===cId):null},
+    getTodaySessions(){return this.state.sessions.filter(s=>s.date===this.today())},
+    getTodayMinutes(){return this.getTodaySessions().reduce((a,s)=>a+s.timeSpent,0)},
+    getWeekSessions(){const n=new Date(),w=[];for(let i=6;i>=0;i--){const d=new Date(n);d.setDate(d.getDate()-i);w.push(d.toISOString().split('T')[0])}return{days:w,sessions:this.state.sessions.filter(s=>w.includes(s.date))}},
+    getCompletedCount(){return this.getAllChapters().filter(c=>c.status==='completed'||c.status==='revised').length},
+    getTotalChapters(){return this.getAllChapters().length},
+    getOverdueChapters(){const t=this.today();return this.getAllChapters().filter(c=>c.deadline&&c.deadline<t&&c.status!=='completed'&&c.status!=='revised')},
+    getRevisionsDue(){const t=new Date(),r=[];this.getAllChapters().forEach(ch=>{if(ch.status==='completed'||ch.status==='revised'){const lr=ch.revisionDates.length>0?new Date(ch.revisionDates[ch.revisionDates.length-1]):(ch.completionDate?new Date(ch.completionDate):null);if(lr){const ds=Math.floor((t-lr)/864e5),iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount,iv.length-1)];if(ds>=ni)r.push({...ch,daysSince:ds,nextInterval:ni})}}});return r},
+
+    getReadinessScore(){
+        const total=this.getTotalChapters();if(!total)return 0;
+        const comp=this.getCompletedCount()/total*40;
+        const revCh=this.getAllChapters().filter(c=>c.revisionCount>0).length;
+        const rev=total>0?(revCh/total)*20:0;
+        const streak=Math.min(this.state.profile.streak/14,1)*15;
+        const avgScore=this.state.examScores.length>0?this.state.examScores.reduce((a,e)=>a+(e.scored/e.total*100),0)/this.state.examScores.length:0;
+        const score=avgScore/100*15;
+        const unresolvedDoubts=this.state.doubts.filter(d=>d.status==='unresolved').length;
+        const doubtPenalty=Math.min(unresolvedDoubts*2,10);
+        return Math.min(100,Math.max(0,Math.round(comp+rev+streak+score-doubtPenalty)));
+    },
+    getDaysToExam(){if(!this.state.profile.examDate)return null;return this.daysBetween(this.today(),this.state.profile.examDate)},
+    getPredictedCompletion(){
+        const totalCh=this.getTotalChapters(),compCh=this.getCompletedCount();
+        if(compCh===0||totalCh===0)return null;
+        const firstSession=this.state.sessions.length>0?this.state.sessions[0].date:null;
+        if(!firstSession)return null;
+        const daysActive=Math.max(1,this.daysBetween(firstSession,this.today()));
+        const rate=compCh/daysActive;
+        if(rate<=0)return null;
+        const remaining=totalCh-compCh;
+        const daysNeeded=Math.ceil(remaining/rate);
+        const predDate=new Date();predDate.setDate(predDate.getDate()+daysNeeded);
+        return{date:predDate.toISOString().split('T')[0],daysNeeded,rate:Math.round(rate*10)/10};
+    },
+
+    // STREAK
+    updateStreak(){const t=this.today(),l=this.state.profile.lastStudyDate;if(!l)return;if(this.daysBetween(l,t)>1){this.state.profile.streak=0;this.save()}},
+    recordStudyDay(){const t=this.today(),l=this.state.profile.lastStudyDate;if(l===t)return;if(l&&this.daysBetween(l,t)===1)this.state.profile.streak++;else this.state.profile.streak=1;this.state.profile.lastStudyDate=t;this.save()},
+
+    // XP
+    addXP(amt,reason){const ol=this.state.profile.level;this.state.profile.xp+=amt;this.state.profile.level=Math.floor(Math.sqrt(this.state.profile.xp/50))+1;this.save();this.updateSidebar();this.toast(`+${amt} XP — ${reason}`,'xp');if(this.state.profile.level>ol)setTimeout(()=>this.showLevelUp(this.state.profile.level),600);this.checkBadges()},
+    xpForLevel(l){return l*l*50},
+    showLevelUp(l){document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');this.celebrate()},
+    updateSidebar(){const p=this.state.profile;document.getElementById('sb-name').textContent=p.name;document.getElementById('sb-level').textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);document.getElementById('sb-xp-fill').style.width=pct+'%';document.getElementById('sb-xp-text').textContent=`${p.xp-c} / ${n-c} XP`},
+    updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');rb.style.display=r>0?'inline':'none';rb.textContent=r;ob.style.display=o>0?'inline':'none';ob.textContent=o;db.style.display=ud>0?'inline':'none';db.textContent=ud},
+
+    checkBadges(){const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){this.save();nb.forEach(b=>setTimeout(()=>this.toast(`🏅 Badge: ${b.icon} ${b.name}!`,'success'),800))}},
+
+    getStats(){
+        const p=this.state.profile,ac=this.getAllChapters(),ts=this.getTodaySessions(),st=new Set(ts.map(s=>s.subjectId)),tr=ac.reduce((a,c)=>a+c.revisionCount,0),cs=this.state.subjects.filter(s=>s.chapters.length>0&&s.chapters.every(c=>c.status==='completed'||c.status==='revised')).length,sbd={};this.state.sessions.forEach(s=>{sbd[s.date]=(sbd[s.date]||0)+s.timeSpent});const md=Math.max(0,...Object.values(sbd));
+        return{totalSessions:this.state.sessions.length,totalMinutes:this.state.sessions.reduce((a,s)=>a+s.timeSpent,0),streak:p.streak,level:p.level,completedChapters:this.getCompletedCount(),totalRevisions:tr,completedSubjects:cs,subjectsStudiedToday:st.size,maxDailyMinutes:md,pomodoroCompleted:this.state.sessions.filter(s=>s.type==='pomodoro').length};
+    },
+
+    // DAILY CHALLENGES
+    generateDailyChallenges(){
+        if(this.state.dailyChallenges.date===this.today())return;
+        const shuffled=[...this.DAILY_CHALLENGES].sort(()=>Math.random()-0.5);
+        this.state.dailyChallenges={date:this.today(),challenges:shuffled.slice(0,3).map((c,i)=>({id:i,text:c.text,xp:c.xp,checkIdx:this.DAILY_CHALLENGES.indexOf(c)})),completed:[]};
+        this.save();
+    },
+    checkDailyChallenges(){
+        const dc=this.state.dailyChallenges;if(dc.date!==this.today())return;
+        const ctx={sessions:this.state.sessions,today:this.today(),todayMinutes:this.getTodayMinutes(),
+            chaptersCompletedToday:this.getAllChapters().filter(c=>(c.status==='completed'||c.status==='revised')&&c.completionDate===this.today()).length,
+            revisionsToday:this.state.sessions.filter(s=>s.date===this.today()&&s.type==='revision').length,
+            tasks:this.state.tasks,examScores:this.state.examScores,
+            doubtsResolvedToday:this.state.doubts.filter(d=>d.resolvedDate===this.today()).length,
+            notesAddedToday:(this.state.notes||[]).filter(n=>{const d=new Date(n.createdAt);return d.toISOString().split('T')[0]===this.today()}).length
+        };
+        dc.challenges.forEach(ch=>{
+            if(dc.completed.includes(ch.id))return;
+            const orig=this.DAILY_CHALLENGES[ch.checkIdx];
+            if(orig&&orig.check(ctx)){dc.completed.push(ch.id);this.addXP(ch.xp,`Challenge: ${ch.text}`);this.toast(`🎯 Challenge done: ${ch.text}`,'success')}
+        });
+        this.save();
+    },
+
+    // MOOD
+    setMood(mood){
+        this.state.profile.mood=mood;
+        this.state.profile.moodHistory.push({mood,date:this.today(),time:Date.now()});
+        this.save();this.toast(`Mood set: ${mood}`,'info');
+        if(this.state.currentPage==='coach')this.renderCoach();
+    },
+
+    // WELCOME
+    welcomeNext(step){if(step===2){const n=document.getElementById('welcome-name').value.trim();if(!n){this.toast('Enter your name','warning');return}this.state.profile.name=n}document.querySelectorAll('.welcome-step').forEach(s=>s.classList.remove('active'));document.querySelector(`.welcome-step[data-step="${step}"]`).classList.add('active')},
+    loadCBSE(){this.CBSE_DATA.forEach(sub=>{const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});this.state.subjects.push(sj)});this.save();this.toast('CBSE syllabus loaded! 📚','success');this.welcomeNext(3)},
+    completeWelcome(){this.state.profile.dailyGoalMinutes=parseInt(document.getElementById('welcome-goal').value);const ed=document.getElementById('welcome-exam-date').value;if(ed)this.state.profile.examDate=ed;this.save();document.getElementById('welcome-overlay').classList.add('hidden');this.render();this.updateSidebar();this.celebrate();this.toast('Welcome, '+this.state.profile.name+'! 🚀','success')},
+
+    // NAV
+    navigate(page){
+        this.state.currentPage=page;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+        const pe=document.getElementById('page-'+page);if(pe)pe.classList.add('active');
+        document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
+        document.querySelectorAll('.mob-nav-item').forEach((n,i)=>{const pages=['dashboard','subjects','','tasks','rewards'];n.classList.toggle('active',pages[i]===page)});
+        const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings'};
+        document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();this.renderPage(page);
+        document.getElementById('sidebar').classList.remove('open');document.getElementById('content').scrollTop=0;
+    },
+    updatePageSubtitle(){const n=new Date(),o={weekday:'long',month:'long',day:'numeric'};let sub=n.toLocaleDateString('en-US',o);const dte=this.getDaysToExam();if(dte!==null&&dte>0)sub+=` • ${dte} days to boards`;document.getElementById('page-subtitle').textContent=sub},
+    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings()};if(r[p])r[p]()},
+    render(){this.renderPage(this.state.currentPage);this.updateNavBadges();this.checkDailyChallenges()},
+
+    getGreeting(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'},
+    getMotivation(){const m=["Every chapter brings you closer to success! 💪","Small daily progress = big results! 🚀","Consistency beats intensity! 🔥","Your future self will thank you! 📚","One chapter at a time! ✨","Believe in yourself! 🌟","Hard work pays off! 🏆","Stay focused, stay winning! 🎯"];return m[Math.floor(Math.random()*m.length)]},
+
+    getTomorrowPlan(){const plan=[];this.getOverdueChapters().forEach(c=>plan.push({...c,reason:'Overdue',priority:'overdue'}));this.getRevisionsDue().forEach(c=>plan.push({...c,reason:'Revision due',priority:'revised'}));const pending=this.getAllChapters().filter(c=>c.status==='not-started'||c.status==='in-progress');pending.filter(c=>c.difficulty==='hard').slice(0,2).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Hard topic',priority:'hard'})});pending.filter(c=>c.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,3).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Deadline approaching',priority:'medium'})});pending.slice(0,5).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Pending',priority:'easy'})});return plan},
+
+    // HEATMAP DATA
+    getHeatmapData(){const data={};const now=new Date();for(let i=89;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);data[d.toISOString().split('T')[0]]=0}this.state.sessions.forEach(s=>{if(data[s.date]!==undefined)data[s.date]+=s.timeSpent});return data},
+
+    // DASHBOARD
+    renderDashboard(){
+        const el=document.getElementById('page-dashboard');
+        const tm=this.getTodayMinutes(),gm=this.state.profile.dailyGoalMinutes,gp=Math.min(100,Math.round(tm/gm*100));
+        const comp=this.getCompletedCount(),tot=this.getTotalChapters(),sp=tot>0?Math.round(comp/tot*100):0;
+        const od=this.getOverdueChapters(),rd=this.getRevisionsDue(),ts=this.getTodaySessions(),st=this.state.profile.streak;
+        const wd=this.getWeekSessions(),plan=this.getTomorrowPlan(),dte=this.getDaysToExam(),rs=this.getReadinessScore();
+        const hm=this.getHeatmapData();
+        const dc=this.state.dailyChallenges;
+        const pred=this.getPredictedCompletion();
+
+        let html=`<div style="margin-bottom:24px"><h2 style="font-size:1.5rem;font-weight:700">Good ${this.getGreeting()}, ${this.state.profile.name} 👋</h2><p style="color:var(--text-secondary);font-size:.9rem;margin-top:4px">${this.getMotivation()}</p></div>`;
+    
+        // Mood picker if not set today
+        const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
+        if(!todayMood){
+            html+=`<div class="card" style="margin-bottom:20px;text-align:center"><p style="font-size:.9rem;margin-bottom:12px;font-weight:600">How are you feeling today?</p><div class="mood-picker"><button class="mood-btn" onclick="App.setMood('😊')">😊</button><button class="mood-btn" onclick="App.setMood('😐')">😐</button><button class="mood-btn" onclick="App.setMood('😴')">😴</button><button class="mood-btn" onclick="App.setMood('😤')">😤</button><button class="mood-btn" onclick="App.setMood('🤩')">🤩</button></div></div>`;
+        }
+
+        // Exam countdown + Readiness
+        if(dte!==null&&dte>0){
+            html+=`<div class="grid grid-2" style="margin-bottom:20px"><div class="card" style="text-align:center"><div class="countdown-big">${dte}</div><div class="countdown-label">days to Board Exams</div><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">${this.state.profile.examDate}</p>${pred?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Predicted completion: ${pred.date} (${pred.rate} ch/day)</p>`:''}</div><div class="card" style="text-align:center"><div class="readiness-ring"><svg width="120" height="120" viewBox="0 0 120 120" style="max-width:100%;height:auto"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}" stroke-width="8" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52*(1-rs/100)}" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center"/></svg><div class="readiness-value" style="color:${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}">${rs}%</div></div><p style="font-size:.85rem;font-weight:600;margin-top:8px">Board Readiness</p><p style="font-size:.72rem;color:var(--text-muted)">Syllabus + Revisions + Scores + Streak</p></div></div>`;
+        }
+
+        // Daily Challenge
+        if(dc.date===this.today()&&dc.challenges.length>0){
+            html+=`<div class="challenge-card"><h4>🎯 Today's Challenges</h4>${dc.challenges.map(ch=>{const done=dc.completed.includes(ch.id);return`<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="width:18px;height:18px;border-radius:5px;border:2px solid ${done?'var(--success)':'var(--border)'};background:${done?'var(--success)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#fff;flex-shrink:0">${done?'✓':''}</div><span style="font-size:.82rem;${done?'text-decoration:line-through;opacity:.5':''}">${ch.text}</span><span class="challenge-xp" style="margin-left:auto">+${ch.xp} XP</span></div>`}).join('')}</div>`;
+        }
+
+        // Stats row
+        html+=`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">📖</div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>Studied today</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">✅</div><div class="stat-info"><h3>${comp}/${tot}</h3><p>Chapters done</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🔥</div><div class="stat-info"><h3>${st}</h3><p>Day streak</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)">⚡</div><div class="stat-info"><h3>LVL ${this.state.profile.level}</h3><p>${this.state.profile.xp} XP</p></div></div></div>`;
+
+        // Goal + Syllabus + Streak
+        html+=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">🎯 Daily Goal</span><span style="font-size:.85rem;font-weight:700;color:${gp>=100?'var(--success)':'var(--accent-light)'}">${gp}%</span></div><div class="progress-bar" style="height:12px;border-radius:6px;margin-bottom:10px"><div class="progress-fill" style="width:${gp}%;background:${gp>=100?'var(--gradient-3)':'var(--gradient-1)'}"></div></div><p style="font-size:.78rem;color:var(--text-muted)">${this.formatMin(tm)} / ${this.formatMin(gm)} ${gp>=100?'— 🎉':''}</p></div><div class="card"><div class="card-header"><span class="card-title">📊 Syllabus</span><span style="font-size:.85rem;font-weight:700;color:var(--accent-light)">${sp}%</span></div><div class="progress-bar" style="height:12px;border-radius:6px;margin-bottom:10px"><div class="progress-fill" style="width:${sp}%;background:var(--gradient-2)"></div></div><p style="font-size:.78rem;color:var(--text-muted)">${comp} of ${tot} chapters</p></div><div class="card"><div class="card-header"><span class="card-title">🔥 Streak</span></div><div class="streak-days">${wd.days.map(d=>{const hs=wd.sessions.some(s=>s.date===d),it=d===this.today();return`<div class="streak-dot ${hs?'active':''} ${it?'today':''}">${new Date(d+'T12:00').toLocaleDateString('en',{weekday:'narrow'})}</div>`}).join('')}</div><p style="font-size:.78rem;color:var(--text-muted);margin-top:10px">${st>0?st+' day streak!':'Start today!'}</p></div></div>`;
+
+        // Heatmap
+        const hmDates=Object.keys(hm);
+        html+=`<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">📅 Study Heatmap</span><span class="card-subtitle">Last 90 days</span></div><div class="heatmap">${hmDates.map(d=>{const m=hm[d];const lvl=m===0?'':m<30?'l1':m<60?'l2':m<120?'l3':'l4';return`<div class="heatmap-cell ${lvl}" title="${d}: ${this.formatMin(m)}"></div>`}).join('')}</div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;justify-content:flex-end"><span style="font-size:.65rem;color:var(--text-muted)">Less</span><div class="heatmap-cell" style="width:12px;height:12px"></div><div class="heatmap-cell l1" style="width:12px;height:12px"></div><div class="heatmap-cell l2" style="width:12px;height:12px"></div><div class="heatmap-cell l3" style="width:12px;height:12px"></div><div class="heatmap-cell l4" style="width:12px;height:12px"></div><span style="font-size:.65rem;color:var(--text-muted)">More</span></div></div>`;
+
+        // Today + Recommended
+        html+=`<div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">📝 Today's Sessions</span><span class="card-subtitle">${ts.length}</span></div>${ts.length===0?`<div class="empty-state" style="padding:20px"><div class="empty-icon">📖</div><p class="empty-desc" style="font-size:.82rem">No sessions yet</p><button class="btn btn-primary btn-sm" onclick="App.openQuickLog()">⚡ Log</button></div>`:ts.slice(-4).reverse().map(s=>{const sub=this.getSubjectById(s.subjectId);return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?sub.icon:'📖'}</div><div class="plan-info"><h4>${sub?sub.name:'?'}</h4><p>${s.chapterName||''} • ${s.type}</p></div><div class="plan-time">${this.formatMin(s.timeSpent)}</div></div>`}).join('')}</div><div class="card"><div class="card-header"><span class="card-title">📋 Up Next</span></div>${plan.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All caught up! 🎉</p>':plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} • ${p.reason}</p></div><span class="tag tag-${p.priority}" style="font-size:.65rem">${p.priority}</span></div>`).join('')}</div></div>`;
+
+        // Subject progress + alerts
+        html+=`<div class="grid grid-2"><div class="card"><div class="card-header"><span class="card-title">📚 Subjects</span></div>${this.state.subjects.length===0?'<p style="color:var(--text-muted);font-size:.85rem">No subjects yet</p>':this.state.subjects.map(s=>{const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${s.icon} ${s.name}</span><span class="sp-pct" style="color:${s.color}">${pc}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div></div>`}).join('')}</div><div class="card"><div class="card-header"><span class="card-title">⚠️ Alerts</span></div>${od.length===0&&rd.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All clear! ✨</p>':''}${od.slice(0,3).map(c=>`<div class="plan-card" style="border-color:rgba(239,68,68,0.2)"><div class="plan-emoji">⚠️</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}${rd.slice(0,3).map(c=>`<div class="plan-card" style="border-color:rgba(99,102,241,0.2)"><div class="plan-emoji">🔄</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • Revise</p></div></div>`).join('')}</div></div>`;
+
+        el.innerHTML=html;
+    },
+
+    // SUBJECTS
+    renderSubjects(){
+        const el=document.getElementById('page-subjects'),subs=this.state.subjects;
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
+        const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
+        if(subs.length===0){h+=`<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No subjects</div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Add Subject</button></div>`}
+        else{flt.forEach(s=>{
+            const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;
+            const trophyIcon=pc>=100?'🥇':pc>=75?'🥈':pc>=50?'🥉':'';
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">🗑</button></div></div><div class="progress-bar" style="margin-bottom:16px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';return`<div class="chapter-item" style="box-sizing:border-box"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span style="font-size:.65rem">🔄${c.revisionCount}</span>`:''}${ov?'<span class="tag tag-overdue">!</span>':''}</div></div><div class="chapter-actions" style="flex-shrink:0"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise">🔄</button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete">🗑</button></div></div>`}).join('')}</div></div>`})}
+        el.innerHTML=h;
+    },
+    filterSubject(id){this.state.selectedSubjectFilter=id;this.renderSubjects()},
+    toggleChapter(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;if(ch.status==='completed'||ch.status==='revised'){ch.status='in-progress';ch.completionDate=null}else{ch.status='completed';ch.completionDate=this.today();this.addXP(20,'Chapter completed');this.celebrate()}this.save();this.render()},
+    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
+    deleteChapter(sId,cId){if(!confirm('Delete chapter?'))return;const s=this.getSubjectById(sId);s.chapters=s.chapters.filter(c=>c.id!==cId);this.save();this.render()},
+    deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);this.save();this.render()},
+
+    openChapterDetail(sId,cId){
+        const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
+        const ss=this.state.sessions.filter(s=>s.chapterId===cId),tt=ss.reduce((a,s)=>a+s.timeSpent,0);
+        const ov=ch.deadline&&ch.deadline<this.today()&&ch.status!=='completed'&&ch.status!=='revised';
+        const exKey=sId+'_'+cId;
+        const exercises=this.state.exercises[exKey]||[];
+        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div><div class="grid grid-3" style="margin-bottom:18px"><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${this.formatMin(tt)}</p><p style="font-size:.7rem;color:var(--text-muted)">Time</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ch.revisionCount}</p><p style="font-size:.7rem;color:var(--text-muted)">Revisions</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ss.length}</p><p style="font-size:.7rem;color:var(--text-muted)">Sessions</p></div></div><div class="form-row" style="margin-bottom:16px"><div class="form-group" style="margin:0"><label class="form-label">Status</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','status',this.value)"><option value="not-started" ${ch.status==='not-started'?'selected':''}>Not Started</option><option value="in-progress" ${ch.status==='in-progress'?'selected':''}>In Progress</option><option value="completed" ${ch.status==='completed'?'selected':''}>Completed</option><option value="revised" ${ch.status==='revised'?'selected':''}>Revised</option></select></div><div class="form-group" style="margin:0"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div></div><div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--danger);font-size:.75rem;margin-top:4px">⚠️ Overdue!</p>':''}</div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Study notes..." onchange="App.updateChapterField('${sId}','${cId}','notes',this.value)">${ch.notes||''}</textarea></div><div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>`;
+        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">⚡ Log Study</button>`;
+        this.openModal('modal-detail');
+    },
+    updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}this.save();this.render()},
+
+    // EXERCISES
+    addExercise(sId,cId){
+        const exKey=sId+'_'+cId;
+        const inputId='ex-new-'+exKey.replace(/[^a-zA-Z0-9]/g,'');
+        const inp=document.getElementById(inputId);if(!inp)return;
+        const names=inp.value.split(',').map(n=>n.trim()).filter(n=>n);
+        if(names.length===0)return;
+        if(!this.state.exercises[exKey])this.state.exercises[exKey]=[];
+        names.forEach(name=>{this.state.exercises[exKey].push({name,done:false})});
+        this.save();this.openChapterDetail(sId,cId);this.toast('Exercises added!','success');
+    },
+    toggleExercise(sId,cId,idx){
+        const exKey=sId+'_'+cId;
+        if(!this.state.exercises[exKey]||!this.state.exercises[exKey][idx])return;
+        this.state.exercises[exKey][idx].done=!this.state.exercises[exKey][idx].done;
+        if(this.state.exercises[exKey][idx].done)this.addXP(5,'Exercise done');
+        this.save();this.openChapterDetail(sId,cId);
+    },
+    renderExercises(){
+        const el=document.getElementById('page-exercises');
+        let h='<div style="margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">Track NCERT exercises, RD Sharma, and sample papers per chapter.</p></div>';
+        const subs=this.state.subjects;
+        if(subs.length===0){h+='<div class="empty-state"><div class="empty-icon">🔢</div><div class="empty-title">Add subjects first</div></div>';el.innerHTML=h;return}
+        subs.forEach(s=>{
+            const chaptersWithEx=s.chapters.filter(c=>{const k=s.id+'_'+c.id;return this.state.exercises[k]&&this.state.exercises[k].length>0});
+            if(chaptersWithEx.length===0)return;
+            h+=`<div class="card" style="margin-bottom:16px;border-left:3px solid ${s.color}"><div class="card-header"><span class="card-title">${s.icon} ${s.name}</span></div>`;
+            chaptersWithEx.forEach(c=>{
+                const k=s.id+'_'+c.id;const exs=this.state.exercises[k]||[];
+                const doneCount=exs.filter(e=>e.done).length;
+                h+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:.85rem;font-weight:600">${c.name}</span><span style="font-size:.75rem;color:var(--text-muted)">${doneCount}/${exs.length}</span></div><div class="exercise-grid">${exs.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${s.id}','${c.id}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>`;
+            });
+            h+='</div>';
+        });
+        // Also show chapters with no exercises
+        let emptyCount=0;
+        subs.forEach(s=>{s.chapters.forEach(c=>{const k=s.id+'_'+c.id;if(!this.state.exercises[k]||this.state.exercises[k].length===0)emptyCount++})});
+        if(emptyCount>0)h+=`<p style="color:var(--text-muted);font-size:.82rem;text-align:center;margin-top:16px">${emptyCount} chapters have no exercises tracked. Open chapter details to add them.</p>`;
+        el.innerHTML=h;
+    },
+
+    // STUDY LOG
+    openQuickLog(pSub,pCh){
+        const subs=this.state.subjects;let co='';
+        if(pSub){const s=this.getSubjectById(pSub);if(s)co=s.chapters.map(c=>`<option value="${c.id}" ${c.id===pCh?'selected':''}>${c.name}</option>`).join('')}
+        document.getElementById('log-form-body').innerHTML=`<div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="log-subject" onchange="App.updateLogChapters()"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div></div><div class="form-group"><label class="form-label">Time Spent</label><div class="quick-log" id="time-chips"><div class="quick-chip" data-min="15" onclick="App.selectTime(this)">15m</div><div class="quick-chip" data-min="30" onclick="App.selectTime(this)">30m</div><div class="quick-chip selected" data-min="45" onclick="App.selectTime(this)">45m</div><div class="quick-chip" data-min="60" onclick="App.selectTime(this)">1h</div><div class="quick-chip" data-min="90" onclick="App.selectTime(this)">1.5h</div><div class="quick-chip" data-min="120" onclick="App.selectTime(this)">2h</div></div><input type="number" id="log-time-custom" class="form-input" placeholder="Or enter minutes" min="1" style="margin-top:8px"></div><div class="form-group"><label class="form-label">Type</label><div class="quick-log" id="type-chips"><div class="quick-chip selected" data-type="learning" onclick="App.selectType(this)">📖 Learning</div><div class="quick-chip" data-type="revision" onclick="App.selectType(this)">🔄 Revision</div><div class="quick-chip" data-type="practice" onclick="App.selectType(this)">✏️ Practice</div><div class="quick-chip" data-type="test" onclick="App.selectType(this)">📝 Test</div></div></div><div class="form-group"><label class="form-label">Focus ⭐</label><div class="star-rating" id="productivity-stars">${[1,2,3,4,5].map(i=>`<span class="star ${i<=4?'active':''}" data-val="${i}" onclick="App.setRating(${i})">⭐</span>`).join('')}</div></div><div class="form-group"><label class="form-label">Notes</label><input type="text" id="log-notes" class="form-input" placeholder="Quick note..."></div>`;
+        this.openModal('modal-log');
+    },
+    updateLogChapters(){const sId=document.getElementById('log-subject').value,s=this.getSubjectById(sId),sel=document.getElementById('log-chapter');sel.innerHTML='<option value="">Select</option>';if(s)s.chapters.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${c.name}</option>`})},
+    selectTime(el){document.querySelectorAll('#time-chips .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');document.getElementById('log-time-custom').value=''},
+    selectType(el){document.querySelectorAll('#type-chips .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
+    setRating(v){document.querySelectorAll('#productivity-stars .star').forEach(s=>{s.classList.toggle('active',parseInt(s.dataset.val)<=v)})},
+
+    saveStudyLog(){
+        const sId=document.getElementById('log-subject').value,cId=document.getElementById('log-chapter').value,ct=document.getElementById('log-time-custom').value,st=document.querySelector('#time-chips .quick-chip.selected'),time=ct?parseInt(ct):(st?parseInt(st.dataset.min):0),type=document.querySelector('#type-chips .quick-chip.selected')?.dataset.type||'learning',rating=document.querySelectorAll('#productivity-stars .star.active').length,notes=document.getElementById('log-notes').value;
+        if(!sId){this.toast('Select subject','warning');return}if(!time||time<=0){this.toast('Select time','warning');return}
+        const sub=this.getSubjectById(sId),ch=cId?sub.chapters.find(c=>c.id===cId):null;
+        this.state.sessions.push({id:this.uid(),subjectId:sId,chapterId:cId||'',chapterName:ch?ch.name:'',subjectName:sub.name,date:this.today(),timeSpent:time,type,rating,notes,createdAt:Date.now()});
+        if(ch&&ch.status==='not-started')ch.status='in-progress';
+        if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision')}
+        this.recordStudyDay();this.addXP(10,'Session logged');
+        const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){this.addXP(25,'Daily goal! 🎯');this.celebrate()}}
+        this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
+    },
+
+    renderLog(){
+        const el=document.getElementById('page-log'),ss=[...this.state.sessions].reverse(),gr={};ss.forEach(s=>{if(!gr[s.date])gr[s.date]=[];gr[s.date].push(s)});
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${this.state.sessions.length} sessions • ${this.formatMin(this.state.sessions.reduce((a,s)=>a+s.timeSpent,0))}</p><button class="btn btn-primary" onclick="App.openQuickLog()">⚡ Log</button></div>`;
+        if(ss.length===0){h+=`<div class="empty-state"><div class="empty-icon">✏️</div><div class="empty-title">No sessions yet</div><button class="btn btn-primary" onclick="App.openQuickLog()">⚡ First Session</button></div>`}
+        else{Object.keys(gr).forEach(d=>{const dm=gr[d].reduce((a,s)=>a+s.timeSpent,0);h+=`<div style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><h3 style="font-size:.9rem;font-weight:600">${d===this.today()?'Today':d}</h3><span style="font-size:.78rem;color:var(--accent-light);font-weight:600">${this.formatMin(dm)}</span></div>${gr[d].map(s=>{const sub=this.getSubjectById(s.subjectId);return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?sub.icon:'📖'}</div><div class="plan-info"><h4>${sub?sub.name:'?'} ${s.chapterName?'— '+s.chapterName:''}</h4><p>${s.type} ${'⭐'.repeat(s.rating||0)}</p></div><div style="text-align:right"><div class="plan-time">${this.formatMin(s.timeSpent)}</div><button class="ch-btn" style="margin-top:4px" onclick="App.deleteSession('${s.id}')">🗑</button></div></div>`}).join('')}</div>`})}
+        el.innerHTML=h;
+    },
+    deleteSession(id){if(!confirm('Delete?'))return;this.state.sessions=this.state.sessions.filter(s=>s.id!==id);this.save();this.render()},
+
+    // TASKS
+    renderTasks(){
+        const el=document.getElementById('page-tasks');const today=this.today();
+        let todayTasks=this.state.tasks.filter(t=>t.date===today);
+        // Carry forward incomplete tasks from yesterday
+        const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);const yStr=yesterday.toISOString().split('T')[0];
+        const carryForward=this.state.tasks.filter(t=>t.date===yStr&&!t.done);
+        if(carryForward.length>0){
+            carryForward.forEach(t=>{if(!todayTasks.find(x=>x.text===t.text)){this.state.tasks.push({id:this.uid(),text:'⏩ '+t.text,done:false,date:today,createdAt:Date.now()});todayTasks=this.state.tasks.filter(x=>x.date===today)}});
+            this.save();
+        }
+        const doneCount=todayTasks.filter(t=>t.done).length;
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${doneCount}/${todayTasks.length} done</p><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.autoGenerateTasks()">🤖 Auto-Plan</button></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">✏️ Add Task</span></div><div style="display:flex;gap:8px"><input type="text" id="new-task" class="form-input" placeholder="e.g., Solve Ex 2.3..." style="flex:1" onkeydown="if(event.key==='Enter')App.addTask()"><button class="btn btn-primary btn-sm" onclick="App.addTask()">Add</button></div></div>`;
+        h+=`<div class="card"><div class="card-header"><span class="card-title">📋 Today's Tasks</span></div>`;
+        if(todayTasks.length===0){h+='<p style="color:var(--text-muted);font-size:.85rem">No tasks. Add some or use Auto-Plan!</p>'}
+        else{todayTasks.forEach(t=>{h+=`<div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="App.toggleTask('${t.id}')">${t.done?'✓':''}</div><span class="task-text ${t.done?'done':''}">${t.text}</span><button class="ch-btn" onclick="App.deleteTask('${t.id}')" style="width:24px;height:24px;font-size:.7rem">✕</button></div>`})}
+        h+='</div>';el.innerHTML=h;
+    },
+    addTask(){const inp=document.getElementById('new-task');const text=inp.value.trim();if(!text)return;this.state.tasks.push({id:this.uid(),text,done:false,date:this.today(),createdAt:Date.now()});this.save();inp.value='';this.renderTasks();this.toast('Task added','success')},
+    toggleTask(id){const t=this.state.tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;if(t.done)this.addXP(5,'Task completed');this.save();this.renderTasks();this.checkDailyChallenges()},
+    deleteTask(id){this.state.tasks=this.state.tasks.filter(t=>t.id!==id);this.save();this.renderTasks()},
+    autoGenerateTasks(){const tasks=[];const od=this.getOverdueChapters();od.slice(0,2).forEach(c=>tasks.push(`📌 Complete: ${c.subjectIcon} ${c.name}`));const rd=this.getRevisionsDue();rd.slice(0,2).forEach(c=>tasks.push(`🔄 Revise: ${c.subjectIcon} ${c.name}`));const pending=this.getAllChapters().filter(c=>c.status==='in-progress');pending.slice(0,2).forEach(c=>tasks.push(`📖 Continue: ${c.subjectIcon} ${c.name}`));if(tasks.length===0)tasks.push('📚 Study for '+this.formatMin(this.state.profile.dailyGoalMinutes));tasks.forEach(t=>{if(!this.state.tasks.some(x=>x.text===t&&x.date===this.today())){this.state.tasks.push({id:this.uid(),text:t,done:false,date:this.today(),createdAt:Date.now()})}});this.save();this.renderTasks();this.toast('Tasks auto-generated! 🤖','success')},
+
+    // --- END OF PART 1 --- (continued in Part 2)
+    // The following methods are defined in Part 2:
+    // renderExams, openExamModal, saveExamScore, renderRevisions,
+    // renderDoubts, openDoubtModal, saveDoubt, renderResources, openResourceModal, saveResource,
+    // renderPlanning, renderWeekly, renderPomodoro, startPomodoro, pausePomodoro, resetPomodoro,
+    // skipPomodoro, pomodoroComplete, updatePomodoroSetting, startStopwatch, startStopwatchTimer,
+    // stopStopwatch, renderNotes, addNote (modal version), saveNoteFromModal, deleteNote,
+    // renderCoach, getCoachMessage, renderRewards, renderSettings,
+    // handleSearch, openModal, closeModal, openAddChapterModal, saveChapter, saveSubject, pickColor,
+    // exportData, importData, resetAll, toast, celebrate
+        // EXAMS
+    renderExams(){
+        const el=document.getElementById('page-exams');const scores=this.state.examScores||[];
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${scores.length} exams logged</p><button class="btn btn-primary" onclick="App.openExamModal()">+ Log Score</button></div>`;
+        if(scores.length>0){
+            const avg=Math.round(scores.reduce((a,e)=>a+(e.scored/e.total*100),0)/scores.length);
+            const best=Math.round(Math.max(...scores.map(e=>e.scored/e.total*100)));
+            const worst=Math.round(Math.min(...scores.map(e=>e.scored/e.total*100)));
+            h+=`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">📊</div><div class="stat-info"><h3>${avg}%</h3><p>Average</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">🏆</div><div class="stat-info"><h3>${best}%</h3><p>Best score</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">📉</div><div class="stat-info"><h3>${worst}%</h3><p>Lowest</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">📝</div><div class="stat-info"><h3>${scores.length}</h3><p>Tests taken</p></div></div></div>`;
+            // Score trends by subject
+            const bySub={};scores.forEach(e=>{if(!bySub[e.subjectId])bySub[e.subjectId]=[];bySub[e.subjectId].push(e)});
+            h+=`<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">📈 Score Trends by Subject</span></div>`;
+            Object.entries(bySub).forEach(([sId,exams])=>{
+                const sub=this.getSubjectById(sId);if(!sub)return;
+                const latest=exams[exams.length-1];const pct=Math.round(latest.scored/latest.total*100);
+                const prevPct=exams.length>1?Math.round(exams[exams.length-2].scored/exams[exams.length-2].total*100):null;
+                const trend=prevPct!==null?(pct>prevPct?'📈':'📉'):'';
+                h+=`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name} ${trend}</span><span class="sp-pct" style="color:${pct>=80?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${sub.color}"></div></div>${prevPct!==null?`<p style="font-size:.68rem;color:var(--text-muted);margin-top:2px">Previous: ${prevPct}% → Current: ${pct}% (${pct-prevPct>=0?'+':''}${pct-prevPct}%)</p>`:''}</div>`;
+            });
+            h+='</div>';
+            // Target vs actual
+            if(this.state.profile.targetScore){
+                h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${avg>=this.state.profile.targetScore?'var(--success)':'var(--warning)'}"><div class="card-header"><span class="card-title">🎯 Target vs Actual</span></div><p style="font-size:.9rem">Target: <strong>${this.state.profile.targetScore}%</strong> | Average: <strong style="color:${avg>=this.state.profile.targetScore?'var(--success)':'var(--danger)'}">${avg}%</strong> ${avg>=this.state.profile.targetScore?'✅ On track!':'⚠️ Need improvement'}</p></div>`;
+            }
+        }
+        h+=`<div class="card"><div class="card-header"><span class="card-title">📋 All Scores</span></div>`;
+        if(scores.length===0)h+='<p style="color:var(--text-muted);font-size:.85rem">No scores yet. Log your first exam!</p>';
+        else{[...scores].reverse().forEach(e=>{const sub=this.getSubjectById(e.subjectId);const pct=Math.round(e.scored/e.total*100);h+=`<div class="rev-item"><div class="rev-info"><h4>${sub?sub.icon:''} ${e.name}</h4><p>${sub?sub.name:''} • ${e.date} • ${e.scored}/${e.total}</p></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.85rem;font-weight:700;color:${pct>=80?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</span><button class="ch-btn" onclick="App.deleteExam('${e.id}')" style="width:24px;height:24px;font-size:.65rem">🗑</button></div></div>`})}
+        h+='</div>';el.innerHTML=h;
+    },
+    openExamModal(){
+        const subs=this.state.subjects;
+        document.getElementById('exam-form-body').innerHTML=`<div class="form-group"><label class="form-label">Exam Name</label><input type="text" id="exam-name" class="form-input" placeholder="e.g., Unit Test 3"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="exam-subject">${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Date</label><input type="date" id="exam-date" class="form-input" value="${this.today()}"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Marks Obtained</label><input type="number" id="exam-scored" class="form-input" placeholder="28" min="0"></div><div class="form-group"><label class="form-label">Total Marks</label><input type="number" id="exam-total" class="form-input" placeholder="40" min="1"></div></div>`;
+        this.openModal('modal-exam');
+    },
+    saveExamScore(){
+        const name=document.getElementById('exam-name').value.trim(),sId=document.getElementById('exam-subject').value,date=document.getElementById('exam-date').value,scored=parseInt(document.getElementById('exam-scored').value),total=parseInt(document.getElementById('exam-total').value);
+        if(!name||isNaN(scored)||isNaN(total)||total<=0){this.toast('Fill all fields correctly','warning');return}
+        if(scored>total){this.toast('Scored cannot exceed total','warning');return}
+        this.state.examScores.push({id:this.uid(),name,subjectId:sId,date,scored,total,createdAt:Date.now()});
+        this.save();this.closeModal('modal-exam');this.render();this.addXP(10,'Exam logged');
+        const pct=Math.round(scored/total*100);
+        this.toast(`📝 ${name}: ${scored}/${total} (${pct}%)`,'success');
+        this.checkDailyChallenges();
+    },
+    deleteExam(id){if(!confirm('Delete exam score?'))return;this.state.examScores=this.state.examScores.filter(e=>e.id!==id);this.save();this.render()},
+
+    // REVISIONS
+    renderRevisions(){
+        const el=document.getElementById('page-revisions'),rd=this.getRevisionsDue(),ac=this.getAllChapters(),rc=ac.filter(c=>c.revisionCount>0);
+        const totalRevisions=ac.reduce((a,c)=>a+c.revisionCount,0);
+        el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">🔄</div><div class="stat-info"><h3>${rd.length}</h3><p>Due now</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">✅</div><div class="stat-info"><h3>${rc.length}</h3><p>Revised</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">📊</div><div class="stat-info"><h3>${totalRevisions}</h3><p>Total revisions</p></div></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">⚡ Due Now</span></div>${rd.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All clear! 🎉</p>':rd.map(c=>`<div class="rev-item"><div class="rev-info"><h4>${c.subjectIcon} ${c.name}</h4><p>${c.subjectName} • ${c.daysSince}d ago • Rev #${c.revisionCount}</p></div><button class="btn btn-sm btn-primary" onclick="App.quickRevision('${c.subjectId}','${c.id}')">🔄 Revise</button></div>`).join('')}</div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">📚 Revision History</span></div>${rc.length===0?'<p style="color:var(--text-muted);font-size:.85rem">No revisions yet</p>':rc.sort((a,b)=>b.revisionCount-a.revisionCount).slice(0,15).map(c=>`<div class="rev-item"><div class="rev-info"><h4>${c.subjectIcon} ${c.name}</h4><p>${c.subjectName} • ${c.revisionCount} revision${c.revisionCount>1?'s':''} • Last: ${c.revisionDates[c.revisionDates.length-1]||'N/A'}</p></div><span class="tag tag-revised">🔄 ×${c.revisionCount}</span></div>`).join('')}</div><div class="card" style="border-left:3px solid var(--info)"><div class="card-header"><span class="card-title">💡 Spaced Repetition Schedule</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:1.7"><p>📌 Rev 1: <strong>1 day</strong> after completion</p><p>📌 Rev 2: <strong>3 days</strong> after Rev 1</p><p>📌 Rev 3: <strong>7 days</strong> after Rev 2</p><p>📌 Rev 4: <strong>14 days</strong> after Rev 3</p><p>📌 Rev 5: <strong>30 days</strong> after Rev 4</p></div></div>`;
+    },
+
+    // DOUBTS
+    renderDoubts(){
+        const el=document.getElementById('page-doubts');const doubts=this.state.doubts||[];
+        const unresolved=doubts.filter(d=>d.status==='unresolved');
+        const asked=doubts.filter(d=>d.status==='asked');
+        const understood=doubts.filter(d=>d.status==='understood');
+        let h=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;margin-bottom:18px;gap:12px"><div class="grid grid-3" style="gap:10px;flex:1;min-width:0"><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(239,68,68,0.12);width:36px;height:36px;font-size:1rem">❓</div><div class="stat-info"><h3 style="font-size:1.2rem">${unresolved.length}</h3><p>Unresolved</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(245,158,11,0.12);width:36px;height:36px;font-size:1rem">🙋</div><div class="stat-info"><h3 style="font-size:1.2rem">${asked.length}</h3><p>Asked</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(16,185,129,0.12);width:36px;height:36px;font-size:1rem">✅</div><div class="stat-info"><h3 style="font-size:1.2rem">${understood.length}</h3><p>Understood</p></div></div></div><button class="btn btn-primary" onclick="App.openDoubtModal()" style="align-self:flex-start">+ Add Doubt</button></div>`;
+
+        const renderDoubtList=(title,list,emoji)=>{
+            if(list.length===0)return'';
+            let html=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${emoji} ${title} (${list.length})</span></div>`;
+            list.forEach(d=>{
+                const sub=this.getSubjectById(d.subjectId);
+                html+=`<div class="doubt-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h4>${d.text}</h4><p>${sub?sub.icon+' '+sub.name:''} ${d.chapter?'• '+d.chapter:''} ${d.priority==='must-clear'?'<span class="tag tag-hard" style="margin-left:4px">Must Clear</span>':''}</p></div><span class="tag tag-${d.status}">${d.status}</span></div><div class="doubt-actions">${d.status==='unresolved'?`<button class="btn btn-sm btn-warning" onclick="App.updateDoubtStatus('${d.id}','asked')">🙋 Asked Teacher</button>`:''} ${d.status!=='understood'?`<button class="btn btn-sm btn-success" onclick="App.updateDoubtStatus('${d.id}','understood')">✅ Understood</button>`:''}<button class="ch-btn" onclick="App.deleteDoubt('${d.id}')" style="width:28px;height:28px">🗑</button></div></div>`;
+            });
+            html+='</div>';return html;
+        };
+
+        h+=renderDoubtList('Unresolved',unresolved,'🔴');
+        h+=renderDoubtList('Asked Teacher',asked,'🟡');
+        h+=renderDoubtList('Understood',understood,'🟢');
+
+        if(doubts.length===0){
+            h+=`<div class="empty-state"><div class="empty-icon">❓</div><div class="empty-title">No doubts tracked</div><div class="empty-desc">Add topics you're struggling with to keep track of them!</div><button class="btn btn-primary" onclick="App.openDoubtModal()">+ Add First Doubt</button></div>`;
+        }
+        el.innerHTML=h;
+    },
+    openDoubtModal(){
+        const subs=this.state.subjects;
+        document.getElementById('doubt-form-body').innerHTML=`<div class="form-group"><label class="form-label">Doubt / Topic</label><input type="text" id="doubt-text" class="form-input" placeholder="e.g., I don't understand trigonometric identities proof"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="doubt-subject"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="doubt-chapter" class="form-input" placeholder="e.g., Trigonometry"></div></div><div class="form-group"><label class="form-label">Priority</label><div class="quick-log"><div class="quick-chip selected" data-priority="must-clear" onclick="App.pickDoubtPriority(this)">🔴 Must Clear Before Exam</div><div class="quick-chip" data-priority="nice-to-know" onclick="App.pickDoubtPriority(this)">🟡 Nice to Know</div></div></div>`;
+        this.openModal('modal-doubt');
+    },
+    pickDoubtPriority(el){document.querySelectorAll('#doubt-form-body .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
+    saveDoubt(){
+        const text=document.getElementById('doubt-text').value.trim();
+        if(!text){this.toast('Enter your doubt','warning');return}
+        const sId=document.getElementById('doubt-subject').value;
+        const chapter=document.getElementById('doubt-chapter').value.trim();
+        const priority=document.querySelector('#doubt-form-body .quick-chip.selected')?.dataset.priority||'must-clear';
+        this.state.doubts.push({id:this.uid(),text,subjectId:sId,chapter,priority,status:'unresolved',createdAt:Date.now(),resolvedDate:null});
+        this.save();this.closeModal('modal-doubt');this.render();this.toast('❓ Doubt added','success');
+    },
+    updateDoubtStatus(id,status){
+        const d=this.state.doubts.find(x=>x.id===id);if(!d)return;
+        d.status=status;
+        if(status==='understood'){d.resolvedDate=this.today();this.addXP(10,'Doubt cleared! 🧠')}
+        this.save();this.render();
+        this.toast(status==='understood'?'✅ Doubt cleared!':'🙋 Status updated','success');
+        this.checkDailyChallenges();
+    },
+    deleteDoubt(id){if(!confirm('Delete doubt?'))return;this.state.doubts=this.state.doubts.filter(d=>d.id!==id);this.save();this.render()},
+
+    // RESOURCES
+    renderResources(){
+        const el=document.getElementById('page-resources');const resources=this.state.resources||[];
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${resources.length} resources saved</p><button class="btn btn-primary" onclick="App.openResourceModal()">+ Add Resource</button></div>`;
+        if(resources.length===0){
+            h+=`<div class="empty-state"><div class="empty-icon">🔗</div><div class="empty-title">No resources yet</div><div class="empty-desc">Save YouTube links, PDFs, and websites for quick access during study!</div><button class="btn btn-primary" onclick="App.openResourceModal()">+ Add Resource</button></div>`;
+        }else{
+            const bySub={};resources.forEach(r=>{const k=r.subjectId||'general';if(!bySub[k])bySub[k]=[];bySub[k].push(r)});
+            Object.entries(bySub).forEach(([sId,rs])=>{
+                const sub=this.getSubjectById(sId);
+                h+=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${sub?sub.icon+' '+sub.name:'📎 General'}</span></div>`;
+                rs.forEach(r=>{
+                    const typeIcons={youtube:'🎬',pdf:'📄',website:'🌐',other:'📎'};
+                    h+=`<div class="resource-item"><span style="font-size:1.3rem">${typeIcons[r.type]||'📎'}</span><div style="flex:1;min-width:0"><h4 style="font-size:.85rem;font-weight:600">${r.title}</h4><a href="${r.url}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--accent-light);word-break:break-all">${r.url.substring(0,60)}${r.url.length>60?'...':''}</a>${r.chapter?`<p style="font-size:.7rem;color:var(--text-muted)">Ch: ${r.chapter}</p>`:''}</div><button class="ch-btn" onclick="App.deleteResource('${r.id}')" style="flex-shrink:0">🗑</button></div>`;
+                });
+                h+='</div>';
+            });
+        }
+        el.innerHTML=h;
+    },
+    openResourceModal(){
+        const subs=this.state.subjects;
+        document.getElementById('resource-form-body').innerHTML=`<div class="form-group"><label class="form-label">Title</label><input type="text" id="res-title" class="form-input" placeholder="e.g., Best Electricity chapter video"></div><div class="form-group"><label class="form-label">URL / Link</label><input type="url" id="res-url" class="form-input" placeholder="https://youtube.com/..."></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="res-subject"><option value="">General</option>${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><select class="form-select" id="res-type"><option value="youtube">🎬 YouTube</option><option value="pdf">📄 PDF</option><option value="website">🌐 Website</option><option value="other">📎 Other</option></select></div></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="res-chapter" class="form-input" placeholder="e.g., Electricity"></div>`;
+        this.openModal('modal-resource');
+    },
+    saveResource(){
+        const title=document.getElementById('res-title').value.trim();
+        const url=document.getElementById('res-url').value.trim();
+        if(!title||!url){this.toast('Enter title and URL','warning');return}
+        this.state.resources.push({id:this.uid(),title,url,subjectId:document.getElementById('res-subject').value,type:document.getElementById('res-type').value,chapter:document.getElementById('res-chapter').value.trim(),createdAt:Date.now()});
+        this.save();this.closeModal('modal-resource');this.render();this.toast('🔗 Resource saved!','success');this.checkBadges();
+    },
+    deleteResource(id){if(!confirm('Delete resource?'))return;this.state.resources=this.state.resources.filter(r=>r.id!==id);this.save();this.render()},
+
+    // PLANNING
+    renderPlanning(){
+        const el=document.getElementById('page-planning'),ac=this.getAllChapters(),od=this.getOverdueChapters(),up=ac.filter(c=>c.deadline&&c.deadline>=this.today()&&c.status!=='completed'&&c.status!=='revised').sort((a,b)=>a.deadline.localeCompare(b.deadline)),nd=ac.filter(c=>!c.deadline&&c.status!=='completed'&&c.status!=='revised');
+        const pred=this.getPredictedCompletion();
+        const dte=this.getDaysToExam();
+
+        let predHtml='';
+        if(pred&&dte!==null){
+            const onTrack=this.daysBetween(this.today(),pred.date)<=dte;
+            predHtml=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${onTrack?'var(--success)':'var(--danger)'}"><div class="card-header"><span class="card-title">🔮 Predicted Completion</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${onTrack?'var(--success)':'var(--danger)'}">${onTrack?'✅ On track for boards!':'⚠️ Won\'t finish before exams! Speed up!'}</p>${!onTrack&&dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: ${Math.ceil((this.getTotalChapters()-this.getCompletedCount())/dte*10)/10} chapters/day to finish on time</p>`:''}</div>`;
+        }
+
+        el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">⚠️</div><div class="stat-info"><h3>${od.length}</h3><p>Overdue</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">📅</div><div class="stat-info"><h3>${up.length}</h3><p>Upcoming</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">❓</div><div class="stat-info"><h3>${nd.length}</h3><p>No deadline</p></div></div></div>${predHtml}${od.length>0?`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--danger)"><div class="card-header"><span class="card-title">⚠️ Overdue</span></div>${od.map(c=>`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}</div>`:''}<div class="card"><div class="card-header"><span class="card-title">📅 Upcoming Deadlines</span></div>${up.length===0?'<p style="color:var(--text-muted)">None</p>':up.map(c=>{const dl=this.daysBetween(this.today(),c.deadline);return`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${c.deadline}</p></div><span class="tag" style="color:var(--${dl<=3?'danger':dl<=7?'warning':'success'})">${dl}d</span></div>`}).join('')}</div>`;
+    },
+
+    // WEEKLY / ANALYTICS
+    renderWeekly(){
+        const el=document.getElementById('page-weekly'),wk=this.getWeekSessions(),ws=wk.sessions,tm=ws.reduce((a,s)=>a+s.timeSpent,0),ds=new Set(ws.map(s=>s.date)).size;
+        const dd=wk.days.map(d=>({date:d,minutes:ws.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0)})),mx=Math.max(1,...dd.map(d=>d.minutes));
+        const sb={};ws.forEach(s=>{sb[s.subjectId]=(sb[s.subjectId]||0)+s.timeSpent});
+
+        // Monthly comparison
+        const now=new Date();const thisMonth=now.getMonth(),thisYear=now.getFullYear();
+        const lm=thisMonth===0?11:thisMonth-1;const lmYear=thisMonth===0?thisYear-1:thisYear;
+        const tmSessions=this.state.sessions.filter(s=>{const d=new Date(s.date);return d.getMonth()===thisMonth&&d.getFullYear()===thisYear});
+        const lmSessions=this.state.sessions.filter(s=>{const d=new Date(s.date);return d.getMonth()===lm&&d.getFullYear()===lmYear});
+        const tmMin=tmSessions.reduce((a,s)=>a+s.timeSpent,0);
+        const lmMin=lmSessions.reduce((a,s)=>a+s.timeSpent,0);
+        const monthChange=lmMin>0?Math.round((tmMin-lmMin)/lmMin*100):0;
+
+        // Best study time (productivity patterns)
+        const hourBuckets={};this.state.sessions.forEach(s=>{const h=new Date(s.createdAt).getHours();hourBuckets[h]=(hourBuckets[h]||0)+s.timeSpent});
+        const bestHour=Object.entries(hourBuckets).sort((a,b)=>b[1]-a[1])[0];
+
+        // Best day of week
+        const dayBuckets={0:0,1:0,2:0,3:0,4:0,5:0,6:0};
+        this.state.sessions.forEach(s=>{const d=new Date(s.date+'T12:00').getDay();dayBuckets[d]+=s.timeSpent});
+        const dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+        const bestDay=Object.entries(dayBuckets).sort((a,b)=>b[1]-a[1])[0];
+
+        // Average session length
+        const avgSession=this.state.sessions.length>0?Math.round(this.state.sessions.reduce((a,s)=>a+s.timeSpent,0)/this.state.sessions.length):0;
+
+        // Subject balance for radar visual
+        const allSubTime={};this.state.sessions.forEach(s=>{allSubTime[s.subjectId]=(allSubTime[s.subjectId]||0)+s.timeSpent});
+        const totalAllTime=Object.values(allSubTime).reduce((a,b)=>a+b,0)||1;
+
+        el.innerHTML=`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">⏱</div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>This week</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">📆</div><div class="stat-info"><h3>${ds}/7</h3><p>Days studied</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">📅</div><div class="stat-info"><h3>${this.formatMin(tmMin)}</h3><p>This month</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)">📊</div><div class="stat-info"><h3>${avgSession}m</h3><p>Avg session</p></div></div></div>
+        <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">📊 Daily Study Time</span></div><div class="week-graph">${dd.map(d=>{const pc=d.minutes/mx*100;const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T12:00').getDay()];return`<div class="bar-col"><div class="bar-value">${d.minutes>0?this.formatMin(d.minutes):''}</div><div class="bar" style="height:${Math.max(2,pc)}%;${d.date===this.today()?'background:var(--gradient-3)':''}"></div><div class="bar-label">${dn}</div></div>`}).join('')}</div></div><div class="card"><div class="card-header"><span class="card-title">📚 Subject Split (This Week)</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
+        <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">📊 Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--success)':'var(--danger)'};font-weight:600">${tmMin>=lmMin?'📈':'📉'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'Improving!':'Study more!'}</p></div><div class="card"><div class="card-header"><span class="card-title">🕐 Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">📅</span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">⏱</span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">📊 Subject Balance (All Time)</span></div><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">${this.state.subjects.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);const isLow=pc<(100/Math.max(1,this.state.subjects.length))*0.5;return`<div style="text-align:center;min-width:60px;flex:0 0 auto"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ${s.color};display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.5rem;${isLow?'opacity:.5':''}">${s.icon}</div><p style="font-size:.78rem;font-weight:600">${s.name}</p><p style="font-size:.72rem;color:${isLow?'var(--danger)':s.color}">${pc}%</p>${isLow?'<p style="font-size:.6rem;color:var(--danger)">⚠️ Low</p>':''}`}).join('')}</div></div>`;
+    },
+
+    // POMODORO + STOPWATCH
+    renderPomodoro(){
+        const el=document.getElementById('page-pomodoro'),p=this.pomodoro,set=this.state.pomodoroSettings;
+        const mins=Math.floor(p.timeLeft/60),secs=p.timeLeft%60;
+        const tt=(p.mode==='work'?set.workMin:(p.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin))*60;
+        const prog=((tt-p.timeLeft)/tt)*100;
+        const sw=this.state.stopwatch;
+        el.innerHTML=`<div class="grid grid-2"><div class="card"><div class="pomodoro-display"><svg width="200" height="200" viewBox="0 0 200 200" style="max-width:100%;height:auto"><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="rgba(128,128,128,0.1)"/><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="${p.mode==='work'?'url(#pg)':'var(--success)'}" stroke-dasharray="${2*Math.PI*90}" stroke-dashoffset="${2*Math.PI*90*(1-prog/100)}" stroke-linecap="round"/><defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><div class="pomodoro-time">${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}</div><div class="pomodoro-label">${p.mode==='work'?'🎯 Focus':'☕ Break'} — Session ${p.session}</div><div class="pomodoro-controls">${p.running?`<button class="btn btn-secondary" onclick="App.pausePomodoro()">⏸ Pause</button>`:`<button class="btn btn-primary" onclick="App.startPomodoro()">▶ Start</button>`}<button class="btn btn-secondary" onclick="App.resetPomodoro()">↺</button><button class="btn btn-ghost" onclick="App.skipPomodoro()">⏭</button></div></div></div><div class="card"><div class="card-header"><span class="card-title">⏱ Stopwatch</span></div><div style="text-align:center;padding:20px"><div class="stopwatch-time">${this.formatSec(sw.elapsed||0)}</div><p style="font-size:.8rem;color:var(--text-secondary);margin:12px 0">${sw.running?'🔴 Recording...':'Ready'}</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${sw.running?`<button class="btn btn-danger" onclick="App.stopStopwatch()">⏹ Stop & Log</button>`:`<div style="width:100%"><select id="sw-subject" class="form-select" style="margin-bottom:8px">${this.state.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select><button class="btn btn-primary" onclick="App.startStopwatch()" style="width:100%">▶ Start Timer</button></div>`}</div></div><hr style="border-color:var(--border);margin:16px 0"><div class="card-header"><span class="card-title">⚙️ Pomodoro Settings</span></div><div class="form-row"><div class="form-group"><label class="form-label">Focus (min)</label><input type="number" class="form-input" value="${set.workMin}" min="1" max="120" onchange="App.updatePomodoroSetting('workMin',this.value)"></div><div class="form-group"><label class="form-label">Break (min)</label><input type="number" class="form-input" value="${set.breakMin}" min="1" max="30" onchange="App.updatePomodoroSetting('breakMin',this.value)"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Long Break (min)</label><input type="number" class="form-input" value="${set.longBreakMin}" min="1" max="60" onchange="App.updatePomodoroSetting('longBreakMin',this.value)"></div><div class="form-group"><label class="form-label">Sessions before long</label><input type="number" class="form-input" value="${set.sessionsBeforeLong}" min="2" max="8" onchange="App.updatePomodoroSetting('sessionsBeforeLong',this.value)"></div></div></div></div>`;
+    },
+    startPomodoro(){if(this.pomodoro.running)return;this.pomodoro.running=true;this.pomodoro.interval=setInterval(()=>{this.pomodoro.timeLeft--;if(this.pomodoro.timeLeft<=0)this.pomodoroComplete();if(this.state.currentPage==='pomodoro')this.renderPomodoro()},1000);this.renderPomodoro()},
+    pausePomodoro(){this.pomodoro.running=false;clearInterval(this.pomodoro.interval);this.renderPomodoro()},
+    resetPomodoro(){this.pausePomodoro();this.pomodoro.timeLeft=(this.pomodoro.mode==='work'?this.state.pomodoroSettings.workMin:this.state.pomodoroSettings.breakMin)*60;this.renderPomodoro()},
+    skipPomodoro(){this.pausePomodoro();this.pomodoroComplete()},
+    pomodoroComplete(){
+        this.pausePomodoro();const set=this.state.pomodoroSettings;
+        if(this.pomodoro.mode==='work'){
+            if(this.state.subjects.length>0){this.state.sessions.push({id:this.uid(),subjectId:this.state.subjects[0].id,chapterId:'',chapterName:'',subjectName:'Pomodoro',date:this.today(),timeSpent:set.workMin,type:'pomodoro',rating:5,notes:`Pomodoro #${this.pomodoro.session}`,createdAt:Date.now()});this.recordStudyDay();this.addXP(10,'Pomodoro done 🍅')}
+            this.toast(`🍅 Pomodoro #${this.pomodoro.session} done!`,'success');
+            this.pomodoro.mode='break';this.pomodoro.timeLeft=(this.pomodoro.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin)*60;
+        }else{
+            this.toast('☕ Break over! Time to focus!','info');this.pomodoro.mode='work';this.pomodoro.session++;this.pomodoro.timeLeft=set.workMin*60;
+        }
+        this.save();this.renderPomodoro();this.checkDailyChallenges();
+    },
+    updatePomodoroSetting(k,v){this.state.pomodoroSettings[k]=parseInt(v)||1;if(!this.pomodoro.running&&k==='workMin'&&this.pomodoro.mode==='work')this.pomodoro.timeLeft=this.state.pomodoroSettings.workMin*60;this.save()},
+
+    // Stopwatch
+    startStopwatch(){const sId=document.getElementById('sw-subject')?.value;this.state.stopwatch={running:true,elapsed:0,subjectId:sId||'',chapterId:'',startTime:Date.now()};this.save();this.startStopwatchTimer();this.renderPomodoro()},
+    startStopwatchTimer(){if(this.swInterval)clearInterval(this.swInterval);this.swInterval=setInterval(()=>{if(this.state.stopwatch.running){this.state.stopwatch.elapsed=Math.floor((Date.now()-this.state.stopwatch.startTime)/1000);if(this.state.currentPage==='pomodoro')this.renderPomodoro()}},1000)},
+    stopStopwatch(){
+        clearInterval(this.swInterval);const sw=this.state.stopwatch;const mins=Math.max(1,Math.round(sw.elapsed/60));
+        if(sw.subjectId){const sub=this.getSubjectById(sw.subjectId);this.state.sessions.push({id:this.uid(),subjectId:sw.subjectId,chapterId:'',chapterName:'',subjectName:sub?sub.name:'Stopwatch',date:this.today(),timeSpent:mins,type:'learning',rating:4,notes:'Stopwatch session',createdAt:Date.now()});this.recordStudyDay();this.addXP(10,'Stopwatch session');this.toast(`⏱ ${this.formatMin(mins)} logged!`,'success')}
+        this.state.stopwatch={running:false,elapsed:0,subjectId:'',chapterId:''};this.save();this.render();
+    },
+
+    // NOTES (with modal)
+    renderNotes(){
+        const el=document.getElementById('page-notes');const notes=this.state.notes||[];
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${notes.length} notes</p><button class="btn btn-primary" onclick="App.openNoteModal()">+ Add Note</button></div>`;
+        if(notes.length===0){
+            h+=`<div class="empty-state"><div class="empty-icon">📓</div><div class="empty-title">No notes yet</div><div class="empty-desc">Save formulas, key concepts, and study notes here!</div><button class="btn btn-primary" onclick="App.openNoteModal()">+ First Note</button></div>`;
+        }else{
+            // Search notes
+            h+=`<div class="form-group" style="margin-bottom:16px"><input type="text" class="form-input" placeholder="🔍 Search notes..." oninput="App.filterNotes(this.value)"></div><div id="notes-list">`;
+            const bySub={};notes.forEach(n=>{const k=n.subjectId||'general';if(!bySub[k])bySub[k]=[];bySub[k].push(n)});
+            Object.entries(bySub).forEach(([sId,ns])=>{
+                const sub=this.getSubjectById(sId);
+                h+=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${sub?sub.icon+' '+sub.name:'📓 General'}</span></div>${ns.map(n=>{const ac=(n.attachments&&n.attachments.length)?n.attachments.length:0;return`<div class="plan-card" style="cursor:pointer" onclick="App.viewNote('${n.id}')"><div class="plan-info"><h4>${n.title} ${n.isFormula?'📐':''} ${ac?`<span style="font-size:.68rem;background:rgba(99,102,241,0.15);color:var(--accent-light);padding:2px 6px;border-radius:8px;margin-left:4px">📎 ${ac}</span>`:''}</h4><p style="white-space:pre-wrap;margin-top:4px;font-size:.8rem;color:var(--text-secondary)">${n.content.substring(0,180)}${n.content.length>180?'...':''}</p></div><button class="ch-btn" onclick="event.stopPropagation();App.deleteNote('${n.id}')">🗑</button></div>`}).join('')}</div>`;
+            });
+            h+='</div>';
+        }
+        el.innerHTML=h;
+    },
+    openNoteModal(editId){
+        const subs=this.state.subjects;
+        const existing=editId?(this.state.notes||[]).find(n=>n.id===editId):null;
+        this._pendingAttachments=existing&&existing.attachments?[...existing.attachments]:[];
+        const attachHtml=this._buildAttachPreviewHtml();
+        document.getElementById('note-edit-body').innerHTML=`<div class="form-group"><label class="form-label">Title</label><input type="text" id="note-title" class="form-input" placeholder="e.g., Trigonometry Formulas" value="${existing?existing.title:''}"></div><div class="form-group"><label class="form-label">Content / Formulas</label><textarea class="form-textarea" id="note-content" placeholder="Write your notes, formulas, key concepts..." style="min-height:120px">${existing?existing.content:''}</textarea></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="note-subject"><option value="">General</option>${subs.map(s=>`<option value="${s.id}" ${existing&&existing.subjectId===s.id?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><div class="quick-log"><div class="quick-chip ${!existing||!existing.isFormula?'selected':''}" data-formula="false" onclick="App.pickNoteType(this)">📝 Notes</div><div class="quick-chip ${existing&&existing.isFormula?'selected':''}" data-formula="true" onclick="App.pickNoteType(this)">📐 Formula</div></div></div></div><div class="form-group"><label class="form-label">📎 Attachments <span style="font-size:.72rem;color:var(--text-muted)">(Images &amp; PDFs • max 4 MB each)</span></label><div class="attach-zone" id="attach-zone" onclick="document.getElementById('attach-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="App._handleAttachDrop(event)"><div style="font-size:1.8rem">📁</div><p>Click to upload or drag &amp; drop<br><span style="font-size:.7rem">JPG · PNG · GIF · WebP · PDF</span></p><input type="file" id="attach-file-input" accept="image/*,.pdf" multiple style="display:none" onchange="App._handleAttachFiles(this.files)"></div><div class="attach-preview" id="attach-preview">${attachHtml}</div></div>${editId?`<input type="hidden" id="note-edit-id" value="${editId}">`:''}`;
+        document.querySelector('#modal-note-edit .modal-header h2').textContent=editId?'📓 Edit Note':'📓 Add Note';
+        this.openModal('modal-note-edit');
+    },
+    _buildAttachPreviewHtml(){
+        return (this._pendingAttachments||[]).map((a,i)=>
+            a.type==='image'
+            ?`<div class="attach-thumb"><img src="${a.data}" alt="${a.name}"><button class="attach-remove" onclick="App._removeNewAttach(${i})">×</button></div>`
+            :`<div class="attach-thumb"><div class="pdf-thumb">📄<span>${a.name}</span></div><button class="attach-remove" onclick="App._removeNewAttach(${i})">×</button></div>`
+        ).join('');
+    },
+    _removeNewAttach(i){
+        this._pendingAttachments.splice(i,1);
+        const p=document.getElementById('attach-preview');
+        if(p)p.innerHTML=this._buildAttachPreviewHtml();
+    },
+    _handleAttachDrop(e){
+        e.preventDefault();
+        document.getElementById('attach-zone').classList.remove('drag-over');
+        this._handleAttachFiles(e.dataTransfer.files);
+    },
+    _handleAttachFiles(files){
+        if(!files||!files.length)return;
+        const MAX=4*1024*1024;
+        Array.from(files).forEach(file=>{
+            if(file.size>MAX){this.toast(`${file.name} is too large (max 4 MB)`,'warning');return}
+            const isPdf=file.type==='application/pdf';
+            const isImg=file.type.startsWith('image/');
+            if(!isPdf&&!isImg){this.toast('Only images and PDFs are supported','warning');return}
+            const reader=new FileReader();
+            reader.onload=e=>{
+                this._pendingAttachments=this._pendingAttachments||[];
+                this._pendingAttachments.push({type:isPdf?'pdf':'image',name:file.name,data:e.target.result});
+                const p=document.getElementById('attach-preview');
+                if(p)p.innerHTML=this._buildAttachPreviewHtml();
+            };
+            reader.readAsDataURL(file);
+        });
+    },
+    pickNoteType(el){el.parentElement.querySelectorAll('.quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
+    saveNoteFromModal(){
+        const title=document.getElementById('note-title').value.trim();
+        const content=document.getElementById('note-content').value.trim();
+        if(!title&&!content&&(!this._pendingAttachments||!this._pendingAttachments.length)){this.toast('Enter a title or content','warning');return}
+        const subjectId=document.getElementById('note-subject').value;
+        const isFormula=document.querySelector('#note-edit-body .quick-chip.selected')?.dataset.formula==='true';
+        const editId=document.getElementById('note-edit-id')?.value;
+        const attachments=this._pendingAttachments?[...this._pendingAttachments]:[];
+        if(editId){
+            const note=this.state.notes.find(n=>n.id===editId);
+            if(note){note.title=title;note.content=content;note.subjectId=subjectId;note.isFormula=isFormula;note.attachments=attachments;note.updatedAt=Date.now()}
+        }else{
+            this.state.notes.push({id:this.uid(),title,content,subjectId,isFormula,attachments,createdAt:Date.now()});
+        }
+        this._pendingAttachments=[];
+        try{this.save();}catch(e){this.toast('⚠️ Storage full! Remove some attachments.','warning');return;}
+        this.closeModal('modal-note-edit');this.renderNotes();
+        this.toast(editId?'📓 Note updated!':'📓 Note saved!','success');
+        this.checkBadges();this.checkDailyChallenges();
+    },
+    viewNote(id){
+        const note=this.state.notes.find(n=>n.id===id);if(!note)return;
+        const sub=this.getSubjectById(note.subjectId);
+        const attachHtml=(note.attachments&&note.attachments.length)
+            ?`<div style="margin-top:16px"><p style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">📎 Attachments (${note.attachments.length})</p><div class="note-attachments">${note.attachments.map((a,i)=>
+                a.type==='image'
+                ?`<div class="note-attach-item" onclick="App.openLightbox('${id}',${i})" title="${a.name}"><img src="${a.data}" alt="${a.name}"></div>`
+                :`<div class="note-attach-item" onclick="App.openLightbox('${id}',${i})" title="${a.name}"><div class="note-attach-pdf">📄<span>${a.name}</span></div></div>`
+            ).join('')}</div></div>`:'';
+        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:14px">${sub?`<span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span>`:''} ${note.isFormula?'<span class="tag" style="background:rgba(99,102,241,0.12);color:var(--accent-light)">📐 Formula</span>':''}</div><h3 style="font-size:1.15rem;margin-bottom:14px">${note.title}</h3><div style="white-space:pre-wrap;font-size:.9rem;line-height:1.8;color:var(--text-secondary);background:var(--bg-card);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border)">${note.content||'<span style="opacity:.4">No text content</span>'}</div>${attachHtml}`;
+        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.closeModal('modal-detail');App.openNoteModal('${id}')">✏️ Edit</button>`;
+        this.openModal('modal-detail');
+    },
+    openLightbox(noteId,attachIdx){
+        const note=this.state.notes.find(n=>n.id===noteId);if(!note||!note.attachments)return;
+        const a=note.attachments[attachIdx];if(!a)return;
+        const overlay=document.getElementById('lb-overlay');
+        const img=document.getElementById('lb-img');
+        const pdf=document.getElementById('lb-pdf');
+        if(a.type==='image'){img.src=a.data;img.style.display='';pdf.style.display='none';pdf.src=''}
+        else{pdf.src=a.data;pdf.style.display='';img.style.display='none';img.src=''}
+        overlay.classList.add('show');
+        document.body.style.overflow='hidden';
+    },
+    closeLightbox(){
+        document.getElementById('lb-overlay').classList.remove('show');
+        document.getElementById('lb-img').src='';
+        document.getElementById('lb-pdf').src='';
+        document.body.style.overflow='';
+    },
+    deleteNote(id){if(!confirm('Delete note?'))return;this.state.notes=this.state.notes.filter(n=>n.id!==id);this.save();this.renderNotes()},
+    filterNotes(q){
+        if(!q||q.length<2){if(this.state.currentPage==='notes')this.renderNotes();return}
+        q=q.toLowerCase();
+        const notes=(this.state.notes||[]).filter(n=>n.title.toLowerCase().includes(q)||n.content.toLowerCase().includes(q));
+        const container=document.getElementById('notes-list');
+        if(!container)return;
+        if(notes.length===0){container.innerHTML='<p style="color:var(--text-muted);text-align:center;padding:20px">No matching notes</p>';return}
+        container.innerHTML=notes.map(n=>{
+            const sub=this.getSubjectById(n.subjectId);
+            return`<div class="plan-card" style="cursor:pointer;margin-bottom:6px" onclick="App.viewNote('${n.id}')"><div class="plan-info"><h4>${n.title} ${n.isFormula?'📐':''}</h4><p style="font-size:.78rem;color:var(--text-muted)">${sub?sub.icon+' '+sub.name:'General'}</p></div></div>`;
+        }).join('');
+    },
+
+    // AI COACH
+    // ── AI COACH ──────────────────────────────────────────────
+    GROQ_KEY:'',// key is now stored securely in Vercel environment variables
+    coachHistory:[], // {role:'user'|'model', parts:[{text}]}
+
+    buildCoachContext(){
+        const p=this.state.profile;
+        const tm=this.getTodayMinutes();
+        const sp=this.getTotalChapters()>0?Math.round(this.getCompletedCount()/this.getTotalChapters()*100):0;
+        const od=this.getOverdueChapters();
+        const rd=this.getRevisionsDue();
+        const ws=this.state.subjects.filter(s=>{const d=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;return s.chapters.length>0&&d/s.chapters.length<0.3});
+        const udoubts=this.state.doubts.filter(d=>d.status==='unresolved');
+        const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
+        const dte=this.getDaysToExam();
+        const recentSessions=this.state.sessions.slice(-5).map(s=>`${s.subjectName} - ${s.chapterName} (${s.timeSpent}min, ${s.type})`).join('; ');
+        const subjectProgress=this.state.subjects.map(s=>{
+            const done=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;
+            return `${s.icon} ${s.name}: ${done}/${s.chapters.length} chapters`;
+        }).join(', ');
+
+        return `You are a friendly, encouraging AI study coach for a Class 10 CBSE student. You know their real study data and give SHORT, specific, actionable advice. Be warm but concise — 2-4 sentences max unless asked for detail. Use emojis naturally. Never be generic.
+
+STUDENT PROFILE:
+- Name: ${p.name}
+- Exam date: ${p.examDate||'not set'} (${dte!==null?dte+' days away':'date not set'})
+- Daily goal: ${this.formatMin(p.dailyGoalMinutes)} | Studied today: ${this.formatMin(tm)}
+- Study streak: ${p.streak} days
+- Today's mood: ${todayMood?todayMood.mood:'not set'}
+- Level: ${p.level} (${p.xp} XP)
+
+SYLLABUS PROGRESS:
+- Overall: ${sp}% complete (${this.getCompletedCount()}/${this.getTotalChapters()} chapters)
+- By subject: ${subjectProgress}
+
+URGENT ITEMS:
+- Overdue chapters (${od.length}): ${od.slice(0,3).map(c=>c.name).join(', ')||'none'}
+- Revisions due (${rd.length}): ${rd.slice(0,3).map(c=>c.name).join(', ')||'none'}
+- Weak subjects (<30% done): ${ws.map(s=>s.name).join(', ')||'none'}
+- Unresolved doubts (${udoubts.length}): ${udoubts.slice(0,3).map(d=>d.text).join('; ')||'none'}
+
+RECENT STUDY SESSIONS: ${recentSessions||'none yet'}
+
+Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style MCQs on the topic with 4 options and the answer at the end. If they ask what to study, suggest specifically from their pending chapters.`;
+    },
+
+    async sendCoachMessage(){
+        const input=document.getElementById('coach-input');
+        const msg=input.value.trim();
+        if(!msg)return;
+        input.value='';
+        input.style.height='auto';
+
+        // Add user message to UI
+        this.coachHistory.push({role:'user',parts:[{text:msg}]});
+        this.renderChatMessages();
+        this.scrollChat();
+
+        // Show typing indicator
+        document.getElementById('coach-typing').style.display='flex';
+        this.scrollChat();
+
+        try{
+            const systemCtx=this.buildCoachContext();
+            const messages=[
+                {role:'system',content:systemCtx},
+                ...this.coachHistory.map(m=>({
+                    role:m.role==='model'?'assistant':m.role,
+                    content:m.parts[0].text
+                }))
+            ];
+
+            // Call our own Vercel serverless function — key is stored server-side
+            const res=await fetch('/api/chat',{
+                method:'POST',
+                headers:{'Content-Type':'application/json'},
+                body:JSON.stringify({messages})
+            });
+            const data=await res.json();
+            if(data.error)throw new Error(data.error);
+            const reply=data.reply||'Sorry, I could not respond. Try again!';
+            this.coachHistory.push({role:'model',parts:[{text:reply}]});
+        }catch(e){
+            this.coachHistory.push({role:'model',parts:[{text:'⚠️ Could not connect to AI. Check your internet and try again. ('+e.message+')'}]});
+        }
+
+        document.getElementById('coach-typing').style.display='none';
+        this.renderChatMessages();
+        this.scrollChat();
+    },
+
+    renderChatMessages(){
+        const container=document.getElementById('coach-messages');
+        if(!container)return;
+        container.innerHTML=this.coachHistory.map(m=>{
+            const isUser=m.role==='user';
+            const text=m.parts[0].text;
+            // Simple markdown: **bold**, newlines
+            const formatted=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+            return`<div style="display:flex;gap:10px;margin-bottom:14px;${isUser?'flex-direction:row-reverse':''}">
+                <div style="width:32px;height:32px;border-radius:50%;background:${isUser?'var(--gradient-1)':'rgba(99,102,241,0.15)'};display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${isUser?'👤':'🤖'}</div>
+                <div style="max-width:78%;background:${isUser?'var(--gradient-1)':'var(--bg-card)'};border:1px solid ${isUser?'transparent':'var(--border)'};border-radius:${isUser?'14px 4px 14px 14px':'4px 14px 14px 14px'};padding:10px 14px;font-size:.85rem;line-height:1.6;color:${isUser?'#fff':'var(--text-primary)'}">
+                    ${formatted}
+                </div>
+            </div>`;
+        }).join('');
+    },
+
+    scrollChat(){
+        const box=document.getElementById('coach-chat-box');
+        if(box)setTimeout(()=>box.scrollTop=box.scrollHeight,50);
+    },
+
+    askQuickQuestion(q){
+        const input=document.getElementById('coach-input');
+        if(input){input.value=q;this.sendCoachMessage();}
+    },
+
+    renderCoach(){
+        const el=document.getElementById('page-coach');
+        const od=this.getOverdueChapters(),rd=this.getRevisionsDue();
+        const tm=this.getTodayMinutes(),gm=this.state.profile.dailyGoalMinutes;
+        const sp=this.getTotalChapters()>0?Math.round(this.getCompletedCount()/this.getTotalChapters()*100):0;
+        const ws=this.state.subjects.filter(s=>{const d=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;return s.chapters.length>0&&d/s.chapters.length<0.3});
+        const udoubts=this.state.doubts.filter(d=>d.status==='unresolved').length;
+        const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
+        const plan=this.getTomorrowPlan();
+        const weekPlan=this.generateWeeklyPlan();
+        const dte=this.getDaysToExam();
+
+        // Quick suggestion chips based on data
+        const suggestions=[];
+        if(od.length>0)suggestions.push(`What should I do about my ${od.length} overdue chapters?`);
+        if(rd.length>0)suggestions.push('Help me plan my revisions for today');
+        suggestions.push('What should I study right now?');
+        if(ws.length>0)suggestions.push(`How do I improve in ${ws[0].name}?`);
+        suggestions.push('Quiz me on '+( this.getAllChapters().find(c=>c.status==='in-progress')?.name || 'Electricity'));
+        suggestions.push('How do I stay consistent?');
+
+        el.innerHTML=`
+<!-- Stats strip -->
+<div class="grid grid-4" style="margin-bottom:20px">
+    <div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">📊</div><div class="stat-info"><h3>${sp}%</h3><p>Syllabus done</p></div></div>
+    <div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">⚠️</div><div class="stat-info"><h3>${od.length}</h3><p>Overdue</p></div></div>
+    <div class="card stat-card"><div class="stat-icon" style="background:rgba(6,182,212,0.12)">🔄</div><div class="stat-info"><h3>${rd.length}</h3><p>Revisions due</p></div></div>
+    <div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🎯</div><div class="stat-info"><h3>${Math.min(100,Math.round(tm/gm*100))}%</h3><p>Goal today</p></div></div>
+</div>
+
+<!-- AI Chat -->
+<div class="card" style="margin-bottom:20px">
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
+        <div style="width:42px;height:42px;border-radius:50%;background:var(--gradient-1);display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 15px rgba(99,102,241,0.3)">🤖</div>
+        <div><h3 style="font-size:1rem;font-weight:700">AI Study Coach</h3><p style="font-size:.72rem;color:var(--text-muted)">Powered by Groq • Knows your real progress</p></div>
+        <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="App.clearCoachHistory()" title="Clear chat">🗑</button>
+    </div>
+
+    <!-- Chat messages -->
+    <div id="coach-chat-box" style="height:340px;overflow-y:auto;margin-bottom:14px;padding-right:4px">
+        <div id="coach-messages"></div>
+        <div id="coach-typing" style="display:none;align-items:center;gap:10px;margin-bottom:10px">
+            <div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center">🤖</div>
+            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 16px">
+                <div style="display:flex;gap:4px;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s infinite"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s .2s infinite"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s .4s infinite"></span></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick suggestions -->
+    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+        ${suggestions.slice(0,4).map(s=>`<button class="btn btn-sm btn-secondary" style="font-size:.72rem" onclick="App.askQuickQuestion('${s.replace(/'/g,"\\'")}')">💬 ${s.length>35?s.slice(0,35)+'...':s}</button>`).join('')}
+    </div>
+
+    <!-- Input -->
+    <div style="display:flex;gap:8px;align-items:flex-end">
+        <textarea id="coach-input" class="form-input" placeholder="Ask anything — what to study, explain a concept, quiz me..." style="flex:1;resize:none;min-height:42px;max-height:120px;line-height:1.5;padding:10px 14px" rows="1"
+            onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.sendCoachMessage()}"
+            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+        <button class="btn btn-primary" onclick="App.sendCoachMessage()" style="height:42px;padding:0 16px">Send ➤</button>
+    </div>
+</div>
+
+<!-- Insights + Plan grid -->
+<div class="grid grid-2" style="margin-bottom:20px">
+    <div class="card"><div class="card-header"><span class="card-title">📋 Study Now</span></div>
+        ${plan.slice(0,5).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} • ${p.reason}</p></div></div>`).join('')||'<p style="color:var(--text-muted);padding:10px">All caught up! 🎉</p>'}
+    </div>
+    <div class="card"><div class="card-header"><span class="card-title">💡 Quick Insights</span></div>
+        ${tm<gm?`<div class="coach-msg" style="border-color:var(--warning)"><h4>📖 ${this.formatMin(gm-tm)} left for goal</h4><p>You've studied ${this.formatMin(tm)} today</p></div>`:`<div class="coach-msg" style="border-color:var(--success)"><h4>🎯 Daily Goal Hit!</h4><p>${this.formatMin(tm)} studied today 🔥</p></div>`}
+        ${od.length>0?`<div class="coach-msg" style="border-color:var(--danger)"><h4>⚠️ ${od.length} Overdue</h4><p>${od.slice(0,2).map(c=>c.name).join(', ')}</p></div>`:''}
+        ${rd.length>0?`<div class="coach-msg" style="border-color:var(--info)"><h4>🔄 ${rd.length} Revisions Due</h4><p>Spaced repetition builds memory</p></div>`:''}
+        ${ws.length>0?`<div class="coach-msg" style="border-color:var(--accent)"><h4>📉 Weak: ${ws.map(s=>s.icon).join(' ')}</h4><p>${ws.map(s=>s.name).join(', ')} need attention</p></div>`:''}
+        ${udoubts>0?`<div class="coach-msg" style="border-color:var(--danger)"><h4>❓ ${udoubts} Unresolved Doubts</h4><p>Clear these before they pile up</p></div>`:''}
+        ${dte>0?`<div class="coach-msg" style="border-color:var(--success)"><h4>📅 ${dte} days to boards</h4><p>Readiness: ${this.getReadinessScore()}%</p></div>`:''}
+    </div>
+</div>
+
+<!-- Mood -->
+<div class="card" style="margin-bottom:20px">
+    <div class="card-header" style="margin-bottom:12px"><span class="card-title">😊 Today's Mood</span></div>
+    <div class="mood-picker" style="justify-content:flex-start;gap:8px">
+        ${['🤩','😊','😐','😴','😤'].map(m=>`<button class="mood-btn ${todayMood?.mood===m?'selected':''}" onclick="App.setMood('${m}')" style="font-size:1.5rem;padding:6px">${m}</button>`).join('')}
+    </div>
+    ${todayMood?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:10px">${this.getMoodAdvice(todayMood.mood)}</p>`:''}
+</div>
+
+<!-- Weekly Plan -->
+<div class="card"><div class="card-header"><span class="card-title">📅 Suggested Weekly Plan</span><button class="btn btn-sm btn-secondary" onclick="App.regenerateWeeklyPlan()">🔄 Refresh</button></div>
+    ${weekPlan.map(day=>`<div class="plan-day"><div class="plan-day-header">📆 ${day.dayName}</div>${day.items.map(item=>`<div class="plan-slot"><span style="font-size:1.1rem">${item.icon}</span><span style="flex:1">${item.text}</span><span style="font-size:.72rem;color:var(--text-muted)">${item.type}</span></div>`).join('')}</div>`).join('')}
+</div>`;
+
+        // Render existing chat history (persists during session)
+        this.renderChatMessages();
+        this.scrollChat();
+
+        // If first open with no history, send a greeting
+        if(this.coachHistory.length===0){
+            const greeting=`Hey ${this.state.profile.name}! 👋 I'm your AI study coach. I can see your real progress — ${this.getCompletedCount()}/${this.getTotalChapters()} chapters done${od.length>0?`, ${od.length} overdue`:''}${rd.length>0?`, ${rd.length} revisions due`:''}. What do you need help with today?`;
+            this.coachHistory.push({role:'model',parts:[{text:greeting}]});
+            this.renderChatMessages();
+        }
+    },
+
+    clearCoachHistory(){
+        this.coachHistory=[];
+        this.renderCoach();
+    },
+
+    getMoodAdvice(mood){
+        const a={'🤩':'You\'re energized! Perfect time for hard topics like Trigonometry or Quadratic Equations! 🚀','😊':'Good mood! Balance new topics with revision. Productive day ahead! ✨','😐':'Feeling neutral? Start with something familiar, then tackle tougher topics. 📖','😴':'Take it easy — do light revision or watch a concept video. Rest matters! 💤','😤':'Feeling frustrated? Try solving practice problems — small wins help! 🧘'};
+        return a[mood]||'Keep going! Every session counts! 💪';
+    },
+
+    generateWeeklyPlan(){
+        const days=['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+        const plan=[];
+        const pending=this.getAllChapters().filter(c=>c.status!=='completed'&&c.status!=='revised');
+        const revDue=this.getRevisionsDue();
+        let pIdx=0,rIdx=0;
+        days.forEach((dayName,di)=>{
+            const items=[];
+            if(pending[pIdx]){items.push({icon:pending[pIdx].subjectIcon,text:`${pending[pIdx].subjectName}: ${pending[pIdx].name}`,type:'New'});pIdx++}
+            if(pending[pIdx]&&di<5){items.push({icon:pending[pIdx].subjectIcon,text:`${pending[pIdx].subjectName}: ${pending[pIdx].name}`,type:'New'});pIdx++}
+            if(revDue[rIdx]){items.push({icon:'🔄',text:`Revise: ${revDue[rIdx].name}`,type:'Revision'});rIdx++}
+            if(di>=5){items.push({icon:'📝',text:'Practice previous year papers',type:'Practice'})}
+            if(items.length===0)items.push({icon:'📚',text:'Free study / Catch up',type:'Flexible'});
+            plan.push({dayName,items});
+        });
+        return plan;
+    },
+    regenerateWeeklyPlan(){this.renderCoach();this.toast('📅 Plan refreshed!','info')},
+
+    // REWARDS
+    renderRewards(){
+        const el=document.getElementById('page-rewards'),p=this.state.profile,c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pc=Math.min(100,((p.xp-c)/(n-c))*100),stats=this.getStats();
+        el.innerHTML=`<div class="card" style="margin-bottom:20px;text-align:center;padding:30px"><div style="font-size:3.5rem;margin-bottom:10px">⚡</div><h2 style="font-size:2rem;font-weight:800;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent">Level ${p.level}</h2><p style="color:var(--text-secondary);margin-bottom:16px">${p.xp} XP Total</p><div style="max-width:400px;margin:0 auto"><div class="progress-bar" style="height:14px;border-radius:7px"><div class="progress-fill" style="width:${pc}%;background:var(--gradient-1)"></div></div><p style="font-size:.78rem;color:var(--text-muted);margin-top:8px">${p.xp-c} / ${n-c} XP to Level ${p.level+1}</p></div></div><div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🔥</div><div class="stat-info"><h3>${p.streak}</h3><p>Day Streak</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">🏅</div><div class="stat-info"><h3>${this.state.earnedBadges.length}/${this.BADGES.length}</h3><p>Badges</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">📖</div><div class="stat-info"><h3>${stats.totalSessions}</h3><p>Sessions</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)">⏱</div><div class="stat-info"><h3>${this.formatMin(stats.totalMinutes)}</h3><p>Total Study Time</p></div></div></div><div class="card"><div class="card-header"><span class="card-title">🏆 Achievement Badges</span><span class="card-subtitle">${this.state.earnedBadges.length} earned</span></div><div class="grid grid-4">${this.BADGES.map(b=>{const e=this.state.earnedBadges.includes(b.id);return`<div class="card badge-card ${e?'':'locked'}"><span class="badge-icon">${b.icon}</span><div class="badge-name">${b.name}</div><div class="badge-desc">${b.desc}</div>${e?'<div class="badge-earned">✓ Earned</div>':''}</div>`}).join('')}</div></div>`;
+    },
+
+    // SETTINGS
+    renderSettings(){
+        const el=document.getElementById('page-settings'),p=this.state.profile,stats=this.getStats();
+        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">👤 Profile</span></div><div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.save();App.updateSidebar()"></div><div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App.save()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.save();App.updatePageSubtitle()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||90}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App.save()"></div></div>
+        <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">🎨 Theme</span></div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm ${this.state.theme==='dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('dark')">🌙 Dark</button><button class="btn btn-sm ${this.state.theme==='light'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('light')">☀️ Light</button><button class="btn btn-sm ${this.state.theme==='warm-dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('warm-dark')">🌅 Warm Dark</button></div><div style="display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--border)"><input type="checkbox" id="auto-theme-check" ${this.state.autoTheme?'checked':''} onchange="App.toggleAutoTheme()" style="width:16px;height:16px;cursor:pointer"><label for="auto-theme-check" style="font-size:.82rem;cursor:pointer">🕐 Auto switch (Light 7AM–7PM, Dark at night)</label></div></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">📊 Statistics</span></div><div style="font-size:.85rem;color:var(--text-secondary);line-height:2"><p>📖 Sessions: <strong style="color:var(--text-primary)">${stats.totalSessions}</strong></p><p>⏱ Total Study Time: <strong style="color:var(--text-primary)">${this.formatMin(stats.totalMinutes)}</strong></p><p>✅ Chapters Done: <strong style="color:var(--text-primary)">${stats.completedChapters}/${this.getTotalChapters()}</strong></p><p>🔄 Total Revisions: <strong style="color:var(--text-primary)">${stats.totalRevisions}</strong></p><p>🔥 Current Streak: <strong style="color:var(--text-primary)">${stats.streak} days</strong></p><p>📝 Exams Logged: <strong style="color:var(--text-primary)">${this.state.examScores.length}</strong></p><p>❓ Doubts: <strong style="color:var(--text-primary)">${this.state.doubts.length} (${this.state.doubts.filter(d=>d.status==='unresolved').length} unresolved)</strong></p><p>📓 Notes: <strong style="color:var(--text-primary)">${(this.state.notes||[]).length}</strong></p><p>🔗 Resources: <strong style="color:var(--text-primary)">${(this.state.resources||[]).length}</strong></p><p>⚡ Level ${stats.level} (${p.xp} XP)</p></div></div></div><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">💾 Data Management</span></div><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-secondary" onclick="App.exportData()" style="justify-content:center">📤 Export Data (JSON)</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()" style="justify-content:center">📥 Import Data</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)"><hr style="border-color:var(--border)"><button class="btn btn-danger" onclick="App.resetAll()" style="justify-content:center">🗑 Reset All Data</button></div></div>
+        <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">⌨️ Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">ℹ️ About StudyOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">StudyOS is your personal Class 10 study command center. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p></div></div></div>`;
+    },
+
+    // SEARCH
+    handleSearch(q){
+        const dd=document.getElementById('search-dropdown');
+        if(!q||q.length<2){dd.style.display='none';return}
+        q=q.toLowerCase();const results=[];
+        this.getAllChapters().forEach(c=>{if(c.name.toLowerCase().includes(q)||c.subjectName.toLowerCase().includes(q)){results.push({...c,resultType:'chapter'})}});
+        (this.state.notes||[]).forEach(n=>{if(n.title.toLowerCase().includes(q)||n.content.toLowerCase().includes(q)){results.push({...n,resultType:'note'})}});
+        (this.state.doubts||[]).forEach(d=>{if(d.text.toLowerCase().includes(q)){results.push({...d,resultType:'doubt'})}});
+        (this.state.resources||[]).forEach(r=>{if(r.title.toLowerCase().includes(q)){results.push({...r,resultType:'resource'})}});
+        if(results.length===0){dd.style.display='none';return}
+        dd.style.display='block';
+        dd.innerHTML=results.slice(0,10).map(r=>{
+            if(r.resultType==='note')return`<div class="plan-card" style="margin:4px;cursor:pointer" onclick="App.navigate('notes');document.getElementById('search-dropdown').style.display='none'"><div class="plan-emoji">📓</div><div class="plan-info"><h4>${r.title}</h4><p>Note</p></div></div>`;
+            if(r.resultType==='doubt')return`<div class="plan-card" style="margin:4px;cursor:pointer" onclick="App.navigate('doubts');document.getElementById('search-dropdown').style.display='none'"><div class="plan-emoji">❓</div><div class="plan-info"><h4>${r.text.substring(0,50)}</h4><p>Doubt • ${r.status}</p></div></div>`;
+            if(r.resultType==='resource')return`<div class="plan-card" style="margin:4px;cursor:pointer" onclick="App.navigate('resources');document.getElementById('search-dropdown').style.display='none'"><div class="plan-emoji">🔗</div><div class="plan-info"><h4>${r.title}</h4><p>Resource</p></div></div>`;
+            return`<div class="plan-card" style="margin:4px;cursor:pointer" onclick="App.openChapterDetail('${r.subjectId}','${r.id}');document.getElementById('search-dropdown').style.display='none'"><div class="plan-emoji">${r.subjectIcon}</div><div class="plan-info"><h4>${r.name}</h4><p>${r.subjectName}</p></div></div>`;
+        }).join('');
+    },
+
+    // MODALS
+    openModal(id){document.getElementById(id).classList.add('show')},
+    closeModal(id){document.getElementById(id).classList.remove('show')},
+
+    openAddChapterModal(pSub){
+        const subs=this.state.subjects;
+        if(subs.length===0){this.toast('Add a subject first!','warning');this.openModal('modal-subject');return}
+        document.getElementById('chapter-form-body').innerHTML=`<div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="ch-subject">${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter Name</label><input type="text" id="ch-name" class="form-input" placeholder="e.g., Real Numbers"></div><div class="form-row"><div class="form-group"><label class="form-label">Difficulty</label><select class="form-select" id="ch-diff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div><div class="form-group"><label class="form-label">Deadline</label><input type="date" id="ch-deadline" class="form-input"></div></div>`;
+        this.openModal('modal-chapter');
+    },
+    saveChapter(){
+        const sId=document.getElementById('ch-subject').value,name=document.getElementById('ch-name').value.trim();
+        if(!name){this.toast('Enter chapter name','warning');return}
+        const sub=this.getSubjectById(sId);if(!sub)return;
+        sub.chapters.push({id:this.uid(),name,status:'not-started',deadline:document.getElementById('ch-deadline').value||'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:document.getElementById('ch-diff').value,notes:'',exercises:[],createdAt:Date.now()});
+        this.save();this.closeModal('modal-chapter');this.render();this.toast(`📖 "${name}" added!`,'success');
+    },
+    saveSubject(){
+        const name=document.getElementById('new-subject-name').value.trim(),icon=document.getElementById('new-subject-icon').value.trim()||'📚',cc=document.querySelector('#color-pick .quick-chip.selected'),color=cc?cc.dataset.color:'#6366f1';
+        if(!name){this.toast('Enter subject name','warning');return}
+        this.state.subjects.push({id:this.uid(),name,icon,color,chapters:[]});
+        this.save();this.closeModal('modal-subject');this.render();this.toast(`📚 "${name}" added!`,'success');
+    },
+    pickColor(el){document.querySelectorAll('#color-pick .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
+
+    // EXPORT/IMPORT
+    exportData(){
+        const d=JSON.stringify(this.state,null,2),b=new Blob([d],{type:'application/json'}),u=URL.createObjectURL(b),a=document.createElement('a');
+        a.href=u;a.download=`studyos-${this.today()}.json`;a.click();URL.revokeObjectURL(u);this.toast('Data exported! 📤','success');
+    },
+    importData(e){
+        const f=e.target.files[0];if(!f)return;
+        if(!confirm('This will replace ALL current data. Continue?')){e.target.value='';return}
+        const r=new FileReader();
+        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.save();this.render();this.updateSidebar();this.applyTheme();this.toast('Data imported! 📥','success')}catch(err){this.toast('Invalid file format','error')}};
+        r.readAsText(f);e.target.value='';
+    },
+    resetAll(){
+        if(!confirm('⚠️ Delete ALL data? This cannot be undone!'))return;
+        if(!confirm('Are you really sure? Type "yes" in the next prompt to confirm.')&&!confirm('Final confirmation: Delete everything?'))return;
+        localStorage.removeItem('studyos_data');location.reload();
+    },
+
+    // TOAST
+    toast(msg,type='info'){
+        const c=document.getElementById('toast-container');
+        const icons={success:'✅',warning:'⚠️',error:'❌',info:'ℹ️',xp:'⚡'};
+        const t=document.createElement('div');
+        t.className=`toast toast-${type}`;
+        t.innerHTML=`<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+        c.appendChild(t);
+        setTimeout(()=>{t.classList.add('toast-out');setTimeout(()=>t.remove(),300)},3500);
+    },
+
+    // CELEBRATION
+    celebrate(){
+        const c=document.getElementById('celebration');c.innerHTML='';c.classList.add('show');
+        const cols=['#6366f1','#8b5cf6','#06b6d4','#10b981','#f59e0b','#ef4444','#ec4899','#fbbf24'];
+        for(let i=0;i<60;i++){
+            const cf=document.createElement('div');cf.className='confetti';
+            cf.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${cols[Math.floor(Math.random()*cols.length)]};animation-duration:${1.5+Math.random()*2}s;animation-delay:${Math.random()*0.5}s;width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>0.5?'50%':'2px'}`;
+            c.appendChild(cf);
+        }
+        setTimeout(()=>c.classList.remove('show'),3500);
+    }
+};
+
+// INIT
+document.addEventListener('DOMContentLoaded',()=>App.init());
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(m=>{
+    m.addEventListener('click',e=>{if(e.target===m)m.classList.remove('show')});
+});
+
+// Keyboard shortcuts
+document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));
+    if(e.ctrlKey&&e.key==='l'){e.preventDefault();App.openQuickLog()}
+    if(e.ctrlKey&&e.key==='p'){e.preventDefault();App.navigate('pomodoro')}
+    if(e.ctrlKey&&e.key==='k'){e.preventDefault();document.querySelector('.search-box input')?.focus()}
+    if(e.altKey){
+        const pages=['dashboard','subjects','log','tasks','revisions','exams','pomodoro','notes','coach'];
+        const num=parseInt(e.key);
+        if(num>=1&&num<=pages.length){e.preventDefault();App.navigate(pages[num-1])}
+    }
+});
+
+//done
+</script>
+</body>
+</html>
