@@ -5,6 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <title>StudyOS — Class 10 Study Command Center</title>
     <link rel="manifest" href="data:application/json;base64,eyJuYW1lIjoiU3R1ZHlPUyIsInNob3J0X25hbWUiOiJTdHVkeU9TIiwic3RhcnRfdXJsIjoiLiIsImRpc3BsYXkiOiJzdGFuZGFsb25lIiwiYmFja2dyb3VuZF9jb2xvciI6IiMwYTBhMWEiLCJ0aGVtZV9jb2xvciI6IiM2MzY2ZjEiLCJpY29ucyI6W119">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
         *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
         :root{
@@ -17,6 +20,29 @@
             --success:#10b981;--warning:#f59e0b;--danger:#ef4444;--info:#06b6d4;
             --radius:14px;--radius-sm:10px;--radius-xs:7px;
             --shadow:0 4px 24px rgba(0,0,0,0.3);--sidebar-w:260px;
+            /* ── 8pt spacing scale ── */
+            --sp-1:4px;--sp-2:8px;--sp-3:12px;--sp-4:16px;
+            --sp-5:24px;--sp-6:32px;--sp-7:48px;--sp-8:64px;
+            /* ── Semantic color tokens ── */
+            --color-done:#10b981;        /* green  — completion */
+            --color-done-bg:rgba(16,185,129,0.1);
+            --color-done-border:rgba(16,185,129,0.2);
+            --color-warn:#f59e0b;        /* amber  — urgency / in-progress */
+            --color-warn-bg:rgba(245,158,11,0.1);
+            --color-warn-border:rgba(245,158,11,0.2);
+            --color-danger:#ef4444;      /* red    — overdue / critical only */
+            --color-danger-bg:rgba(239,68,68,0.08);
+            --color-danger-border:rgba(239,68,68,0.2);
+            --color-streak:#f97316;      /* orange — streak / energy */
+            --color-streak-bg:rgba(249,115,22,0.1);
+            --color-xp:#8b5cf6;          /* purple — XP / rewards / premium */
+            --color-xp-bg:rgba(139,92,246,0.1);
+            --color-focus:#06b6d4;       /* cyan   — focus / info */
+            --color-focus-bg:rgba(6,182,212,0.1);
+            /* ── Typography scale ── */
+            --font-display:'Sora',system-ui,sans-serif;
+            --font-body:'Inter',system-ui,sans-serif;
+            --font-mono:'JetBrains Mono',monospace;
         }
         [data-theme="light"]{
             --bg-primary:#faf8f5;--bg-secondary:#ffffff;--bg-card:rgba(0,0,0,0.03);
@@ -30,23 +56,239 @@
             --border-hover:rgba(255,235,205,0.15);--text-primary:#f5ede4;--text-secondary:rgba(245,237,228,0.65);
             --text-muted:rgba(245,237,228,0.45);--shadow:0 4px 24px rgba(0,0,0,0.4);
         }
-        [data-theme="light"] body::before{background:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(139,92,246,0.04) 0%,transparent 60%)}
-        [data-theme="light"] #sidebar{background:rgba(255,255,255,0.95)}
-        [data-theme="light"] #topbar{background:rgba(250,248,245,0.9)}
-        [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.95)}
-        [data-theme="light"] .modal{background:#fff}
-        [data-theme="light"] .toast{background:#fff}
-        [data-theme="light"] .logo-icon{box-shadow:0 4px 15px rgba(99,102,241,0.2)}
-        [data-theme="warm-dark"] body::before{background:radial-gradient(ellipse at 20% 0%,rgba(245,158,11,0.06) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(239,68,68,0.04) 0%,transparent 60%)}
         [data-theme="warm-dark"] #sidebar{background:rgba(33,28,23,0.9)}
         [data-theme="warm-dark"] #topbar{background:rgba(26,21,18,0.8)}
         [data-theme="warm-dark"] .mobile-nav{background:rgba(33,28,23,0.95)}
         html{font-size:15px;scroll-behavior:smooth}
-        body{font-family:'Inter',system-ui,-apple-system,sans-serif;background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden;line-height:1.5;transition:background .3s,color .3s}
-        body::before{content:'';position:fixed;inset:0;background:radial-gradient(ellipse at 20% 0%,rgba(99,102,241,0.08) 0%,transparent 60%),radial-gradient(ellipse at 80% 100%,rgba(139,92,246,0.06) 0%,transparent 60%);pointer-events:none;z-index:0}
+        body{font-family:var(--font-body);background:var(--bg-primary);color:var(--text-primary);min-height:100vh;overflow-x:hidden;line-height:1.5;transition:background .3s,color .3s}
+        /* Typography system */
+        h1,h2,h3,.logo-text,.card-title,.page-title,.db-hero-title,.db-stat-val,.topbar-left h1{font-family:var(--font-display)}
+        .db-stat-val,.profile-lvl,.xp-text,.countdown-big,.readiness-value,.db-hero-ring-val{font-family:var(--font-mono)}
+        input,select,textarea,button{font-family:var(--font-body);font-size:inherit}
+        /* ── 3D GLASS BACKGROUND SYSTEM ─────────────────────── */
+        body::before{
+            content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 10%, rgba(99,102,241,0.13) 0%,transparent 60%),
+                radial-gradient(ellipse 60% 50% at 85% 85%, rgba(139,92,246,0.1) 0%,transparent 55%),
+                radial-gradient(ellipse 50% 40% at 60% 40%, rgba(6,182,212,0.06) 0%,transparent 50%);
+        }
+        /* Floating glass orbs layer */
+        body::after{
+            content:'';position:fixed;inset:0;pointer-events:none;z-index:0;
+            background:
+                radial-gradient(circle 300px at 8% 80%, rgba(99,102,241,0.07) 0%,transparent 70%),
+                radial-gradient(circle 200px at 92% 20%, rgba(6,182,212,0.08) 0%,transparent 70%),
+                radial-gradient(circle 150px at 50% 95%, rgba(139,92,246,0.06) 0%,transparent 70%);
+        }
+        /* Glass orb decorations — visible subtle spheres */
+        #glass-orbs{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+        .glass-orb{
+            position:absolute;border-radius:50%;
+            background:radial-gradient(circle at 35% 35%,rgba(255,255,255,0.08) 0%,rgba(255,255,255,0.02) 40%,transparent 70%);
+            border:1px solid rgba(255,255,255,0.06);
+            backdrop-filter:blur(1px);
+        }
+        .glass-orb-1{width:420px;height:420px;top:-120px;left:-80px;animation:orb-float 18s ease-in-out infinite}
+        .glass-orb-2{width:280px;height:280px;bottom:-60px;right:-40px;animation:orb-float 22s ease-in-out infinite reverse}
+        .glass-orb-3{width:180px;height:180px;top:40%;right:8%;animation:orb-float 15s ease-in-out infinite 3s}
+        .glass-orb-4{width:120px;height:120px;bottom:20%;left:12%;animation:orb-float 20s ease-in-out infinite 6s}
+        @keyframes orb-float{
+            0%,100%{transform:translateY(0) scale(1)}
+            33%{transform:translateY(-18px) scale(1.02)}
+            66%{transform:translateY(10px) scale(0.98)}
+        }
+        /* ── LIGHT THEME OVERRIDES ───────────────────────────── */
+        [data-theme="light"] body::before{
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 10%, rgba(99,102,241,0.07) 0%,transparent 60%),
+                radial-gradient(ellipse 60% 50% at 85% 85%, rgba(139,92,246,0.05) 0%,transparent 55%),
+                radial-gradient(ellipse 50% 40% at 60% 40%, rgba(6,182,212,0.04) 0%,transparent 50%);
+        }
+        [data-theme="light"] body::after{
+            background:
+                radial-gradient(circle 300px at 8% 80%, rgba(99,102,241,0.04) 0%,transparent 70%),
+                radial-gradient(circle 200px at 92% 20%, rgba(6,182,212,0.05) 0%,transparent 70%);
+        }
+        [data-theme="light"] .glass-orb{
+            background:radial-gradient(circle at 35% 35%,rgba(255,255,255,0.6) 0%,rgba(255,255,255,0.2) 40%,transparent 70%);
+            border:1px solid rgba(99,102,241,0.08);
+        }
+        [data-theme="light"] #sidebar{background:rgba(255,255,255,0.85);backdrop-filter:blur(20px)}
+        [data-theme="light"] #topbar{background:rgba(250,248,245,0.8);backdrop-filter:blur(20px)}
+        [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.9);backdrop-filter:blur(20px)}
+        [data-theme="light"] .modal{background:rgba(255,255,255,0.95);backdrop-filter:blur(20px)}
+        [data-theme="light"] .toast{background:rgba(255,255,255,0.95)}
+        [data-theme="light"] .logo-icon{box-shadow:0 4px 15px rgba(99,102,241,0.2)}
+        /* ── WARM DARK THEME OVERRIDES ───────────────────────── */
+        [data-theme="warm-dark"] body::before{
+            background:
+                radial-gradient(ellipse 80% 60% at 15% 10%, rgba(245,158,11,0.09) 0%,transparent 60%),
+                radial-gradient(ellipse 60% 50% at 85% 85%, rgba(239,68,68,0.07) 0%,transparent 55%),
+                radial-gradient(ellipse 50% 40% at 60% 40%, rgba(251,146,60,0.05) 0%,transparent 50%);
+        }
+        [data-theme="warm-dark"] body::after{
+            background:
+                radial-gradient(circle 300px at 8% 80%, rgba(245,158,11,0.06) 0%,transparent 70%),
+                radial-gradient(circle 200px at 92% 20%, rgba(239,68,68,0.06) 0%,transparent 70%),
+                radial-gradient(circle 150px at 50% 95%, rgba(251,146,60,0.04) 0%,transparent 70%);
+        }
+        [data-theme="warm-dark"] .glass-orb{
+            background:radial-gradient(circle at 35% 35%,rgba(255,220,180,0.06) 0%,rgba(255,200,150,0.02) 40%,transparent 70%);
+            border:1px solid rgba(255,200,150,0.06);
+        }
         ::-webkit-scrollbar{width:6px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:rgba(128,128,128,0.2);border-radius:3px}
         input,select,textarea,button{font-family:inherit;font-size:inherit}
-        @keyframes blink{0%,100%{opacity:.2}50%{opacity:1}}
+        .db-greeting{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
+        /* Hero */
+        .db-hero{
+            background:linear-gradient(135deg,#1a1060 0%,#2d1b8e 30%,#1e3a8a 65%,#0f4c75 100%);
+            border-radius:var(--radius);padding:28px 28px 28px 28px;
+            display:flex;align-items:center;justify-content:space-between;gap:20px;
+            margin-bottom:20px;cursor:pointer;
+            transition:transform .25s,box-shadow .25s;
+            box-shadow:0 8px 40px rgba(29,20,120,0.45),0 2px 8px rgba(0,0,0,0.3);
+            position:relative;overflow:hidden;
+            border:1px solid rgba(255,255,255,0.08)
+        }
+        /* Decorative blobs inside hero */
+        .db-hero::before{
+            content:'';position:absolute;
+            width:260px;height:260px;border-radius:50%;
+            background:radial-gradient(circle,rgba(139,92,246,0.35) 0%,transparent 70%);
+            top:-80px;right:60px;pointer-events:none
+        }
+        .db-hero::after{
+            content:'';position:absolute;
+            width:180px;height:180px;border-radius:50%;
+            background:radial-gradient(circle,rgba(6,182,212,0.2) 0%,transparent 70%);
+            bottom:-60px;left:40%;pointer-events:none
+        }
+        .db-hero:hover{transform:translateY(-3px);box-shadow:0 16px 56px rgba(29,20,120,0.55),0 4px 12px rgba(0,0,0,0.3)}
+        .db-hero-empty{
+            background:linear-gradient(135deg,rgba(99,102,241,0.08),rgba(139,92,246,0.06));
+            border:1px solid rgba(99,102,241,0.15);cursor:default;
+            box-shadow:none
+        }
+        .db-hero-empty::before,.db-hero-empty::after{display:none}
+        .db-hero-empty:hover{transform:none;box-shadow:none}
+        .db-hero-left{flex:1;position:relative;z-index:1}
+        .db-hero-label{
+            font-size:.6rem;font-weight:700;letter-spacing:3px;
+            color:rgba(165,220,255,0.8);margin-bottom:10px;
+            display:flex;align-items:center;gap:6px
+        }
+        .db-hero-label::before{
+            content:'';display:inline-block;width:6px;height:6px;
+            border-radius:50%;background:#22d3ee;
+            box-shadow:0 0 8px #22d3ee;animation:pulse-dot 2s infinite
+        }
+        @keyframes pulse-dot{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(1.3)}}
+        .db-hero-empty .db-hero-label{color:var(--accent-light)}
+        .db-hero-empty .db-hero-label::before{display:none}
+        .db-hero-title{
+            font-size:1.45rem;font-weight:800;
+            color:#fff;line-height:1.2;margin-bottom:8px;
+            text-shadow:0 2px 12px rgba(0,0,0,0.3)
+        }
+        .db-hero-empty .db-hero-title{color:var(--text-primary);text-shadow:none}
+        .db-hero-sub{
+            font-size:.82rem;
+            color:rgba(186,220,255,0.8);
+            display:flex;align-items:center;gap:6px
+        }
+        .db-hero-empty .db-hero-sub{color:var(--text-secondary)}
+        /* Glassmorphism button overrides inside hero */
+        .db-hero .btn-primary{
+            background:rgba(255,255,255,0.15);
+            backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,0.25);
+            color:#fff;
+            box-shadow:0 4px 15px rgba(0,0,0,0.2);
+            font-weight:700
+        }
+        .db-hero .btn-primary:hover{
+            background:rgba(255,255,255,0.25);
+            transform:translateY(-1px);
+            box-shadow:0 6px 20px rgba(0,0,0,0.25)
+        }
+        .db-hero .btn-secondary{
+            background:rgba(0,0,0,0.2);
+            backdrop-filter:blur(10px);
+            border:1px solid rgba(255,255,255,0.12);
+            color:rgba(255,255,255,0.85);
+            box-shadow:none
+        }
+        .db-hero .btn-secondary:hover{
+            background:rgba(0,0,0,0.3);
+            border-color:rgba(255,255,255,0.2)
+        }
+        /* Ring */
+        .db-hero-ring{position:relative;display:flex;align-items:center;justify-content:center;flex-shrink:0;z-index:1}
+        .db-hero-ring svg circle:last-child{filter:drop-shadow(0 0 6px rgba(34,211,238,0.6))}
+        .db-hero-ring-val{position:absolute;font-size:1.4rem;font-weight:800;color:#fff;top:50%;left:50%;transform:translate(-50%,-58%);text-shadow:0 2px 8px rgba(0,0,0,0.4)}
+        .db-hero-ring-lbl{position:absolute;font-size:.52rem;font-weight:600;color:rgba(186,220,255,0.8);letter-spacing:1px;top:50%;left:50%;transform:translate(-50%,65%)}
+        /* Stats */
+        .db-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+        .db-stat{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:16px;transition:border-color .2s,transform .2s}
+        .db-stat:hover{border-color:var(--border-hover);transform:translateY(-1px)}
+        .db-stat-val{font-size:1.5rem;font-weight:800;line-height:1;margin-bottom:4px}
+        .db-stat-lbl{font-size:.72rem;color:var(--text-muted);margin-bottom:4px}
+        .db-stat-trend{font-size:.7rem;font-weight:500}
+        /* Urgency */
+        .db-urgency{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:var(--radius-sm);padding:14px 16px;margin-bottom:16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:background .2s}
+        .db-urgency:hover{background:rgba(239,68,68,0.1)}
+        /* Two col layout */
+        .db-two-col{display:grid;grid-template-columns:1fr 340px;gap:16px;align-items:start}
+        .db-col-main{display:flex;flex-direction:column;gap:16px}
+        .db-col-side{display:flex;flex-direction:column;gap:16px}
+        /* Week bar chart */
+        .db-week-strip{display:flex;gap:6px;align-items:flex-end;height:80px}
+        .db-week-col{display:flex;flex-direction:column;align-items:center;flex:1;height:100%}
+        .db-week-bar-wrap{flex:1;display:flex;align-items:flex-end;width:100%}
+        .db-week-bar{width:100%;background:rgba(99,102,241,0.15);border-radius:4px 4px 0 0;min-height:4px;transition:height .6s ease,background .2s}
+        .db-week-bar.has-data{background:var(--gradient-1)}
+        .db-week-bar.today{background:var(--gradient-2);box-shadow:0 0 12px rgba(6,182,212,0.3)}
+        .db-week-day{font-size:.62rem;color:var(--text-muted);margin-top:4px;font-weight:500}
+        .db-week-day.today{color:var(--accent-light);font-weight:700}
+        /* Mood */
+        .db-mood-card{padding:16px}
+        .db-mood-btn{background:var(--bg-card);border:1px solid var(--border);border-radius:10px;font-size:1.4rem;padding:8px 10px;cursor:pointer;transition:all .15s;line-height:1}
+        .db-mood-btn:hover{transform:scale(1.15);border-color:var(--accent);background:rgba(99,102,241,0.1)}
+        /* ── RESPONSIVE ─────────────────────────────────────── */
+        @media(max-width:900px){
+            .db-two-col{grid-template-columns:1fr}
+            .db-col-side{order:-1}
+            .db-stats{grid-template-columns:repeat(2,1fr)}
+            .db-hero-ring{display:none}
+        }
+        @media(max-width:500px){
+            .db-hero{padding:18px}
+            .db-hero-title{font-size:1.1rem}
+            .db-stats{grid-template-columns:repeat(2,1fr);gap:8px}
+            .db-stat{padding:12px}
+            .db-stat-val{font-size:1.2rem}
+        }
+        /* ── THEME-SPECIFIC HERO ─────────────────────────────── */
+        [data-theme="light"] .db-hero{
+            background:linear-gradient(135deg,#3730a3 0%,#4f46e5 35%,#0284c7 70%,#0369a1 100%);
+            box-shadow:0 8px 40px rgba(79,70,229,0.3),0 2px 8px rgba(0,0,0,0.1);
+        }
+        [data-theme="light"] .db-hero::before{background:radial-gradient(circle,rgba(255,255,255,0.2) 0%,transparent 70%)}
+        [data-theme="light"] .db-hero::after{background:radial-gradient(circle,rgba(186,230,255,0.2) 0%,transparent 70%)}
+        [data-theme="warm-dark"] .db-hero{
+            background:linear-gradient(135deg,#431407 0%,#7c2d12 30%,#92400e 65%,#713f12 100%);
+            box-shadow:0 8px 40px rgba(124,45,18,0.5),0 2px 8px rgba(0,0,0,0.3);
+        }
+        [data-theme="warm-dark"] .db-hero::before{background:radial-gradient(circle,rgba(251,146,60,0.25) 0%,transparent 70%)}
+        [data-theme="warm-dark"] .db-hero::after{background:radial-gradient(circle,rgba(234,88,12,0.15) 0%,transparent 70%)}
+        [data-theme="warm-dark"] .db-hero-label{color:rgba(255,220,180,0.8)}
+        [data-theme="warm-dark"] .db-hero-label::before{background:#fb923c;box-shadow:0 0 8px #fb923c}
+        [data-theme="warm-dark"] .db-hero-sub{color:rgba(255,210,160,0.8)}
+        [data-theme="warm-dark"] .db-hero-ring-lbl{color:rgba(255,210,160,0.8)}
+        [data-theme="warm-dark"] .db-hero svg circle:last-child{stroke:#fb923c;filter:drop-shadow(0 0 6px rgba(251,146,60,0.7))}
+        /* ── END THEME HERO ──────────────────────────────────── */
+        /* ── END DASHBOARD REDESIGN ─────────────────────────── */
         /* --- Attachment styles --- */
         .attach-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;transition:all .2s;margin-top:4px}
         .attach-zone:hover,.attach-zone.drag-over{border-color:var(--accent);background:rgba(99,102,241,0.06)}
@@ -77,15 +319,22 @@
         .logo-icon{width:40px;height:40px;background:var(--gradient-1);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;font-weight:700;color:#fff;box-shadow:0 4px 15px rgba(99,102,241,0.3)}
         .logo-text{font-size:1.25rem;font-weight:700;background:var(--gradient-1);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
         .logo-sub{font-size:.65rem;color:var(--text-muted);text-transform:uppercase;letter-spacing:2px;margin-top:2px}
-        .nav{flex:1;padding:16px 12px;overflow-y:auto}
-        .nav-item{display:flex;align-items:center;gap:12px;padding:11px 14px;border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-secondary);font-size:.9rem;font-weight:500;margin-bottom:2px;position:relative}
+        .nav{flex:1;padding:var(--sp-4) var(--sp-3);overflow-y:auto}
+        .nav-item{display:flex;align-items:center;gap:var(--sp-3);padding:10px var(--sp-4);border-radius:var(--radius-sm);cursor:pointer;transition:all .2s;color:var(--text-secondary);font-size:.875rem;font-weight:500;margin-bottom:2px;position:relative;font-family:var(--font-display)}
         .nav-item:hover{background:var(--bg-card-hover);color:var(--text-primary)}
         .nav-item.active{background:rgba(99,102,241,0.12);color:#818cf8}
         .nav-item.active::before{content:'';position:absolute;left:0;top:50%;transform:translateY(-50%);width:3px;height:20px;background:var(--gradient-1);border-radius:0 3px 3px 0}
-        .nav-icon{font-size:1.15rem;width:24px;text-align:center}
+        .nav-icon{font-size:1.1rem;width:22px;text-align:center;flex-shrink:0}
         .nav-label{white-space:nowrap}
-        .nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:.65rem;padding:2px 7px;border-radius:10px;font-weight:600}
-        .nav-section{font-size:.65rem;text-transform:uppercase;letter-spacing:2px;color:var(--text-muted);padding:18px 14px 8px;font-weight:600}
+        .nav-badge{margin-left:auto;background:var(--color-danger);color:#fff;font-size:.6rem;padding:2px 6px;border-radius:10px;font-weight:700;font-family:var(--font-mono)}
+        .nav-section{font-size:.6rem;text-transform:uppercase;letter-spacing:2.5px;color:var(--text-muted);padding:var(--sp-4) var(--sp-4) var(--sp-2);font-weight:700;font-family:var(--font-display)}
+        /* Collapsible nav groups */
+        .nav-collapsible{cursor:pointer;display:flex;align-items:center;justify-content:space-between;user-select:none;transition:color .2s}
+        .nav-collapsible:hover{color:var(--text-secondary)}
+        .nav-chevron{font-size:.7rem;transition:transform .25s ease;display:inline-block;opacity:.6}
+        .nav-chevron.collapsed{transform:rotate(-90deg)}
+        .nav-group{overflow:hidden;max-height:500px;transition:max-height .3s ease,opacity .3s ease;opacity:1}
+        .nav-group.collapsed{max-height:0;opacity:0;pointer-events:none}
         .sidebar-profile{padding:16px;border-top:1px solid var(--border)}
         .profile-card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius-sm);padding:14px}
         .profile-level{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
@@ -141,15 +390,19 @@
         .progress-fill::after{content:'';position:absolute;inset:0;background:linear-gradient(90deg,transparent,rgba(255,255,255,0.15),transparent);animation:shimmer 2s infinite}
         @keyframes shimmer{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
 
-        .tag{display:inline-flex;align-items:center;padding:3px 10px;border-radius:20px;font-size:.7rem;font-weight:600;gap:4px}
-        .tag-not-started{background:rgba(128,128,128,0.1);color:var(--text-muted)}
-        .tag-in-progress{background:rgba(245,158,11,0.12);color:var(--warning)}
-        .tag-completed{background:rgba(16,185,129,0.12);color:var(--success)}
-        .tag-revised{background:rgba(99,102,241,0.12);color:var(--accent-light)}
-        .tag-overdue{background:rgba(239,68,68,0.12);color:var(--danger)}
-        .tag-easy{background:rgba(16,185,129,0.1);color:var(--success)}
-        .tag-medium{background:rgba(245,158,11,0.1);color:var(--warning)}
-        .tag-hard{background:rgba(239,68,68,0.1);color:var(--danger)}
+        .tag{display:inline-flex;align-items:center;padding:var(--sp-1) var(--sp-2);border-radius:20px;font-size:.7rem;font-weight:600;gap:4px;font-family:var(--font-display)}
+        /* Semantic status colors — each color has ONE meaning */
+        .tag-not-started{background:rgba(128,128,128,0.1);color:var(--text-muted);border:1px solid rgba(128,128,128,0.15)}
+        .tag-in-progress{background:var(--color-warn-bg);color:var(--color-warn);border:1px solid var(--color-warn-border)}
+        .tag-completed{background:var(--color-done-bg);color:var(--color-done);border:1px solid var(--color-done-border)}
+        .tag-revised{background:var(--color-done-bg);color:var(--color-done);border:1px solid var(--color-done-border)}
+        .tag-overdue{background:var(--color-danger-bg);color:var(--color-danger);border:1px solid var(--color-danger-border)}
+        .tag-easy{background:var(--color-done-bg);color:var(--color-done);border:1px solid var(--color-done-border)}
+        .tag-medium{background:var(--color-warn-bg);color:var(--color-warn);border:1px solid var(--color-warn-border)}
+        .tag-hard{background:var(--color-danger-bg);color:var(--color-danger);border:1px solid var(--color-danger-border)}
+        .tag-unresolved{background:var(--color-danger-bg);color:var(--color-danger);border:1px solid var(--color-danger-border)}
+        .tag-asked{background:var(--color-warn-bg);color:var(--color-warn);border:1px solid var(--color-warn-border)}
+        .tag-understood{background:var(--color-done-bg);color:var(--color-done);border:1px solid var(--color-done-border)}
         .tag-unresolved{background:rgba(239,68,68,0.12);color:var(--danger)}
         .tag-asked{background:rgba(245,158,11,0.12);color:var(--warning)}
         .tag-understood{background:rgba(16,185,129,0.12);color:var(--success)}
@@ -252,7 +505,7 @@
         .rev-info p{font-size:.72rem;color:var(--text-muted)}
 
         .mobile-nav{display:none;position:fixed;bottom:0;left:0;right:0;background:rgba(17,17,40,0.95);backdrop-filter:blur(20px);border-top:1px solid var(--border);padding:6px 10px env(safe-area-inset-bottom);z-index:100;transition:background .3s}
-        [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.95)}
+        [data-theme="light"] .mobile-nav{background:rgba(255,255,255,0.9);backdrop-filter:blur(20px)}
         .mobile-nav-items{display:flex;justify-content:space-around}
         .mob-nav-item{display:flex;flex-direction:column;align-items:center;gap:2px;padding:6px 8px;cursor:pointer;color:var(--text-muted);font-size:.6rem;font-weight:600;transition:all .2s;border-radius:8px}
         .mob-nav-item .mob-icon{font-size:1.2rem}
@@ -634,30 +887,49 @@
     </div>
 </div>
 
+<div id="glass-orbs">
+    <div class="glass-orb glass-orb-1"></div>
+    <div class="glass-orb glass-orb-2"></div>
+    <div class="glass-orb glass-orb-3"></div>
+    <div class="glass-orb glass-orb-4"></div>
+</div>
 <div id="app">
     <aside id="sidebar">
         <div class="logo"><div class="logo-icon">S</div><div><div class="logo-text">StudyOS</div><div class="logo-sub">Class 10 Tracker</div></div></div>
         <nav class="nav">
-            <div class="nav-section">Main</div>
+            <div class="nav-section">Core</div>
             <div class="nav-item active" data-page="dashboard" onclick="App.navigate('dashboard')"><span class="nav-icon">📊</span><span class="nav-label">Dashboard</span></div>
             <div class="nav-item" data-page="subjects" onclick="App.navigate('subjects')"><span class="nav-icon">📚</span><span class="nav-label">Subjects</span></div>
             <div class="nav-item" data-page="log" onclick="App.navigate('log')"><span class="nav-icon">✏️</span><span class="nav-label">Study Log</span></div>
-            <div class="nav-section">Plan & Track</div>
-            <div class="nav-item" data-page="tasks" onclick="App.navigate('tasks')"><span class="nav-icon">☑️</span><span class="nav-label">Daily Tasks</span></div>
-            <div class="nav-item" data-page="revisions" onclick="App.navigate('revisions')"><span class="nav-icon">🔄</span><span class="nav-label">Revisions</span><span class="nav-badge" id="rev-badge" style="display:none">0</span></div>
-            <div class="nav-item" data-page="exams" onclick="App.navigate('exams')"><span class="nav-icon">📝</span><span class="nav-label">Exam Scores</span></div>
-            <div class="nav-item" data-page="doubts" onclick="App.navigate('doubts')"><span class="nav-icon">❓</span><span class="nav-label">Doubts</span><span class="nav-badge" id="doubt-badge" style="display:none">0</span></div>
-            <div class="nav-item" data-page="exercises" onclick="App.navigate('exercises')"><span class="nav-icon">🔢</span><span class="nav-label">Exercises</span></div>
-            <div class="nav-item" data-page="planning" onclick="App.navigate('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning</span><span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
-            <div class="nav-item" data-page="weekly" onclick="App.navigate('weekly')"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></div>
-            <div class="nav-section">Tools</div>
-            <div class="nav-item" data-page="pomodoro" onclick="App.navigate('pomodoro')"><span class="nav-icon">🍅</span><span class="nav-label">Focus Timer</span></div>
-            <div class="nav-item" data-page="notes" onclick="App.navigate('notes')"><span class="nav-icon">📓</span><span class="nav-label">Notes & Formulas</span></div>
-            <div class="nav-item" data-page="resources" onclick="App.navigate('resources')"><span class="nav-icon">🔗</span><span class="nav-label">Resources</span></div>
             <div class="nav-item" data-page="coach" onclick="App.navigate('coach')"><span class="nav-icon">🤖</span><span class="nav-label">AI Coach</span></div>
-            <div class="nav-item" data-page="rewards" onclick="App.navigate('rewards')"><span class="nav-icon">🏆</span><span class="nav-label">Rewards</span></div>
-            <div class="nav-section">System</div>
-            <div class="nav-item" data-page="settings" onclick="App.navigate('settings')"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
+            <div class="nav-item" data-page="pomodoro" onclick="App.navigate('pomodoro')"><span class="nav-icon">🍅</span><span class="nav-label">Focus Timer</span></div>
+
+            <!-- Tier 2: Track — collapsible -->
+            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('track')" id="nav-group-track-header">
+                <span>Track</span>
+                <span class="nav-chevron" id="nav-chevron-track">▾</span>
+            </div>
+            <div class="nav-group" id="nav-group-track">
+                <div class="nav-item" data-page="tasks" onclick="App.navigate('tasks')"><span class="nav-icon">☑️</span><span class="nav-label">Daily Tasks</span></div>
+                <div class="nav-item" data-page="revisions" onclick="App.navigate('revisions')"><span class="nav-icon">🔄</span><span class="nav-label">Revisions</span><span class="nav-badge" id="rev-badge" style="display:none">0</span></div>
+                <div class="nav-item" data-page="exams" onclick="App.navigate('exams')"><span class="nav-icon">📝</span><span class="nav-label">Exam Scores</span></div>
+                <div class="nav-item" data-page="doubts" onclick="App.navigate('doubts')"><span class="nav-icon">❓</span><span class="nav-label">Doubts</span><span class="nav-badge" id="doubt-badge" style="display:none">0</span></div>
+                <div class="nav-item" data-page="planning" onclick="App.navigate('planning')"><span class="nav-icon">📅</span><span class="nav-label">Planning</span><span class="nav-badge" id="overdue-badge" style="display:none">0</span></div>
+            </div>
+
+            <!-- Tier 3: More — collapsed by default -->
+            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('more')" id="nav-group-more-header">
+                <span>More</span>
+                <span class="nav-chevron collapsed" id="nav-chevron-more">▾</span>
+            </div>
+            <div class="nav-group collapsed" id="nav-group-more">
+                <div class="nav-item" data-page="weekly" onclick="App.navigate('weekly')"><span class="nav-icon">📈</span><span class="nav-label">Analytics</span></div>
+                <div class="nav-item" data-page="exercises" onclick="App.navigate('exercises')"><span class="nav-icon">🔢</span><span class="nav-label">Exercises</span></div>
+                <div class="nav-item" data-page="notes" onclick="App.navigate('notes')"><span class="nav-icon">📓</span><span class="nav-label">Notes & Formulas</span></div>
+                <div class="nav-item" data-page="resources" onclick="App.navigate('resources')"><span class="nav-icon">🔗</span><span class="nav-label">Resources</span></div>
+                <div class="nav-item" data-page="rewards" onclick="App.navigate('rewards')"><span class="nav-icon">🏆</span><span class="nav-label">Rewards</span></div>
+                <div class="nav-item" data-page="settings" onclick="App.navigate('settings')"><span class="nav-icon">⚙️</span><span class="nav-label">Settings</span></div>
+            </div>
         </nav>
         <div class="sidebar-profile"><div class="profile-card"><div class="profile-level"><span class="profile-name" id="sb-name">Student</span><span class="profile-lvl" id="sb-level">LVL 1</span></div><div class="xp-bar"><div class="xp-fill" id="sb-xp-fill" style="width:0%"></div></div><div class="xp-text" id="sb-xp-text">0 / 50 XP</div></div></div>
     </aside>
@@ -825,6 +1097,20 @@ const App={
     save(){try{localStorage.setItem('studyos_data',JSON.stringify(this.state))}catch(e){console.error(e)}},
 
     applyTheme(){document.documentElement.setAttribute('data-theme',this.state.theme)},
+
+    toggleNavGroup(group){
+        const el=document.getElementById('nav-group-'+group);
+        const chevron=document.getElementById('nav-chevron-'+group);
+        if(!el||!chevron)return;
+        el.classList.toggle('collapsed');
+        chevron.classList.toggle('collapsed');
+    },
+
+    // Pages in each nav group (for auto-expand on navigate)
+    NAV_GROUPS:{
+        track:['tasks','revisions','exams','doubts','planning'],
+        more:['weekly','exercises','notes','resources','rewards','settings']
+    },
     toggleTheme(theme){
         if(theme){this.state.theme=theme}
         else{const themes=['dark','light','warm-dark'];const ci=themes.indexOf(this.state.theme);this.state.theme=themes[(ci+1)%themes.length]}
@@ -949,6 +1235,17 @@ const App={
         const pe=document.getElementById('page-'+page);if(pe)pe.classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
         document.querySelectorAll('.mob-nav-item').forEach((n,i)=>{const pages=['dashboard','subjects','','tasks','rewards'];n.classList.toggle('active',pages[i]===page)});
+        // Auto-expand nav group containing this page
+        Object.entries(this.NAV_GROUPS||{}).forEach(([group,pages])=>{
+            if(pages.includes(page)){
+                const el=document.getElementById('nav-group-'+group);
+                const chevron=document.getElementById('nav-chevron-'+group);
+                if(el&&el.classList.contains('collapsed')){
+                    el.classList.remove('collapsed');
+                    if(chevron)chevron.classList.remove('collapsed');
+                }
+            }
+        });
         const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();this.renderPage(page);
         document.getElementById('sidebar').classList.remove('open');document.getElementById('content').scrollTop=0;
@@ -977,42 +1274,241 @@ const App={
         const hm=this.getHeatmapData();
         const dc=this.state.dailyChallenges||{date:'',challenges:[],completed:[]};
         const pred=this.getPredictedCompletion();
-
-        let html=`<div style="margin-bottom:24px"><h2 style="font-size:1.5rem;font-weight:700">Good ${this.getGreeting()}, ${this.state.profile.name} 👋</h2><p style="color:var(--text-secondary);font-size:.9rem;margin-top:4px">${this.getMotivation()}</p></div>`;
-    
-        // Mood picker if not set today
         const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
-        if(!todayMood){
-            html+=`<div class="card" style="margin-bottom:20px;text-align:center"><p style="font-size:.9rem;margin-bottom:12px;font-weight:600">How are you feeling today?</p><div class="mood-picker"><button class="mood-btn" onclick="App.setMood('😊')">😊</button><button class="mood-btn" onclick="App.setMood('😐')">😐</button><button class="mood-btn" onclick="App.setMood('😴')">😴</button><button class="mood-btn" onclick="App.setMood('😤')">😤</button><button class="mood-btn" onclick="App.setMood('🤩')">🤩</button></div></div>`;
-        }
+        const avgMin=this.state.sessions.length>0?Math.round(this.state.sessions.reduce((a,s)=>a+s.timeSpent,0)/Math.max(1,new Set(this.state.sessions.map(s=>s.date)).size)):0;
+        const urgentCount=od.length+rd.length;
 
-        // Exam countdown + Readiness
-        if(dte!==null&&dte>0){
-            html+=`<div class="grid grid-2" style="margin-bottom:20px"><div class="card" style="text-align:center"><div class="countdown-big">${dte}</div><div class="countdown-label">days to Board Exams</div><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">${this.state.profile.examDate}</p>${pred?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">Predicted completion: ${pred.date} (${pred.rate} ch/day)</p>`:''}</div><div class="card" style="text-align:center"><div class="readiness-ring"><svg width="120" height="120" viewBox="0 0 120 120" style="max-width:100%;height:auto"><circle cx="60" cy="60" r="52" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="8"/><circle cx="60" cy="60" r="52" fill="none" stroke="${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}" stroke-width="8" stroke-dasharray="${2*Math.PI*52}" stroke-dashoffset="${2*Math.PI*52*(1-rs/100)}" stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center"/></svg><div class="readiness-value" style="color:${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}">${rs}%</div></div><p style="font-size:.85rem;font-weight:600;margin-top:8px">Board Readiness</p><p style="font-size:.72rem;color:var(--text-muted)">Syllabus + Revisions + Scores + Streak</p></div></div>`;
-        }
+        // ── HERO: What to do right now ──────────────────────────
+        const heroChapter=plan[0];
+        const heroHTML=heroChapter
+            ?`<div class="db-hero" onclick="App.openChapterDetail('${heroChapter.subjectId}','${heroChapter.id}')">
+                <div class="db-hero-left">
+                    <div class="db-hero-label">▶ STUDY NOW</div>
+                    <div class="db-hero-title">${heroChapter.name}</div>
+                    <div class="db-hero-sub">${heroChapter.subjectIcon} ${heroChapter.subjectName} · ${heroChapter.reason}</div>
+                    <div style="display:flex;gap:8px;margin-top:16px">
+                        <button class="btn btn-primary" onclick="event.stopPropagation();App.openQuickLog()" style="font-size:.8rem;padding:8px 16px">⚡ Log Session</button>
+                        <button class="btn btn-secondary" onclick="event.stopPropagation();App.navigate('pomodoro')" style="font-size:.8rem;padding:8px 16px">🍅 Focus Timer</button>
+                    </div>
+                </div>
+                <div class="db-hero-ring">
+                    <svg width="110" height="110" viewBox="0 0 110 110">
+                        <circle cx="55" cy="55" r="48" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
+                        <circle cx="55" cy="55" r="48" fill="none" stroke="#22d3ee" stroke-width="7"
+                            stroke-dasharray="${2*Math.PI*48}"
+                            stroke-dashoffset="${2*Math.PI*48*(1-gp/100)}"
+                            stroke-linecap="round"
+                            style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s ease"/>
+                    </svg>
+                    <div class="db-hero-ring-val">${gp}%</div>
+                    <div class="db-hero-ring-lbl">of goal</div>
+                </div>
+            </div>`
+            :`<div class="db-hero db-hero-empty">
+                <div class="db-hero-left">
+                    <div class="db-hero-label">✨ ALL CAUGHT UP</div>
+                    <div class="db-hero-title">Great work, ${this.state.profile.name}!</div>
+                    <div class="db-hero-sub">All chapters are up to date</div>
+                    <button class="btn btn-primary" onclick="App.navigate('subjects')" style="margin-top:16px;font-size:.8rem;padding:8px 16px">📚 Browse Subjects</button>
+                </div>
+                <div style="font-size:4rem">🎉</div>
+            </div>`;
 
-        // Daily Challenge
-        if(dc.date===this.today()&&dc.challenges.length>0){
-            html+=`<div class="challenge-card"><h4>🎯 Today's Challenges</h4>${dc.challenges.map(ch=>{const done=dc.completed.includes(ch.id);return`<div style="display:flex;align-items:center;gap:10px;margin-top:8px"><div style="width:18px;height:18px;border-radius:5px;border:2px solid ${done?'var(--success)':'var(--border)'};background:${done?'var(--success)':'transparent'};display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#fff;flex-shrink:0">${done?'✓':''}</div><span style="font-size:.82rem;${done?'text-decoration:line-through;opacity:.5':''}">${ch.text}</span><span class="challenge-xp" style="margin-left:auto">+${ch.xp} XP</span></div>`}).join('')}</div>`;
-        }
+        // ── 4 STAT PILLS ─────────────────────────────────────────
+        const statsHTML=`<div class="db-stats">
+            <div class="db-stat">
+                <div class="db-stat-val">${this.formatMin(tm)}</div>
+                <div class="db-stat-lbl">Today${avgMin>0?' · avg '+this.formatMin(avgMin):''}</div>
+                <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--success)':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'📖 Study time'}</div>
+            </div>
+            <div class="db-stat">
+                <div class="db-stat-val">${comp}<span style="font-size:1rem;font-weight:400;opacity:.5">/${tot}</span></div>
+                <div class="db-stat-lbl">Chapters done</div>
+                <div class="db-stat-trend" style="color:var(--accent-light)">${sp}% of syllabus</div>
+            </div>
+            <div class="db-stat">
+                <div class="db-stat-val">${st}<span style="font-size:1rem;font-weight:400;opacity:.5"> day${st!==1?'s':''}</span></div>
+                <div class="db-stat-lbl">Current streak</div>
+                <div class="db-stat-trend" style="color:${st>=7?'var(--warning)':'var(--text-muted)'}">${st>=30?'🏆 Legend':st>=14?'💪 On fire':st>=7?'🔥 Hot streak':st>0?'Keep going!':'Start today!'}</div>
+            </div>
+            <div class="db-stat">
+                <div class="db-stat-val">${dte!==null&&dte>0?dte:'—'}</div>
+                <div class="db-stat-lbl">${dte!==null&&dte>0?'Days to boards':'Exam date'}</div>
+                <div class="db-stat-trend" style="color:${dte!==null&&dte<30?'var(--danger)':dte!==null&&dte<60?'var(--warning)':'var(--text-muted)'}">${dte!==null&&dte>0?(dte<30?'⚠️ Very soon!':dte<60?'📅 Getting close':'📅 Set a goal'):'Not set yet'}</div>
+            </div>
+        </div>`;
 
-        // Stats row
-        html+=`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">📖</div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>Studied today</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)">✅</div><div class="stat-info"><h3>${comp}/${tot}</h3><p>Chapters done</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🔥</div><div class="stat-info"><h3>${st}</h3><p>Day streak</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)">⚡</div><div class="stat-info"><h3>LVL ${this.state.profile.level}</h3><p>${this.state.profile.xp} XP</p></div></div></div>`;
+        // ── URGENCY BANNER (only if needed) ──────────────────────
+        const urgencyHTML=urgentCount>0?`<div class="db-urgency" onclick="App.navigate('revisions')">
+            <div style="display:flex;align-items:center;gap:10px;flex:1">
+                <span style="font-size:1.2rem">${od.length>0?'🚨':'🔔'}</span>
+                <div>
+                    <div style="font-weight:600;font-size:.85rem">${od.length>0?(od.length+' overdue chapter'+(od.length>1?'s':'')+(rd.length>0?' + ':'')):''}${rd.length>0?(rd.length+' revision'+(rd.length>1?'s':'')+' due'):''}</div>
+                    <div style="font-size:.75rem;opacity:.8">${od.length>0?(od[0].name+(od.length>1?' and '+(od.length-1)+' more':'')):((rd[0]&&rd[0].name)||'')} · Tap to review</div>
+                </div>
+            </div>
+            <span style="opacity:.6;font-size:.8rem">→</span>
+        </div>`:'';
 
-        // Goal + Syllabus + Streak
-        html+=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">🎯 Daily Goal</span><span style="font-size:.85rem;font-weight:700;color:${gp>=100?'var(--success)':'var(--accent-light)'}">${gp}%</span></div><div class="progress-bar" style="height:12px;border-radius:6px;margin-bottom:10px"><div class="progress-fill" style="width:${gp}%;background:${gp>=100?'var(--gradient-3)':'var(--gradient-1)'}"></div></div><p style="font-size:.78rem;color:var(--text-muted)">${this.formatMin(tm)} / ${this.formatMin(gm)} ${gp>=100?'— 🎉':''}</p></div><div class="card"><div class="card-header"><span class="card-title">📊 Syllabus</span><span style="font-size:.85rem;font-weight:700;color:var(--accent-light)">${sp}%</span></div><div class="progress-bar" style="height:12px;border-radius:6px;margin-bottom:10px"><div class="progress-fill" style="width:${sp}%;background:var(--gradient-2)"></div></div><p style="font-size:.78rem;color:var(--text-muted)">${comp} of ${tot} chapters</p></div><div class="card"><div class="card-header"><span class="card-title">🔥 Streak</span></div><div class="streak-days">${wd.days.map(d=>{const hs=wd.sessions.some(s=>s.date===d),it=d===this.today();return`<div class="streak-dot ${hs?'active':''} ${it?'today':''}">${new Date(d+'T12:00').toLocaleDateString('en',{weekday:'narrow'})}</div>`}).join('')}</div><p style="font-size:.78rem;color:var(--text-muted);margin-top:10px">${st>0?st+' day streak!':'Start today!'}</p></div></div>`;
+        // ── WEEK STRIP ────────────────────────────────────────────
+        const weekHTML=`<div class="db-week-card card">
+            <div class="card-header" style="margin-bottom:14px">
+                <span class="card-title">This Week</span>
+                <span style="font-size:.78rem;color:var(--text-muted)">${wd.sessions.reduce((a,s)=>a+s.timeSpent,0)>0?this.formatMin(wd.sessions.reduce((a,s)=>a+s.timeSpent,0))+' total':''}</span>
+            </div>
+            <div class="db-week-strip">
+                ${wd.days.map(d=>{
+                    const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);
+                    const isToday=d===this.today();
+                    const height=mins>0?Math.max(20,Math.min(100,Math.round(mins/gm*100)))+'%':'4px';
+                    const dayName=new Date(d+'T12:00').toLocaleDateString('en',{weekday:'short'});
+                    return`<div class="db-week-col">
+                        <div class="db-week-bar-wrap">
+                            <div class="db-week-bar ${isToday?'today':''} ${mins>0?'has-data':''}" style="height:${height}" title="${dayName}: ${this.formatMin(mins)}"></div>
+                        </div>
+                        <div class="db-week-day ${isToday?'today':''}">${dayName}</div>
+                    </div>`;
+                }).join('')}
+            </div>
+        </div>`;
 
-        // Heatmap
+        // ── MOOD (compact, inline) ────────────────────────────────
+        const moodHTML=!todayMood?`<div class="card db-mood-card">
+            <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">How are you feeling?</div>
+            <div style="display:flex;gap:8px">
+                ${['🤩','😊','😐','😴','😤'].map(m=>`<button class="db-mood-btn" onclick="App.setMood('${m}')">${m}</button>`).join('')}
+            </div>
+        </div>`:
+        `<div class="card db-mood-card" style="display:flex;align-items:center;gap:12px">
+            <span style="font-size:1.6rem">${todayMood.mood}</span>
+            <div>
+                <div style="font-size:.8rem;font-weight:600">Feeling ${{'🤩':'amazing','😊':'good','😐':'okay','😴':'tired','😤':'frustrated'}[todayMood.mood]||'okay'} today</div>
+                <div style="font-size:.72rem;color:var(--text-muted)">${this.getMoodAdvice(todayMood.mood).slice(0,60)}...</div>
+            </div>
+        </div>`;
+
+        // ── DAILY CHALLENGES ──────────────────────────────────────
+        const challengeHTML=dc.date===this.today()&&dc.challenges.length>0?`<div class="card">
+            <div class="card-header" style="margin-bottom:12px"><span class="card-title">🎯 Today's Challenges</span>
+            <span style="font-size:.72rem;color:var(--text-muted)">${dc.completed.length}/${dc.challenges.length} done</span></div>
+            <div class="db-challenge-progress">
+                <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px">
+                    <div style="height:100%;width:${Math.round(dc.completed.length/dc.challenges.length*100)}%;background:var(--gradient-1);border-radius:2px;transition:width .5s ease"></div>
+                </div>
+            </div>
+            ${dc.challenges.map(ch=>{const done=dc.completed.includes(ch.id);return`
+            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
+                <div style="width:20px;height:20px;border-radius:6px;border:2px solid ${done?'var(--success)':'var(--border)'};background:${done?'var(--success)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s">
+                    ${done?'<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}
+                </div>
+                <span style="font-size:.82rem;flex:1;${done?'text-decoration:line-through;opacity:.45':''}">${ch.text}</span>
+                <span style="font-size:.7rem;background:rgba(99,102,241,0.1);color:var(--accent-light);padding:2px 7px;border-radius:6px;white-space:nowrap">+${ch.xp} XP</span>
+            </div>`}).join('')}
+        </div>`:'';
+
+        // ── SUBJECT PROGRESS ──────────────────────────────────────
+        const subjectsHTML=this.state.subjects.length>0?`<div class="card">
+            <div class="card-header" style="margin-bottom:14px">
+                <span class="card-title">📚 Subjects</span>
+                <button class="btn btn-ghost btn-sm" onclick="App.navigate('subjects')" style="font-size:.72rem">See all →</button>
+            </div>
+            ${this.state.subjects.map(s=>{
+                const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;
+                const pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;
+                return`<div style="margin-bottom:14px">
+                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+                        <span style="font-size:.85rem;font-weight:500">${s.icon} ${s.name}</span>
+                        <span style="font-size:.75rem;font-weight:700;color:${s.color}">${dn}/${s.chapters.length}</span>
+                    </div>
+                    <div style="height:6px;background:var(--border);border-radius:3px;overflow:hidden">
+                        <div style="height:100%;width:${pc}%;background:${s.color};border-radius:3px;transition:width 1s ease"></div>
+                    </div>
+                </div>`;
+            }).join('')}
+        </div>`:`<div class="card" style="text-align:center;padding:32px 20px">
+            <div style="font-size:2.5rem;margin-bottom:10px">📚</div>
+            <div style="font-weight:600;margin-bottom:6px">No subjects yet</div>
+            <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">Load your CBSE syllabus or add subjects manually</div>
+            <button class="btn btn-primary btn-sm" onclick="App.navigate('subjects')">Get Started →</button>
+        </div>`;
+
+        // ── UP NEXT ───────────────────────────────────────────────
+        const upNextHTML=`<div class="card">
+            <div class="card-header" style="margin-bottom:12px">
+                <span class="card-title">📋 Up Next</span>
+                <button class="btn btn-ghost btn-sm" onclick="App.navigate('coach')" style="font-size:.72rem">Full plan →</button>
+            </div>
+            ${plan.length===0
+                ?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px 0">All caught up! 🎉</p>'
+                :plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')">
+                    <div class="plan-emoji">${p.subjectIcon}</div>
+                    <div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName}</p></div>
+                    <span style="font-size:.65rem;padding:3px 8px;border-radius:6px;white-space:nowrap;background:${p.priority==='overdue'?'rgba(239,68,68,0.1)':p.priority==='revised'?'rgba(6,182,212,0.1)':'rgba(99,102,241,0.1)'};color:${p.priority==='overdue'?'var(--danger)':p.priority==='revised'?'var(--info)':'var(--accent-light)'}">${p.reason}</span>
+                </div>`).join('')}
+        </div>`;
+
+        // ── HEATMAP ───────────────────────────────────────────────
         const hmDates=Object.keys(hm);
-        html+=`<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">📅 Study Heatmap</span><span class="card-subtitle">Last 90 days</span></div><div class="heatmap">${hmDates.map(d=>{const m=hm[d];const lvl=m===0?'':m<30?'l1':m<60?'l2':m<120?'l3':'l4';return`<div class="heatmap-cell ${lvl}" title="${d}: ${this.formatMin(m)}"></div>`}).join('')}</div><div style="display:flex;gap:6px;align-items:center;margin-top:8px;justify-content:flex-end"><span style="font-size:.65rem;color:var(--text-muted)">Less</span><div class="heatmap-cell" style="width:12px;height:12px"></div><div class="heatmap-cell l1" style="width:12px;height:12px"></div><div class="heatmap-cell l2" style="width:12px;height:12px"></div><div class="heatmap-cell l3" style="width:12px;height:12px"></div><div class="heatmap-cell l4" style="width:12px;height:12px"></div><span style="font-size:.65rem;color:var(--text-muted)">More</span></div></div>`;
+        const heatmapHTML=`<div class="card">
+            <div class="card-header" style="margin-bottom:14px">
+                <span class="card-title">📅 Study Activity</span>
+                <div style="display:flex;gap:4px;align-items:center">
+                    <span style="font-size:.65rem;color:var(--text-muted)">Less</span>
+                    ${['','l1','l2','l3','l4'].map(l=>`<div class="heatmap-cell ${l}" style="width:10px;height:10px;flex-shrink:0"></div>`).join('')}
+                    <span style="font-size:.65rem;color:var(--text-muted)">More</span>
+                </div>
+            </div>
+            <div class="heatmap">${hmDates.map(d=>{const m=hm[d];const lvl=m===0?'':m<30?'l1':m<60?'l2':m<120?'l3':'l4';return`<div class="heatmap-cell ${lvl}" title="${d}: ${this.formatMin(m)}"></div>`}).join('')}</div>
+        </div>`;
 
-        // Today + Recommended
-        html+=`<div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">📝 Today's Sessions</span><span class="card-subtitle">${ts.length}</span></div>${ts.length===0?`<div class="empty-state" style="padding:20px"><div class="empty-icon">📖</div><p class="empty-desc" style="font-size:.82rem">No sessions yet</p><button class="btn btn-primary btn-sm" onclick="App.openQuickLog()">⚡ Log</button></div>`:ts.slice(-4).reverse().map(s=>{const sub=this.getSubjectById(s.subjectId);return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?sub.icon:'📖'}</div><div class="plan-info"><h4>${sub?sub.name:'?'}</h4><p>${s.chapterName||''} • ${s.type}</p></div><div class="plan-time">${this.formatMin(s.timeSpent)}</div></div>`}).join('')}</div><div class="card"><div class="card-header"><span class="card-title">📋 Up Next</span></div>${plan.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All caught up! 🎉</p>':plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} • ${p.reason}</p></div><span class="tag tag-${p.priority}" style="font-size:.65rem">${p.priority}</span></div>`).join('')}</div></div>`;
+        // ── BOARD READINESS (only if exam date set) ───────────────
+        const readinessHTML=dte!==null&&dte>0?`<div class="card" style="display:flex;align-items:center;gap:20px">
+            <div class="readiness-ring" style="flex-shrink:0">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="6"/>
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}" stroke-width="6"
+                        stroke-dasharray="${2*Math.PI*34}" stroke-dashoffset="${2*Math.PI*34*(1-rs/100)}"
+                        stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s ease"/>
+                </svg>
+                <div class="readiness-value" style="font-size:1.1rem;color:${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}">${rs}%</div>
+            </div>
+            <div style="flex:1">
+                <div style="font-weight:700;font-size:.95rem;margin-bottom:4px">Board Readiness</div>
+                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">${dte} days to exam · ${rs>=70?'Looking strong! Keep revising 💪':rs>=40?'Good progress, push harder 🚀':'Need to pick up the pace ⚠️'}</div>
+                ${pred?`<div style="font-size:.72rem;color:var(--text-muted)">📈 Predicted finish: ${pred.date} at ${pred.rate} ch/day</div>`:''}
+            </div>
+        </div>`:'';
 
-        // Subject progress + alerts
-        html+=`<div class="grid grid-2"><div class="card"><div class="card-header"><span class="card-title">📚 Subjects</span></div>${this.state.subjects.length===0?'<p style="color:var(--text-muted);font-size:.85rem">No subjects yet</p>':this.state.subjects.map(s=>{const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${s.icon} ${s.name}</span><span class="sp-pct" style="color:${s.color}">${pc}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div></div>`}).join('')}</div><div class="card"><div class="card-header"><span class="card-title">⚠️ Alerts</span></div>${od.length===0&&rd.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All clear! ✨</p>':''}${od.slice(0,3).map(c=>`<div class="plan-card" style="border-color:rgba(239,68,68,0.2)"><div class="plan-emoji">⚠️</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}${rd.slice(0,3).map(c=>`<div class="plan-card" style="border-color:rgba(99,102,241,0.2)"><div class="plan-emoji">🔄</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • Revise</p></div></div>`).join('')}</div></div>`;
+        // ── SAVED INDICATOR ───────────────────────────────────────
+        const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a onclick="App.exportData()" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
 
-        el.innerHTML=html;
+        // ── ASSEMBLE ──────────────────────────────────────────────
+        el.innerHTML=`
+        <div class="db-greeting">
+            <div>
+                <h2 style="font-size:1.4rem;font-weight:700;line-height:1.2">Good ${this.getGreeting()}, ${this.state.profile.name} 👋</h2>
+                <p style="color:var(--text-secondary);font-size:.85rem;margin-top:4px">${this.getMotivation()}</p>
+            </div>
+            ${todayMood?`<span style="font-size:1.8rem">${todayMood.mood}</span>`:''}
+        </div>
+        ${heroHTML}
+        ${statsHTML}
+        ${urgencyHTML}
+        <div class="db-two-col">
+            <div class="db-col-main">
+                ${weekHTML}
+                ${challengeHTML}
+                ${heatmapHTML}
+            </div>
+            <div class="db-col-side">
+                ${moodHTML}
+                ${readinessHTML}
+                ${upNextHTML}
+                ${subjectsHTML}
+            </div>
+        </div>
+        ${savedHTML}`;
+
         }catch(err){
             console.error('Dashboard render error:',err);
             el.innerHTML=`<div style="padding:40px;text-align:center">
@@ -1023,7 +1519,6 @@ const App={
             </div>`;
         }
     },
-
     // SUBJECTS
     renderSubjects(){
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
