@@ -288,7 +288,155 @@
         [data-theme="warm-dark"] .db-hero-ring-lbl{color:rgba(255,210,160,0.8)}
         [data-theme="warm-dark"] .db-hero svg circle:last-child{stroke:#fb923c;filter:drop-shadow(0 0 6px rgba(251,146,60,0.7))}
         /* ── END THEME HERO ──────────────────────────────────── */
-        /* ── END DASHBOARD REDESIGN ─────────────────────────── */
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 4 — Purposeful Empty States
+        ══════════════════════════════════════════════════════ */
+        .empty-state{text-align:center;padding:var(--sp-7) var(--sp-5)}
+        .empty-state-icon{font-size:3rem;margin-bottom:var(--sp-4);display:block;opacity:.7;animation:float-icon 3s ease-in-out infinite}
+        @keyframes float-icon{0%,100%{transform:translateY(0)}50%{transform:translateY(-8px)}}
+        .empty-state-title{font-size:1.1rem;font-weight:700;font-family:var(--font-display);margin-bottom:var(--sp-2)}
+        .empty-state-desc{font-size:.85rem;color:var(--text-secondary);max-width:300px;margin:0 auto var(--sp-4);line-height:1.6}
+        .empty-state-hint{font-size:.75rem;color:var(--text-muted);margin-top:var(--sp-3);padding:var(--sp-2) var(--sp-4);background:var(--bg-card);border-radius:var(--radius-xs);display:inline-block}
+
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 5 — Chapter complete + goal hit animations
+        ══════════════════════════════════════════════════════ */
+        /* Chapter check pulse */
+        .chapter-check{transition:all .3s cubic-bezier(.34,1.56,.64,1)}
+        .chapter-check.done{animation:check-pop .4s cubic-bezier(.34,1.56,.64,1)}
+        @keyframes check-pop{0%{transform:scale(1)}40%{transform:scale(1.4)}100%{transform:scale(1)}}
+        /* Goal hit banner */
+        .goal-hit-banner{
+            position:fixed;top:80px;left:50%;transform:translateX(-50%) translateY(-20px);
+            background:linear-gradient(135deg,#10b981,#06b6d4);
+            color:#fff;padding:var(--sp-3) var(--sp-5);border-radius:var(--radius);
+            font-family:var(--font-display);font-weight:700;font-size:.95rem;
+            box-shadow:0 8px 32px rgba(16,185,129,.4);z-index:300;
+            opacity:0;transition:all .5s cubic-bezier(.34,1.56,.64,1);pointer-events:none;
+            white-space:nowrap;display:flex;align-items:center;gap:var(--sp-2)
+        }
+        .goal-hit-banner.show{opacity:1;transform:translateX(-50%) translateY(0)}
+        /* Subject complete flash */
+        @keyframes subject-complete{
+            0%{box-shadow:0 0 0 0 rgba(16,185,129,.6)}
+            70%{box-shadow:0 0 0 16px rgba(16,185,129,0)}
+            100%{box-shadow:0 0 0 0 rgba(16,185,129,0)}
+        }
+        .subject-complete-flash{animation:subject-complete .8s ease-out}
+
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 6 — Mobile FAB
+        ══════════════════════════════════════════════════════ */
+        .fab{
+            display:none;position:fixed;bottom:80px;right:20px;
+            width:56px;height:56px;border-radius:50%;
+            background:var(--gradient-1);color:#fff;border:none;
+            font-size:1.5rem;cursor:pointer;z-index:150;
+            box-shadow:0 6px 24px rgba(99,102,241,.45);
+            transition:transform .2s,box-shadow .2s;align-items:center;justify-content:center
+        }
+        .fab:hover{transform:scale(1.08);box-shadow:0 8px 32px rgba(99,102,241,.55)}
+        .fab:active{transform:scale(.95)}
+        .fab-menu{
+            display:none;position:fixed;bottom:148px;right:16px;
+            flex-direction:column;gap:var(--sp-2);z-index:150;align-items:flex-end
+        }
+        .fab-menu.open{display:flex}
+        .fab-action{
+            display:flex;align-items:center;gap:var(--sp-2);
+            background:var(--bg-secondary);border:1px solid var(--border);
+            border-radius:var(--radius-sm);padding:var(--sp-2) var(--sp-4);
+            font-size:.82rem;font-weight:600;font-family:var(--font-display);
+            cursor:pointer;color:var(--text-primary);
+            box-shadow:0 4px 16px rgba(0,0,0,.25);
+            white-space:nowrap;transition:all .2s;
+            animation:fab-item-in .2s ease both
+        }
+        .fab-action:hover{border-color:var(--accent);transform:translateX(-4px)}
+        @keyframes fab-item-in{from{opacity:0;transform:translateX(12px)}to{opacity:1;transform:none}}
+        .fab-action:nth-child(1){animation-delay:.05s}
+        .fab-action:nth-child(2){animation-delay:.1s}
+        .fab-action:nth-child(3){animation-delay:.15s}
+        .fab-backdrop{display:none;position:fixed;inset:0;z-index:140}
+        .fab-backdrop.open{display:block}
+
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 7 — Streak Reminder Toast
+        ══════════════════════════════════════════════════════ */
+        .streak-reminder{
+            position:fixed;bottom:24px;left:50%;transform:translateX(-50%) translateY(100px);
+            background:linear-gradient(135deg,#f97316,#ef4444);color:#fff;
+            padding:var(--sp-4) var(--sp-5);border-radius:var(--radius);
+            font-family:var(--font-display);font-size:.9rem;font-weight:600;
+            box-shadow:0 8px 32px rgba(249,115,22,.4);z-index:300;
+            display:flex;align-items:center;gap:var(--sp-3);
+            transition:transform .5s cubic-bezier(.34,1.56,.64,1);pointer-events:auto
+        }
+        .streak-reminder.show{transform:translateX(-50%) translateY(0)}
+        .streak-reminder button{
+            background:rgba(255,255,255,.2);border:1px solid rgba(255,255,255,.3);
+            color:#fff;padding:4px 12px;border-radius:var(--radius-xs);
+            font-size:.78rem;font-weight:700;cursor:pointer;font-family:var(--font-display)
+        }
+
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 8 — Gestalt grouping (enclosure over borders)
+        ══════════════════════════════════════════════════════ */
+        /* Section enclosures — background colour instead of borders */
+        .section-group{
+            background:var(--bg-card);border-radius:var(--radius);
+            padding:var(--sp-5);margin-bottom:var(--sp-4)
+        }
+        .section-group-title{
+            font-family:var(--font-display);font-size:.65rem;font-weight:700;
+            text-transform:uppercase;letter-spacing:2.5px;color:var(--text-muted);
+            margin-bottom:var(--sp-4)
+        }
+        /* Card system: less border, more air */
+        .card{background:var(--bg-card);border:1px solid var(--border);border-radius:var(--radius);padding:var(--sp-5);transition:all .25s}
+        .card:hover{border-color:var(--border-hover)}
+        /* Related items: proximity grouping */
+        .item-group{display:flex;flex-direction:column;gap:var(--sp-2)}
+
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 9 — Thumb-zone optimized mobile modals
+        ══════════════════════════════════════════════════════ */
+        @media(max-width:768px){
+            .modal-overlay{align-items:flex-end}
+            .modal{
+                border-radius:var(--radius) var(--radius) 0 0;
+                max-height:90vh;width:100%;max-width:100%;
+                animation:slide-up-modal .3s cubic-bezier(.34,1.1,.64,1)
+            }
+            @keyframes slide-up-modal{from{transform:translateY(100%)}to{transform:translateY(0)}}
+            /* Drag handle */
+            .modal-header::before{
+                content:'';display:block;width:40px;height:4px;
+                background:var(--border);border-radius:2px;
+                margin:0 auto var(--sp-4);
+            }
+            /* Bigger tap targets */
+            .modal-close{width:44px;height:44px;font-size:1.3rem}
+            .btn{min-height:44px}
+            .form-input,.form-select,.form-textarea{min-height:44px;font-size:16px}/* 16px prevents iOS zoom */
+            .modal-footer{padding:var(--sp-4);padding-bottom:max(var(--sp-4),env(safe-area-inset-bottom))}
+        }
+
+        /* ══════════════════════════════════════════════════════
+           PRIORITY 10 — Save indicator in topbar
+        ══════════════════════════════════════════════════════ */
+        .save-indicator{
+            display:inline-flex;align-items:center;gap:5px;
+            font-size:.7rem;font-family:var(--font-mono);
+            color:var(--color-done);font-weight:600;
+            opacity:0;transition:opacity .3s;pointer-events:none
+        }
+        .save-indicator.show{opacity:1}
+        .save-indicator::before{
+            content:'';width:6px;height:6px;border-radius:50%;
+            background:var(--color-done);display:inline-block;
+            box-shadow:0 0 6px var(--color-done)
+        }
         /* --- Attachment styles --- */
         .attach-zone{border:2px dashed var(--border);border-radius:var(--radius-sm);padding:18px;text-align:center;cursor:pointer;transition:all .2s;margin-top:4px}
         .attach-zone:hover,.attach-zone.drag-over{border-color:var(--accent);background:rgba(99,102,241,0.06)}
@@ -520,6 +668,7 @@
         #main{margin-left:0}
         #menu-toggle{display:flex}
         .mobile-nav{display:block}
+        .fab{display:flex}
         .grid-4,.grid-5{grid-template-columns:repeat(2,1fr)}
         .grid-3{grid-template-columns:1fr}
         .grid-2{grid-template-columns:1fr}
@@ -941,6 +1090,7 @@
     <div class="search-box" style="position:relative"><input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 14px 7px 32px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)"><div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--bg-secondary);border:1px solid var(--border);border-radius:var(--radius-xs);margin-top:4px;display:none;z-index:60;max-height:250px;overflow-y:auto"></div></div>
     <button class="btn btn-primary" onclick="App.openQuickLog()"><span>⚡</span><span class="hide-mobile">Quick Log</span></button>
     <button class="btn btn-secondary" onclick="App.openAddChapterModal()"><span>+</span><span class="hide-mobile">Chapter</span></button>
+    <span class="save-indicator" id="save-indicator">Saved</span>
 </div>
         </div>
 
@@ -996,6 +1146,23 @@
   <img id="lb-img" src="" alt="" style="display:none">
   <iframe id="lb-pdf" src="" style="display:none"></iframe>
 </div>
+<!-- Goal hit banner -->
+<div class="goal-hit-banner" id="goal-hit-banner">🎯 Daily goal reached! Amazing work!</div>
+<!-- Streak reminder -->
+<div class="streak-reminder" id="streak-reminder">
+    <span style="font-size:1.4rem">🔥</span>
+    <div><div id="streak-reminder-msg">Your streak ends tonight!</div><div style="font-size:.72rem;opacity:.85;margin-top:2px">Log a session to keep it alive</div></div>
+    <button onclick="App.openQuickLog();App.dismissStreakReminder()">Study Now</button>
+    <button onclick="App.dismissStreakReminder()" style="background:transparent;border:none;padding:4px;font-size:1rem;opacity:.7">✕</button>
+</div>
+<!-- FAB -->
+<div class="fab-backdrop" id="fab-backdrop" onclick="App.closeFab()"></div>
+<div class="fab-menu" id="fab-menu">
+    <div class="fab-action" onclick="App.openQuickLog();App.closeFab()">⚡ Log Session</div>
+    <div class="fab-action" onclick="App.navigate('pomodoro');App.closeFab()">🍅 Focus Timer</div>
+    <div class="fab-action" onclick="App.navigate('coach');App.closeFab()">🤖 AI Coach</div>
+</div>
+<button class="fab" id="fab-btn" onclick="App.toggleFab()">＋</button>
 <div id="toast-container"></div>
 <div class="celebration" id="celebration"></div>
 <div class="level-up-overlay" id="level-up"><div class="level-up-card"><div class="lu-icon">⚡</div><h2 id="lu-text">Level Up!</h2><p id="lu-sub">You reached a new level!</p><button class="btn btn-primary" style="margin-top:20px" onclick="document.getElementById('level-up').classList.remove('show')">Awesome! 🎉</button></div></div>
@@ -1087,14 +1254,65 @@ const App={
         this.applyTheme();
         this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
         this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();this.checkBadges();
-        setInterval(()=>{this.updatePageSubtitle();if(this.state.autoTheme)this.autoThemeCheck()},60000);
+        setInterval(()=>{this.updatePageSubtitle();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder()},60000);
+        this.checkStreakReminder();
         this.updatePageSubtitle();
         if(this.state.autoTheme)this.autoThemeCheck();
         if(this.state.stopwatch.running)this.startStopwatchTimer();
     },
 
     load(){try{const d=localStorage.getItem('studyos_data');if(d){const p=JSON.parse(d);Object.assign(this.state,p)}}catch(e){console.error(e)}},
-    save(){try{localStorage.setItem('studyos_data',JSON.stringify(this.state))}catch(e){console.error(e)}},
+    save(){
+        try{localStorage.setItem('studyos_data',JSON.stringify(this.state))}catch(e){console.error(e)}
+        // Priority 10: Save indicator
+        const si=document.getElementById('save-indicator');
+        if(si){si.classList.add('show');clearTimeout(this._saveTimer);this._saveTimer=setTimeout(()=>si.classList.remove('show'),2000)}
+    },
+
+    // ── PRIORITY 5: Goal hit banner ───────────────────────
+    showGoalHitBanner(){
+        const b=document.getElementById('goal-hit-banner');
+        if(!b||this._goalShownToday===this.today())return;
+        this._goalShownToday=this.today();
+        b.classList.add('show');
+        setTimeout(()=>b.classList.remove('show'),3500);
+    },
+
+    // ── PRIORITY 6: FAB controls ─────────────────────────
+    toggleFab(){
+        const menu=document.getElementById('fab-menu');
+        const backdrop=document.getElementById('fab-backdrop');
+        const btn=document.getElementById('fab-btn');
+        const isOpen=menu.classList.contains('open');
+        menu.classList.toggle('open',!isOpen);
+        backdrop.classList.toggle('open',!isOpen);
+        btn.textContent=isOpen?'＋':'✕';
+        btn.style.transform=isOpen?'':'rotate(45deg)';
+    },
+    closeFab(){
+        document.getElementById('fab-menu').classList.remove('open');
+        document.getElementById('fab-backdrop').classList.remove('open');
+        const btn=document.getElementById('fab-btn');
+        btn.textContent='＋';btn.style.transform='';
+    },
+
+    // ── PRIORITY 7: Streak reminder ──────────────────────
+    checkStreakReminder(){
+        const h=new Date().getHours();
+        const tm=this.getTodayMinutes();
+        const streak=this.state.profile.streak||0;
+        if(h>=20&&h<23&&streak>0&&tm===0&&!this._streakReminderShown){
+            this._streakReminderShown=true;
+            const msg=document.getElementById('streak-reminder-msg');
+            if(msg)msg.textContent=`Your ${streak}-day streak ends tonight!`;
+            const r=document.getElementById('streak-reminder');
+            if(r){r.classList.add('show');setTimeout(()=>r.classList.remove('show'),8000)}
+        }
+    },
+    dismissStreakReminder(){
+        const r=document.getElementById('streak-reminder');
+        if(r)r.classList.remove('show');
+    },
 
     applyTheme(){document.documentElement.setAttribute('data-theme',this.state.theme)},
 
@@ -1524,7 +1742,7 @@ const App={
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
-        if(subs.length===0){h+=`<div class="empty-state"><div class="empty-icon">📚</div><div class="empty-title">No subjects</div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Add Subject</button></div>`}
+        if(subs.length===0){h+=`<div class="empty-state"><span class="empty-state-icon">📚</span><div class="empty-state-title">No subjects yet</div><div class="empty-state-desc">Load your entire CBSE Class 10 syllabus in one tap, or add subjects manually.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App.loadCBSE()">✨ Load CBSE Syllabus</button><button class="btn btn-secondary" onclick="App.openModal('modal-subject')">+ Add Manually</button></div><div class="empty-state-hint">💡 CBSE loads all 5 subjects with chapters pre-filled</div></div>`}
         else{flt.forEach(s=>{
             const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;
             const trophyIcon=pc>=100?'🥇':pc>=75?'🥈':pc>=50?'🥉':'';
@@ -1532,7 +1750,20 @@ const App={
         el.innerHTML=h;
     },
     filterSubject(id){this.state.selectedSubjectFilter=id;this.renderSubjects()},
-    toggleChapter(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;if(ch.status==='completed'||ch.status==='revised'){ch.status='in-progress';ch.completionDate=null}else{ch.status='completed';ch.completionDate=this.today();this.addXP(20,'Chapter completed');this.celebrate()}this.save();this.render()},
+    toggleChapter(sId,cId){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        if(ch.status==='completed'||ch.status==='revised'){ch.status='in-progress';ch.completionDate=null}
+        else{
+            ch.status='completed';ch.completionDate=this.today();
+            this.addXP(20,'Chapter completed');this.celebrate();
+            // Check if subject is now fully complete
+            const sub=this.getSubjectById(sId);
+            if(sub&&sub.chapters.every(c=>c.status==='completed'||c.status==='revised')){
+                setTimeout(()=>{this.celebrate();this.toast(`🏆 ${sub.icon} ${sub.name} complete! Amazing!`,'success')},800);
+            }
+        }
+        this.save();this.render();
+    },
     quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
     deleteChapter(sId,cId){if(!confirm('Delete chapter?'))return;const s=this.getSubjectById(sId);s.chapters=s.chapters.filter(c=>c.id!==cId);this.save();this.render()},
     deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);this.save();this.render()},
@@ -1571,7 +1802,7 @@ const App={
         const el=document.getElementById('page-exercises');
         let h='<div style="margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">Track NCERT exercises, RD Sharma, and sample papers per chapter.</p></div>';
         const subs=this.state.subjects;
-        if(subs.length===0){h+='<div class="empty-state"><div class="empty-icon">🔢</div><div class="empty-title">Add subjects first</div></div>';el.innerHTML=h;return}
+        if(subs.length===0){h+='<div class="empty-state"><span class="empty-state-icon">🔢</span><div class="empty-state-title">Add subjects first</div><div class="empty-state-desc">Exercises are tracked per chapter. Load your CBSE syllabus or add subjects to get started.</div><button class="btn btn-primary" onclick="App.navigate(\'subjects\')">Go to Subjects →</button></div>';el.innerHTML=h;return}
         subs.forEach(s=>{
             const chaptersWithEx=s.chapters.filter(c=>{const k=s.id+'_'+c.id;return this.state.exercises[k]&&this.state.exercises[k].length>0});
             if(chaptersWithEx.length===0)return;
@@ -1610,14 +1841,14 @@ const App={
         if(ch&&ch.status==='not-started')ch.status='in-progress';
         if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision')}
         this.recordStudyDay();this.addXP(10,'Session logged');
-        const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){this.addXP(25,'Daily goal! 🎯');this.celebrate()}}
+        const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){this.addXP(25,'Daily goal! 🎯');this.celebrate();this.showGoalHitBanner()}}
         this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
     },
 
     renderLog(){
         const el=document.getElementById('page-log'),ss=[...this.state.sessions].reverse(),gr={};ss.forEach(s=>{if(!gr[s.date])gr[s.date]=[];gr[s.date].push(s)});
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${this.state.sessions.length} sessions • ${this.formatMin(this.state.sessions.reduce((a,s)=>a+s.timeSpent,0))}</p><button class="btn btn-primary" onclick="App.openQuickLog()">⚡ Log</button></div>`;
-        if(ss.length===0){h+=`<div class="empty-state"><div class="empty-icon">✏️</div><div class="empty-title">No sessions yet</div><button class="btn btn-primary" onclick="App.openQuickLog()">⚡ First Session</button></div>`}
+        if(ss.length===0){h+=`<div class="empty-state"><span class="empty-state-icon">✏️</span><div class="empty-state-title">No sessions logged yet</div><div class="empty-state-desc">Every study session you log builds your streak, earns XP, and helps the AI Coach give you better advice.</div><button class="btn btn-primary" onclick="App.openQuickLog()">⚡ Log Your First Session</button><div class="empty-state-hint">⏱ Even 15 minutes counts!</div></div>`}
         else{Object.keys(gr).forEach(d=>{const dm=gr[d].reduce((a,s)=>a+s.timeSpent,0);h+=`<div style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><h3 style="font-size:.9rem;font-weight:600">${d===this.today()?'Today':d}</h3><span style="font-size:.78rem;color:var(--accent-light);font-weight:600">${this.formatMin(dm)}</span></div>${gr[d].map(s=>{const sub=this.getSubjectById(s.subjectId);return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?sub.icon:'📖'}</div><div class="plan-info"><h4>${sub?sub.name:'?'} ${s.chapterName?'— '+s.chapterName:''}</h4><p>${s.type} ${'⭐'.repeat(s.rating||0)}</p></div><div style="text-align:right"><div class="plan-time">${this.formatMin(s.timeSpent)}</div><button class="ch-btn" style="margin-top:4px" onclick="App.deleteSession('${s.id}')">🗑</button></div></div>`}).join('')}</div>`})}
         el.innerHTML=h;
     },
@@ -1637,7 +1868,7 @@ const App={
         const doneCount=todayTasks.filter(t=>t.done).length;
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${doneCount}/${todayTasks.length} done</p><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.autoGenerateTasks()">🤖 Auto-Plan</button></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">✏️ Add Task</span></div><div style="display:flex;gap:8px"><input type="text" id="new-task" class="form-input" placeholder="e.g., Solve Ex 2.3..." style="flex:1" onkeydown="if(event.key==='Enter')App.addTask()"><button class="btn btn-primary btn-sm" onclick="App.addTask()">Add</button></div></div>`;
         h+=`<div class="card"><div class="card-header"><span class="card-title">📋 Today's Tasks</span></div>`;
-        if(todayTasks.length===0){h+='<p style="color:var(--text-muted);font-size:.85rem">No tasks. Add some or use Auto-Plan!</p>'}
+        if(todayTasks.length===0){h+=`<div class="empty-state"><span class="empty-state-icon">☑️</span><div class="empty-state-title">No tasks for today</div><div class="empty-state-desc">Tasks help you stay focused on what matters. Add your own or let AI plan your day automatically.</div><button class="btn btn-primary" onclick="App.autoGenerateTasks()">🤖 Auto-Plan My Day</button><div class="empty-state-hint">💡 Tip: Auto-Plan pulls from your overdue chapters and revisions</div></div>`}
         else{todayTasks.forEach(t=>{h+=`<div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="App.toggleTask('${t.id}')">${t.done?'✓':''}</div><span class="task-text ${t.done?'done':''}">${t.text}</span><button class="ch-btn" onclick="App.deleteTask('${t.id}')" style="width:24px;height:24px;font-size:.7rem">✕</button></div>`})}
         h+='</div>';el.innerHTML=h;
     },
@@ -1733,7 +1964,7 @@ const App={
         h+=renderDoubtList('Understood',understood,'🟢');
 
         if(doubts.length===0){
-            h+=`<div class="empty-state"><div class="empty-icon">❓</div><div class="empty-title">No doubts tracked</div><div class="empty-desc">Add topics you're struggling with to keep track of them!</div><button class="btn btn-primary" onclick="App.openDoubtModal()">+ Add First Doubt</button></div>`;
+            h+=`<div class="empty-state"><span class="empty-state-icon">🤔</span><div class="empty-state-title">No doubts logged — good sign!</div><div class="empty-state-desc">When you're confused about something, log it here. Your AI Coach can help explain it and you'll never forget to revisit a tricky concept.</div><button class="btn btn-primary" onclick="App.openDoubtModal()">+ Log a Doubt</button><div class="empty-state-hint">💡 Clearing doubts before boards is critical — don't skip this</div></div>`;
         }
         el.innerHTML=h;
     },
@@ -1767,7 +1998,7 @@ const App={
         const el=document.getElementById('page-resources');const resources=this.state.resources||[];
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${resources.length} resources saved</p><button class="btn btn-primary" onclick="App.openResourceModal()">+ Add Resource</button></div>`;
         if(resources.length===0){
-            h+=`<div class="empty-state"><div class="empty-icon">🔗</div><div class="empty-title">No resources yet</div><div class="empty-desc">Save YouTube links, PDFs, and websites for quick access during study!</div><button class="btn btn-primary" onclick="App.openResourceModal()">+ Add Resource</button></div>`;
+            h+=`<div class="empty-state"><span class="empty-state-icon">🔗</span><div class="empty-state-title">No resources saved yet</div><div class="empty-state-desc">Save YouTube videos, PDFs, and websites here so you never lose a good study resource mid-session.</div><button class="btn btn-primary" onclick="App.openResourceModal()">+ Save First Resource</button><div class="empty-state-hint">💡 Great resources: NCERT PDFs, PW videos, Khan Academy</div></div>`;
         }else{
             const bySub={};resources.forEach(r=>{const k=r.subjectId||'general';if(!bySub[k])bySub[k]=[];bySub[k].push(r)});
             Object.entries(bySub).forEach(([sId,rs])=>{
@@ -1889,7 +2120,7 @@ const App={
         const el=document.getElementById('page-notes');const notes=this.state.notes||[];
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${notes.length} notes</p><button class="btn btn-primary" onclick="App.openNoteModal()">+ Add Note</button></div>`;
         if(notes.length===0){
-            h+=`<div class="empty-state"><div class="empty-icon">📓</div><div class="empty-title">No notes yet</div><div class="empty-desc">Save formulas, key concepts, and study notes here!</div><button class="btn btn-primary" onclick="App.openNoteModal()">+ First Note</button></div>`;
+            h+=`<div class="empty-state"><span class="empty-state-icon">📓</span><div class="empty-state-title">No notes yet</div><div class="empty-state-desc">Save formulas, key concepts, and revision notes here. You can attach images and PDFs too.</div><button class="btn btn-primary" onclick="App.openNoteModal()">+ Write First Note</button><div class="empty-state-hint">💡 Try saving the quadratic formula or Newton's laws first</div></div>`;
         }else{
             // Search notes
             h+=`<div class="form-group" style="margin-bottom:16px"><input type="text" class="form-input" placeholder="🔍 Search notes..." oninput="App.filterNotes(this.value)"></div><div id="notes-list">`;
