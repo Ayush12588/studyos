@@ -2641,7 +2641,11 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
 };
 
 // INIT
-document.addEventListener('DOMContentLoaded',()=>App.init());
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => App.init());
+} else {
+    App.init();
+}
 
 // Close modals on overlay click
 document.querySelectorAll('.modal-overlay').forEach(m=>{
