@@ -1250,6 +1250,12 @@ const App={
 
     init(){
         this.load();
+
+        const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings'];
+        if (!validPages.includes(this.state.currentPage)) {
+            this.state.currentPage = 'dashboard';
+        }
+
         if(!this.state.profile.name||this.state.profile.name==='Student'){
             if(this.state.subjects.length===0)document.getElementById('welcome-overlay').classList.remove('hidden');
         }
