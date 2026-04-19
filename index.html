@@ -2613,7 +2613,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         const f=e.target.files[0];if(!f)return;
         if(!confirm('This will replace ALL current data. Continue?')){e.target.value='';return}
         const r=new FileReader();
-        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.save();this.render();this.updateSidebar();this.applyTheme();this.toast('Data imported! 📥','success')}catch(err){this.toast('Invalid file format','error')}};
+        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();this.render();this.updateSidebar();this.applyTheme();this.toast('Data imported! 📥','success')}catch(err){this.toast('Invalid file format','error')}};
         r.readAsText(f);e.target.value='';
     },
     resetAll(){
