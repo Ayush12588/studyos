@@ -246,33 +246,37 @@ a { color: inherit; text-decoration: none; }
     border-bottom: 1px solid var(--color-border);
     flex-shrink: 0;
 }
-.logo-icon {
-    width: 32px; height: 32px;
-    background: var(--color-brand);
-    border-radius: 8px;
-    display: flex; align-items: center; justify-content: center;
-    font-size: .85rem; font-weight: 800;
-    color: #fff;
-    letter-spacing: -0.5px;
+.logo-icon-svg {
     flex-shrink: 0;
-    /* Override any shadow from original */
-    box-shadow: none !important;
+}
+[data-theme="warm-dark"] .logo-icon-svg rect {
+    fill: var(--color-brand);
 }
 .logo-text {
     font-size: 1rem;
     font-weight: 700;
     color: var(--color-brand);
-    /* Strip gradient text from original */
     background: none !important;
     -webkit-background-clip: unset !important;
     -webkit-text-fill-color: currentColor !important;
+    line-height: 1.2;
+}
+.logo-study {
+    font-weight: 500;
+    color: var(--color-brand);
+    letter-spacing: -0.2px;
+}
+.logo-os {
+    font-weight: 800;
+    color: var(--color-brand);
+    letter-spacing: -0.5px;
 }
 .logo-sub {
-    font-size: .6rem;
-    color: var(--color-text-secondary);
+    font-size: 0.6rem;
+    color: var(--text-muted);
     text-transform: uppercase;
-    letter-spacing: 1.5px;
-    margin-top: 1px;
+    letter-spacing: 1.8px;
+    margin-top: 2px;
     font-weight: 500;
 }
 
@@ -502,9 +506,45 @@ a { color: inherit; text-decoration: none; }
 }
 .topbar-actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
     align-items: center;
     flex-shrink: 0;
+}
+
+/* ── Topbar pill base style ── */
+.topbar-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 20px;
+    font-family: var(--font-mono);
+    font-weight: 700;
+    font-size: .78rem;
+    line-height: 1;
+    white-space: nowrap;
+    flex-shrink: 0;
+    cursor: default;
+}
+
+/* Streak pill */
+.topbar-streak-pill {
+    background: rgba(249,115,22,0.15);
+    border: 1px solid rgba(249,115,22,0.3);
+    color: #F97316;
+}
+
+/* Exam countdown pill */
+.topbar-exam-pill {
+    background: rgba(79,70,229,0.15);
+    border: 1px solid rgba(79,70,229,0.3);
+    color: #818CF8;
+}
+.topbar-exam-pill.danger {
+    background: rgba(239,68,68,0.15);
+    border-color: rgba(239,68,68,0.3);
+    color: #EF4444;
 }
 
 /* ── Mobile search icon button ── */
@@ -513,7 +553,7 @@ a { color: inherit; text-decoration: none; }
     align-items: center;
     justify-content: center;
     width: 36px;
-    height: 40px;
+    height: 36px;
     border-radius: var(--radius-sm);
     border: 1px solid var(--color-border);
     background: var(--color-surface);
@@ -524,9 +564,17 @@ a { color: inherit; text-decoration: none; }
 }
 .search-icon-btn:hover {
     background: var(--color-surface-hover);
-    border-color: var(--border-hover);
     color: var(--color-text-primary);
 }
+
+/* topbar-quicklog: desktop = full text btn-primary, mobile = icon-only 36×36 */
+.topbar-quicklog {
+    flex-shrink: 0;
+    height: 36px;
+    padding: 0 12px;
+}
+/* topbar-addchapter: desktop = normal btn-secondary, hidden on mobile */
+.topbar-addchapter { flex-shrink: 0; height: 36px; }
 
 /* ── Mobile search overlay ── */
 #mobile-search-overlay {
@@ -757,11 +805,11 @@ a { color: inherit; text-decoration: none; }
 /* ═══════════════════════════════════════════════════
    DASHBOARD HERO
 ═══════════════════════════════════════════════════ */
-.db-greeting {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    margin-bottom: 20px;
+.db-greeting-compact {
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    margin-bottom: 10px;
+    line-height: 1.4;
 }
 
 .db-hero {
@@ -780,6 +828,7 @@ a { color: inherit; text-decoration: none; }
     overflow: hidden;
     border: 1px solid rgba(255,255,255,0.07);
     box-shadow: none !important;
+    min-height: 160px;
 }
 .db-hero::before {
     content: '';
@@ -825,6 +874,16 @@ a { color: inherit; text-decoration: none; }
     cursor: default;
     box-shadow: none !important;
 }
+.db-hero-celebration {
+    background: linear-gradient(135deg, #052e16 0%, #14532d 40%, #166534 70%, #052e16 100%) !important;
+    border-color: rgba(34,197,94,0.25) !important;
+}
+.db-hero-celebration::before {
+    background: radial-gradient(circle, rgba(34,197,94,0.20) 0%, transparent 70%) !important;
+}
+.db-hero-celebration::after {
+    background: radial-gradient(circle, rgba(74,222,128,0.12) 0%, transparent 70%) !important;
+}
 .db-hero-empty::before, .db-hero-empty::after { display: none; }
 .db-hero-empty:hover { opacity: 1; }
 
@@ -856,8 +915,8 @@ a { color: inherit; text-decoration: none; }
 .db-hero-empty .db-hero-label::before { display: none; }
 
 .db-hero-title {
-    font-size: 1.35rem;
-    font-weight: 700;
+    font-size: 1.5rem;
+    font-weight: 800;
     color: #fff;
     line-height: 1.2;
     margin-bottom: 8px;
@@ -873,6 +932,19 @@ a { color: inherit; text-decoration: none; }
 }
 .db-hero-empty .db-hero-sub { color: var(--color-text-secondary); }
 
+/* Subject tag pill inside hero */
+.db-hero-subject-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 0.72rem;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 20px;
+    margin-bottom: 6px;
+    width: fit-content;
+}
+
 /* Ring */
 .db-hero-ring {
     position: relative;
@@ -881,24 +953,27 @@ a { color: inherit; text-decoration: none; }
     justify-content: center;
     flex-shrink: 0;
     z-index: 1;
+    width: 120px;
+    height: 120px;
 }
 .db-hero-ring svg circle:last-child { filter: none; }
 .db-hero-ring-val {
     position: absolute;
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     font-weight: 700;
     color: #fff;
     top: 50%; left: 50%;
-    transform: translate(-50%, -58%);
+    transform: translate(-50%, -60%);
 }
 .db-hero-ring-lbl {
     position: absolute;
-    font-size: .5rem;
+    font-size: .6rem;
     font-weight: 600;
     color: rgba(186,220,255,0.7);
     letter-spacing: 1px;
     top: 50%; left: 50%;
-    transform: translate(-50%, 65%);
+    transform: translate(-50%, 55%);
+    white-space: nowrap;
 }
 
 /* Stats row */
@@ -917,14 +992,19 @@ a { color: inherit; text-decoration: none; }
     box-shadow: none !important;
 }
 .db-stat:hover { border-color: var(--border-hover); }
+/* Colored left borders per stat type */
+.db-stat-indigo { border-left: 3px solid #6366f1; }
+.db-stat-green  { border-left: 3px solid #22C55E; }
+.db-stat-orange { border-left: 3px solid #F97316; }
+.db-stat-purple { border-left: 3px solid #a855f7; }
 .db-stat-val {
-    font-size: 1.5rem;
+    font-size: 1.6rem;
     font-weight: 700;
     line-height: 1;
     margin-bottom: 4px;
 }
 .db-stat-lbl { font-size: .7rem; color: var(--text-muted); margin-bottom: 4px; }
-.db-stat-trend { font-size: .68rem; font-weight: 500; }
+.db-stat-trend { font-size: .65rem; font-weight: 500; }
 
 /* Urgency bar */
 .db-urgency {
@@ -1319,26 +1399,7 @@ a { color: inherit; text-decoration: none; }
 /* ═══════════════════════════════════════════════════
    SAVE INDICATOR
 ═══════════════════════════════════════════════════ */
-.save-indicator {
-    display: inline-flex;
-    align-items: center;
-    gap: 5px;
-    font-size: .68rem;
-    font-family: var(--font-mono);
-    color: var(--color-success);
-    font-weight: 600;
-    opacity: 0;
-    transition: opacity .25s;
-    pointer-events: none;
-}
-.save-indicator.show { opacity: 1; }
-.save-indicator::before {
-    content: '';
-    width: 5px; height: 5px;
-    border-radius: 50%;
-    background: var(--color-success);
-    display: inline-block;
-}
+/* save-indicator removed — auto-save is silent */
 
 /* ═══════════════════════════════════════════════════
    WELCOME OVERLAY
@@ -1793,26 +1854,128 @@ a { color: inherit; text-decoration: none; }
     bottom: 0; left: 0; right: 0;
     background: var(--color-surface);
     border-top: 1px solid var(--color-border);
-    padding: 6px 8px;
-    padding-bottom: max(6px, env(safe-area-inset-bottom));
+    height: 60px;
+    padding: 0 8px;
+    padding-bottom: env(safe-area-inset-bottom);
     z-index: 100;
 }
-.mobile-nav-items { display: flex; justify-content: space-around; }
+.mobile-nav-items {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    height: 100%;
+}
+
+/* Standard (non-center) nav items */
 .mob-nav-item {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 2px;
-    padding: 5px 8px;
+    gap: 3px;
+    padding: 8px 12px;
     cursor: pointer;
     color: var(--text-muted);
-    font-size: .58rem;
+    font-size: .6rem;
     font-weight: 500;
     transition: color .15s;
-    border-radius: 6px;
+    border-radius: 10px;
+    position: relative;
+    -webkit-tap-highlight-color: transparent;
 }
-.mob-icon { font-size: 1.1rem; display: block; }
-.mob-nav-item.active { color: var(--color-brand); }
+.mob-nav-item svg {
+    width: 20px;
+    height: 20px;
+    stroke-width: 1.75;
+    flex-shrink: 0;
+}
+/* Keep legacy .mob-icon class working for SVGs */
+.mob-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+.mob-label {
+    display: block;
+    line-height: 1;
+}
+
+/* Active state: color change only, no background */
+.mob-nav-item.active {
+    color: var(--color-brand);
+}
+
+/* Active indicator dot */
+.mob-nav-item::after {
+    content: '';
+    position: absolute;
+    bottom: 2px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 3px;
+    height: 3px;
+    border-radius: 50%;
+    background: var(--color-brand);
+    opacity: 0;
+    transition: opacity .15s;
+}
+.mob-nav-item.active::after {
+    opacity: 1;
+}
+
+/* Center item: suppress all normal active styles */
+.mob-nav-item.mob-nav-center,
+.mob-nav-item.mob-nav-center.active {
+    color: transparent;
+    padding: 0;
+    border-radius: 0;
+}
+.mob-nav-item.mob-nav-center::after,
+.mob-nav-item.mob-nav-center.active::after {
+    display: none;
+}
+
+/* ── Center elevated Log button ── */
+.mob-nav-center {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    /* Lift above the nav bar */
+    position: relative;
+    top: -16px;
+}
+.mob-log-btn {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--color-brand);
+    border: none;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    outline: 3px solid rgba(79, 70, 229, 0.25);
+    outline-offset: 2px;
+    transition: transform .15s ease, background .15s ease;
+    -webkit-tap-highlight-color: transparent;
+    flex-shrink: 0;
+}
+.mob-log-btn svg {
+    width: 22px;
+    height: 22px;
+    stroke: #fff;
+    stroke-width: 2;
+    flex-shrink: 0;
+}
+.mob-log-btn:hover {
+    background: var(--color-brand-hover);
+}
+.mob-log-btn:active {
+    transform: scale(0.92);
+}
+/* Warm-dark theme: outline color follows brand automatically */
+[data-theme="warm-dark"] .mob-log-btn {
+    outline-color: rgba(212, 137, 26, 0.3);
+}
 
 /* ═══════════════════════════════════════════════════
    TOPBAR MENU TOGGLE + SEARCH
@@ -2088,16 +2251,30 @@ h1,h2,h3,h4,
     #content { padding: 16px 14px; padding-bottom: max(100px, calc(80px + env(safe-area-inset-bottom))); }
     #topbar { padding: 0 14px; height: 52px; }
     .topbar-left h1 { font-size: .9rem; }
-    .topbar-actions .btn { padding: 6px 10px; font-size: .75rem; }
-    /* Hide desktop search, show icon button */
+    /* Hide desktop search box */
     .topbar-actions .search-box { display: none !important; }
+    /* Hide Add Chapter — FAB covers it */
+    .topbar-addchapter { display: none !important; }
+    /* Show icon buttons */
     .search-icon-btn { display: flex; }
+    /* Quick Log shrinks to icon-only 36×36 */
+    .topbar-quicklog {
+        width: 36px !important;
+        height: 36px !important;
+        padding: 0 !important;
+        justify-content: center !important;
+        border-radius: var(--radius-sm) !important;
+        min-height: unset !important;
+    }
+    /* Uniform gap between all topbar-actions items */
+    .topbar-actions { gap: 6px; }
+    /* Pills: slightly smaller on mobile */
+    .topbar-pill { height: 24px; font-size: .7rem; padding: 0 8px; }
     #mobile-search-overlay { display: flex; }
     .db-two-col { grid-template-columns: 1fr; }
     .db-col-side { order: -1; }
     .db-subj-grid { grid-template-columns: 1fr 1fr; }
     .db-stats { grid-template-columns: repeat(2,1fr); }
-    .db-hero-ring { display: none; }
     .modal-overlay { align-items: flex-end; }
     .modal { border-radius: var(--radius) var(--radius) 0 0; max-height: 90vh; width: 100%; max-width: 100%; }
     .modal-close { width: 42px; height: 42px; }
@@ -2128,7 +2305,7 @@ h1,h2,h3,h4,
     .grid { gap: 10px; }
     .stat-info h3 { font-size: .95rem; }
     .chapter-name { font-size: .76rem; }
-    .mobile-nav { padding: 4px 6px; }
+    .mobile-nav { padding: 0 4px; }
     .goal-tiles { grid-template-columns: repeat(2,1fr); }
 }
 
@@ -2154,10 +2331,11 @@ h1,h2,h3,h4,
     input[type="url"], select, textarea { font-size: 16px !important; }
     .search-box::before { display: none; }
     #search-dropdown { left: -40px !important; right: auto !important; width: 80vw !important; }
+    .db-hero-ring { display: none; }
 }
 
 @supports(padding:max(0px)){
-    .mobile-nav { padding-bottom: max(6px, env(safe-area-inset-bottom)); }
+    .mobile-nav { padding-bottom: max(0px, env(safe-area-inset-bottom)); }
 }
 
 /* Smooth scrolling on touch */
@@ -2254,10 +2432,21 @@ body { overscroll-behavior-y: contain; }
 <div id="sidebar-backdrop" onclick="App.closeSidebar()"></div>
     <aside id="sidebar">
         <div class="logo">
-            <div class="logo-icon">S</div>
+            <svg class="logo-icon-svg" width="32" height="32" viewBox="0 0 32 32" style="flex-shrink:0" xmlns="http://www.w3.org/2000/svg">
+                <rect width="32" height="32" rx="8" fill="#4F46E5"/>
+                <circle cx="16" cy="16" r="13" fill="none" stroke="rgba(255,255,255,0.35)" stroke-width="2" stroke-linecap="round" stroke-dasharray="61 82" transform="rotate(-220 16 16)"/>
+                <path d="M8,22 C8,14 14,13 16,13 L16,22 Z" fill="none" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+                <path d="M24,22 C24,14 18,13 16,13 L16,22 Z" fill="none" stroke="white" stroke-width="1.5" stroke-linejoin="round"/>
+                <line x1="16" y1="13" x2="16" y2="22" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="8" y1="22" x2="24" y2="22" stroke="white" stroke-width="1.5" stroke-linecap="round"/>
+                <line x1="10" y1="17" x2="14" y2="16" stroke="rgba(255,255,255,0.6)" stroke-width="1" stroke-linecap="round"/>
+                <line x1="10" y1="19" x2="14" y2="18" stroke="rgba(255,255,255,0.6)" stroke-width="1" stroke-linecap="round"/>
+                <line x1="18" y1="16" x2="22" y2="17" stroke="rgba(255,255,255,0.6)" stroke-width="1" stroke-linecap="round"/>
+                <line x1="18" y1="18" x2="22" y2="19" stroke="rgba(255,255,255,0.6)" stroke-width="1" stroke-linecap="round"/>
+            </svg>
             <div>
-                <div class="logo-text">StudyOS</div>
-                <div class="logo-sub">Command Center</div>
+                <div class="logo-text"><span class="logo-study">Study</span><span class="logo-os">OS</span></div>
+                <div class="logo-sub">CBSE Class 10</div>
             </div>
         </div>
         <nav class="nav">
@@ -2396,19 +2585,28 @@ body { overscroll-behavior-y: contain; }
                     <input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 12px 7px 30px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)">
                     <div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);margin-top:4px;display:none;z-index:60;max-height:240px;overflow-y:auto"></div>
                 </div>
+                <!-- Streak pill: hidden if streak === 0 -->
+                <span class="topbar-pill topbar-streak-pill" id="topbar-streak-pill" style="display:none" aria-label="Study streak">
+                    🔥 <span id="topbar-streak-val">0</span>
+                </span>
+                <!-- Exam countdown pill: hidden if no exam date set -->
+                <span class="topbar-pill topbar-exam-pill" id="topbar-exam-pill" style="display:none" aria-label="Days to exam">
+                    📅 <span id="topbar-exam-val">0</span>d
+                </span>
                 <!-- Mobile-only search icon (hidden on desktop via CSS) -->
                 <button class="search-icon-btn" onclick="App.openMobileSearch()" aria-label="Search">
                     <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
                 </button>
-                <button class="btn btn-primary" onclick="App.openQuickLog()">
+                <!-- Quick Log: full button on desktop, icon-only on mobile -->
+                <button class="btn btn-primary topbar-quicklog" onclick="App.openQuickLog()" aria-label="Quick Log">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
                     <span class="hide-mobile">Quick Log</span>
                 </button>
-                <button class="btn btn-secondary" onclick="App.openAddChapterModal()">
+                <!-- Add Chapter: desktop only, hidden on mobile -->
+                <button class="btn btn-secondary topbar-addchapter" onclick="App.openAddChapterModal()" aria-label="Add Chapter">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
                     <span class="hide-mobile">Chapter</span>
                 </button>
-                <span class="save-indicator" id="save-indicator">Saved</span>
             </div>
         </div>
 
@@ -2433,28 +2631,29 @@ body { overscroll-behavior-y: contain; }
     </main>
 </div>
 
-<!-- Mobile bottom nav (5 items, icons + labels) -->
+<!-- Mobile bottom nav — elevated center Log button -->
 <div class="mobile-nav">
     <div class="mobile-nav-items">
         <div class="mob-nav-item active" onclick="App.navigate('dashboard')">
-            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
-            Home
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            <span class="mob-label">Home</span>
         </div>
         <div class="mob-nav-item" onclick="App.navigate('subjects')">
-            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
-            Subjects
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="mob-label">Subjects</span>
         </div>
-        <div class="mob-nav-item" onclick="App.openQuickLog()">
-            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
-            Log
+        <div class="mob-nav-item mob-nav-center" onclick="App.openQuickLog()">
+            <button class="mob-log-btn" aria-label="Log study session">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </button>
         </div>
         <div class="mob-nav-item" onclick="App.navigate('tasks')">
-            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
-            Tasks
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span class="mob-label">Tasks</span>
         </div>
         <div class="mob-nav-item" onclick="App.navigate('rewards')">
-            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Rewards
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span class="mob-label">Rewards</span>
         </div>
     </div>
 </div>
@@ -2626,7 +2825,11 @@ const App={
         stopwatch:{running:false,elapsed:0,subjectId:'',chapterId:''},
         dailyChallenges:{date:'',challenges:[],completed:[]},
         weeklyPlan:{},
-        checkins:{}
+        checkins:{},
+        // STREAK FREEZE
+        streakFreezes:1,
+        lastFreezeUsedDate:null,
+        pendingFreezeNotice:false
     },
     pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null},
     swInterval:null,
@@ -2706,14 +2909,19 @@ const App={
         if(!this.state.profile.mood)this.state.profile.mood='';
         if(!this.state.profile.moodHistory)this.state.profile.moodHistory=[];
         if(this.state.autoTheme===undefined)this.state.autoTheme=false;
+        // STREAK FREEZE — migration: add fields if missing from saved state
+        if(this.state.streakFreezes===undefined)this.state.streakFreezes=1;
+        if(this.state.lastFreezeUsedDate===undefined)this.state.lastFreezeUsedDate=null;
+        if(this.state.pendingFreezeNotice===undefined)this.state.pendingFreezeNotice=false;
 
         this.applyTheme();
         this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
         this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();this.checkBadges();
-        setInterval(()=>{this.updatePageSubtitle();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
+        setInterval(()=>{this.updatePageSubtitle();this.updateTopbarPills();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
         // Only check streak reminder after page settles, not on cold start
         setTimeout(()=>{this.checkStreakReminder();this.checkEodCheckin()},5000);
         this.updatePageSubtitle();
+        this.updateTopbarPills();
         if(this.state.autoTheme)this.autoThemeCheck();
         if(this.state.stopwatch.running)this.startStopwatchTimer();
     },
@@ -2721,9 +2929,8 @@ const App={
     load(){try{const d=localStorage.getItem('studyos_data');if(d){const p=JSON.parse(d);Object.assign(this.state,p)}}catch(e){console.error(e)}},
     save(){
         try{localStorage.setItem('studyos_data',JSON.stringify(this.state))}catch(e){console.error(e)}
-        // Priority 10: Save indicator
-        const si=document.getElementById('save-indicator');
-        if(si){si.classList.add('show');clearTimeout(this._saveTimer);this._saveTimer=setTimeout(()=>si.classList.remove('show'),2000)}
+        // Auto-save is silent — no topbar indicator
+        this.updateTopbarPills();
     },
 
     // ── PRIORITY 5: Goal hit banner ───────────────────────
@@ -2778,6 +2985,13 @@ const App={
         if(r)r.classList.remove('show');
         if(persist)localStorage.setItem('sr_dismissed',this.today());
         clearTimeout(this._streakTimer);
+    },
+    // STREAK FREEZE — dismiss the one-time freeze-used banner
+    dismissFreezeNotice(){
+        this.state.pendingFreezeNotice=false;
+        this.save();
+        const banner=document.getElementById('freeze-notice-banner');
+        if(banner)banner.remove();
     },
 
     // ── P1-1: End-of-day check-in ────────────────────────────
@@ -2923,13 +3137,89 @@ const App={
     },
 
     // STREAK
-    updateStreak(){const t=this.today(),l=this.state.profile.lastStudyDate;if(!l)return;if(this.daysBetween(l,t)>1){this.state.profile.streak=0;this.save()}},
-    recordStudyDay(){const t=this.today(),l=this.state.profile.lastStudyDate;if(l===t)return;if(l&&this.daysBetween(l,t)===1)this.state.profile.streak++;else this.state.profile.streak=1;this.state.profile.lastStudyDate=t;this.save()},
+    // STREAK FREEZE — updateStreak now runs the full freeze pipeline on load
+    updateStreak(){
+        const t=this.today(),l=this.state.profile.lastStudyDate;
+        if(!l)return; // never studied — no streak to drop, no freeze needed
+
+        // STEP 1: Calculate what streak SHOULD be (existing logic)
+        const yesterdayStreak=this.state.profile.streak||0;
+        if(this.daysBetween(l,t)>1){
+            this.state.profile.streak=0;
+        }
+        const newStreak=this.state.profile.streak;
+
+        // STEP 2 + 3: Freeze auto-apply — only if streak just dropped to 0
+        // STREAK FREEZE
+        if(
+            newStreak===0 &&
+            yesterdayStreak>0 &&
+            this.state.streakFreezes>0 &&
+            this.state.lastFreezeUsedDate!==t
+        ){
+            // Consume freeze and restore streak
+            this.state.streakFreezes=Math.max(0,this.state.streakFreezes-1);
+            this.state.lastFreezeUsedDate=t;
+            this.state.profile.streak=yesterdayStreak;
+            this.state.pendingFreezeNotice=true;
+        }
+
+        // STEP 4: Save
+        this.save();
+
+        // Freeze earn check — after freeze is applied, on multiples of 7
+        // STREAK FREEZE
+        const finalStreak=this.state.profile.streak;
+        if(finalStreak>0&&finalStreak%7===0){
+            if(this.state.streakFreezes<3){
+                this.state.streakFreezes=Math.min(3,this.state.streakFreezes+1);
+                this.save();
+                setTimeout(()=>this.toast(`🧊 Streak freeze earned! You now have ${this.state.streakFreezes} freeze${this.state.streakFreezes!==1?'s':''}.`,'info'),800);
+            }else{
+                setTimeout(()=>this.toast(`🔥 Streak milestone! You're already holding max freezes.`,'info'),800);
+            }
+        }
+    },
+    // LOG VALIDATION — streakEligible param: true = count toward streak, false = neutral (save only)
+    recordStudyDay(streakEligible=true){
+        const t=this.today(),l=this.state.profile.lastStudyDate;
+        // Always mark today as studied so the day isn't treated as a "miss" by updateStreak
+        // But only increment the streak counter when streakEligible === true
+        if(l===t)return;
+        this.state.profile.lastStudyDate=t;
+        if(!streakEligible){
+            // Short session — neutral. Save the date stamp so tomorrow's session
+            // sees consecutive days, but do not advance the streak counter.
+            this.save();
+            return;
+        }
+        const prevStreak=this.state.profile.streak||0;
+        if(l&&this.daysBetween(l,t)===1)this.state.profile.streak++;
+        else this.state.profile.streak=1;
+        this.save();
+        // ── Streak milestone celebration ──
+        const newStreak=this.state.profile.streak;
+        const MILESTONES=[3,7,14,21,30,50,100];
+        if(MILESTONES.includes(newStreak)&&!MILESTONES.includes(prevStreak)){
+            setTimeout(()=>{
+                this.celebrate();
+                const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='🔥';
+                document.getElementById('lu-text').textContent=`🔥 ${newStreak}-day streak!`;
+                document.getElementById('lu-sub').textContent=`You've studied ${newStreak} days in a row. Boards don't stand a chance.`;
+                document.getElementById('level-up').classList.add('show');
+                this.addXP(50,`${newStreak}-day streak milestone! 🔥`);
+            },700);
+        }
+        // BUG FIX: Freeze earning removed from here — duplicate with updateStreak().
+        // updateStreak() always runs on the next app load after a session is saved
+        // and will catch the milestone correctly. Keeping it here caused 2 freezes
+        // to be awarded on milestone days (day 7, 14, 21...).
+    },
 
     // XP
     addXP(amt,reason){const ol=this.state.profile.level;this.state.profile.xp+=amt;this.state.profile.level=Math.floor(Math.sqrt(this.state.profile.xp/50))+1;this.save();this.updateSidebar();this.toast(`+${amt} XP — ${reason}`,'xp');if(this.state.profile.level>ol)setTimeout(()=>this.showLevelUp(this.state.profile.level),600);this.checkBadges()},
     xpForLevel(l){return l*l*50},
-    showLevelUp(l){document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');this.celebrate()},
+    showLevelUp(l){const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='⚡';document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');this.celebrate()},
     updateSidebar(){const p=this.state.profile;document.getElementById('sb-name').textContent=p.name;document.getElementById('sb-level').textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);document.getElementById('sb-xp-fill').style.width=pct+'%';document.getElementById('sb-xp-text').textContent=`${p.xp-c} / ${n-c} XP`},
     updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');rb.style.display=r>0?'inline':'none';rb.textContent=r;ob.style.display=o>0?'inline':'none';ob.textContent=o;db.style.display=ud>0?'inline':'none';db.textContent=ud},
 
@@ -2964,6 +3254,17 @@ const App={
         this.save();
     },
 
+    // DAILY CHALLENGE — animated checkbox toggle (visual + re-triggers logic check)
+    _dcToggleAnim(id,el){
+        const dc=this.state.dailyChallenges;
+        if(!dc||dc.date!==this.today())return;
+        if(dc.completed.includes(id))return; // one-way: auto-checked by check engine
+        el.style.transform='scale(1.3)';
+        setTimeout(()=>{ el.style.transform='scale(1)'; },200);
+        this.checkDailyChallenges();
+        this.render();
+    },
+
     // MOOD
     setMood(mood){
         this.state.profile.mood=mood;
@@ -2973,7 +3274,7 @@ const App={
     },
 
     // WELCOME
-    welcomeNext(step){if(step===2){const n=document.getElementById('welcome-name').value.trim();if(!n){this.toast('Enter your name','warning');return}this.state.profile.name=n}document.querySelectorAll('.welcome-step').forEach(s=>s.classList.remove('active'));document.querySelector(`.welcome-step[data-step="${step}"]`).classList.add('active')},
+    welcomeNext(step){if(step===3){const n=document.getElementById('welcome-name').value.trim();if(!n){this.toast('Enter your name','warning');return}this.state.profile.name=n}document.querySelectorAll('.welcome-step').forEach(s=>s.classList.remove('active'));document.querySelector(`.welcome-step[data-step="${step}"]`).classList.add('active')},
     loadCBSE(){this.CBSE_DATA.forEach(sub=>{const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});this.state.subjects.push(sj)});this.save();this.toast('CBSE syllabus loaded! 📚','success');this.welcomeNext(3)},
     completeWelcome(){this.state.profile.dailyGoalMinutes=parseInt(document.getElementById('welcome-goal').value);const ed=document.getElementById('welcome-exam-date').value;if(ed)this.state.profile.examDate=ed;this.save();document.getElementById('welcome-overlay').classList.add('hidden');this.render();this.updateSidebar();this.celebrate();this.toast('Welcome, '+this.state.profile.name+'! 🚀','success')},
 
@@ -2999,6 +3300,28 @@ const App={
         this.closeSidebar();document.getElementById('content').scrollTop=0;
     },
     updatePageSubtitle(){const n=new Date(),o={month:'short',weekday:'short',day:'numeric'};let sub=n.toLocaleDateString('en-US',o);const dte=this.getDaysToExam();if(dte!==null&&dte>0)sub+=` • ${dte} days left`;document.getElementById('page-subtitle').textContent=sub},
+
+    updateTopbarPills(){
+        // ── Streak pill ──
+        const streak=this.state.profile.streak||0;
+        const sp=document.getElementById('topbar-streak-pill');
+        const sv=document.getElementById('topbar-streak-val');
+        if(sp&&sv){
+            if(streak>0){sp.style.display='inline-flex';sv.textContent=streak}
+            else{sp.style.display='none'}
+        }
+        // ── Exam countdown pill ──
+        const dte=this.getDaysToExam();
+        const ep=document.getElementById('topbar-exam-pill');
+        const ev=document.getElementById('topbar-exam-val');
+        if(ep&&ev){
+            if(dte!==null&&dte>=0){
+                ep.style.display='inline-flex';
+                ev.textContent=dte;
+                if(dte<30){ep.classList.add('danger')}else{ep.classList.remove('danger')}
+            }else{ep.style.display='none'}
+        }
+    },
     renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings()};if(r[p])r[p]()},
     render(){this.renderPage(this.state.currentPage);this.updateNavBadges();this.checkDailyChallenges()},
 
@@ -3042,63 +3365,106 @@ const App={
         }else if(dte===null){paceMsg='Set exam date for pace tracking'}
         else if(dte===0){paceMsg='Exam is today — best of luck! 🌟';paceColor='#FBBF24'}
         else if(remaining===0){paceMsg='All chapters done! 🎉';paceColor='#4ADE80'}
+        // Determine ring color: green if daily goal already hit, cyan for WIP
+        const ringColor=gp>=100?'#22C55E':'#22d3ee';
+        // Find subject color for hero chapter subject tag
+        const heroSubject=heroChapter?this.state.subjects.find(s=>s.id===heroChapter.subjectId):null;
+        const heroSubjectColor=heroSubject?heroSubject.color:'#6366f1';
+        const heroSubjectColorRgba=heroSubjectColor.startsWith('#')
+            ?(()=>{const r=parseInt(heroSubjectColor.slice(1,3),16),g=parseInt(heroSubjectColor.slice(3,5),16),b=parseInt(heroSubjectColor.slice(5,7),16);return`rgba(${r},${g},${b},0.15)`})()
+            :'rgba(99,102,241,0.15)';
+
         const heroHTML=heroChapter
             ?`<div class="db-hero" onclick="App.openChapterDetail('${heroChapter.subjectId}','${heroChapter.id}')">
                 <div class="db-hero-left">
                     <div class="db-hero-label">▶ STUDY NOW</div>
                     <div class="db-hero-title">${heroChapter.name}</div>
-                    <div class="db-hero-sub">${heroChapter.subjectIcon} ${heroChapter.subjectName} · ${heroChapter.reason}</div>
-                    ${paceMsg?`<div style="font-size:.72rem;margin-top:6px;font-weight:600;color:${paceColor}">${paceMsg}</div>`:''}
+                    <div class="db-hero-subject-tag" style="background:${heroSubjectColorRgba};color:${heroSubjectColor}">
+                        ${heroChapter.subjectIcon} ${heroChapter.subjectName}
+                    </div>
+                    ${paceMsg?`<div style="font-size:.75rem;margin-top:8px;font-style:italic;color:${paceColor}">${paceMsg}</div>`:''}
                     <div style="display:flex;gap:8px;margin-top:16px">
-                        <button class="btn btn-primary" onclick="event.stopPropagation();App.openQuickLog()" style="font-size:.8rem;padding:8px 16px">⚡ Log Session</button>
-                        <button class="btn btn-secondary" onclick="event.stopPropagation();App.navigate('pomodoro')" style="font-size:.8rem;padding:8px 16px">🍅 Focus Timer</button>
+                        <button class="btn btn-primary" onclick="event.stopPropagation();App.openQuickLog()" style="font-size:.8rem;padding:8px 16px;border-radius:12px">⚡ Log Session</button>
+                        <button class="btn btn-secondary" onclick="event.stopPropagation();App.navigate('pomodoro')" style="font-size:.8rem;padding:8px 16px;border-radius:12px">🍅 Focus Timer</button>
                     </div>
                 </div>
                 <div class="db-hero-ring">
-                    <svg width="110" height="110" viewBox="0 0 110 110">
-                        <circle cx="55" cy="55" r="48" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
-                        <circle cx="55" cy="55" r="48" fill="none" stroke="#22d3ee" stroke-width="7"
-                            stroke-dasharray="${2*Math.PI*48}"
-                            stroke-dashoffset="${2*Math.PI*48*(1-gp/100)}"
+                    <svg width="120" height="120" viewBox="0 0 120 120">
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
+                        <circle cx="60" cy="60" r="52" fill="none" stroke="${ringColor}" stroke-width="7"
+                            stroke-dasharray="${2*Math.PI*52}"
+                            stroke-dashoffset="${2*Math.PI*52*(1-gp/100)}"
                             stroke-linecap="round"
                             style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s ease"/>
                     </svg>
-                    <div class="db-hero-ring-val">${gp}%</div>
+                    <div class="db-hero-ring-val" style="color:${ringColor}">${gp}%</div>
                     <div class="db-hero-ring-lbl">of goal</div>
                 </div>
             </div>`
-            :`<div class="db-hero db-hero-empty">
+            :`<div class="db-hero db-hero-empty db-hero-celebration">
                 <div class="db-hero-left">
                     <div class="db-hero-label">✨ ALL CAUGHT UP</div>
                     <div class="db-hero-title">Great work, ${this.state.profile.name}!</div>
-                    <div class="db-hero-sub">All chapters are up to date</div>
-                    ${paceMsg?`<div style="font-size:.72rem;margin-top:6px;font-weight:600;color:var(--text-secondary)">${paceMsg}</div>`:''}
-                    <button class="btn btn-primary" onclick="App.navigate('subjects')" style="margin-top:16px;font-size:.8rem;padding:8px 16px">📚 Browse Subjects</button>
+                    <div class="db-hero-sub" style="color:rgba(134,239,172,0.85)">All chapters are up to date 🎉</div>
+                    ${paceMsg?`<div style="font-size:.75rem;margin-top:8px;font-style:italic;color:var(--text-secondary)">${paceMsg}</div>`:''}
+                    <button class="btn btn-primary" onclick="App.navigate('subjects')" style="margin-top:16px;font-size:.8rem;padding:8px 16px;border-radius:12px">📚 Browse Subjects</button>
                 </div>
-                <div style="font-size:4rem">🎉</div>
+                <div style="font-size:4rem;position:relative;z-index:1">🎉</div>
             </div>`;
 
-        // ── 4 STAT PILLS ─────────────────────────────────────────
-        const statsHTML=`<div class="db-stats">
-            <div class="db-stat">
+        // ── STREAK HERO + 3 SUPPORTING STATS ─────────────────────
+        // STREAK FREEZE — read freeze state for display
+        const sf=this.state.streakFreezes||0;
+        const freezeSlotsHTML=[0,1,2].map(i=>`<span style="font-size:1rem;opacity:${i<sf?'1':'0.25'}">🧊</span>`).join('');
+        const freezeLabelHTML=sf===0
+            ?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:4px">no freezes — earn one at a 7-day streak</div>`
+            :`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:4px">streak freeze${sf!==1?'s':''}</div>`;
+        // STREAK FREEZE — dismissible freeze-used banner
+        const freezeBannerHTML=this.state.pendingFreezeNotice
+            ?`<div id="freeze-notice-banner" style="background:var(--color-focus-bg);border:1px solid var(--color-focus);border-radius:var(--radius-sm);padding:12px 16px;font-size:.82rem;display:flex;align-items:center;gap:10px;margin-bottom:12px">
+                <span style="flex-shrink:0;font-size:1.1rem">🧊</span>
+                <span style="flex:1">Streak freeze used — your <strong>${this.state.profile.streak}</strong>-day streak is safe. Study today to keep it going.</span>
+                <button onclick="App.dismissFreezeNotice()" style="background:none;border:none;cursor:pointer;color:var(--color-text-secondary);font-size:1.1rem;padding:2px 6px;flex-shrink:0;line-height:1" title="Dismiss">×</button>
+            </div>`
+            :'';
+        const streakHeroStyle=st>0
+            ?`background:rgba(249,115,22,0.10);border:1.5px solid #F97316;`
+            :`background:var(--color-surface);border:1.5px solid var(--color-border);`;
+        const streakSubline=st>0
+            ?`🔥 ${st} day streak — keep it alive`
+            :`Start your streak today — any session counts`;
+        const streakSubColor=st>0?`#F97316`:`var(--color-text-secondary)`;
+        const statsHTML=`
+        <div style="${streakHeroStyle}border-radius:var(--radius);padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:default;">
+            <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
+                <span style="font-size:2.2rem;line-height:1;flex-shrink:0">${st>0?'🔥':'🕯️'}</span>
+                <div>
+                    <div style="font-family:var(--font-mono);font-size:2.75rem;font-weight:700;line-height:1;color:${st>0?'#F97316':'var(--color-text-primary)'};">${st}<span style="font-size:1.1rem;font-weight:500;opacity:.55;margin-left:4px">day${st!==1?'s':''}</span></div>
+                    <div style="font-size:.78rem;color:${streakSubColor};margin-top:5px;font-weight:${st>0?'600':'400'}">${streakSubline}</div>
+                    ${st===0?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:3px;opacity:.7">Log a session below to begin</div>`:''}
+                    <div style="margin-top:8px;display:flex;align-items:center;gap:4px">${freezeSlotsHTML}</div>
+                    ${freezeLabelHTML}                </div>
+            </div>
+            <div style="text-align:right;flex-shrink:0">
+                <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-text-secondary);font-weight:700;margin-bottom:2px">Streak</div>
+                ${st>0?`<div style="font-size:.72rem;color:#F97316;font-weight:600">Best: keep going!</div>`:`<button class="btn btn-primary btn-sm" onclick="App.openQuickLog()" style="font-size:.72rem;padding:5px 12px;margin-top:4px">⚡ Log now</button>`}
+            </div>
+        </div>
+        <div class="db-stats" style="grid-template-columns:repeat(3,1fr);">
+            <div class="db-stat db-stat-indigo">
                 <div class="db-stat-val">${this.formatMin(tm)}</div>
                 <div class="db-stat-lbl">Today${avgMin>0?' · avg '+this.formatMin(avgMin):''}</div>
-                <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--success)':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'📖 Study time'}</div>
+                <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'#6366f1':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>
             </div>
-            <div class="db-stat">
-                <div class="db-stat-val">${comp}<span style="font-size:1rem;font-weight:400;opacity:.5">/${tot}</span></div>
+            <div class="db-stat db-stat-green">
+                <div class="db-stat-val">${comp}<span style="font-size:.9rem;font-weight:400;opacity:.5">/${tot}</span></div>
                 <div class="db-stat-lbl">Chapters done</div>
-                <div class="db-stat-trend" style="color:var(--accent-light)">${sp}% of syllabus</div>
+                <div class="db-stat-trend" style="color:${sp>=50?'#22C55E':'var(--text-muted)'}">${sp>=50?'↑ Strong':'—'}</div>
             </div>
-            <div class="db-stat">
-                <div class="db-stat-val">${st}<span style="font-size:1rem;font-weight:400;opacity:.5"> day${st!==1?'s':''}</span></div>
-                <div class="db-stat-lbl">Current streak</div>
-                <div class="db-stat-trend" style="color:${st>=7?'var(--warning)':'var(--text-muted)'}">${st>=30?'🏆 Legend':st>=14?'💪 On fire':st>=7?'🔥 Hot streak':st>0?'Keep going!':'Start today!'}</div>
-            </div>
-            <div class="db-stat">
+            <div class="db-stat db-stat-purple">
                 <div class="db-stat-val">${dte!==null&&dte>0?dte:'—'}</div>
                 <div class="db-stat-lbl">${dte!==null&&dte>0?'Days to boards':'Exam date'}</div>
-                <div class="db-stat-trend" style="color:${dte!==null&&dte<30?'var(--danger)':dte!==null&&dte<60?'var(--warning)':'var(--text-muted)'}">${dte!==null&&dte>0?(dte<30?'⚠️ Very soon!':dte<60?'📅 Getting close':'📅 Set a goal'):'Not set yet'}</div>
+                <div class="db-stat-trend" style="color:${dte!==null&&dte<30?'var(--danger)':dte!==null&&dte<60?'#a855f7':'var(--text-muted)'}">${dte!==null&&dte>0?(dte<30?'↓ Very soon':dte<60?'Getting close':'Plenty of time'):'Not set'}</div>
             </div>
         </div>`;
 
@@ -3152,23 +3518,43 @@ const App={
         </div>`;
 
         // ── DAILY CHALLENGES ──────────────────────────────────────
-        const challengeHTML=dc.date===this.today()&&dc.challenges.length>0?`<div class="card">
-            <div class="card-header" style="margin-bottom:12px"><span class="card-title">🎯 Today's Challenges</span>
-            <span style="font-size:.72rem;color:var(--text-muted)">${dc.completed.length}/${dc.challenges.length} done</span></div>
-            <div class="db-challenge-progress">
-                <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:12px">
-                    <div style="height:100%;width:${Math.round(dc.completed.length/dc.challenges.length*100)}%;background:var(--gradient-1);border-radius:2px;transition:width .5s ease"></div>
+        // ── DAILY CHALLENGES ──────────────────────────────────────
+        const _dcTotal=dc.challenges.length||3;
+        const _dcDone=dc.completed.length;
+        const _dcPct=_dcTotal>0?Math.round(_dcDone/_dcTotal*100):0;
+        const _allDone=_dcDone===_dcTotal&&_dcTotal>0;
+        const _totalXP=dc.challenges.reduce((a,c)=>a+c.xp,0);
+
+        const challengeHTML=(()=>{
+            // Empty state
+            if(!dc.date||dc.date!==this.today()||dc.challenges.length===0){
+                return`<div class="card" style="text-align:center;padding:24px 16px">
+                    <span style="font-size:1.3rem">🎯</span>
+                    <p style="font-size:.82rem;color:var(--text-muted);margin-top:8px">Challenges refresh daily</p>
+                </div>`;
+            }
+            return`<div class="card" id="dc-card" style="${_allDone?'border:1px solid rgba(34,197,94,0.3)':''}">
+                <div class="card-header" style="margin-bottom:6px">
+                    <span class="card-title">🎯 Daily Challenges</span>
+                    <span style="font-size:.72rem;color:var(--text-muted)">${_dcDone}/${_dcTotal} done</span>
                 </div>
-            </div>
-            ${dc.challenges.map(ch=>{const done=dc.completed.includes(ch.id);return`
-            <div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border)">
-                <div style="width:20px;height:20px;border-radius:6px;border:2px solid ${done?'var(--success)':'var(--border)'};background:${done?'var(--success)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .3s">
-                    ${done?'<svg width="10" height="10" viewBox="0 0 10 10"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="1.5" fill="none" stroke-linecap="round"/></svg>':''}
+                <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:14px">
+                    <div style="height:100%;width:${_dcPct}%;background:linear-gradient(90deg,var(--color-brand),#22d3ee);border-radius:2px;transition:width .5s ease"></div>
                 </div>
-                <span style="font-size:.82rem;flex:1;${done?'text-decoration:line-through;opacity:.45':''}">${ch.text}</span>
-                <span style="font-size:.7rem;background:rgba(99,102,241,0.1);color:var(--accent-light);padding:2px 7px;border-radius:6px;white-space:nowrap">+${ch.xp} XP</span>
-            </div>`}).join('')}
-        </div>`:'';
+                ${dc.challenges.map((ch,idx)=>{
+                    const done=dc.completed.includes(ch.id);
+                    const isLast=idx===dc.challenges.length-1;
+                    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;${isLast?'':'border-bottom:1px solid var(--border)'}">
+                        <div id="dc-chk-${ch.id}" onclick="App._dcToggleAnim(${ch.id},this)" style="width:20px;height:20px;border-radius:6px;border:2px solid ${done?'var(--color-brand)':'var(--border)'};background:${done?'var(--color-brand)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .25s cubic-bezier(0.34,1.56,0.64,1)">
+                            ${done?`<svg width="10" height="10" viewBox="0 0 10 10" style="display:block"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
+                        </div>
+                        <span style="font-size:.82rem;flex:1;transition:opacity .2s;${done?'text-decoration:line-through;opacity:.45':''}">${ch.text}</span>
+                        <span style="font-size:.7rem;font-weight:700;background:rgba(99,102,241,0.12);color:var(--accent-light);padding:3px 8px;border-radius:8px;white-space:nowrap">+${ch.xp} XP</span>
+                    </div>`;
+                }).join('')}
+                ${_allDone?`<div style="font-size:.75rem;color:var(--success);text-align:center;padding-top:10px">✅ All done! +${_totalXP} XP earned</div>`:''}
+            </div>`;
+        })();
 
         // ── SUBJECT PROGRESS ──────────────────────────────────────
         const subjectsHTML=this.state.subjects.length>0?`<div class="card">
@@ -3281,40 +3667,52 @@ const App={
         const nudgeDismissed=localStorage.getItem('nudge_dismissed')===this.today();
         if(!nudgeDismissed){
             let nudgeMsg='',nudgeIcon='🤖',nudgeBorder='var(--accent)';
-            if(daysSinceStudy>=2){
-                nudgeMsg=`You haven't studied in ${daysSinceStudy} days. Your ${this.state.profile.streak>0?this.state.profile.streak+'-day streak is at risk. ':''}"${plan[0]?plan[0].name:'pending chapter'}" is waiting — even 20 minutes counts.`;
-                nudgeIcon='😟';nudgeBorder='var(--warning)';
-            }else if(weakChapters.length>=3){
-                nudgeMsg=`${weakChapters.length} chapters flagged as weak (${weakChapters.slice(0,2).map(c=>c.name).join(', ')}${weakChapters.length>2?'…':''}). These need focused re-study before boards.`;
-                nudgeIcon='📉';nudgeBorder='var(--danger)';
-            }else if(dte!==null&&dte>0&&remaining>0){
-                const needed=remaining/dte;const actual=pred?pred.rate:0;
-                if(actual>0&&actual<needed*0.6){
-                    nudgeMsg=`At your current pace (${actual} ch/day) you need ${needed.toFixed(1)} ch/day to finish before boards. You're behind — consider pushing 1 extra chapter today.`;
-                    nudgeIcon='⏰';nudgeBorder='var(--danger)';
+            // BUG FIX: user has already studied today — silence is the reward, show nothing
+            if(daysSinceStudy===0){
+                coachNudge='';
+            }else{
+                // BUG FIX: all nudge logic runs only when daysSinceStudy > 0
+                if(daysSinceStudy===1){
+                    nudgeMsg=`Study something today to protect your streak — even 20 minutes counts.`;
+                    nudgeIcon='⚡';nudgeBorder='var(--warning)';
+                }else if(daysSinceStudy<=3){
+                    nudgeMsg=`Your streak is paused. Log any session today to restart it.`;
+                    nudgeIcon='🎯';nudgeBorder='var(--warning)';
+                }else if(daysSinceStudy<=6){
+                    nudgeMsg=`It's been a few days — no pressure. One session today puts you back on track.`;
+                    nudgeIcon='💪';nudgeBorder='var(--accent)';
+                }else if(daysSinceStudy>=7){
+                    nudgeMsg=`Fresh start. Log one session today — your streak begins now.`;
+                    nudgeIcon='🌱';nudgeBorder='var(--success)';
                 }
-            }
-            if(nudgeMsg){
-                coachNudge=`<div style="background:rgba(79,70,229,0.06);border:1px solid ${nudgeBorder};border-left:3px solid ${nudgeBorder};border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
-                    <span style="font-size:1.3rem;flex-shrink:0">${nudgeIcon}</span>
-                    <div style="flex:1">
-                        <div style="font-size:.78rem;font-weight:600;margin-bottom:3px;color:var(--text-primary)">Coach says</div>
-                        <div style="font-size:.8rem;color:var(--text-secondary);line-height:1.5">${nudgeMsg}</div>
-                    </div>
-                    <button onclick="localStorage.setItem('nudge_dismissed','${this.today()}');this.closest('[style]').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:2px 4px;flex-shrink:0" title="Dismiss">×</button>
-                </div>`;
+                if(!nudgeMsg&&weakChapters.length>=3){
+                    nudgeMsg=`${weakChapters.length} chapters flagged as weak (${weakChapters.slice(0,2).map(c=>c.name).join(', ')}${weakChapters.length>2?'…':''}). These need focused re-study before boards.`;
+                    nudgeIcon='📉';nudgeBorder='var(--danger)';
+                }
+                if(!nudgeMsg&&dte!==null&&dte>0&&remaining>0){
+                    const needed=remaining/dte;const actual=pred?pred.rate:0;
+                    if(actual>0&&actual<needed*0.6){
+                        nudgeMsg=`At your current pace (${actual} ch/day) you need ${needed.toFixed(1)} ch/day to finish before boards. You're behind — consider pushing 1 extra chapter today.`;
+                        nudgeIcon='⏰';nudgeBorder='var(--danger)';
+                    }
+                }
+                if(nudgeMsg){
+                    coachNudge=`<div style="background:rgba(79,70,229,0.06);border:1px solid ${nudgeBorder};border-left:3px solid ${nudgeBorder};border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
+                        <span style="font-size:1.3rem;flex-shrink:0">${nudgeIcon}</span>
+                        <div style="flex:1">
+                            <div style="font-size:.78rem;font-weight:600;margin-bottom:3px;color:var(--text-primary)">Coach says</div>
+                            <div style="font-size:.8rem;color:var(--text-secondary);line-height:1.5">${nudgeMsg}</div>
+                        </div>
+                        <button onclick="localStorage.setItem('nudge_dismissed','${this.today()}');this.closest('[style]').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:2px 4px;flex-shrink:0" title="Dismiss">×</button>
+                    </div>`;
+                }
             }
         }
 
         // ── ASSEMBLE ──────────────────────────────────────────────
         el.innerHTML=`
-        <div class="db-greeting">
-            <div>
-                <h2 style="font-size:1.4rem;font-weight:700;line-height:1.2">Good ${this.getGreeting()}, ${this.state.profile.name} 👋</h2>
-                <p style="color:var(--text-secondary);font-size:.85rem;margin-top:4px">${this.getMotivation()}</p>
-            </div>
-            ${todayMood?`<span style="font-size:1.8rem">${todayMood.mood}</span>`:''}
-        </div>
+        ${freezeBannerHTML}
+        <p class="db-greeting-compact">Good ${this.getGreeting()}, ${this.state.profile.name} 👋 &nbsp;·&nbsp; ${this.getMotivation()} ✨</p>
         ${heroHTML}
         ${statsHTML}
         ${urgencyHTML}
@@ -3436,11 +3834,65 @@ const App={
     openQuickLog(pSub,pCh){
         const subs=this.state.subjects;let co='';
         if(pSub){const s=this.getSubjectById(pSub);if(s)co=s.chapters.map(c=>`<option value="${c.id}" ${c.id===pCh?'selected':''}>${c.name}</option>`).join('')}
-        document.getElementById('log-form-body').innerHTML=`<div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="log-subject" onchange="App.updateLogChapters()"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div></div><div class="form-group"><label class="form-label">Intention</label><div class="quick-log" id="intention-chips"><div class="quick-chip selected" data-intention="understand" onclick="App.selectIntention(this)">🧠 Understand</div><div class="quick-chip" data-intention="revise" onclick="App.selectIntention(this)">🔄 Revise</div><div class="quick-chip" data-intention="practice" onclick="App.selectIntention(this)">✏️ Practice</div><div class="quick-chip" data-intention="doubts" onclick="App.selectIntention(this)">❓ Clear Doubts</div></div></div><div class="form-group"><label class="form-label">Time Spent</label><div class="quick-log" id="time-chips"><div class="quick-chip" data-min="15" onclick="App.selectTime(this)">15m</div><div class="quick-chip" data-min="30" onclick="App.selectTime(this)">30m</div><div class="quick-chip selected" data-min="45" onclick="App.selectTime(this)">45m</div><div class="quick-chip" data-min="60" onclick="App.selectTime(this)">1h</div><div class="quick-chip" data-min="90" onclick="App.selectTime(this)">1.5h</div><div class="quick-chip" data-min="120" onclick="App.selectTime(this)">2h</div></div><input type="number" id="log-time-custom" class="form-input" placeholder="Or enter minutes" min="1" style="margin-top:8px"></div><div class="form-group"><label class="form-label">Type</label><div class="quick-log" id="type-chips"><div class="quick-chip selected" data-type="learning" onclick="App.selectType(this)">📖 Learning</div><div class="quick-chip" data-type="revision" onclick="App.selectType(this)">🔄 Revision</div><div class="quick-chip" data-type="practice" onclick="App.selectType(this)">✏️ Practice</div><div class="quick-chip" data-type="test" onclick="App.selectType(this)">📝 Test</div></div></div><div class="form-group"><label class="form-label">How well did you understand? <span style="font-size:.72rem;color:var(--text-muted)">(tap one)</span></label><div style="display:flex;gap:8px" id="confidence-chips"><button type="button" class="conf-btn" data-conf="1" onclick="App.selectConfidence(this)" title="Lost — didn't understand" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-border);background:var(--color-surface-hover);cursor:pointer;transition:border-color .15s,background .15s">🔴</button><button type="button" class="conf-btn" data-conf="2" onclick="App.selectConfidence(this)" title="Shaky — some gaps" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-border);background:var(--color-surface-hover);cursor:pointer;transition:border-color .15s,background .15s">🟡</button><button type="button" class="conf-btn selected" data-conf="3" onclick="App.selectConfidence(this)" title="Good — mostly clear" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-brand);background:rgba(79,70,229,0.12);cursor:pointer;transition:border-color .15s,background .15s">🟢</button><button type="button" class="conf-btn" data-conf="4" onclick="App.selectConfidence(this)" title="Nailed it — crystal clear" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-border);background:var(--color-surface-hover);cursor:pointer;transition:border-color .15s,background .15s">⚡</button></div><div style="font-size:.68rem;color:var(--text-muted);margin-top:5px">🔴 Lost · 🟡 Shaky · 🟢 Good · ⚡ Nailed it</div></div><div class="form-group"><label class="form-label">Focus ⭐</label><div class="star-rating" id="productivity-stars">${[1,2,3,4,5].map(i=>`<span class="star ${i<=4?'active':''}" data-val="${i}" onclick="App.setRating(${i})">⭐</span>`).join('')}</div></div><div class="form-group"><label class="form-label">Notes</label><input type="text" id="log-notes" class="form-input" placeholder="Quick note..."></div>`;
+        // LOG VALIDATION — default chip is 45m, so hint starts green
+        const defaultMin=45;
+        const defaultHintColor='var(--color-success)';
+        const defaultHintText='✓ Counts toward your streak';
+        document.getElementById('log-form-body').innerHTML=`
+<div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="log-subject" onchange="App.updateLogChapters()"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div></div>
+<div class="form-group">
+    <label class="form-label">What did you cover?</label>
+    <input type="text" id="log-covered" class="form-input" placeholder="e.g. Completed Newton's laws, revised Chapter 3..." maxlength="200">
+    <div id="log-covered-error" style="display:none;color:var(--color-danger);font-size:0.75rem;margin-top:4px">Please add a quick note on what you studied</div>
+</div>
+<div class="form-group"><label class="form-label">Intention</label><div class="quick-log" id="intention-chips"><div class="quick-chip selected" data-intention="understand" onclick="App.selectIntention(this)">🧠 Understand</div><div class="quick-chip" data-intention="revise" onclick="App.selectIntention(this)">🔄 Revise</div><div class="quick-chip" data-intention="practice" onclick="App.selectIntention(this)">✏️ Practice</div><div class="quick-chip" data-intention="doubts" onclick="App.selectIntention(this)">❓ Clear Doubts</div></div></div>
+<div class="form-group"><label class="form-label">Time Spent</label><div class="quick-log" id="time-chips"><div class="quick-chip" data-min="15" onclick="App.selectTime(this)">15m</div><div class="quick-chip" data-min="30" onclick="App.selectTime(this)">30m</div><div class="quick-chip selected" data-min="45" onclick="App.selectTime(this)">45m</div><div class="quick-chip" data-min="60" onclick="App.selectTime(this)">1h</div><div class="quick-chip" data-min="90" onclick="App.selectTime(this)">1.5h</div><div class="quick-chip" data-min="120" onclick="App.selectTime(this)">2h</div></div><input type="number" id="log-time-custom" class="form-input" placeholder="Or enter minutes" min="1" style="margin-top:8px" oninput="App.updateDurationHint()">
+<div id="duration-hint" style="color:${defaultHintColor};font-size:0.75rem;margin-top:4px">${defaultHintText}</div>
+</div>
+<div class="form-group"><label class="form-label">Type</label><div class="quick-log" id="type-chips"><div class="quick-chip selected" data-type="learning" onclick="App.selectType(this)">📖 Learning</div><div class="quick-chip" data-type="revision" onclick="App.selectType(this)">🔄 Revision</div><div class="quick-chip" data-type="practice" onclick="App.selectType(this)">✏️ Practice</div><div class="quick-chip" data-type="test" onclick="App.selectType(this)">📝 Test</div></div></div>
+<div class="form-group"><label class="form-label">How well did you understand? <span style="font-size:.72rem;color:var(--text-muted)">(tap one)</span></label><div style="display:flex;gap:8px" id="confidence-chips"><button type="button" class="conf-btn" data-conf="1" onclick="App.selectConfidence(this)" title="Lost — didn't understand" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-border);background:var(--color-surface-hover);cursor:pointer;transition:border-color .15s,background .15s">🔴</button><button type="button" class="conf-btn" data-conf="2" onclick="App.selectConfidence(this)" title="Shaky — some gaps" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-border);background:var(--color-surface-hover);cursor:pointer;transition:border-color .15s,background .15s">🟡</button><button type="button" class="conf-btn selected" data-conf="3" onclick="App.selectConfidence(this)" title="Good — mostly clear" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-brand);background:rgba(79,70,229,0.12);cursor:pointer;transition:border-color .15s,background .15s">🟢</button><button type="button" class="conf-btn" data-conf="4" onclick="App.selectConfidence(this)" title="Nailed it — crystal clear" style="font-size:1.4rem;padding:6px 10px;border-radius:8px;border:2px solid var(--color-border);background:var(--color-surface-hover);cursor:pointer;transition:border-color .15s,background .15s">⚡</button></div><div style="font-size:.68rem;color:var(--text-muted);margin-top:5px">🔴 Lost · 🟡 Shaky · 🟢 Good · ⚡ Nailed it</div></div>
+<div class="form-group"><label class="form-label">Focus ⭐</label><div class="star-rating" id="productivity-stars">${[1,2,3,4,5].map(i=>`<span class="star ${i<=4?'active':''}" data-val="${i}" onclick="App.setRating(${i})">⭐</span>`).join('')}</div></div>
+<div class="form-group"><label class="form-label">Notes</label><input type="text" id="log-notes" class="form-input" placeholder="Quick note..."></div>`;
         this.openModal('modal-log');
     },
+    // LOG VALIDATION — live hint update when user types in the custom duration field
+    updateDurationHint(){
+        const custom=document.getElementById('log-time-custom');
+        const hint=document.getElementById('duration-hint');
+        if(!hint||!custom)return;
+        const val=parseInt(custom.value);
+        if(!custom.value||isNaN(val)||val<=0){
+            hint.style.display='none';
+            return;
+        }
+        hint.style.display='block';
+        if(val>=15){
+            hint.style.color='var(--color-success)';
+            hint.textContent='✓ Counts toward your streak';
+        }else{
+            hint.style.color='var(--color-warning)';
+            hint.textContent='Sessions under 15 min won\'t count toward your streak';
+        }
+    },
     updateLogChapters(){const sId=document.getElementById('log-subject').value,s=this.getSubjectById(sId),sel=document.getElementById('log-chapter');sel.innerHTML='<option value="">Select</option>';if(s)s.chapters.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${c.name}</option>`})},
-    selectTime(el){document.querySelectorAll('#time-chips .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected');document.getElementById('log-time-custom').value=''},
+    selectTime(el){
+        document.querySelectorAll('#time-chips .quick-chip').forEach(c=>c.classList.remove('selected'));
+        el.classList.add('selected');
+        document.getElementById('log-time-custom').value='';
+        // LOG VALIDATION — update hint immediately when a chip is clicked
+        const hint=document.getElementById('duration-hint');
+        if(hint){
+            const mins=parseInt(el.dataset.min)||0;
+            hint.style.display='block';
+            if(mins>=15){
+                hint.style.color='var(--color-success)';
+                hint.textContent='✓ Counts toward your streak';
+            }else{
+                hint.style.color='var(--color-warning)';
+                hint.textContent='Sessions under 15 min won\'t count toward your streak';
+            }
+        }
+    },
     selectType(el){document.querySelectorAll('#type-chips .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
     setRating(v){document.querySelectorAll('#productivity-stars .star').forEach(s=>{s.classList.toggle('active',parseInt(s.dataset.val)<=v)})},
     selectConfidence(el){document.querySelectorAll('#confidence-chips .conf-btn').forEach(b=>{b.classList.remove('selected');b.style.borderColor='var(--color-border)';b.style.background='var(--color-surface-hover)'});el.classList.add('selected');el.style.borderColor='var(--color-brand)';el.style.background='rgba(79,70,229,0.12)'},
@@ -3452,9 +3904,27 @@ const App={
         const confidence=confBtn?parseInt(confBtn.dataset.conf):3;
         const intentionChip=document.querySelector('#intention-chips .quick-chip.selected');
         const intention=intentionChip?intentionChip.dataset.intention:'understand';
-        if(!sId){this.toast('Select subject','warning');return}if(!time||time<=0){this.toast('Select time','warning');return}
+
+        // LOG VALIDATION — STEP 1: covered note is required; block save if missing
+        const coveredEl=document.getElementById('log-covered');
+        const coveredErrorEl=document.getElementById('log-covered-error');
+        const coveredNote=coveredEl?coveredEl.value.trim():'';
+        if(!coveredNote){
+            if(coveredErrorEl)coveredErrorEl.style.display='block';
+            if(coveredEl)coveredEl.focus();
+            return;
+        }
+        if(coveredErrorEl)coveredErrorEl.style.display='none';
+
+        if(!sId){this.toast('Select subject','warning');return}
+        if(!time||time<=0){this.toast('Select time','warning');return}
+
+        // LOG VALIDATION — STEP 2: determine streak eligibility (>= 15 min)
+        const streakEligible=time>=15;
+
         const sub=this.getSubjectById(sId),ch=cId?sub.chapters.find(c=>c.id===cId):null;
-        this.state.sessions.push({id:this.uid(),subjectId:sId,chapterId:cId||'',chapterName:ch?ch.name:'',subjectName:sub.name,date:this.today(),timeSpent:time,type,rating,notes,confidence,intention,createdAt:Date.now()});
+        // LOG VALIDATION — STEP 3: store coveredNote and streakEligible on the session object
+        this.state.sessions.push({id:this.uid(),subjectId:sId,chapterId:cId||'',chapterName:ch?ch.name:'',subjectName:sub.name,date:this.today(),timeSpent:time,type,rating,notes,confidence,intention,coveredNote,streakEligible,createdAt:Date.now()});
         if(ch){
             // Write confidence back: take the min (worst) confidence seen across sessions for this chapter
             const chSessions=this.state.sessions.filter(s=>s.chapterId===cId&&s.confidence);
@@ -3465,7 +3935,9 @@ const App={
             if(ch.status==='not-started')ch.status='in-progress';
         }
         if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision')}
-        this.recordStudyDay();this.addXP(10,'Session logged');
+        // LOG VALIDATION — STEP 4: pass streakEligible so short sessions are neutral, not misses
+        this.recordStudyDay(streakEligible);
+        this.addXP(10,'Session logged');
         const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){this.addXP(25,'Daily goal! 🎯');this.celebrate();this.showGoalHitBanner()}}
         this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
         this.dismissStreakReminder(false);
