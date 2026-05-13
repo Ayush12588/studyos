@@ -6,7 +6,7 @@ export default async function handler(req, res) {
 
     // Only allow requests from your own site
     const origin = req.headers.origin || '';
-    const allowed = ['https://studyos-edu.vercel.app', 'http://localhost:3000'];
+    const allowed = ['https://studyos-edu.vercel.app', 'http://localhost:5500'];
     if (!allowed.includes(origin)) {
         return res.status(403).json({ error: 'Forbidden' });
     }
