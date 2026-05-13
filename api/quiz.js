@@ -12,13 +12,17 @@ export default async function handler(req, res) {
     }
 
     try {
-        const { messages } = req.body;
+        const { system, userMessage } = req.body;
 
-        if (!messages || !Array.isArray(messages)) {
-            return res.status(400).json({ error: 'Invalid request body' });
+        if (!system || !userMessage) {
+            return res.status(400).json({ error: 'Missing system or userMessage' });
         }
 
-        // Call Groq API using the secret key stored in Vercel environment
+        const messages = [
+            { role: 'system', content: system },
+            { role: 'user', content: userMessage }
+        ];
+
         const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
@@ -26,10 +30,10 @@ export default async function handler(req, res) {
                 'Authorization': `Bearer ${process.env.GROQ_KEY}`
             },
             body: JSON.stringify({
-                model: 'llama-3.1-8b-instant',
+                model: 'llama-3.3-70b-versatile', // Larger model for better MCQ quality
                 messages,
-                max_tokens: 600,
-                temperature: 0.7
+                max_tokens: 3500,
+                temperature: 0.4  // Lower = more factually accurate
             })
         });
 
@@ -39,7 +43,7 @@ export default async function handler(req, res) {
             return res.status(500).json({ error: data.error.message });
         }
 
-        const reply = data.choices?.[0]?.message?.content || 'Sorry, I could not respond.';
+        const reply = data.choices?.[0]?.message?.content || '';
         return res.status(200).json({ reply });
 
     } catch (err) {

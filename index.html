@@ -2362,6 +2362,298 @@ body { overscroll-behavior-y: contain; }
     box-shadow: 0 0 0 3px rgba(212,137,26,0.18) !important;
 }
 
+/* ═══════════════════════════════════════════════════
+   QUIZ FEATURE
+═══════════════════════════════════════════════════ */
+
+/* Subject cards on quiz home */
+.quiz-subject-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 18px;
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    position: relative;
+    overflow: hidden;
+}
+.quiz-subject-card:hover { border-color: var(--border-hover); background: var(--color-surface-hover); }
+.quiz-subject-card.due { border-color: var(--color-warning); }
+.quiz-subject-card.due-urgent { border-color: var(--color-danger); }
+
+.quiz-subject-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 14px;
+}
+.quiz-subject-icon {
+    width: 44px; height: 44px;
+    border-radius: 10px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+.quiz-subject-info { flex: 1; min-width: 0; }
+.quiz-subject-name { font-size: .9rem; font-weight: 700; color: var(--color-text-primary); }
+.quiz-subject-meta { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+
+.quiz-due-badge {
+    font-size: .65rem;
+    font-weight: 700;
+    padding: 3px 8px;
+    border-radius: 20px;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    flex-shrink: 0;
+}
+.quiz-due-badge.due { background: rgba(245,158,11,0.15); color: var(--color-warning); border: 1px solid rgba(245,158,11,0.3); }
+.quiz-due-badge.due-urgent { background: rgba(239,68,68,0.12); color: var(--color-danger); border: 1px solid rgba(239,68,68,0.25); }
+.quiz-due-badge.ok { background: rgba(34,197,94,0.1); color: var(--color-success); border: 1px solid rgba(34,197,94,0.2); }
+.quiz-due-badge.new { background: rgba(79,70,229,0.12); color: var(--accent-light); border: 1px solid rgba(79,70,229,0.25); }
+
+.quiz-stats-row {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    margin-bottom: 14px;
+}
+.quiz-stat-chip {
+    font-size: .72rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+.quiz-stat-chip strong { color: var(--color-text-primary); font-family: var(--font-mono); }
+
+.quiz-interval-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+.quiz-interval-label { font-size: .72rem; color: var(--text-muted); flex-shrink: 0; }
+.quiz-interval-chips { display: flex; gap: 4px; }
+.quiz-interval-chip {
+    font-size: .68rem;
+    font-weight: 600;
+    padding: 3px 9px;
+    border-radius: 20px;
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-hover);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all .15s;
+    font-family: var(--font-mono);
+}
+.quiz-interval-chip:hover { border-color: var(--color-brand); color: var(--color-brand); }
+.quiz-interval-chip.selected { background: var(--color-brand); color: #fff; border-color: var(--color-brand); }
+
+/* Quiz session screen */
+.quiz-session-wrap {
+    max-width: 680px;
+    margin: 0 auto;
+}
+.quiz-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    gap: 12px;
+    flex-wrap: wrap;
+}
+.quiz-progress-track {
+    height: 5px;
+    background: var(--color-border);
+    border-radius: 3px;
+    margin-bottom: 24px;
+    overflow: hidden;
+}
+.quiz-progress-fill {
+    height: 100%;
+    background: var(--color-brand);
+    border-radius: 3px;
+    transition: width .4s ease;
+}
+.quiz-timer-pill {
+    font-family: var(--font-mono);
+    font-size: .85rem;
+    font-weight: 700;
+    padding: 4px 12px;
+    border-radius: 20px;
+    background: rgba(79,70,229,0.12);
+    border: 1px solid rgba(79,70,229,0.25);
+    color: var(--accent-light);
+    min-width: 64px;
+    text-align: center;
+    transition: background .3s, color .3s, border-color .3s;
+}
+.quiz-timer-pill.warn {
+    background: rgba(245,158,11,0.12);
+    border-color: rgba(245,158,11,0.3);
+    color: var(--color-warning);
+}
+.quiz-timer-pill.danger {
+    background: rgba(239,68,68,0.12);
+    border-color: rgba(239,68,68,0.25);
+    color: var(--color-danger);
+}
+
+.quiz-q-card {
+    background: var(--color-surface);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 24px;
+    margin-bottom: 20px;
+    animation: fadeUp .2s ease;
+}
+.quiz-q-meta {
+    font-size: .7rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    margin-bottom: 10px;
+    font-weight: 600;
+}
+.quiz-q-text {
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--color-text-primary);
+    line-height: 1.55;
+    margin-bottom: 20px;
+}
+.quiz-options { display: flex; flex-direction: column; gap: 10px; }
+.quiz-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 12px;
+    padding: 13px 16px;
+    border-radius: var(--radius-sm);
+    border: 1px solid var(--color-border);
+    background: var(--color-surface-hover);
+    cursor: pointer;
+    transition: border-color .15s, background .15s;
+    text-align: left;
+    width: 100%;
+    font-family: var(--font-body);
+    font-size: .875rem;
+    color: var(--color-text-primary);
+    line-height: 1.4;
+}
+.quiz-option:hover:not(:disabled) {
+    border-color: var(--color-brand);
+    background: rgba(79,70,229,0.06);
+}
+.quiz-option.selected {
+    border-color: var(--color-brand);
+    background: rgba(79,70,229,0.1);
+}
+.quiz-option.correct {
+    border-color: var(--color-success);
+    background: rgba(34,197,94,0.08);
+    color: var(--color-success);
+}
+.quiz-option.wrong {
+    border-color: var(--color-danger);
+    background: rgba(239,68,68,0.07);
+    color: var(--color-danger);
+    opacity: .75;
+}
+.quiz-option.reveal-correct {
+    border-color: var(--color-success);
+    background: rgba(34,197,94,0.06);
+}
+.quiz-option:disabled { cursor: default; }
+
+.quiz-option-key {
+    font-family: var(--font-mono);
+    font-size: .72rem;
+    font-weight: 700;
+    width: 22px; height: 22px;
+    border-radius: 6px;
+    background: var(--color-border);
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+    color: var(--text-secondary);
+    transition: background .15s, color .15s;
+}
+.quiz-option.selected .quiz-option-key { background: var(--color-brand); color: #fff; }
+.quiz-option.correct .quiz-option-key { background: var(--color-success); color: #fff; }
+.quiz-option.wrong .quiz-option-key { background: var(--color-danger); color: #fff; }
+.quiz-option.reveal-correct .quiz-option-key { background: var(--color-success); color: #fff; }
+
+/* Explanation box shown after answering */
+.quiz-explanation {
+    margin-top: 14px;
+    padding: 12px 14px;
+    border-radius: var(--radius-sm);
+    border-left: 3px solid;
+    font-size: .82rem;
+    line-height: 1.55;
+    animation: fadeUp .2s ease;
+    display: none;
+}
+.quiz-explanation.show { display: block; }
+.quiz-explanation.correct-exp { border-color: var(--color-success); background: rgba(34,197,94,0.06); color: var(--color-text-secondary); }
+.quiz-explanation.wrong-exp { border-color: var(--color-danger); background: rgba(239,68,68,0.05); color: var(--color-text-secondary); }
+
+/* Results screen */
+.quiz-result-ring-wrap {
+    position: relative;
+    width: 140px; height: 140px;
+    margin: 0 auto 20px;
+}
+.quiz-result-ring-val {
+    position: absolute;
+    inset: 0;
+    display: flex; flex-direction: column;
+    align-items: center; justify-content: center;
+    font-family: var(--font-mono);
+    font-weight: 700;
+}
+.quiz-result-score { font-size: 2rem; line-height: 1; }
+.quiz-result-total { font-size: .72rem; color: var(--text-muted); margin-top: 2px; }
+
+.quiz-chapter-breakdown {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-top: 16px;
+}
+.quiz-chapter-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 12px;
+    border-radius: var(--radius-xs);
+    background: var(--color-surface-hover);
+    border: 1px solid var(--color-border);
+    font-size: .8rem;
+    gap: 8px;
+}
+.quiz-chapter-row .qcr-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.quiz-chapter-row .qcr-score { font-family: var(--font-mono); font-size: .75rem; font-weight: 700; flex-shrink: 0; }
+.quiz-chapter-row.weak { border-color: rgba(239,68,68,0.2); background: rgba(239,68,68,0.04); }
+.quiz-chapter-row.strong { border-color: rgba(34,197,94,0.2); background: rgba(34,197,94,0.04); }
+
+/* Loading state */
+.quiz-generating {
+    text-align: center;
+    padding: 60px 20px;
+}
+.quiz-generating .qg-spinner {
+    width: 40px; height: 40px;
+    border: 3px solid var(--color-border);
+    border-top-color: var(--color-brand);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+    margin: 0 auto 16px;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.quiz-generating p { color: var(--text-secondary); font-size: .875rem; }
+
     </style>
 </head>
 <body>
@@ -2502,6 +2794,11 @@ body { overscroll-behavior-y: contain; }
                     <span class="nav-label">Planning</span>
                     <span class="nav-badge" id="overdue-badge" style="display:none">0</span>
                 </div>
+                <div class="nav-item" data-page="quiz" onclick="App.navigate('quiz')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                    <span class="nav-label">Quiz</span>
+                    <span class="nav-badge" id="quiz-badge" style="display:none">0</span>
+                </div>
             </div>
 
             <!-- MORE (collapsed by default) -->
@@ -2627,6 +2924,7 @@ body { overscroll-behavior-y: contain; }
             <div class="page" id="page-coach"></div>
             <div class="page" id="page-rewards"></div>
             <div class="page" id="page-settings"></div>
+            <div class="page" id="page-quiz"></div>
         </div>
     </main>
 </div>
@@ -2829,7 +3127,9 @@ const App={
         // STREAK FREEZE
         streakFreezes:1,
         lastFreezeUsedDate:null,
-        pendingFreezeNotice:false
+        pendingFreezeNotice:false,
+        // QUIZ
+        quizData:{} // { [subjectId]: { questions:[], generatedAt, lastScore, lastQuizDate, interval, history:[] } }
     },
     pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null},
     swInterval:null,
@@ -2885,7 +3185,7 @@ const App={
     init(){
         this.load();
 
-        const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings'];
+        const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings','quiz'];
         if (!validPages.includes(this.state.currentPage)) {
             this.state.currentPage = 'dashboard';
         }
@@ -2895,6 +3195,7 @@ const App={
         }
         // Ensure new state fields
         if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
+        if(!this.state.quizData)this.state.quizData={};
         if(!this.state.examScores)this.state.examScores=[];
         if(!this.state.tasks)this.state.tasks=[];
         if(!this.state.notes)this.state.notes=[];
@@ -3221,7 +3522,7 @@ const App={
     xpForLevel(l){return l*l*50},
     showLevelUp(l){const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='⚡';document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');this.celebrate()},
     updateSidebar(){const p=this.state.profile;document.getElementById('sb-name').textContent=p.name;document.getElementById('sb-level').textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);document.getElementById('sb-xp-fill').style.width=pct+'%';document.getElementById('sb-xp-text').textContent=`${p.xp-c} / ${n-c} XP`},
-    updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');rb.style.display=r>0?'inline':'none';rb.textContent=r;ob.style.display=o>0?'inline':'none';ob.textContent=o;db.style.display=ud>0?'inline':'none';db.textContent=ud},
+    updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');rb.style.display=r>0?'inline':'none';rb.textContent=r;ob.style.display=o>0?'inline':'none';ob.textContent=o;db.style.display=ud>0?'inline':'none';db.textContent=ud;const qDue=this.getQuizDueSubjects().length;const qb=document.getElementById('quiz-badge');if(qb){qb.style.display=qDue>0?'inline':'none';qb.textContent=qDue;}},
 
     checkBadges(){const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){this.save();nb.forEach(b=>setTimeout(()=>this.toast(`🏅 Badge: ${b.icon} ${b.name}!`,'success'),800))}},
 
@@ -3280,6 +3581,12 @@ const App={
 
     // NAV
     navigate(page){
+        // If leaving an active quiz, stop its countdown timer to prevent
+        // _finishQuiz() firing silently in the background and corrupting state
+        if(page!=='quiz'&&this._quiz&&this._quiz.active){
+            clearInterval(this._quiz.timerInterval);
+            this._quiz=null;
+        }
         this.state.currentPage=page;document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
         const pe=document.getElementById('page-'+page);if(pe)pe.classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
@@ -3322,7 +3629,7 @@ const App={
             }else{ep.style.display='none'}
         }
     },
-    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings()};if(r[p])r[p]()},
+    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz()};if(r[p])r[p]()},
     render(){this.renderPage(this.state.currentPage);this.updateNavBadges();this.checkDailyChallenges()},
 
     getGreeting(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'},
@@ -4831,7 +5138,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     },
     resetAll(){
         if(!confirm('⚠️ Delete ALL data? This cannot be undone!'))return;
-        if(!confirm('Are you really sure? Type "yes" in the next prompt to confirm.')&&!confirm('Final confirmation: Delete everything?'))return;
+        if(!confirm('Are you really sure? All subjects, sessions, notes, and progress will be permanently deleted.'))return;
         localStorage.removeItem('studyos_data');location.reload();
     },
 
@@ -4856,10 +5163,532 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
             c.appendChild(cf);
         }
         setTimeout(()=>c.classList.remove('show'),3500);
+    },
+
+
+    // ══════════════════════════════════════════════════
+    // QUIZ FEATURE — Active Recall
+    // ══════════════════════════════════════════════════
+
+    // Active quiz session state (not persisted — lives only during a quiz)
+    _quiz: null,
+
+    getQuizDueSubjects(){
+        if(!this.state.quizData) this.state.quizData={};
+        const today=this.today();
+        return this.state.subjects.filter(s=>{
+            const completed=s.chapters.filter(c=>c.status==='completed'||c.status==='revised');
+            if(completed.length===0) return false;
+            const qd=this.state.quizData[s.id];
+            if(!qd||!qd.lastQuizDate) return true; // never quizzed = due
+            const interval=qd.interval||7;
+            const next=new Date(qd.lastQuizDate);
+            next.setDate(next.getDate()+interval);
+            return today>=next.toISOString().split('T')[0];
+        });
+    },
+
+    getQuizNextDate(subjectId){
+        const qd=this.state.quizData&&this.state.quizData[subjectId];
+        if(!qd||!qd.lastQuizDate) return null;
+        const interval=qd.interval||7;
+        const next=new Date(qd.lastQuizDate);
+        next.setDate(next.getDate()+interval);
+        return next.toISOString().split('T')[0];
+    },
+
+    setQuizInterval(subjectId, days){
+        if(!this.state.quizData) this.state.quizData={};
+        if(!this.state.quizData[subjectId]) this.state.quizData[subjectId]={};
+        this.state.quizData[subjectId].interval=days;
+        this.save();
+        this.renderQuiz();
+    },
+
+    renderQuiz(){
+        const el=document.getElementById('page-quiz');
+        if(!el) return;
+
+        // If a session is active, render the session
+        if(this._quiz && this._quiz.active){
+            this._renderQuizSession(el);
+            return;
+        }
+
+        // ── Quiz Home ──
+        const subjects=this.state.subjects.filter(s=>s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length>0);
+        const dueSubjects=this.getQuizDueSubjects();
+        if(!this.state.quizData) this.state.quizData={};
+        const today=this.today();
+
+        if(subjects.length===0){
+            el.innerHTML=`<div class="empty-state" style="padding:60px 20px;text-align:center">
+                <div style="font-size:3rem;margin-bottom:16px">🧠</div>
+                <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">No chapters completed yet</h3>
+                <p style="color:var(--text-muted);font-size:.875rem">Complete at least one chapter to unlock quizzes.</p>
+                <button class="btn btn-primary" style="margin-top:20px" onclick="App.navigate('subjects')">Go to Subjects</button>
+            </div>`;
+            return;
+        }
+
+        const dueCount=dueSubjects.length;
+
+        el.innerHTML=`
+<div style="margin-bottom:24px">
+    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+            <h2 style="font-size:1.15rem;font-weight:700;margin-bottom:4px">🧠 Active Recall Quiz</h2>
+            <p style="font-size:.8rem;color:var(--text-muted)">AI-generated MCQs from your completed chapters · Tests memory retention</p>
+        </div>
+        ${dueCount>0?`<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:8px 14px;font-size:.78rem;color:var(--color-warning);font-weight:600;flex-shrink:0">${dueCount} quiz${dueCount>1?'zes':''} due today</div>`:''}
+    </div>
+</div>
+
+<div class="grid grid-2" id="quiz-subject-grid">
+${subjects.map(s=>{
+    const completed=s.chapters.filter(c=>c.status==='completed'||c.status==='revised');
+    const qd=this.state.quizData[s.id]||{};
+    const interval=qd.interval||7;
+    const isDue=dueSubjects.find(x=>x.id===s.id);
+    const nextDate=this.getQuizNextDate(s.id);
+    const lastScore=qd.lastScore;
+    const history=qd.history||[];
+    const hasCached=qd.questions&&qd.questions.length>0;
+
+    let dueBadge='',cardClass='';
+    if(!qd.lastQuizDate){
+        dueBadge=`<span class="quiz-due-badge new">Never taken</span>`;
+    } else if(isDue){
+        const overdue=today>nextDate;
+        dueBadge=`<span class="quiz-due-badge ${overdue?'due-urgent':'due'}">${overdue?'Overdue':'Due today'}</span>`;
+        cardClass=overdue?'due-urgent':'due';
+    } else {
+        dueBadge=`<span class="quiz-due-badge ok">Next: ${nextDate}</span>`;
     }
+
+    const avgScore=history.length>0?Math.round(history.reduce((a,h)=>a+h.pct,0)/history.length):null;
+
+    return `<div class="quiz-subject-card ${cardClass}">
+        <div class="quiz-subject-header">
+            <div class="quiz-subject-icon" style="background:${s.color}22">${s.icon}</div>
+            <div class="quiz-subject-info">
+                <div class="quiz-subject-name">${s.name}</div>
+                <div class="quiz-subject-meta">${completed.length} completed chapter${completed.length!==1?'s':''}</div>
+            </div>
+            ${dueBadge}
+        </div>
+        <div class="quiz-stats-row">
+            ${lastScore!==undefined?`<div class="quiz-stat-chip">Last score: <strong>${lastScore}%</strong></div>`:''}
+            ${avgScore!==null?`<div class="quiz-stat-chip">Avg: <strong>${avgScore}%</strong></div>`:''}
+            ${history.length>0?`<div class="quiz-stat-chip">Taken: <strong>${history.length}x</strong></div>`:''}
+            ${hasCached?`<div class="quiz-stat-chip" style="color:var(--color-success)">✓ Questions ready</div>`:''}
+        </div>
+        <div class="quiz-interval-row" style="margin-bottom:14px">
+            <span class="quiz-interval-label">Review every:</span>
+            <div class="quiz-interval-chips">
+                ${[3,5,7,14].map(d=>`<button class="quiz-interval-chip ${interval===d?'selected':''}" onclick="event.stopPropagation();App.setQuizInterval('${s.id}',${d})">${d}d</button>`).join('')}
+            </div>
+        </div>
+        <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="App.startQuiz('${s.id}')">
+            ${isDue||!qd.lastQuizDate?'⚡ Start Quiz':'🔁 Quiz Again'}
+        </button>
+    </div>`;
+}).join('')}
+</div>`;
+    },
+
+    async startQuiz(subjectId){
+        const sub=this.getSubjectById(subjectId);
+        if(!sub){this.toast('Subject not found','error');return;}
+
+        const completed=sub.chapters.filter(c=>c.status==='completed'||c.status==='revised');
+        if(completed.length===0){this.toast('No completed chapters to quiz on','warning');return;}
+
+        if(!this.state.quizData) this.state.quizData={};
+        if(!this.state.quizData[subjectId]) this.state.quizData[subjectId]={};
+        const qd=this.state.quizData[subjectId];
+
+        // Check cache validity: exists, has enough questions, < 14 days old
+        const cacheValid=qd.questions&&qd.questions.length>=10&&qd.generatedAt&&
+            (Date.now()-qd.generatedAt < 14*24*60*60*1000);
+
+        const el=document.getElementById('page-quiz');
+        if(!cacheValid){
+            // Show loading
+            el.innerHTML=`<div class="quiz-generating">
+                <div class="qg-spinner"></div>
+                <p style="font-weight:600;margin-bottom:6px">Generating questions for ${sub.icon} ${sub.name}…</p>
+                <p>AI is writing CBSE-style MCQs from your ${completed.length} completed chapters</p>
+            </div>`;
+
+            try {
+                const questions=await this._generateQuizQuestions(sub, completed);
+                qd.questions=questions;
+                qd.generatedAt=Date.now();
+                this.save();
+            } catch(e){
+                el.innerHTML=`<div class="quiz-generating">
+                    <p style="color:var(--color-danger);font-weight:600">⚠️ Could not generate questions</p>
+                    <p style="margin-top:8px">${e.message}</p>
+                    <button class="btn btn-secondary" style="margin-top:20px" onclick="App.renderQuiz()">← Back</button>
+                </div>`;
+                return;
+            }
+        }
+
+        // Pick 10 random questions from the pool
+        const pool=[...qd.questions];
+        const shuffled=pool.sort(()=>Math.random()-.5).slice(0,Math.min(10,pool.length));
+        // Shuffle options for each question
+        shuffled.forEach(q=>{
+            const opts=[...q.options];
+            const correct=opts[q.correctIndex];
+            opts.sort(()=>Math.random()-.5);
+            q.correctIndex=opts.indexOf(correct);
+            q.options=opts;
+        });
+
+        // Start session
+        this._quiz={
+            active:true,
+            subjectId,
+            subjectName:sub.name,
+            subjectIcon:sub.icon,
+            questions:shuffled,
+            current:0,
+            answers:[],       // {selected, correct, chapterName}
+            answered:false,
+            startTime:Date.now(),
+            timerInterval:null,
+            elapsed:0,
+            totalSeconds:10*60 // 10 min
+        };
+
+        // Start countdown timer
+        this._quiz.timerInterval=setInterval(()=>{
+            if(!this._quiz||!this._quiz.active) return;
+            this._quiz.elapsed++;
+            const remaining=this._quiz.totalSeconds-this._quiz.elapsed;
+            if(remaining<=0){
+                this._finishQuiz(true);
+                return;
+            }
+            // Update timer display only
+            const pill=document.getElementById('quiz-timer-pill');
+            if(pill){
+                const m=Math.floor(remaining/60),s=remaining%60;
+                pill.textContent=`${m}:${s.toString().padStart(2,'0')}`;
+                pill.className='quiz-timer-pill'+(remaining<=60?' danger':remaining<=180?' warn':'');
+            }
+        },1000);
+
+        this._renderQuizSession(document.getElementById('page-quiz'));
+    },
+
+    async _generateQuizQuestions(subject, completedChapters){
+        const chapterNames=completedChapters.map(c=>c.name).join(', ');
+        const systemPrompt=`You are a CBSE Class 10 question paper setter. Generate exactly 15 high-quality multiple choice questions (MCQs) covering these chapters: ${chapterNames} from the subject ${subject.name}.
+
+Rules:
+- Each question MUST be from CBSE Class 10 curriculum
+- Mix difficulty: 5 easy, 6 medium, 4 hard
+- Include application questions, not just definitions
+- Wrong options (distractors) must be plausible — common student misconceptions
+- Include 1-2 "why/because" type questions
+- Each question tagged with the exact chapter name it comes from
+
+Return ONLY a JSON array, no markdown, no extra text. Format:
+[
+  {
+    "question": "Question text here?",
+    "options": ["Option A", "Option B", "Option C", "Option D"],
+    "correctIndex": 0,
+    "explanation": "Brief 1-2 sentence explanation of why this is correct.",
+    "chapter": "Chapter name",
+    "difficulty": "easy|medium|hard"
+  }
+]`;
+
+        const res=await fetch('/api/quiz',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({
+                system: systemPrompt,
+                userMessage: `Generate 15 CBSE Class 10 MCQs for ${subject.name} covering: ${chapterNames}`
+            })
+        });
+
+        if(!res.ok) throw new Error(`Server error: ${res.status}`);
+        const data=await res.json();
+        if(data.error) throw new Error(data.error);
+
+        // Parse JSON from response
+        let raw=data.reply||'';
+        raw=raw.replace(/```json|```/g,'').trim();
+        // Extract JSON array if wrapped in extra text
+        const match=raw.match(/\[[\s\S]*\]/);
+        if(!match) throw new Error('Invalid response format from AI');
+        const questions=JSON.parse(match[0]);
+        if(!Array.isArray(questions)||questions.length===0) throw new Error('No questions returned');
+        return questions;
+    },
+
+    _renderQuizSession(el){
+        const q=this._quiz;
+        if(!q||!q.active){this.renderQuiz();return;}
+
+        const current=q.questions[q.current];
+        const progress=Math.round((q.current/q.questions.length)*100);
+        const remaining=q.totalSeconds-q.elapsed;
+        const m=Math.floor(remaining/60), s=remaining%60;
+        const timerClass=remaining<=60?'danger':remaining<=180?'warn':'';
+
+        el.innerHTML=`<div class="quiz-session-wrap">
+            <!-- Header bar -->
+            <div class="quiz-header-bar">
+                <button class="btn btn-ghost btn-sm" onclick="App._confirmQuitQuiz()">← Exit</button>
+                <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:center">
+                    <span style="font-size:.8rem;color:var(--text-muted);font-weight:600">${q.subjectIcon} ${q.subjectName}</span>
+                    <span style="font-size:.8rem;color:var(--text-muted)">Q ${q.current+1} / ${q.questions.length}</span>
+                </div>
+                <div class="quiz-timer-pill ${timerClass}" id="quiz-timer-pill">${m}:${s.toString().padStart(2,'0')}</div>
+            </div>
+
+            <!-- Progress bar -->
+            <div class="quiz-progress-track">
+                <div class="quiz-progress-fill" style="width:${progress}%"></div>
+            </div>
+
+            <!-- Question card -->
+            <div class="quiz-q-card" id="quiz-q-card">
+                <div class="quiz-q-meta">${current.chapter||''} · ${current.difficulty||'medium'}</div>
+                <div class="quiz-q-text">${current.question}</div>
+                <div class="quiz-options" id="quiz-options">
+                    ${current.options.map((opt,i)=>`
+                    <button class="quiz-option" id="quiz-opt-${i}" onclick="App._selectQuizOption(${i})" ${q.answered?'disabled':''}>
+                        <span class="quiz-option-key">${['A','B','C','D'][i]}</span>
+                        <span>${opt}</span>
+                    </button>`).join('')}
+                </div>
+                <div class="quiz-explanation" id="quiz-explanation"></div>
+            </div>
+
+            <!-- Next / Submit button -->
+            <div style="display:flex;justify-content:flex-end;margin-top:4px">
+                <button class="btn btn-primary" id="quiz-next-btn" onclick="App._nextQuizQuestion()" style="display:none;min-width:140px;justify-content:center">
+                    ${q.current+1===q.questions.length?'See Results 🎯':'Next Question →'}
+                </button>
+            </div>
+        </div>`;
+    },
+
+    _selectQuizOption(optIndex){
+        const q=this._quiz;
+        if(!q||q.answered) return;
+        q.answered=true;
+        const current=q.questions[q.current];
+        const isCorrect=optIndex===current.correctIndex;
+
+        // Record answer
+        q.answers.push({
+            selected:optIndex,
+            correct:current.correctIndex,
+            isCorrect,
+            chapterName:current.chapter||'Unknown',
+            question:current.question
+        });
+
+        // Style options
+        const opts=document.querySelectorAll('.quiz-option');
+        opts.forEach((btn,i)=>{
+            btn.disabled=true;
+            if(i===current.correctIndex) btn.classList.add(isCorrect&&i===optIndex?'correct':'reveal-correct');
+            else if(i===optIndex&&!isCorrect) btn.classList.add('wrong');
+        });
+
+        // Show explanation
+        const expEl=document.getElementById('quiz-explanation');
+        if(expEl&&current.explanation){
+            expEl.className=`quiz-explanation show ${isCorrect?'correct-exp':'wrong-exp'}`;
+            expEl.innerHTML=`${isCorrect?'✅':'❌'} <strong>${isCorrect?'Correct!':'Incorrect.'}</strong> ${current.explanation}`;
+        }
+
+        // Show next button
+        const nextBtn=document.getElementById('quiz-next-btn');
+        if(nextBtn) nextBtn.style.display='flex';
+    },
+
+    _nextQuizQuestion(){
+        const q=this._quiz;
+        if(!q) return;
+
+        if(q.current+1>=q.questions.length){
+            this._finishQuiz(false);
+            return;
+        }
+
+        q.current++;
+        q.answered=false;
+        this._renderQuizSession(document.getElementById('page-quiz'));
+    },
+
+    _finishQuiz(timedOut){
+        const q=this._quiz;
+        if(!q) return;
+        clearInterval(q.timerInterval);
+        q.active=false;
+
+        const total=q.answers.length;
+        const correct=q.answers.filter(a=>a.isCorrect).length;
+        const pct=total>0?Math.round(correct/total*100):0;
+
+        // Compute chapter breakdown
+        const chapterMap={};
+        q.answers.forEach(a=>{
+            if(!chapterMap[a.chapterName]) chapterMap[a.chapterName]={correct:0,total:0};
+            chapterMap[a.chapterName].total++;
+            if(a.isCorrect) chapterMap[a.chapterName].correct++;
+        });
+
+        // Persist results
+        if(!this.state.quizData) this.state.quizData={};
+        if(!this.state.quizData[q.subjectId]) this.state.quizData[q.subjectId]={};
+        const qd=this.state.quizData[q.subjectId];
+        qd.lastQuizDate=this.today();
+        qd.lastScore=pct;
+        if(!qd.history) qd.history=[];
+        qd.history.push({date:this.today(), score:correct, total, pct});
+        if(qd.history.length>20) qd.history=qd.history.slice(-20);
+
+        // XP reward
+        const xpEarned=correct*5+(pct>=80?20:0);
+        this.addXP(xpEarned);
+
+        // Flag weak chapters
+        Object.entries(chapterMap).forEach(([name, data])=>{
+            if(data.total>0&&data.correct/data.total<0.5){
+                this.state.subjects.forEach(s=>{
+                    s.chapters.forEach(c=>{if(c.name===name) c.weakFlag=true;});
+                });
+            }
+        });
+
+        // Log revisions for all quizzed chapters
+        const quizzedChapterNames=[...new Set(q.answers.map(a=>a.chapterName))];
+        this.state.subjects.forEach(s=>{
+            s.chapters.forEach(c=>{
+                if(quizzedChapterNames.includes(c.name)&&(c.status==='completed'||c.status==='revised')){
+                    if(!c.revisionDates) c.revisionDates=[];
+                    c.revisionDates.push(this.today());
+                    c.revisionCount=(c.revisionCount||0)+1;
+                    c.status='revised';
+                }
+            });
+        });
+
+        this.save();
+        this.updateNavBadges();
+
+        // Auto AI debrief (fire and forget — don't await)
+        const weakChapters=Object.entries(chapterMap).filter(([n,d])=>d.correct/d.total<0.5).map(([n])=>n);
+        if(weakChapters.length>0){
+            this._quizAIDebrief(q.subjectName, pct, weakChapters);
+        }
+
+        this._renderQuizResults(correct, total, pct, chapterMap, xpEarned, timedOut, q.subjectIcon, q.subjectName);
+    },
+
+    async _quizAIDebrief(subjectName, pct, weakChapters){
+        try{
+            const messages=[
+                {role:'system',content:'You are a warm, encouraging CBSE Class 10 study coach. Be very brief — 2 sentences max.'},
+                {role:'user',content:`Student just scored ${pct}% on a ${subjectName} quiz. Weak chapters: ${weakChapters.join(', ')}. Give one specific, actionable tip.`}
+            ];
+            const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
+            const data=await res.json();
+            if(data.reply&&this.state.currentPage==='quiz'){
+                const debriefEl=document.getElementById('quiz-ai-debrief');
+                if(debriefEl){
+                    debriefEl.innerHTML=`<div style="padding:12px 14px;border-radius:var(--radius-sm);border-left:3px solid var(--color-brand);background:rgba(79,70,229,0.06);font-size:.82rem;line-height:1.55;color:var(--text-secondary)">
+                        <span style="font-weight:600;color:var(--color-text-primary)">🤖 Coach: </span>${data.reply}
+                    </div>`;
+                }
+            }
+        }catch(e){/* silent fail */}
+    },
+
+    _renderQuizResults(correct, total, pct, chapterMap, xpEarned, timedOut, subjectIcon, subjectName){
+        const el=document.getElementById('page-quiz');
+        // Capture subjectId before _quiz is nulled at the end of this function
+        const retrySubjectId=this._quiz?.subjectId||'';
+        const ringColor=pct>=80?'#22C55E':pct>=50?'#F59E0B':'#EF4444';
+        const circumference=2*Math.PI*56;
+        const weakChapters=Object.entries(chapterMap).filter(([n,d])=>d.correct/d.total<0.5).map(([n])=>n);
+
+        el.innerHTML=`<div class="quiz-session-wrap">
+            <div class="card" style="text-align:center;padding:32px 24px;margin-bottom:20px">
+                ${timedOut?`<div style="font-size:.78rem;color:var(--color-warning);font-weight:600;margin-bottom:12px;letter-spacing:.5px">⏱ TIME UP</div>`:''}
+                <div style="font-size:.85rem;color:var(--text-muted);margin-bottom:16px">${subjectIcon} ${subjectName} Quiz Results</div>
+
+                <div class="quiz-result-ring-wrap">
+                    <svg width="140" height="140" viewBox="0 0 140 140">
+                        <circle cx="70" cy="70" r="56" fill="none" stroke="var(--color-border)" stroke-width="8"/>
+                        <circle cx="70" cy="70" r="56" fill="none" stroke="${ringColor}" stroke-width="8"
+                            stroke-dasharray="${circumference}"
+                            stroke-dashoffset="${circumference*(1-pct/100)}"
+                            stroke-linecap="round"
+                            style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1.2s ease"/>
+                    </svg>
+                    <div class="quiz-result-ring-val">
+                        <div class="quiz-result-score" style="color:${ringColor}">${pct}%</div>
+                        <div class="quiz-result-total">${correct}/${total}</div>
+                    </div>
+                </div>
+
+                <div style="font-size:1.3rem;margin-bottom:6px">${pct>=80?'🎉 Excellent!':pct>=60?'👍 Good job!':pct>=40?'📖 Keep practising':'💪 Need more revision'}</div>
+                <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">${pct>=80?'Strong recall — keep it up!':pct>=60?'Almost there, review weak chapters':'Focus on weak chapters before next quiz'}</div>
+                <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:20px;padding:5px 14px;font-family:var(--font-mono);font-size:.82rem;color:var(--color-xp)">⚡ +${xpEarned} XP earned</div>
+            </div>
+
+            <!-- Chapter breakdown -->
+            <div class="card" style="margin-bottom:20px">
+                <div class="card-header"><span class="card-title">📊 Chapter Breakdown</span></div>
+                <div class="quiz-chapter-breakdown">
+                    ${Object.entries(chapterMap).map(([name,data])=>{
+                        const cpct=Math.round(data.correct/data.total*100);
+                        const cls=cpct>=70?'strong':cpct<50?'weak':'';
+                        return`<div class="quiz-chapter-row ${cls}">
+                            <span class="qcr-name">${name}</span>
+                            <span class="qcr-score" style="color:${cpct>=70?'var(--color-success)':cpct<50?'var(--color-danger)':'var(--color-warning)'}">${data.correct}/${data.total} (${cpct}%)</span>
+                        </div>`;
+                    }).join('')}
+                </div>
+            </div>
+
+            <!-- AI debrief (populated asynchronously) -->
+            <div id="quiz-ai-debrief" style="margin-bottom:20px"></div>
+
+            <!-- Actions -->
+            <div style="display:flex;gap:10px;flex-wrap:wrap">
+                ${weakChapters.length>0?`<button class="btn btn-warning" onclick="App.navigate('subjects')" style="flex:1;justify-content:center;min-width:140px">📖 Review Weak Chapters</button>`:''}
+                <button class="btn btn-primary" onclick="App._quiz=null;App.renderQuiz()" style="flex:1;justify-content:center;min-width:120px">← Back to Quizzes</button>
+                <button class="btn btn-secondary" onclick="App.startQuiz('${retrySubjectId}')" style="flex:1;justify-content:center;min-width:100px">🔁 Retry</button>
+            </div>
+        </div>`;
+
+        this._quiz=null;
+    },
+
+    _confirmQuitQuiz(){
+        if(!confirm('Exit quiz? Your progress will be lost.')) return;
+        if(this._quiz) clearInterval(this._quiz.timerInterval);
+        this._quiz=null;
+        this.renderQuiz();
+    },
+
+    // ── END QUIZ FEATURE ──
 };
 
-// INIT
 if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', () => App.init());
 } else {
