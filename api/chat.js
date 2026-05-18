@@ -1,15 +1,38 @@
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseAdmin = createClient(
+    process.env.SUPABASE_URL,
+    process.env.SUPABASE_SERVICE_ROLE_KEY
+);
+
+const ALLOWED_ORIGINS = ['https://studyos-edu.vercel.app', 'http://localhost:3000'];
+
+async function verifyToken(authHeader) {
+    const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    if (!token) return null;
+
+    const { data, error } = await supabaseAdmin.auth.getUser(token);
+    if (error || !data?.user) return null;
+
+    return data.user;
+}
+
 export default async function handler(req, res) {
-    // Only allow POST
     if (req.method !== 'POST') {
         return res.status(405).json({ error: 'Method not allowed' });
     }
 
-    // Only allow requests from your own site
     const origin = req.headers.origin || '';
-    const allowed = ['https://studyos-edu.vercel.app', 'http://localhost:3000'];
-    if (!allowed.includes(origin)) {
+    if (!ALLOWED_ORIGINS.includes(origin)) {
         return res.status(403).json({ error: 'Forbidden' });
     }
+
+    const user = await verifyToken(req.headers.authorization);
+    if (!user) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const user_id = user.id; // available for logging
 
     try {
         const { messages } = req.body;
@@ -18,12 +41,11 @@ export default async function handler(req, res) {
             return res.status(400).json({ error: 'Invalid request body' });
         }
 
-        // Call Groq API using the secret key stored in Vercel environment
         const groqRes = await fetch('https://api.groq.com/openai/v1/chat/completions', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': `Bearer ${process.env.GROQ_KEY}`
+                'Authorization': `Bearer ${process.env.GROQ_API_KEY}`
             },
             body: JSON.stringify({
                 model: 'llama-3.1-8b-instant',
@@ -40,6 +62,9 @@ export default async function handler(req, res) {
         }
 
         const reply = data.choices?.[0]?.message?.content || 'Sorry, I could not respond.';
+
+        console.log(`[chat] user_id=${user_id} tokens_used=${data.usage?.total_tokens ?? 'n/a'}`);
+
         return res.status(200).json({ reply });
 
     } catch (err) {
