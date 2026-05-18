@@ -397,3 +397,4 @@ export const DB = {
 
 };
 window.DB = DB;
+console.log('db.js loaded', window.DB);
