@@ -143,8 +143,21 @@ export const DB = {
     },
 
     async getByDate(userId, date) {
-      const from = `${date}T00:00:00.000Z`;
-      const to   = `${date}T23:59:59.999Z`;
+      // `date` is a local (IST) calendar date: "YYYY-MM-DD".
+      // started_at is stored as UTC timestamptz. We must query the UTC range
+      // that corresponds to the full IST calendar day, not the UTC calendar day.
+      //
+      // IST is UTC+05:30, so IST midnight = UTC 18:30 the *previous* day.
+      //   IST day start: YYYY-MM-DDT00:00:00+05:30  →  (date-1)T18:30:00.000Z
+      //   IST day end:   YYYY-MM-DDT23:59:59+05:30  →  (date)T18:29:59.999Z
+      //
+      // We compute this without relying on the runtime timezone so it works
+      // correctly even if the server/browser is in a different locale.
+      const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+      const dayStartIST = new Date(`${date}T00:00:00.000Z`).getTime() - IST_OFFSET_MS;
+      const dayEndIST   = new Date(`${date}T23:59:59.999Z`).getTime() - IST_OFFSET_MS;
+      const from = new Date(dayStartIST).toISOString();
+      const to   = new Date(dayEndIST).toISOString();
       return run(
         supabase.from('sessions')
           .select('*')
@@ -396,5 +409,3 @@ export const DB = {
   },
 
 };
-window.DB = DB;
-console.log('db.js loaded', window.DB);
