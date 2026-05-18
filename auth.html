@@ -363,8 +363,7 @@
                     showToast(error.message, 'error');
                     btnText.innerText = originalText;
                 } else {
-                    showToast('Logged in successfully!', 'success');
-                    await initMigration(); 
+                    showToast('Logged in successfully!', 'success'); 
                     setTimeout(() => window.location.href = '/index.html', 1000);
                 }
             } else {
