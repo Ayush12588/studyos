@@ -1,2 +1,30 @@
-.vercel
-.env*.local
+# dependencies
+/node_modules/
+
+# environment
+.env
+.env.local
+.env.*.local
+
+# Vercel
+/.vercel/
+
+# logs
+npm-debug.log*
+yarn-debug.log*
+pnpm-debug.log*
+logs/
+*.log
+
+# build / cache
+/dist/
+build/
+.cache/
+coverage/
+.eslintcache
+
+# editor / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
