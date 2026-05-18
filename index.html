@@ -18,7 +18,6 @@
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dGt3YnhqbnpoY3RndG9tcmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjQxNDgsImV4cCI6MjA5NDY0MDE0OH0.-AAKheuquEqnKRqMkVWPcHlq89FFbaaim7dbS2fbgRY';
     </script>
     <script type="module" src="db.js"></script>
-l
     <script type="module" src="migrate.js"></script>
     <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.min.js"></script>
     <style>
@@ -3148,7 +3147,12 @@ const App={
         {text:'Score 80%+ on practice test',check:s=>s.examScores.filter(x=>x.date===s.today).some(x=>x.scored/x.total>=0.8),xp:40}
     ],
 
-    init(){
+    async init(){
+        const { data: { session } } = await supabase.auth.getSession();
+        if (!session) {
+            window.location.href = '/auth.html';
+            return;
+        }
         this.load();
 
         const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings','quiz'];
