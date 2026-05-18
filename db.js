@@ -396,3 +396,4 @@ export const DB = {
   },
 
 };
+window.DB = DB;
