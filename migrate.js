@@ -699,3 +699,5 @@ export async function initMigration() {
     removeOverlay();
   });
 }
+window.initMigration = initMigration;
+initMigration();
