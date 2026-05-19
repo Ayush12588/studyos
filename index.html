@@ -3153,7 +3153,7 @@ const App={
         
         if (!session) {
             // Give it one more chance — OAuth tokens need a moment
-            await new Promise(resolve => setTimeout(resolve, 500));
+            await new Promise(resolve => setTimeout(resolve, 2000));
             const { data: { session: session2 } } = await supabase.auth.getSession();
             if (!session2) {
                 window.location.href = '/auth.html';
