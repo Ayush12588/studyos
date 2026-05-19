@@ -3148,21 +3148,21 @@ const App={
     ],
 
     async init(){
-        // Wait for Supabase to process OAuth token if present
+        // Let Supabase process any OAuth tokens in the URL hash first
+        await new Promise((resolve) => {
+            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+                subscription.unsubscribe();
+                resolve(session);
+            });
+        });
+
         const { data: { session } } = await supabase.auth.getSession();
-        
         if (!session) {
-            // Give it one more chance — OAuth tokens need a moment
-            await new Promise(resolve => setTimeout(resolve, 2000));
-            const { data: { session: session2 } } = await supabase.auth.getSession();
-            if (!session2) {
-                window.location.href = '/auth.html';
-                return;
-            }
+            window.location.href = '/auth.html';
+            return;
         }
-        
+
         this.load();
-        // ... rest of init
 
         const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings','quiz'];
         if (!validPages.includes(this.state.currentPage)) {
