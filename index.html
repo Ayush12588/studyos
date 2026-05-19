@@ -2670,6 +2670,9 @@ body { overscroll-behavior-y: contain; }
             </div>
             <div id="welcome-days-preview" style="text-align:center;min-height:28px;margin-bottom:16px;font-family:var(--font-mono);font-size:.875rem;color:var(--color-warning);font-weight:700"></div>
             <button class="btn btn-primary" onclick="App.welcomeNext(2)" style="width:100%;justify-content:center">Continue</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('welcome-import-file').click()" style="width:100%;justify-content:center;margin-top:8px">📥 Import Backup</button>
+            <input type="file" id="welcome-import-file" accept=".json" style="display:none" onchange="App.welcomeImport(event)">
+            <p style="margin-top:12px;margin-bottom:0;font-size:.75rem;color:var(--color-text-secondary)">Already have a backup? Import it to restore all your data instantly.</p>
         </div>
         <!-- Step 2: Name + syllabus -->
         <div class="welcome-step" data-step="2">
@@ -5143,6 +5146,12 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         if(!confirm('This will replace ALL current data. Continue?')){e.target.value='';return}
         const r=new FileReader();
         r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();this.render();this.updateSidebar();this.applyTheme();this.toast('Data imported! 📥','success')}catch(err){this.toast('Invalid file format','error')}};
+        r.readAsText(f);e.target.value='';
+    },
+    welcomeImport(e){
+        const f=e.target.files[0];if(!f)return;
+        const r=new FileReader();
+        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();document.getElementById('welcome-overlay').classList.add('hidden');this.render();this.updateSidebar();this.applyTheme();this.toast('Welcome back, '+this.state.profile.name+'! 📥','success')}catch(err){this.toast('Invalid backup file — could not import.','error')}};
         r.readAsText(f);e.target.value='';
     },
     resetAll(){
