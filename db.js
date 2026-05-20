@@ -57,20 +57,20 @@ export const DB = {
   profile: {
     async get(userId) {
       return run(
-        supabase.from('profiles').select('*').eq('id', userId).single()
+        supabase.from('profiles').select('*').eq('user_id', userId).single()
       );
     },
 
     async update(userId, data) {
       return run(
-        supabase.from('profiles').update(data).eq('id', userId).select().single()
+        supabase.from('profiles').update(data).eq('user_id', userId).select().single()
       );
     },
 
     async createDefault(userId, name) {
       return run(
         supabase.from('profiles')
-          .insert({ id: userId, name, created_at: new Date().toISOString() })
+          .insert({ user_id: userId, name, created_at: new Date().toISOString() })
           .select()
           .single()
       );
