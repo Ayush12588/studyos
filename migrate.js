@@ -625,6 +625,7 @@ async function runMigration(userId, localData) {
 
     // ── Success ──
     localStorage.removeItem(LS_KEY);
+    localStorage.setItem('studyos_migration_done', userId);
     showMessage('success', '✓ All data imported successfully! Taking you to your dashboard…');
     setTimeout(() => {
       removeOverlay();
@@ -658,13 +659,18 @@ export async function initMigration() {
   const userId = sessionData?.session?.user?.id;
   if (!userId) return; // Not authenticated — nothing to migrate yet
 
-  // 3. Check migration_done flag on profile
-  const { data: profile } = await DB.profile.get(userId);
-  if (profile?.migration_done) {
-    // Already migrated — clean up stale localStorage silently
-    localStorage.removeItem(LS_KEY);
-    return;
-  }
+  // 3. Check migration_done flag — localStorage first (instant, no Supabase dependency)
+  if (localStorage.getItem('studyos_migration_done') === userId) return;
+
+  // Also check Supabase profile flag (may fail if schema cache is stale — that's OK)
+  try {
+    const { data: profile } = await DB.profile.get(userId);
+    if (profile?.migration_done) {
+      localStorage.setItem('studyos_migration_done', userId);
+      localStorage.removeItem(LS_KEY);
+      return;
+    }
+  } catch { /* Supabase schema cache error — fall through and show modal */ }
 
   // 4. Build and show modal
   injectStyles();
@@ -694,7 +700,8 @@ export async function initMigration() {
   // Wire up Start Fresh
   document.getElementById('mg-skip').addEventListener('click', () => {
     localStorage.removeItem(LS_KEY);
-    // Mark migration_done so modal never reappears
+    // Mark migration_done locally so modal never reappears even if Supabase fails
+    localStorage.setItem('studyos_migration_done', userId);
     DB.profile.update(userId, { migration_done: true }).catch(() => {});
     removeOverlay();
   });
