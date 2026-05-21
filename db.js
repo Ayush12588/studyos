@@ -251,7 +251,7 @@ export const DB = {
   examScores: {
     async getAll(userId) {
       return run(
-        supabase.from('exam_scores').select('*').eq('user_id', userId).order('exam_date', { ascending: false })
+        supabase.from('exam_scores').select('*').eq('user_id', userId).order('date', { ascending: false })
       );
     },
 

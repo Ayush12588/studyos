@@ -3344,7 +3344,7 @@ const App={
                     examDate:  s.exam_date  ?? s.examDate,
                     subjectId: s.subject_id ?? s.subjectId,
                     exam_name:  undefined,
-                    exam_date:  undefined,
+                    date:  undefined,
                     subject_id: undefined,
                 }));
             }
@@ -4597,7 +4597,7 @@ const App={
         const _ne={id:this.uid(),name,subjectId:sId,date,scored,total,createdAt:Date.now()};
         this.state.examScores.push(_ne);
         const _esUid=window._supabaseUserId;
-        if(_esUid){DB.examScores.create({user_id:_esUid,subject_id:sId||null,exam_name:name,scored,total,exam_date:date}).then(({data,error})=>{if(error){console.error('[DB] examScores.create:',error);return;}if(data&&data.id)_ne.id=data.id;});}
+        if(_esUid){DB.examScores.create({user_id:_esUid,subject_id:sId||null,exam_name:name,scored,total,date}).then(({data,error})=>{if(error){console.error('[DB] examScores.create:',error);return;}if(data&&data.id)_ne.id=data.id;});}
         this.save();this.closeModal('modal-exam');this.render();this.addXP(10,'Exam logged');
         const pct=Math.round(scored/total*100);
         this.toast(`📝 ${name}: ${scored}/${total} (${pct}%)`,'success');
