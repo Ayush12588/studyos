@@ -3151,7 +3151,7 @@ const App={
     ],
 
     async init(){
-        // Let Supabase process any OAuth tokens in the URL hash first
+        // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
         await new Promise((resolve) => {
             const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
                 subscription.unsubscribe();
@@ -3165,6 +3165,7 @@ const App={
             return;
         }
 
+        // ── Step 2: Load UI-only state from localStorage (theme, page, etc.) ──
         this.load();
 
         const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings','quiz'];
@@ -3172,19 +3173,11 @@ const App={
             this.state.currentPage = 'dashboard';
         }
 
-        if(!this.state.profile.name||this.state.profile.name==='Student'){
-            if(this.state.subjects.length===0)document.getElementById('welcome-overlay').classList.remove('hidden');
-        }
-        // Ensure new state fields
+        // ── Step 3: Ensure state field defaults (fields with no Supabase home) ──
         if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
         if(!this.state.quizData)this.state.quizData={};
-        if(!this.state.examScores)this.state.examScores=[];
-        if(!this.state.tasks)this.state.tasks=[];
-        if(!this.state.notes)this.state.notes=[];
-        if(!this.state.resources)this.state.resources=[];
-        if(!this.state.doubts)this.state.doubts=[];
         if(!this.state.exercises)this.state.exercises={};
-        if(!this.state.theme)this.state.theme='dark';
+        if(!this.state.theme)this.state.theme='warm-dark';
         if(!this.state.stopwatch)this.state.stopwatch={running:false,elapsed:0,subjectId:'',chapterId:''};
         if(!this.state.dailyChallenges)this.state.dailyChallenges={date:'',challenges:[],completed:[]};
         if(!this.state.weeklyPlan)this.state.weeklyPlan={};
@@ -3192,17 +3185,30 @@ const App={
         if(!this.state.profile.mood)this.state.profile.mood='';
         if(!this.state.profile.moodHistory)this.state.profile.moodHistory=[];
         if(this.state.autoTheme===undefined)this.state.autoTheme=false;
-        // STREAK FREEZE — migration: add fields if missing from saved state
         if(this.state.streakFreezes===undefined)this.state.streakFreezes=1;
         if(this.state.lastFreezeUsedDate===undefined)this.state.lastFreezeUsedDate=null;
         if(this.state.pendingFreezeNotice===undefined)this.state.pendingFreezeNotice=false;
         if(this.state.lastFreezeEarnedDate===undefined)this.state.lastFreezeEarnedDate=null;
 
+        // Apply theme early so the loading screen inherits correct colours
         this.applyTheme();
+
+        // ── Step 4: Fetch all user data from Supabase ────────────────────────
+        this.showLoadingScreen();
+        await this.loadFromSupabase(session.user.id);
+        this.hideLoadingScreen();
+
+        // ── Step 5: Welcome overlay — only for brand-new users ───────────────
+        // An existing/migrated user must never see this.
+        const migrationDone = localStorage.getItem('studyos_migration_done');
+        if (!migrationDone && this.state.subjects.length === 0) {
+            document.getElementById('welcome-overlay').classList.remove('hidden');
+        }
+
+        // ── Step 6: Boot the rest of the app ────────────────────────────────
         this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
         this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();this.checkBadges();
         setInterval(()=>{this.updatePageSubtitle();this.updateTopbarPills();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
-        // Only check streak reminder after page settles, not on cold start
         setTimeout(()=>{this.checkStreakReminder();this.checkEodCheckin()},5000);
         this.updatePageSubtitle();
         this.updateTopbarPills();
@@ -3210,10 +3216,219 @@ const App={
         if(this.state.stopwatch.running)this.startStopwatchTimer();
     },
 
-    load(){try{const d=localStorage.getItem('studyos_data');if(d){const p=JSON.parse(d);Object.assign(this.state,p)}}catch(e){console.error(e)}},
+    // ── Loading screen ────────────────────────────────────────────────────────
+    showLoadingScreen(){
+        if(document.getElementById('studyos-loading-screen'))return;
+        const el=document.createElement('div');
+        el.id='studyos-loading-screen';
+        el.style.cssText=`
+            position:fixed;inset:0;z-index:9999;
+            background:var(--color-bg);
+            display:flex;flex-direction:column;
+            align-items:center;justify-content:center;gap:20px;
+        `;
+        el.innerHTML=`
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="animation:studyos-spin 0.9s linear infinite;flex-shrink:0">
+                <circle cx="20" cy="20" r="16" stroke="var(--color-border)" stroke-width="3"/>
+                <path d="M20 4 A16 16 0 0 1 36 20" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <span style="font-family:var(--font-body);font-size:.875rem;font-weight:500;color:var(--color-text-secondary);letter-spacing:.2px">
+                Loading your data…
+            </span>
+            <style>
+                @keyframes studyos-spin{to{transform:rotate(360deg)}}
+            </style>
+        `;
+        document.body.appendChild(el);
+    },
+
+    hideLoadingScreen(){
+        const el=document.getElementById('studyos-loading-screen');
+        if(el){
+            el.style.transition='opacity .25s ease';
+            el.style.opacity='0';
+            setTimeout(()=>el.remove(),280);
+        }
+    },
+
+    // ── Fetch all user data from Supabase ─────────────────────────────────────
+    async loadFromSupabase(userId){
+        const warn = (label, error) => console.warn(`[StudyOS] loadFromSupabase — ${label} failed:`, error);
+
+        // ── a. Profile ───────────────────────────────────────────────────────
+        try {
+            const { data: profile, error } = await DB.profile.get(userId);
+            if (error) throw error;
+            if (profile) {
+                // Merge: Supabase wins on its own fields; local defaults fill the rest
+                this.state.profile = {
+                    ...this.state.profile,                          // local defaults (xp, level, streak, mood, etc.)
+                    name:             profile.name          ?? this.state.profile.name,
+                    examDate:         profile.exam_date     ?? this.state.profile.examDate,
+                    dailyGoalMinutes: profile.daily_goal_minutes ?? this.state.profile.dailyGoalMinutes,
+                    targetScore:      profile.target_score  ?? this.state.profile.targetScore,
+                    // Preserve any extra columns that already exist on the profile object
+                    // (xp, level, streak come from local state — Supabase is not the source of truth for those yet)
+                };
+            }
+        } catch(e){ warn('profile', e); }
+
+        // ── b. Subjects + Chapters ───────────────────────────────────────────
+        try {
+            const { data: subjects, error } = await DB.subjects.getAll(userId);
+            if (error) throw error;
+            if (subjects) {
+                // Fetch chapters for every subject in parallel
+                const withChapters = await Promise.all(subjects.map(async (sub) => {
+                    let chapters = [];
+                    try {
+                        const { data: chData, error: chErr } = await DB.chapters.getBySubject(sub.id);
+                        if (!chErr && chData) {
+                            chapters = chData.map(ch => ({
+                                ...ch,
+                                subjectId:     ch.subject_id,
+                                revisionCount: ch.revision_count ?? 0,
+                                order:         ch.order_index   ?? 0,
+                                // remove raw snake_case duplicates
+                                subject_id:    undefined,
+                                revision_count:undefined,
+                                order_index:   undefined,
+                            }));
+                        }
+                    } catch(chE){ warn(`chapters for subject ${sub.id}`, chE); }
+                    return { ...sub, chapters };
+                }));
+                this.state.subjects = withChapters;
+            }
+        } catch(e){ warn('subjects', e); }
+
+        // ── c. Sessions ──────────────────────────────────────────────────────
+        try {
+            const { data: sessions, error } = await DB.sessions.getAll(userId);
+            if (error) throw error;
+            if (sessions) {
+                this.state.sessions = sessions.map(s => ({
+                    ...s,
+                    timeSpent: s.time_spent ?? s.timeSpent ?? 0,
+                    // 'date' column stays as-is (date string)
+                    time_spent: undefined,
+                }));
+            }
+        } catch(e){ warn('sessions', e); }
+
+        // ── d. Tasks (today only) ────────────────────────────────────────────
+        try {
+            const { data: tasks, error } = await DB.tasks.getByDate(userId, this.today());
+            if (error) throw error;
+            if (tasks) this.state.tasks = tasks;
+        } catch(e){ warn('tasks', e); }
+
+        // ── e. Doubts ────────────────────────────────────────────────────────
+        try {
+            const { data: doubts, error } = await DB.doubts.getAll(userId);
+            if (error) throw error;
+            if (doubts) this.state.doubts = doubts;
+        } catch(e){ warn('doubts', e); }
+
+        // ── f. Exam scores ────────────────────────────────────────────────────
+        try {
+            const { data: examScores, error } = await DB.examScores.getAll(userId);
+            if (error) throw error;
+            if (examScores) {
+                this.state.examScores = examScores.map(s => ({
+                    ...s,
+                    examName:  s.exam_name  ?? s.examName,
+                    examDate:  s.exam_date  ?? s.examDate,
+                    subjectId: s.subject_id ?? s.subjectId,
+                    exam_name:  undefined,
+                    exam_date:  undefined,
+                    subject_id: undefined,
+                }));
+            }
+        } catch(e){ warn('examScores', e); }
+
+        // ── g. Notes ─────────────────────────────────────────────────────────
+        try {
+            const { data: notes, error } = await DB.notes.getAll(userId);
+            if (error) throw error;
+            if (notes) this.state.notes = notes;
+        } catch(e){ warn('notes', e); }
+
+        // ── h. Resources ─────────────────────────────────────────────────────
+        try {
+            const { data: resources, error } = await DB.resources.getAll(userId);
+            if (error) throw error;
+            if (resources) this.state.resources = resources;
+        } catch(e){ warn('resources', e); }
+    },
+
+    // ── localStorage: UI state + local-only state ────────────────────────────
+    // Source of truth for: theme, currentPage, selectedSubjectFilter, stopwatch,
+    // pomodoroSettings, quizData, exercises, dailyChallenges, weeklyPlan,
+    // checkins, earnedBadges, streakFreezes, profile.xp/level/streak/mood
+    // (anything not yet written through to Supabase).
+    load(){
+        try{
+            const d=localStorage.getItem('studyos_data');
+            if(d){
+                const p=JSON.parse(d);
+                // Only restore keys that live in localStorage.
+                // Supabase-owned keys (subjects, sessions, tasks, etc.) are NOT merged here —
+                // they will be overwritten by loadFromSupabase() immediately after.
+                // Restore safe UI keys
+                const UI_KEYS=['currentPage','selectedSubjectFilter','theme','autoTheme',
+                    'stopwatch','pomodoroSettings','quizData','exercises',
+                    'dailyChallenges','weeklyPlan','checkins','earnedBadges',
+                    'streakFreezes','lastFreezeUsedDate','lastFreezeEarnedDate',
+                    'pendingFreezeNotice'];
+                UI_KEYS.forEach(k=>{ if(p[k]!==undefined) this.state[k]=p[k]; });
+                // Restore local-only profile fields (xp, level, streak, mood, moodHistory, etc.)
+                if(p.profile){
+                    const LOCAL_PROFILE_KEYS=['xp','level','streak','lastStudyDate','maxDailyMinutes',
+                        'mood','moodHistory','pomodoroCompleted'];
+                    LOCAL_PROFILE_KEYS.forEach(k=>{ if(p.profile[k]!==undefined) this.state.profile[k]=p.profile[k]; });
+                }
+            }
+        }catch(e){console.error('[StudyOS] load():', e)}
+    },
+
     save(){
-        try{localStorage.setItem('studyos_data',JSON.stringify(this.state))}catch(e){console.error(e)}
-        // Auto-save is silent — no topbar indicator
+        // Persist UI state + local-only state to localStorage.
+        // Supabase-owned data (subjects, sessions, tasks, doubts, examScores,
+        // notes, resources) is NOT written here — it is written via DB.* calls
+        // at the point of mutation.
+        try{
+            const payload={
+                currentPage:            this.state.currentPage,
+                selectedSubjectFilter:  this.state.selectedSubjectFilter,
+                theme:                  this.state.theme,
+                autoTheme:              this.state.autoTheme,
+                stopwatch:              this.state.stopwatch,
+                pomodoroSettings:       this.state.pomodoroSettings,
+                quizData:               this.state.quizData,
+                exercises:              this.state.exercises,
+                dailyChallenges:        this.state.dailyChallenges,
+                weeklyPlan:             this.state.weeklyPlan,
+                checkins:               this.state.checkins,
+                earnedBadges:           this.state.earnedBadges,
+                streakFreezes:          this.state.streakFreezes,
+                lastFreezeUsedDate:     this.state.lastFreezeUsedDate,
+                lastFreezeEarnedDate:   this.state.lastFreezeEarnedDate,
+                pendingFreezeNotice:    this.state.pendingFreezeNotice,
+                profile:{
+                    xp:                 this.state.profile.xp,
+                    level:              this.state.profile.level,
+                    streak:             this.state.profile.streak,
+                    lastStudyDate:      this.state.profile.lastStudyDate,
+                    maxDailyMinutes:    this.state.profile.maxDailyMinutes,
+                    mood:               this.state.profile.mood,
+                    moodHistory:        this.state.profile.moodHistory,
+                    pomodoroCompleted:  this.state.profile.pomodoroCompleted,
+                },
+            };
+            localStorage.setItem('studyos_data', JSON.stringify(payload));
+        }catch(e){console.error('[StudyOS] save():', e)}
         this.updateTopbarPills();
     },
 
