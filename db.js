@@ -141,7 +141,10 @@ export const DB = {
   sessions: {
     async getAll(userId) {
       return run(
-        supabase.from('sessions').select('*').eq('user_id', userId).order('started_at', { ascending: false })
+        supabase.from('sessions')
+          .select('*')
+          .eq('user_id', userId)
+          .order('created_at', { ascending: false })
       );
     },
 
@@ -163,13 +166,12 @@ export const DB = {
       const to   = new Date(dayEndIST).toISOString();
       return run(
         supabase.from('sessions')
-          .select('*')
-          .eq('user_id', userId)
-          .gte('started_at', from)
-          .lte('started_at', to)
-          .order('started_at')
-      );
-    },
+      .select('*')
+      .eq('user_id', userId)
+      .eq('date', date)
+      .order('created_at')
+  );
+},
 
     async create(session) {
       return run(
