@@ -1,8 +1,10 @@
 import { DB } from './db.js';
+// supabase client is exposed on window by db.js
+const supabase = window.supabase;
 
 // ─── Constants ───────────────────────────────────────────────────────────────
 
-const LS_KEY = 'studyos_data';
+const LS_KEY = 'studyos_data'; // legacy key — app now uses 'studyos_ui' (UI-only)
 const BASE64_RE = /data:[\w/+]+;base64,[A-Za-z0-9+/=]+/g;
 const PLACEHOLDER = '[attachment removed — re-upload manually]';
 
@@ -19,6 +21,8 @@ const STEPS = [
   { key: 'challenges',  label: 'Challenges' },
   { key: 'checkins',    label: 'Check-ins' },
   { key: 'badges',      label: 'Badges' },
+  { key: 'quizData',    label: 'Quiz Data' },
+  { key: 'exercises',   label: 'Exercises' },
 ];
 
 // ─── Styles ──────────────────────────────────────────────────────────────────
@@ -629,8 +633,61 @@ async function runMigration(userId, localData) {
       }
     });
 
+    // 13. Quiz data
+    const quizData = localData.quizData || {};
+
+    await step('quizData', async () => {
+      for (const [subjectId, qd] of Object.entries(quizData)) {
+        const newSubjectId = subjectIdMap[subjectId] ?? subjectId;
+        if (!newSubjectId) continue;
+        const { error } = await DB.quiz.upsert(userId, newSubjectId, { data: JSON.stringify(qd) });
+        if (error) throw error;
+      }
+    });
+
+    // 14. Exercises (stored per chapter in chapters table)
+    const exercises = localData.exercises || {};
+
+    await step('exercises', async () => {
+      for (const [key, exData] of Object.entries(exercises)) {
+        if (!exData || exData.length === 0) continue;
+        // key format: "subjectId_chapterId"
+        const parts = key.split('_');
+        const localSubId = parts[0];
+        const localChId = parts.slice(1).join('_');
+        const newChapterId = chapterIdMap[localChId];
+        if (!newChapterId) continue;
+        const { error } = await supabase
+          .from('chapters')
+          .update({ exercises: JSON.stringify(exData) })
+          .eq('id', newChapterId);
+        if (error) throw error;
+      }
+    });
+
+    // 15. Extended profile fields
+    await step('profile', async () => {
+      const p = localData.profile || {};
+      await DB.profile.update(userId, {
+        xp:                      p.xp ?? 0,
+        level:                   p.level ?? 1,
+        streak:                  p.streak ?? 0,
+        last_study_date:         p.lastStudyDate || null,
+        max_daily_minutes:       p.maxDailyMinutes ?? 0,
+        mood:                    p.mood || null,
+        mood_history:            JSON.stringify(p.moodHistory || []),
+        pomodoro_completed:      p.pomodoroCompleted || 0,
+        streak_freezes:          localData.streakFreezes ?? 1,
+        last_freeze_used_date:   localData.lastFreezeUsedDate || null,
+        last_freeze_earned_date: localData.lastFreezeEarnedDate || null,
+        pending_freeze_notice:   localData.pendingFreezeNotice || false,
+        pomodoro_settings:       JSON.stringify(localData.pomodoroSettings || {}),
+      });
+    });
+
     // ── Success ──
     localStorage.removeItem(LS_KEY);
+    localStorage.removeItem('studyos_ui');
     localStorage.setItem('studyos_migration_done', userId);
     showMessage('success', '✓ All data imported successfully! Taking you to your dashboard…');
     setTimeout(() => {
@@ -650,8 +707,8 @@ async function runMigration(userId, localData) {
 // ─── Entry Point ──────────────────────────────────────────────────────────────
 
 export async function initMigration() {
-  // 1. Check for local data
-  const raw = localStorage.getItem(LS_KEY);
+  // 1. Check for local data (try legacy key first, fall back to exported JSON)
+  const raw = localStorage.getItem(LS_KEY) || localStorage.getItem('studyos_ui');
   if (!raw) return;
 
   let localData;
