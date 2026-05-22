@@ -723,7 +723,11 @@ export async function initMigration() {
   if (!userId) return; // Not authenticated — nothing to migrate yet
 
   // 3. Check migration_done flag — localStorage first (instant, no Supabase dependency)
-  if (localStorage.getItem('studyos_migration_done') === userId) return;
+  if (localStorage.getItem('studyos_migration_done') === userId) {
+    // Always clean up the legacy key so migration never re-triggers
+    localStorage.removeItem(LS_KEY);
+    return;
+  }
 
   // Also check Supabase profile flag (may fail if schema cache is stale — that's OK)
   try {
@@ -731,6 +735,7 @@ export async function initMigration() {
     if (profile?.migration_done) {
       localStorage.setItem('studyos_migration_done', userId);
       localStorage.removeItem(LS_KEY);
+      localStorage.removeItem('studyos_ui_legacy'); // clean any stale keys
       return;
     }
   } catch { /* Supabase schema cache error — fall through and show modal */ }

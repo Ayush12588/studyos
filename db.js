@@ -380,7 +380,10 @@ export const DB = {
     async add(userId, badgeId) {
       return run(
         supabase.from('user_badges')
-          .insert({ user_id: userId, badge_id: badgeId, earned_at: new Date().toISOString() })
+          .upsert(
+            { user_id: userId, badge_id: badgeId, earned_at: new Date().toISOString() },
+            { onConflict: 'user_id,badge_id', ignoreDuplicates: true }
+          )
           .select()
           .single()
       );
