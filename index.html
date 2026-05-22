@@ -5242,9 +5242,13 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
             ];
 
             // Call our own Vercel serverless function — key is stored server-side
+            const { data: { session: authSession } } = await window.supabase.auth.getSession();
             const res=await fetch('/api/chat',{
                 method:'POST',
-                headers:{'Content-Type':'application/json'},
+                headers:{
+                    'Content-Type':'application/json',
+                    'Authorization': `Bearer ${authSession?.access_token || ''}`
+                },
                 body:JSON.stringify({messages})
             });
             const data=await res.json();
