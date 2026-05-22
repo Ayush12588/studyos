@@ -1,25 +1,23 @@
-const CACHE_NAME = 'studyos-v1';
+const CACHE_NAME = 'studyos-v2'; // bumped to purge old cache immediately
 
-const APP_SHELL = [
-  '/',
-  '/manifest.json',
+const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
   'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
 ];
 
-// ── Install: cache app shell ──────────────────────────────────────────
+// App files — always fetched from network, never served stale from cache
+const NETWORK_FIRST = ['/', '/index.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
+
+// ── Install: cache only external assets ──────────────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache => {
-      // Cache each entry individually so one failure doesn't block the rest
-      return Promise.allSettled(
-        APP_SHELL.map(url =>
-          cache.add(url).catch(err =>
-            console.warn('[SW] Failed to cache:', url, err)
-          )
+    caches.open(CACHE_NAME).then(cache =>
+      Promise.allSettled(
+        EXTERNAL_ASSETS.map(url =>
+          cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
         )
-      );
-    }).then(() => self.skipWaiting())
+      )
+    ).then(() => self.skipWaiting())
   );
 });
 
@@ -30,52 +28,60 @@ self.addEventListener('activate', event => {
       Promise.all(
         keys
           .filter(key => key !== CACHE_NAME)
-          .map(key => {
-            console.log('[SW] Deleting old cache:', key);
-            return caches.delete(key);
-          })
+          .map(key => { console.log('[SW] Deleting old cache:', key); return caches.delete(key); })
       )
     ).then(() => self.clients.claim())
   );
 });
 
-// ── Fetch: cache-first for app shell, network-only for /api/* ─────────
+// ── Fetch ─────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Network-only: API routes, non-GET requests
-  if (url.pathname.startsWith('/api/') || event.request.method !== 'GET') {
+  // Network-only: API routes, Supabase, non-GET requests
+  if (
+    url.pathname.startsWith('/api/') ||
+    url.hostname.includes('supabase.co') ||
+    event.request.method !== 'GET'
+  ) {
     event.respondWith(fetch(event.request));
     return;
   }
 
-  // Cache-first for everything else
+  // Network-first: own app files — always get fresh code
+  const isAppFile = NETWORK_FIRST.some(p => url.pathname === p || url.pathname.endsWith(p));
+  if (url.hostname === self.location.hostname || isAppFile) {
+    event.respondWith(
+      fetch(event.request)
+        .then(response => {
+          // Update cache with fresh version
+          if (response && response.status === 200) {
+            const clone = response.clone();
+            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
+          }
+          return response;
+        })
+        .catch(() => {
+          // Offline fallback: serve cached version if available
+          return caches.match(event.request).then(cached => {
+            if (cached) return cached;
+            if (event.request.mode === 'navigate') return caches.match('/');
+          });
+        })
+    );
+    return;
+  }
+
+  // Cache-first: external fonts and libraries (these never change)
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
-
-      // Not in cache — fetch from network and cache for next time
       return fetch(event.request).then(response => {
-        // Only cache valid, non-opaque same-origin or whitelisted cross-origin responses
-        if (
-          !response ||
-          response.status !== 200 ||
-          (response.type === 'opaque')
-        ) {
-          return response;
+        if (response && response.status === 200 && response.type !== 'opaque') {
+          const clone = response.clone();
+          caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
-
-        const responseClone = response.clone();
-        caches.open(CACHE_NAME).then(cache => {
-          cache.put(event.request, responseClone);
-        });
-
         return response;
-      }).catch(() => {
-        // Offline fallback: serve root index.html for navigation requests
-        if (event.request.mode === 'navigate') {
-          return caches.match('/');
-        }
       });
     })
   );
