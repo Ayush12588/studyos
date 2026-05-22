@@ -4702,7 +4702,7 @@ const App={
         const _nd={id:this.uid(),text,subjectId:sId,chapter,priority,status:'unresolved',createdAt:Date.now(),resolvedDate:null};
         this.state.doubts.push(_nd);
         const _duUid=window._supabaseUserId;
-        if(_duUid){DB.doubts.create({user_id:_duUid,subject_id:sId||null,question:text,status:'unresolved'}).then(({data,error})=>{if(error){console.error('[DB] doubts.create:',error);return;}if(data&&data.id)_nd.id=data.id;});}
+        if(_duUid){DB.doubts.create({user_id:_duUid,subject_id:sId||null,text,status:'unresolved'}).then(({data,error})=>{if(error){console.error('[DB] doubts.create:',error);return;}if(data&&data.id)_nd.id=data.id;});}
         this.save();this.closeModal('modal-doubt');this.render();this.toast('❓ Doubt added','success');
     },
     updateDoubtStatus(id,status){
