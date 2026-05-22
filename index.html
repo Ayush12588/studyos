@@ -3153,13 +3153,13 @@ const App={
     async init(){
         // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
         await new Promise((resolve) => {
-            const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
+            const { data: { subscription } } = window.supabase.auth.onAuthStateChange((event, session) => {
                 subscription.unsubscribe();
                 resolve(session);
             });
         });
 
-        const { data: { session } } = await supabase.auth.getSession();
+        const { data: { session } } = await window.supabase.auth.getSession();
         if (!session) {
             window.location.href = '/auth.html';
             return;
@@ -6005,10 +6005,18 @@ Return ONLY a JSON array, no markdown, no extra text. Format:
     // ── END QUIZ FEATURE ──
 };
 
+// Wait for db.js module to populate window.DB and window.supabase before booting
+function _waitForDB(cb, attempts) {
+    attempts = attempts || 0;
+    if (window.DB && window.supabase) { cb(); return; }
+    if (attempts > 100) { console.error('[StudyOS] db.js module never loaded — check db.js path/network'); return; }
+    setTimeout(function(){ _waitForDB(cb, attempts + 1); }, 50);
+}
+
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => App.init());
+    document.addEventListener('DOMContentLoaded', function(){ _waitForDB(function(){ App.init(); }); });
 } else {
-    App.init();
+    _waitForDB(function(){ App.init(); });
 }
 
 // Close modals on overlay click
