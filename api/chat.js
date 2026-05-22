@@ -9,9 +9,15 @@ const ALLOWED_ORIGINS = ['https://studyos-edu.vercel.app', 'http://localhost:300
 
 async function verifyToken(authHeader) {
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+    console.log('[auth] header present:', !!authHeader);
+    console.log('[auth] token extracted:', !!token);
     if (!token) return null;
 
     const { data, error } = await supabaseAdmin.auth.getUser(token);
+    console.log('[auth] supabase error:', error?.message ?? 'none');
+    console.log('[auth] user found:', !!data?.user);
+    console.log('[auth] SUPABASE_URL set:', !!process.env.SUPABASE_URL);
+    console.log('[auth] SERVICE_KEY set:', !!process.env.SUPABASE_SERVICE_ROLE_KEY);
     if (error || !data?.user) return null;
 
     return data.user;
@@ -32,11 +38,8 @@ export default async function handler(req, res) {
         return res.status(401).json({ error: 'Unauthorized' });
     }
 
-    const user_id = user.id; // available for logging
-
     try {
         const { messages } = req.body;
-
         if (!messages || !Array.isArray(messages)) {
             return res.status(400).json({ error: 'Invalid request body' });
         }
@@ -56,15 +59,9 @@ export default async function handler(req, res) {
         });
 
         const data = await groqRes.json();
-
-        if (data.error) {
-            return res.status(500).json({ error: data.error.message });
-        }
+        if (data.error) return res.status(500).json({ error: data.error.message });
 
         const reply = data.choices?.[0]?.message?.content || 'Sorry, I could not respond.';
-
-        console.log(`[chat] user_id=${user_id} tokens_used=${data.usage?.total_tokens ?? 'n/a'}`);
-
         return res.status(200).json({ reply });
 
     } catch (err) {
