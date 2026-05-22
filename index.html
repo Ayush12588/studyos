@@ -3421,7 +3421,7 @@ const App={
                 if(p.profile){
                     const LOCAL_PROFILE_KEYS=['xp','level','streak','lastStudyDate','maxDailyMinutes',
                         'mood','moodHistory','pomodoroCompleted',
-                        'name','examDate','dailyGoalMinutes'];
+                        'name','examDate','dailyGoalMinutes','targetScore'];
                     LOCAL_PROFILE_KEYS.forEach(k=>{ if(p.profile[k]!==undefined) this.state.profile[k]=p.profile[k]; });
                 }
             }
@@ -3463,6 +3463,7 @@ const App={
                     name:               this.state.profile.name,
                     examDate:           this.state.profile.examDate,
                     dailyGoalMinutes:   this.state.profile.dailyGoalMinutes,
+                    targetScore:        this.state.profile.targetScore,
                 },
             };
             localStorage.setItem('studyos_data', JSON.stringify(payload));
