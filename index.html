@@ -3323,9 +3323,11 @@ const App={
                     timeSpent:  s.time_spent  ?? s.timeSpent  ?? 0,
                     subjectId:  s.subject_id  ?? s.subjectId  ?? '',
                     chapterId:  s.chapter_id  ?? s.chapterId  ?? '',
+                    createdAt:  s.created_at  ?? s.createdAt  ?? Date.now(),
                     time_spent:  undefined,
                     subject_id:  undefined,
                     chapter_id:  undefined,
+                    created_at:  undefined,
                 }));
             }
         } catch(e){ warn('sessions', e); }
@@ -3343,10 +3345,14 @@ const App={
             if (error) throw error;
             if (doubts) this.state.doubts = doubts.map(d => ({
                 ...d,
-                text:      d.question  ?? d.text,
-                subjectId: d.subject_id ?? d.subjectId,
-                question:   undefined,
-                subject_id: undefined,
+                text:         d.question    ?? d.text,
+                subjectId:    d.subject_id  ?? d.subjectId,
+                createdAt:    d.created_at  ?? d.createdAt  ?? Date.now(),
+                resolvedDate: d.resolved_date ?? d.resolvedDate ?? null,
+                question:      undefined,
+                subject_id:    undefined,
+                created_at:    undefined,
+                resolved_date: undefined,
             }));
         } catch(e){ warn('doubts', e); }
 
@@ -3357,8 +3363,10 @@ const App={
             if (examScores) {
                 this.state.examScores = examScores.map(s => ({
                     ...s,
-                    subjectId: s.subject_id ?? s.subjectId,
-                    subject_id: undefined,
+                    subjectId:  s.subject_id ?? s.subjectId,
+                    createdAt:  s.created_at ?? s.createdAt ?? Date.now(),
+                    subject_id:  undefined,
+                    created_at:  undefined,
                 }));
             }
         } catch(e){ warn('examScores', e); }
@@ -3369,8 +3377,12 @@ const App={
             if (error) throw error;
             if (notes) this.state.notes = notes.map(n => ({
                 ...n,
-                subjectId:  n.subject_id ?? n.subjectId,
-                subject_id: undefined,
+                subjectId:  n.subject_id  ?? n.subjectId,
+                createdAt:  n.created_at  ?? n.createdAt  ?? Date.now(),
+                updatedAt:  n.updated_at  ?? n.updatedAt  ?? Date.now(),
+                subject_id:  undefined,
+                created_at:  undefined,
+                updated_at:  undefined,
             }));
         } catch(e){ warn('notes', e); }
 
@@ -3381,7 +3393,9 @@ const App={
             if (resources) this.state.resources = resources.map(r => ({
                 ...r,
                 subjectId:  r.subject_id ?? r.subjectId,
-                subject_id: undefined,
+                createdAt:  r.created_at ?? r.createdAt ?? Date.now(),
+                subject_id:  undefined,
+                created_at:  undefined,
             }));
         } catch(e){ warn('resources', e); }
     },
@@ -3771,7 +3785,12 @@ const App={
             revisionsToday:this.state.sessions.filter(s=>s.date===this.today()&&s.type==='revision').length,
             tasks:this.state.tasks,examScores:this.state.examScores,
             doubtsResolvedToday:this.state.doubts.filter(d=>d.resolvedDate===this.today()).length,
-            notesAddedToday:(this.state.notes||[]).filter(n=>{const d=new Date(n.createdAt);return d.toISOString().split('T')[0]===this.today()}).length
+            notesAddedToday:(this.state.notes||[]).filter(n=>{
+                const raw=n.createdAt||n.created_at;
+                if(!raw)return false;
+                const d=new Date(raw);
+                return !isNaN(d.getTime())&&d.toISOString().split('T')[0]===this.today()
+            }).length
         };
         dc.challenges.forEach(ch=>{
             if(dc.completed.includes(ch.id))return;
@@ -3904,7 +3923,7 @@ const App={
         }
     },
     renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz()};if(r[p])r[p]()},
-    render(){this.renderPage(this.state.currentPage);this.updateNavBadges();this.checkDailyChallenges()},
+    render(){this.renderPage(this.state.currentPage);this.updateNavBadges();try{this.checkDailyChallenges();}catch(e){console.error('[StudyOS] checkDailyChallenges crashed:',e);}},
 
     getGreeting(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'},
     getMotivation(){const m=["Every chapter brings you closer to success! 💪","Small daily progress = big results! 🚀","Consistency beats intensity! 🔥","Your future self will thank you! 📚","One chapter at a time! ✨","Believe in yourself! 🌟","Hard work pays off! 🏆","Stay focused, stay winning! 🎯"];return m[Math.floor(Math.random()*m.length)]},
