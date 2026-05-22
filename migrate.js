@@ -577,16 +577,17 @@ async function runMigration(userId, localData) {
     });
 
     // 10. Challenges
-    // c.date must match the IST calendar date the challenge was set for.
-    const challenges = localData.challenges || [];
+    // localData.dailyChallenges is a single object {date, challenges:[], completed:[]}
+    // not an array — normalise to array before iterating.
+    const challengesRaw = localData.challenges || localData.dailyChallenges || [];
+    const challenges = Array.isArray(challengesRaw)
+      ? challengesRaw
+      : (challengesRaw.date ? [challengesRaw] : Object.entries(challengesRaw).map(([date, val]) => ({ ...val, date })));
 
     await step('challenges', async () => {
       for (const c of challenges) {
-        // If the stored date looks like it was derived from UTC (common pattern),
-        // trust it as-is — challenges are day-level records and typically set
-        // at the start of day, so UTC vs IST date drift is rare here. However
-        // if c.created_at exists we can verify and correct.
         const istDate = c.created_at ? (toISTDateString(toUTCISOString(c.created_at)) ?? c.date) : c.date;
+        if (!istDate) continue;
         const { error } = await DB.challenges.upsert(userId, istDate, {
           goal: c.goal,
           completed: c.completed,
@@ -597,11 +598,16 @@ async function runMigration(userId, localData) {
     });
 
     // 11. Check-ins
-    const checkins = localData.checkins || [];
+    const checkinsRaw = localData.checkins || {};
+    // checkins is stored as an object keyed by date {"YYYY-MM-DD": {...}}, not an array
+    const checkins = Array.isArray(checkinsRaw)
+      ? checkinsRaw
+      : Object.entries(checkinsRaw).map(([date, val]) => ({ ...val, date }));
 
     await step('checkins', async () => {
       for (const c of checkins) {
         const istDate = c.created_at ? (toISTDateString(toUTCISOString(c.created_at)) ?? c.date) : c.date;
+        if (!istDate) continue;
         const { error } = await DB.checkins.upsert(userId, istDate, {
           mood: c.mood,
           note: c.note,
