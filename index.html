@@ -3263,15 +3263,12 @@ const App={
             const { data: profile, error } = await DB.profile.get(userId);
             if (error) throw error;
             if (profile) {
-                // Merge: Supabase wins on its own fields; local defaults fill the rest
                 this.state.profile = {
-                    ...this.state.profile,                          // local defaults (xp, level, streak, mood, etc.)
-                    name:             profile.name          ?? this.state.profile.name,
-                    examDate:         profile.exam_date     ?? this.state.profile.examDate,
+                    ...this.state.profile,
+                    name:             (profile.name          && profile.name.trim())          ? profile.name          : this.state.profile.name,
+                    examDate:         (profile.exam_date     && profile.exam_date.trim())     ? profile.exam_date     : this.state.profile.examDate,
                     dailyGoalMinutes: profile.daily_goal_minutes ?? this.state.profile.dailyGoalMinutes,
-                    targetScore:      profile.target_score  ?? this.state.profile.targetScore,
-                    // Preserve any extra columns that already exist on the profile object
-                    // (xp, level, streak come from local state — Supabase is not the source of truth for those yet)
+                    targetScore:      profile.target_score   ?? this.state.profile.targetScore,
                 };
             }
         } catch(e){ warn('profile', e); }
@@ -3423,7 +3420,8 @@ const App={
                 // Restore local-only profile fields (xp, level, streak, mood, moodHistory, etc.)
                 if(p.profile){
                     const LOCAL_PROFILE_KEYS=['xp','level','streak','lastStudyDate','maxDailyMinutes',
-                        'mood','moodHistory','pomodoroCompleted'];
+                        'mood','moodHistory','pomodoroCompleted',
+                        'name','examDate','dailyGoalMinutes'];
                     LOCAL_PROFILE_KEYS.forEach(k=>{ if(p.profile[k]!==undefined) this.state.profile[k]=p.profile[k]; });
                 }
             }
@@ -3462,6 +3460,9 @@ const App={
                     mood:               this.state.profile.mood,
                     moodHistory:        this.state.profile.moodHistory,
                     pomodoroCompleted:  this.state.profile.pomodoroCompleted,
+                    name:               this.state.profile.name,
+                    examDate:           this.state.profile.examDate,
+                    dailyGoalMinutes:   this.state.profile.dailyGoalMinutes,
                 },
             };
             localStorage.setItem('studyos_data', JSON.stringify(payload));
@@ -3864,6 +3865,12 @@ const App={
         const ed=document.getElementById('welcome-exam-date').value;
         if(ed) this.state.profile.examDate=ed;
         this.save();
+        // Sync name + examDate + dailyGoalMinutes to Supabase profile row
+        this._syncProfileField({
+            name: this.state.profile.name,
+            exam_date: this.state.profile.examDate||null,
+            daily_goal_minutes: this.state.profile.dailyGoalMinutes,
+        });
         document.getElementById('welcome-overlay').classList.add('hidden');
         this.render();
         this.updateSidebar();
