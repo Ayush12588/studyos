@@ -529,11 +529,11 @@ async function runMigration(userId, localData) {
         const newSubjectId = subjectIdMap[e.subject_id] ?? e.subject_id;
         const payload = {
           user_id: userId,
-          subject_id: newSubjectId,
-          exam_date: e.exam_date,
-          score: e.score,
-          max_score: e.max_score,
-          title: e.title,
+          subject_id: newSubjectId || null,
+          name: e.name || e.title || 'Exam',
+          scored: e.scored ?? e.score ?? 0,
+          total: e.total ?? e.max_score ?? 100,
+          date: e.date || e.exam_date || new Date().toISOString().split('T')[0],
         };
         const { error } = await DB.examScores.create(payload);
         if (error) throw error;
