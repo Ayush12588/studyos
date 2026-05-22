@@ -3289,13 +3289,21 @@ const App={
                         if (!chErr && chData) {
                             chapters = chData.map(ch => ({
                                 ...ch,
-                                subjectId:     ch.subject_id,
-                                revisionCount: ch.revision_count ?? 0,
-                                order:         ch.order_index   ?? 0,
+                                subjectId:      ch.subject_id,
+                                revisionCount:  ch.revision_count ?? 0,
+                                revisionDates:  ch.revision_dates ?? [],
+                                order:          ch.order_index    ?? 0,
+                                status:         ch.status         ?? 'not-started',
+                                difficulty:     ch.difficulty      ?? 'medium',
+                                notes:          ch.notes           ?? '',
+                                deadline:       ch.deadline        ?? '',
+                                completionDate: ch.completion_date ?? null,
                                 // remove raw snake_case duplicates
-                                subject_id:    undefined,
-                                revision_count:undefined,
-                                order_index:   undefined,
+                                subject_id:      undefined,
+                                revision_count:  undefined,
+                                order_index:     undefined,
+                                revision_dates:  undefined,
+                                completion_date: undefined,
                             }));
                         }
                     } catch(chE){ warn(`chapters for subject ${sub.id}`, chE); }
@@ -3312,9 +3320,12 @@ const App={
             if (sessions) {
                 this.state.sessions = sessions.map(s => ({
                     ...s,
-                    timeSpent: s.time_spent ?? s.timeSpent ?? 0,
-                    // 'date' column stays as-is (date string)
-                    time_spent: undefined,
+                    timeSpent:  s.time_spent  ?? s.timeSpent  ?? 0,
+                    subjectId:  s.subject_id  ?? s.subjectId  ?? '',
+                    chapterId:  s.chapter_id  ?? s.chapterId  ?? '',
+                    time_spent:  undefined,
+                    subject_id:  undefined,
+                    chapter_id:  undefined,
                 }));
             }
         } catch(e){ warn('sessions', e); }
@@ -3330,7 +3341,13 @@ const App={
         try {
             const { data: doubts, error } = await DB.doubts.getAll(userId);
             if (error) throw error;
-            if (doubts) this.state.doubts = doubts;
+            if (doubts) this.state.doubts = doubts.map(d => ({
+                ...d,
+                text:      d.question  ?? d.text,
+                subjectId: d.subject_id ?? d.subjectId,
+                question:   undefined,
+                subject_id: undefined,
+            }));
         } catch(e){ warn('doubts', e); }
 
         // ── f. Exam scores ────────────────────────────────────────────────────
@@ -3340,11 +3357,7 @@ const App={
             if (examScores) {
                 this.state.examScores = examScores.map(s => ({
                     ...s,
-                    examName:  s.exam_name  ?? s.examName,
-                    examDate:  s.exam_date  ?? s.examDate,
                     subjectId: s.subject_id ?? s.subjectId,
-                    exam_name:  undefined,
-                    date:  undefined,
                     subject_id: undefined,
                 }));
             }
@@ -3354,14 +3367,22 @@ const App={
         try {
             const { data: notes, error } = await DB.notes.getAll(userId);
             if (error) throw error;
-            if (notes) this.state.notes = notes;
+            if (notes) this.state.notes = notes.map(n => ({
+                ...n,
+                subjectId:  n.subject_id ?? n.subjectId,
+                subject_id: undefined,
+            }));
         } catch(e){ warn('notes', e); }
 
         // ── h. Resources ─────────────────────────────────────────────────────
         try {
             const { data: resources, error } = await DB.resources.getAll(userId);
             if (error) throw error;
-            if (resources) this.state.resources = resources;
+            if (resources) this.state.resources = resources.map(r => ({
+                ...r,
+                subjectId:  r.subject_id ?? r.subjectId,
+                subject_id: undefined,
+            }));
         } catch(e){ warn('resources', e); }
     },
 
@@ -4331,12 +4352,13 @@ const App={
                 setTimeout(()=>{this.celebrate();this.toast(`🏆 ${sub.icon} ${sub.name} complete! Amazing!`,'success')},800);
             }
         }
-        if(ch.id){DB.chapters.update(ch.id,{status:ch.status}).then(({error})=>{if(error)console.error('[DB] chapters.update status:',error);});}
+        const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status}).then(({error})=>{if(error)console.error('[DB] chapters.update status:',error);});}
         this.save();this.render();
     },
-    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();if(ch.id){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
-    deleteChapter(sId,cId){if(!confirm('Delete chapter?'))return;const s=this.getSubjectById(sId);s.chapters=s.chapters.filter(c=>c.id!==cId);this.save();this.render()},
-    deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);this.save();this.render()},
+    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
+    deleteChapter(sId,cId){if(!confirm('Delete chapter?'))return;const s=this.getSubjectById(sId);const _dc=s.chapters.find(c=>c.id===cId);s.chapters=s.chapters.filter(c=>c.id!==cId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_dc&&_isUUID(_dc.id)){DB.chapters.delete(_dc.id).then(({error})=>{if(error)console.error('[DB] chapters.delete:',error);});}this.save();this.render()},
+    deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;const _ds=this.state.subjects.find(s=>s.id===sId);this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_ds&&_isUUID(_ds.id)){DB.subjects.delete(_ds.id).then(({error})=>{if(error)console.error('[DB] subjects.delete:',error);});}this.save();this.render()},
 
     openChapterDetail(sId,cId){
         const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
@@ -4348,7 +4370,7 @@ const App={
         document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">⚡ Log Study</button>`;
         this.openModal('modal-detail');
     },
-    updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}if(ch.id){const _dbField={status:'status',difficulty:'difficulty',deadline:'deadline',notes:'notes'}[f];if(_dbField){DB.chapters.update(ch.id,{[_dbField]:v}).then(({error})=>{if(error)console.error('[DB] updateChapterField:',error);});}}this.save();this.render()},
+    updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){const _dbField={status:'status',difficulty:'difficulty',deadline:'deadline',notes:'notes'}[f];if(_dbField){DB.chapters.update(ch.id,{[_dbField]:v}).then(({error})=>{if(error)console.error('[DB] updateChapterField:',error);});}}this.save();this.render()},
 
     // EXERCISES
     addExercise(sId,cId){
@@ -4520,7 +4542,7 @@ const App={
         else{Object.keys(gr).forEach(d=>{const dm=gr[d].reduce((a,s)=>a+s.timeSpent,0);h+=`<div style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><h3 style="font-size:.9rem;font-weight:600">${d===this.today()?'Today':d}</h3><span style="font-size:.78rem;color:var(--accent-light);font-weight:600">${this.formatMin(dm)}</span></div>${gr[d].map(s=>{const sub=this.getSubjectById(s.subjectId);const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confEmoji=s.confidence?confMap[s.confidence]:'';return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?sub.icon:'📖'}</div><div class="plan-info"><h4>${sub?sub.name:'?'} ${s.chapterName?'— '+s.chapterName:''}</h4><p>${s.type}${s.intention?' · '+s.intention:''} ${'⭐'.repeat(s.rating||0)}</p></div><div style="text-align:right"><div class="plan-time">${this.formatMin(s.timeSpent)} ${confEmoji}</div><button class="ch-btn" style="margin-top:4px" onclick="App.deleteSession('${s.id}')">🗑</button></div></div>`}).join('')}</div>`})}
         el.innerHTML=h;
     },
-    deleteSession(id){if(!confirm('Delete?'))return;this.state.sessions=this.state.sessions.filter(s=>s.id!==id);this.save();this.render()},
+    deleteSession(id){if(!confirm('Delete?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.sessions.delete(id).then(({error})=>{if(error)console.error('[DB] sessions.delete:',error);});}this.state.sessions=this.state.sessions.filter(s=>s.id!==id);this.save();this.render()},
 
     // TASKS
     renderTasks(){
@@ -4541,8 +4563,8 @@ const App={
         h+='</div>';el.innerHTML=h;
     },
     addTask(){const inp=document.getElementById('new-task');const text=inp.value.trim();if(!text)return;const _t={id:this.uid(),text,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_t);const _tUid=window._supabaseUserId;if(_tUid){DB.tasks.create({user_id:_tUid,text,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] tasks.create:',error);return;}if(data&&data.id)_t.id=data.id;});}this.save();inp.value='';this.renderTasks();this.toast('Task added','success')},
-    toggleTask(id){const t=this.state.tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;if(t.done)this.addXP(5,'Task completed');const _tuUid=window._supabaseUserId;if(_tuUid&&t.id){DB.tasks.update(t.id,{done:t.done}).then(({error})=>{if(error)console.error('[DB] tasks.update:',error);});}this.save();this.renderTasks();this.checkDailyChallenges()},
-    deleteTask(id){this.state.tasks=this.state.tasks.filter(t=>t.id!==id);this.save();this.renderTasks()},
+    toggleTask(id){const t=this.state.tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;if(t.done)this.addXP(5,'Task completed');const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);const _tuUid=window._supabaseUserId;if(_tuUid&&_isUUID(t.id)){DB.tasks.update(t.id,{done:t.done}).then(({error})=>{if(error)console.error('[DB] tasks.update:',error);});}this.save();this.renderTasks();this.checkDailyChallenges()},
+    deleteTask(id){const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.tasks.delete(id).then(({error})=>{if(error)console.error('[DB] tasks.delete:',error);});}this.state.tasks=this.state.tasks.filter(t=>t.id!==id);this.save();this.renderTasks()},
     autoGenerateTasks(){const tasks=[];const od=this.getOverdueChapters();od.slice(0,2).forEach(c=>tasks.push(`📌 Complete: ${c.subjectIcon} ${c.name}`));const rd=this.getRevisionsDue();rd.slice(0,2).forEach(c=>tasks.push(`🔄 Revise: ${c.subjectIcon} ${c.name}`));const pending=this.getAllChapters().filter(c=>c.status==='in-progress');pending.slice(0,2).forEach(c=>tasks.push(`📖 Continue: ${c.subjectIcon} ${c.name}`));if(tasks.length===0)tasks.push('📚 Study for '+this.formatMin(this.state.profile.dailyGoalMinutes));const _agUid=window._supabaseUserId;tasks.forEach(t=>{if(!this.state.tasks.some(x=>x.text===t&&x.date===this.today())){const _at={id:this.uid(),text:t,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_at);if(_agUid){DB.tasks.create({user_id:_agUid,text:t,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] auto tasks.create:',error);return;}if(data&&data.id)_at.id=data.id;});}}});this.save();this.renderTasks();this.toast('Tasks auto-generated! 🤖','success')},
 
     // --- END OF PART 1 --- (continued in Part 2)
@@ -4597,13 +4619,13 @@ const App={
         const _ne={id:this.uid(),name,subjectId:sId,date,scored,total,createdAt:Date.now()};
         this.state.examScores.push(_ne);
         const _esUid=window._supabaseUserId;
-        if(_esUid){DB.examScores.create({user_id:_esUid,subject_id:sId||null,exam_name:name,scored,total,date}).then(({data,error})=>{if(error){console.error('[DB] examScores.create:',error);return;}if(data&&data.id)_ne.id=data.id;});}
+        if(_esUid){DB.examScores.create({user_id:_esUid,subject_id:sId||null,name,scored,total,date}).then(({data,error})=>{if(error){console.error('[DB] examScores.create:',error);return;}if(data&&data.id)_ne.id=data.id;});}
         this.save();this.closeModal('modal-exam');this.render();this.addXP(10,'Exam logged');
         const pct=Math.round(scored/total*100);
         this.toast(`📝 ${name}: ${scored}/${total} (${pct}%)`,'success');
         this.checkDailyChallenges();
     },
-    deleteExam(id){if(!confirm('Delete exam score?'))return;this.state.examScores=this.state.examScores.filter(e=>e.id!==id);this.save();this.render()},
+    deleteExam(id){if(!confirm('Delete exam score?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.examScores.delete(id).then(({error})=>{if(error)console.error('[DB] examScores.delete:',error);});}this.state.examScores=this.state.examScores.filter(e=>e.id!==id);this.save();this.render()},
 
     // REVISIONS
     renderRevisions(){
@@ -4661,12 +4683,13 @@ const App={
         const d=this.state.doubts.find(x=>x.id===id);if(!d)return;
         d.status=status;
         if(status==='understood'){d.resolvedDate=this.today();this.addXP(10,'Doubt cleared! 🧠')}
-        if(d.id){DB.doubts.update(d.id,{status}).then(({error})=>{if(error)console.error('[DB] doubts.update status:',error);});}
+        const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        if(_isUUID(d.id)){DB.doubts.update(d.id,{status}).then(({error})=>{if(error)console.error('[DB] doubts.update status:',error);});}
         this.save();this.render();
         this.toast(status==='understood'?'✅ Doubt cleared!':'🙋 Status updated','success');
         this.checkDailyChallenges();
     },
-    deleteDoubt(id){if(!confirm('Delete doubt?'))return;this.state.doubts=this.state.doubts.filter(d=>d.id!==id);this.save();this.render()},
+    deleteDoubt(id){if(!confirm('Delete doubt?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.doubts.delete(id).then(({error})=>{if(error)console.error('[DB] doubts.delete:',error);});}this.state.doubts=this.state.doubts.filter(d=>d.id!==id);this.save();this.render()},
 
     // RESOURCES
     renderResources(){
@@ -4703,7 +4726,7 @@ const App={
         if(_rUid){DB.resources.create({user_id:_rUid,title,url,type:_nr.type,subject_id:_nr.subjectId||null}).then(({data,error})=>{if(error){console.error('[DB] resources.create:',error);return;}if(data&&data.id)_nr.id=data.id;});}
         this.save();this.closeModal('modal-resource');this.render();this.toast('🔗 Resource saved!','success');this.checkBadges();
     },
-    deleteResource(id){if(!confirm('Delete resource?'))return;this.state.resources=this.state.resources.filter(r=>r.id!==id);this.save();this.render()},
+    deleteResource(id){if(!confirm('Delete resource?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.resources.delete(id).then(({error})=>{if(error)console.error('[DB] resources.delete:',error);});}this.state.resources=this.state.resources.filter(r=>r.id!==id);this.save();this.render()},
 
     // PLANNING
     // P2-2: Generate 3-week day-by-day sprint plan
@@ -5032,7 +5055,7 @@ const App={
         document.getElementById('lb-pdf').src='';
         document.body.style.overflow='';
     },
-    deleteNote(id){if(!confirm('Delete note?'))return;this.state.notes=this.state.notes.filter(n=>n.id!==id);this.save();this.renderNotes()},
+    deleteNote(id){if(!confirm('Delete note?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.notes.delete(id).then(({error})=>{if(error)console.error('[DB] notes.delete:',error);});}this.state.notes=this.state.notes.filter(n=>n.id!==id);this.save();this.renderNotes()},
     filterNotes(q){
         if(!q||q.length<2){if(this.state.currentPage==='notes')this.renderNotes();return}
         q=q.toLowerCase();
