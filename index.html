@@ -5856,16 +5856,18 @@ Return ONLY a JSON array, no markdown, no extra text. Format:
   }
 ]`;
 
-        const res=await fetch('/api/chat',{
-            method:'POST',
-            headers:{'Content-Type':'application/json'},
-            body:JSON.stringify({
-                messages: [
-                    { role: 'system', content: systemPrompt },
-                    { role: 'user', content: `Generate 15 CBSE Class 10 MCQs for ${subject.name} covering: ${chapterNames}` }
-                ]
-            })
-        });
+        const { data: { session: authSession } } = await window.supabase.auth.getSession();
+    const res=await fetch('/api/quiz',{
+        method:'POST',
+        headers:{
+            'Content-Type':'application/json',
+            'Authorization':`Bearer ${authSession?.access_token||''}`
+        },
+        body:JSON.stringify({
+            system: systemPrompt,
+            userMessage: `Generate 15 CBSE Class 10 MCQs for ${subject.name} covering: ${chapterNames}`
+        })
+    });
 
         if(!res.ok) throw new Error(`Server error: ${res.status}`);
         const data=await res.json();
@@ -6054,7 +6056,8 @@ Return ONLY a JSON array, no markdown, no extra text. Format:
                 {role:'system',content:'You are a warm, encouraging CBSE Class 10 study coach. Be very brief — 2 sentences max.'},
                 {role:'user',content:`Student just scored ${pct}% on a ${subjectName} quiz. Weak chapters: ${weakChapters.join(', ')}. Give one specific, actionable tip.`}
             ];
-            const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages})});
+            const { data: { session: authSession } } = await window.supabase.auth.getSession();
+            const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json','Authorization':`Bearer ${authSession?.access_token||''}`},body:JSON.stringify({messages})});
             const data=await res.json();
             if(data.reply&&this.state.currentPage==='quiz'){
                 const debriefEl=document.getElementById('quiz-ai-debrief');
