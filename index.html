@@ -261,31 +261,32 @@ a { color: inherit; text-decoration: none; }
     fill: var(--color-brand);
 }
 .logo-text {
-    font-size: 1rem;
+    font-size: 1.05rem;
     font-weight: 700;
-    color: var(--color-brand);
-    background: none !important;
-    -webkit-background-clip: unset !important;
-    -webkit-text-fill-color: currentColor !important;
     line-height: 1.2;
+    letter-spacing: -0.3px;
 }
 .logo-study {
-    font-weight: 500;
-    color: var(--color-brand);
+    font-weight: 400;
+    color: var(--color-text);
     letter-spacing: -0.2px;
 }
 .logo-os {
     font-weight: 800;
-    color: var(--color-brand);
+    background: linear-gradient(135deg, var(--color-brand) 0%, #a78bfa 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
     letter-spacing: -0.5px;
 }
 .logo-sub {
-    font-size: 0.6rem;
-    color: var(--text-muted);
+    font-size: 0.58rem;
+    color: var(--color-brand);
+    opacity: 0.55;
     text-transform: uppercase;
-    letter-spacing: 1.8px;
+    letter-spacing: 2px;
     margin-top: 2px;
-    font-weight: 500;
+    font-weight: 600;
 }
 
 /* Nav */
