@@ -2782,7 +2782,7 @@ body { overscroll-behavior-y: contain; }
 <div id="sidebar-backdrop" onclick="App.closeSidebar()"></div>
     <aside id="sidebar">
         <div class="logo">
-            <img src="/icons/icon-192.png" width="40" height="40" style="flex-shrink:0;border-radius:8px" alt="StudyOS">
+            <img src="/icons/icon-192.png" width="32" height="32" style="flex-shrink:0;border-radius:8px" alt="StudyOS">
             <div>
                 <div class="logo-text"><span class="logo-study">Study</span><span class="logo-os">OS</span></div>
                 <div class="logo-sub" id="sidebar-class-label">CBSE · Class 10</div>
@@ -3296,10 +3296,8 @@ const App={
         // ── Step 2: Load UI-only state from localStorage (theme, page, etc.) ──
         this.load();
 
-        const validPages = ['dashboard','subjects','log','tasks','revisions','exams','doubts','exercises','planning','weekly','pomodoro','notes','resources','coach','rewards','settings','quiz'];
-        if (!validPages.includes(this.state.currentPage)) {
-            this.state.currentPage = 'dashboard';
-        }
+        // Always start on dashboard on refresh
+        this.state.currentPage = 'dashboard';
 
         // ── Step 3: Ensure state field defaults (fields with no Supabase home) ──
         if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
@@ -3623,7 +3621,7 @@ const App={
                 // they will be overwritten by loadFromSupabase() immediately after.
                 // Restore safe UI keys
                 // Only restore pure UI state — everything else comes from Supabase
-                const UI_KEYS=['currentPage','selectedSubjectFilter','theme','autoTheme','stopwatch'];
+                const UI_KEYS=['selectedSubjectFilter','theme','autoTheme','stopwatch'];
                 UI_KEYS.forEach(k=>{ if(p[k]!==undefined) this.state[k]=p[k]; });
             }
         }catch(e){console.error('[StudyOS] load():', e)}
@@ -4214,7 +4212,15 @@ const App={
         }
     },
     renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz()};if(r[p])r[p]()},
-    render(){this.renderPage(this.state.currentPage);this.updateNavBadges();try{this.checkDailyChallenges();}catch(e){console.error('[StudyOS] checkDailyChallenges crashed:',e);}},
+    render(){
+        const page = this.state.currentPage;
+        document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+        const pe = document.getElementById('page-' + page);
+        if(pe) pe.classList.add('active');
+        this.renderPage(page);
+        this.updateNavBadges();
+        try{this.checkDailyChallenges();}catch(e){console.error('[StudyOS] checkDailyChallenges crashed:',e);}
+    },
 
     getGreeting(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'},
     getMotivation(){const m=["Every chapter brings you closer to success! 💪","Small daily progress = big results! 🚀","Consistency beats intensity! 🔥","Your future self will thank you! 📚","One chapter at a time! ✨","Believe in yourself! 🌟","Hard work pays off! 🏆","Stay focused, stay winning! 🎯"];return m[Math.floor(Math.random()*m.length)]},
