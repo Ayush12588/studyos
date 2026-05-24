@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <title>StudyOS — Class 10 </title>
+    <title>Bodhi</title>
     <link rel="manifest" href="/manifest.json">
     <link rel="icon" type="image/png" href="/icons/icon-192.png">
     <link rel="apple-touch-icon" href="/icons/icon-192.png">
@@ -2705,24 +2705,51 @@ body { overscroll-behavior-y: contain; }
             <input type="file" id="welcome-import-file" accept=".json" style="display:none" onchange="App.welcomeImport(event)">
             <p style="margin-top:12px;margin-bottom:0;font-size:.75rem;color:var(--color-text-secondary)">Already have a backup? Import it to restore all your data instantly.</p>
         </div>
-        <!-- Step 2: Name + syllabus -->
+        <!-- Step 2: Class selection -->
         <div class="welcome-step" data-step="2">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h1>What class are you in?</h1>
+            <p>We'll load the right CBSE syllabus for you.</p>
+            <div class="goal-tiles" style="grid-template-columns:repeat(2,1fr)">
+                <div class="goal-tile" onclick="App.selectWelcomeClass(9)"><span class="gt-hrs">IX</span>Class 9</div>
+                <div class="goal-tile" onclick="App.selectWelcomeClass(10)"><span class="gt-hrs">X</span>Class 10</div>
+                <div class="goal-tile" onclick="App.selectWelcomeClass(11)"><span class="gt-hrs">XI</span>Class 11</div>
+                <div class="goal-tile" onclick="App.selectWelcomeClass(12)"><span class="gt-hrs">XII</span>Class 12</div>
+            </div>
+        </div>
+        <!-- Step 3: Stream selection (Class 11 / 12 only) -->
+        <div class="welcome-step" data-step="3">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h1>Choose your stream</h1>
+            <p>Select the stream you're enrolled in.</p>
+            <div class="goal-tiles" style="grid-template-columns:repeat(1,1fr);max-width:280px;margin:0 auto">
+                <div class="goal-tile" onclick="App.selectWelcomeStream('PCM')"><span class="gt-hrs">⚛️</span>PCM — Science (Maths)</div>
+                <div class="goal-tile" onclick="App.selectWelcomeStream('PCB')"><span class="gt-hrs">🌿</span>PCB — Science (Biology)</div>
+                <div class="goal-tile" onclick="App.selectWelcomeStream('Commerce')"><span class="gt-hrs">📈</span>Commerce</div>
+            </div>
+        </div>
+        <!-- Step 4: Name + syllabus -->
+        <div class="welcome-step" data-step="4">
             <div class="welcome-step-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
             </div>
             <h1>Welcome to StudyOS</h1>
-            <p>Your Class 10 Command Center. Let's personalize your workspace.</p>
+            <p id="welcome-class-label">Your Command Center. Let's personalize your workspace.</p>
             <div class="form-group" style="text-align:left;max-width:300px;margin:0 auto 16px">
                 <label class="form-label">Your Name</label>
                 <input type="text" id="welcome-name" class="form-input" placeholder="Enter your name" autocomplete="off">
             </div>
             <div style="display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto 0">
-                <button class="btn btn-primary" onclick="App.loadCBSE()" style="justify-content:center">Load CBSE Class 10 Syllabus</button>
-                <button class="btn btn-secondary" onclick="App.welcomeNext(3)" style="justify-content:center">I'll add subjects manually</button>
+                <button class="btn btn-primary" id="welcome-load-btn" onclick="App.loadCBSEForClass()" style="justify-content:center">Load CBSE Class 10 Syllabus</button>
+                <button class="btn btn-secondary" onclick="App.welcomeNext(5)" style="justify-content:center">I'll add subjects manually</button>
             </div>
         </div>
-        <!-- Step 3: Daily goal as tiles -->
-        <div class="welcome-step" data-step="3">
+        <!-- Step 5: Daily goal as tiles -->
+        <div class="welcome-step" data-step="5">
             <div class="welcome-step-icon">
                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
             </div>
@@ -3294,6 +3321,8 @@ const App={
         if(!this.state.dailyChallenges)this.state.dailyChallenges={date:'',challenges:[],completed:[]};
         if(!this.state.weeklyPlan)this.state.weeklyPlan={};
         if(!this.state.checkins)this.state.checkins={};
+        if(!this.state.profile.selectedClass) this.state.profile.selectedClass = 10;
+        if(!this.state.profile.selectedStream) this.state.profile.selectedStream = null;
         if(!this.state.profile.mood)this.state.profile.mood='';
         if(!this.state.profile.moodHistory)this.state.profile.moodHistory=[];
         if(this.state.autoTheme===undefined)this.state.autoTheme=false;
@@ -3321,6 +3350,7 @@ const App={
         this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
         this._badgesLoaded=true; // flag: earnedBadges is now populated from Supabase
         this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();
+        this.updatePageTitle();
         this.checkBadges();
         setInterval(()=>{this.updatePageSubtitle();this.updateTopbarPills();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
         setTimeout(()=>{this.checkStreakReminder();this.checkEodCheckin()},5000);
@@ -3383,6 +3413,8 @@ const App={
                     examDate:         (profile.exam_date     && profile.exam_date.trim())     ? profile.exam_date     : this.state.profile.examDate,
                     dailyGoalMinutes: profile.daily_goal_minutes ?? this.state.profile.dailyGoalMinutes,
                     targetScore:      profile.target_score   ?? this.state.profile.targetScore,
+                    selectedClass:    profile.selected_class  ?? this.state.profile.selectedClass,
+                    selectedStream:   profile.selected_stream ?? this.state.profile.selectedStream,
                 };
             }
         } catch(e){ warn('profile', e); }
@@ -3646,6 +3678,8 @@ const App={
             last_freeze_earned_date: this.state.lastFreezeEarnedDate || null,
             pending_freeze_notice:   this.state.pendingFreezeNotice || false,
             pomodoro_settings:       JSON.stringify(this.state.pomodoroSettings || {}),
+            selected_class:          this.state.profile.selectedClass || 10,
+            selected_stream:         this.state.profile.selectedStream || null,
         }).then(({error})=>{ if(error) console.error('[DB] _syncFullProfile:', error); });
     },
 
@@ -4006,17 +4040,48 @@ const App={
 
     // WELCOME
     welcomeNext(step){
+        // Step 2: save exam date from step 1
         if(step===2){
             const eField=document.getElementById('welcome-exam-date');
             if(eField&&eField.value) this.state.profile.examDate=eField.value;
         }
-        if(step===3){
+        // Step 5 (old step 3): save name from step 4
+        if(step===5){
             const n=document.getElementById('welcome-name').value.trim();
             if(!n){this.toast('Enter your name','warning');return;}
             this.state.profile.name=n;
         }
         document.querySelectorAll('.welcome-step').forEach(s=>s.classList.remove('active'));
         document.querySelector(`.welcome-step[data-step="${step}"]`).classList.add('active');
+    },
+    selectWelcomeClass(cls){
+        this._welcomeClass = cls;
+        // Highlight selected tile
+        document.querySelectorAll('.welcome-step[data-step="2"] .goal-tile').forEach(t=>t.classList.remove('selected'));
+        event.currentTarget.classList.add('selected');
+        // Class 9/10: skip stream step, go straight to step 4
+        if(cls <= 10){
+            this._welcomeStream = null;
+            this._updateWelcomeStep4Label();
+            this.welcomeNext(4);
+        } else {
+            // Class 11/12: go to stream selection
+            this.welcomeNext(3);
+        }
+    },
+    selectWelcomeStream(stream){
+        this._welcomeStream = stream;
+        this._updateWelcomeStep4Label();
+        this.welcomeNext(4);
+    },
+    _updateWelcomeStep4Label(){
+        const cls = this._welcomeClass || 10;
+        const stream = this._welcomeStream || null;
+        const label = stream ? `Class ${cls} ${stream}` : `Class ${cls}`;
+        const p = document.getElementById('welcome-class-label');
+        if(p) p.textContent = `Your ${label} Command Center. Let's personalize your workspace.`;
+        const btn = document.getElementById('welcome-load-btn');
+        if(btn) btn.textContent = `Load CBSE ${label} Syllabus`;
     },
     loadCBSE(){
         const _lcUid=window._supabaseUserId;
@@ -4041,6 +4106,42 @@ const App={
             }
         });
         this.toast('CBSE syllabus loaded! 📚','success');this.welcomeNext(3);
+    },
+    loadCBSEForClass(){
+        const cls = this._welcomeClass || 10;
+        const stream = this._welcomeStream || null;
+        let data = this.CBSE_DATA[cls];
+        if(cls === 11 || cls === 12){
+            if(!stream){ this.toast('Please select a stream first','warning'); return; }
+            data = this.CBSE_DATA[cls][stream];
+        }
+        if(!data){ this.toast('Syllabus not found','error'); return; }
+        this.state.profile.selectedClass = cls;
+        this.state.profile.selectedStream = stream;
+        const _lcUid = window._supabaseUserId;
+        data.forEach(sub => {
+            const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
+            sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});
+            this.state.subjects.push(sj);
+            if(_lcUid){
+                DB.subjects.create(_lcUid,{name:sub.name,icon:sub.icon,color:sub.color}).then(({data:sd,error})=>{
+                    if(error){console.error('[DB] loadCBSEForClass subjects:',error);return;}
+                    if(sd&&sd.id){
+                        sj.id=sd.id;
+                        sj.chapters.forEach((ch,i)=>{
+                            DB.chapters.create({user_id:_lcUid,subject_id:sd.id,name:ch.name,status:'not-started',difficulty:'medium',revision_count:0,order_index:i}).then(({data:cd,error:ce})=>{
+                                if(ce){console.error('[DB] loadCBSEForClass chapters:',ce);return;}
+                                if(cd&&cd.id)ch.id=cd.id;
+                            });
+                        });
+                    }
+                });
+            }
+        });
+        this._syncFullProfile();
+        this.updatePageTitle();
+        this.toast('Class '+cls+' syllabus loaded! 📚','success');
+        this.welcomeNext(5);
     },
     completeWelcome(){
         const sel=document.getElementById('welcome-goal');
@@ -4549,7 +4650,7 @@ const App={
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
-        if(subs.length===0){h+=`<div class="empty-state"><span class="empty-state-icon">📚</span><div class="empty-state-title">No subjects yet</div><div class="empty-state-desc">Load your entire CBSE Class 10 syllabus in one tap, or add subjects manually.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App.loadCBSE()">✨ Load CBSE Syllabus</button><button class="btn btn-secondary" onclick="App.openModal('modal-subject')">+ Add Manually</button></div><div class="empty-state-hint">💡 CBSE loads all 5 subjects with chapters pre-filled</div></div>`}
+        if(subs.length===0){h+=`<div class="empty-state"><span class="empty-state-icon">📚</span><div class="empty-state-title">No subjects yet</div><div class="empty-state-desc">Load your entire CBSE Class ${this.state.profile.selectedClass||10} syllabus in one tap, or add subjects manually.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App._welcomeClass=App.state.profile.selectedClass||10;App._welcomeStream=App.state.profile.selectedStream||null;App.loadCBSEForClass()">✨ Load CBSE Class ${this.state.profile.selectedClass||10} Syllabus</button><button class="btn btn-secondary" onclick="App.openModal('modal-subject')">+ Add Manually</button></div><div class="empty-state-hint">💡 CBSE loads all 5 subjects with chapters pre-filled</div></div>`}
         else{flt.forEach(s=>{
             const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length,pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;
             const trophyIcon=pc>=100?'🥇':pc>=75?'🥈':pc>=50?'🥉':'';
@@ -5296,6 +5397,9 @@ const App={
 
     buildCoachContext(){
         const p=this.state.profile;
+        const cls = p.selectedClass || 10;
+        const stream = p.selectedStream;
+        const classLabel = stream ? `Class ${cls} ${stream}` : `Class ${cls}`;
         const tm=this.getTodayMinutes();
         const sp=this.getTotalChapters()>0?Math.round(this.getCompletedCount()/this.getTotalChapters()*100):0;
         const od=this.getOverdueChapters();
@@ -5313,10 +5417,11 @@ const App={
         const todayCheckin=this.state.checkins&&this.state.checkins[this.today()];
         const recentCheckins=Object.values(this.state.checkins||{}).slice(-3).map(c=>`${c.date}: understood="${c.understood}", unclear="${c.unclear}"`).join('; ');
 
-        return `You are a friendly, encouraging AI study coach for a Class 10 CBSE student. You know their real study data and give SHORT, specific, actionable advice. Be warm but concise — 2-4 sentences max unless asked for detail. Use emojis naturally. Never be generic.
+        return `You are a friendly, encouraging AI study coach for a CBSE ${classLabel} student. You know their real study data and give SHORT, specific, actionable advice. Be warm but concise — 2-4 sentences max unless asked for detail. Use emojis naturally. Never be generic.
 
 STUDENT PROFILE:
 - Name: ${p.name}
+- Class: ${classLabel}
 - Exam date: ${p.examDate||'not set'} (${dte!==null?dte+' days away':'date not set'})
 - Daily goal: ${this.formatMin(p.dailyGoalMinutes)} | Studied today: ${this.formatMin(tm)}
 - Study streak: ${p.streak} days
@@ -5551,10 +5656,24 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     },
 
     // SETTINGS
+    changeClass(cls){
+        this.state.profile.selectedClass = cls;
+        if(cls <= 10) this.state.profile.selectedStream = null;
+        this._syncFullProfile();
+        this.renderSettings();
+        this.updatePageTitle();
+    },
+    updatePageTitle(){
+        const cls = this.state.profile.selectedClass || 10;
+        const stream = this.state.profile.selectedStream;
+        let label = 'Class ' + cls;
+        if(stream) label += ' ' + stream;
+        document.title = 'Bodhi — ' + label;
+    },
     renderSettings(){
         const el=document.getElementById('page-settings'),p=this.state.profile,stats=this.getStats();
         const userEmail=window._supabaseSession?.user?.email||window._supabaseUserEmail||'';
-        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">👤 Profile</span></div>${userEmail?`<div class="form-group"><label class="form-label">Email</label><div class="form-input" style="background:var(--color-surface-hover);cursor:default;color:var(--text-muted);font-size:.82rem">${userEmail}</div></div>`:''}<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.updateSidebar();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App._syncFullProfile()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.updatePageSubtitle();App.updateTopbarPills();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||90}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App._syncFullProfile()"></div></div>
+        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">👤 Profile</span></div>${userEmail?`<div class="form-group"><label class="form-label">Email</label><div class="form-input" style="background:var(--color-surface-hover);cursor:default;color:var(--text-muted);font-size:.82rem">${userEmail}</div></div>`:''}<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.updateSidebar();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Class</label><select class="form-select" onchange="App.changeClass(parseInt(this.value))">${[9,10,11,12].map(c=>`<option value="${c}" ${p.selectedClass===c?'selected':''}>Class ${c}</option>`).join('')}</select></div>${(p.selectedClass===11||p.selectedClass===12)?`<div class="form-group"><label class="form-label">Stream</label><select class="form-select" onchange="App.state.profile.selectedStream=this.value;App._syncFullProfile()">${['PCM','PCB','Commerce'].map(s=>`<option value="${s}" ${p.selectedStream===s?'selected':''} >${s}</option>`).join('')}</select></div>`:''}<div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App._syncFullProfile()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.updatePageSubtitle();App.updateTopbarPills();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||90}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App._syncFullProfile()"></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">🎨 Theme</span></div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm ${this.state.theme==='dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('dark')">🌙 Dark</button><button class="btn btn-sm ${this.state.theme==='light'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('light')">☀️ Light</button><button class="btn btn-sm ${this.state.theme==='warm-dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('warm-dark')">🌅 Warm Dark</button></div><div style="display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--border)"><input type="checkbox" id="auto-theme-check" ${this.state.autoTheme?'checked':''} onchange="App.toggleAutoTheme()" style="width:16px;height:16px;cursor:pointer"><label for="auto-theme-check" style="font-size:.82rem;cursor:pointer">🕐 Auto switch (Light 7AM–7PM, Dark at night)</label></div></div></div>
         <div class="card"><div class="card-header"><span class="card-title">📊 Statistics</span></div><div style="font-size:.85rem;color:var(--text-secondary);line-height:2"><p>📖 Sessions: <strong style="color:var(--text-primary)">${stats.totalSessions}</strong></p><p>⏱ Total Study Time: <strong style="color:var(--text-primary)">${this.formatMin(stats.totalMinutes)}</strong></p><p>✅ Chapters Done: <strong style="color:var(--text-primary)">${stats.completedChapters}/${this.getTotalChapters()}</strong></p><p>🔄 Total Revisions: <strong style="color:var(--text-primary)">${stats.totalRevisions}</strong></p><p>🔥 Current Streak: <strong style="color:var(--text-primary)">${stats.streak} days</strong></p><p>📝 Exams Logged: <strong style="color:var(--text-primary)">${this.state.examScores.length}</strong></p><p>❓ Doubts: <strong style="color:var(--text-primary)">${this.state.doubts.length} (${this.state.doubts.filter(d=>d.status==='unresolved').length} unresolved)</strong></p><p>📓 Notes: <strong style="color:var(--text-primary)">${(this.state.notes||[]).length}</strong></p><p>🔗 Resources: <strong style="color:var(--text-primary)">${(this.state.resources||[]).length}</strong></p><p>⚡ Level ${stats.level} (${p.xp} XP)</p></div></div></div><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">💾 Data Management</span></div><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-secondary" onclick="App.exportData()" style="justify-content:center">📤 Export Data (JSON)</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()" style="justify-content:center">📥 Import Data</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)"><hr style="border-color:var(--border)"><button class="btn btn-danger" onclick="App.resetAll()" style="justify-content:center">🗑 Reset All Data</button></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">⌨️ Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>
