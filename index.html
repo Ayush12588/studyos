@@ -497,16 +497,17 @@ a { color: inherit; text-decoration: none; }
     overflow: hidden;
 }
 .topbar-left h1 {
-    font-size: 1rem;
-    font-weight: 600;
+    font-size: 1.1rem;
+    font-weight: 700;
     color: var(--color-text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    letter-spacing: -.2px;
 }
 .topbar-left p {
-    font-size: .72rem;
-    color: var(--color-text-secondary);
+    font-size: .68rem;
+    color: var(--text-muted);
     margin-top: 1px;
     white-space: nowrap;
     overflow: hidden;
@@ -2242,7 +2243,7 @@ h1,h2,h3,h4,
     .grid-2 { grid-template-columns: 1fr; }
     #content { padding: 16px 14px; padding-bottom: max(100px, calc(80px + env(safe-area-inset-bottom))); }
     #topbar { padding: 0 14px; height: 52px; }
-    .topbar-left h1 { font-size: .9rem; }
+    .topbar-left h1 { font-size: 1rem; }
     /* Hide desktop search box */
     .topbar-actions .search-box { display: none !important; }
     /* Hide Add Chapter — FAB covers it */
@@ -2360,23 +2361,64 @@ body { overscroll-behavior-y: contain; }
 }
 
 /* ═══════════════════════════════════════════════════
+   COACH PAGE
+═══════════════════════════════════════════════════ */
+.coach-stat-strip{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--color-border);border:1px solid var(--color-border);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.coach-stat-item{background:var(--color-surface);padding:12px 10px;display:flex;flex-direction:column;align-items:center;gap:3px;text-align:center;transition:background .15s}
+.coach-stat-item:hover{background:var(--color-surface-hover)}
+.coach-stat-val{font-size:1.1rem;font-weight:800;font-family:var(--font-mono);color:var(--color-text-primary);line-height:1}
+.coach-stat-val.danger{color:var(--color-danger)}.coach-stat-val.warning{color:var(--color-warning)}.coach-stat-val.success{color:var(--color-success)}
+.coach-stat-lbl{font-size:.62rem;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
+.coach-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
+.coach-card-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--color-border)}
+.coach-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--color-brand),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.coach-title{font-size:.9rem;font-weight:700;color:var(--color-text-primary);flex:1}
+.coach-status-dot{width:7px;height:7px;border-radius:50%;background:var(--color-success);flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,0.2)}
+.coach-chat-body{height:300px;overflow-y:auto;padding:14px 16px;scroll-behavior:smooth}
+.coach-chips-row{padding:10px 16px;display:flex;flex-wrap:wrap;gap:6px;border-top:1px solid var(--color-border);border-bottom:1px solid var(--color-border)}
+.coach-chip{font-size:.72rem;font-weight:500;padding:5px 11px;border-radius:20px;border:1px solid var(--color-border);background:var(--color-surface-hover);color:var(--color-text-secondary);cursor:pointer;transition:all .15s;white-space:nowrap}
+.coach-chip:hover{border-color:var(--color-brand);color:var(--color-brand);background:rgba(79,70,229,0.06)}
+.coach-input-row{display:flex;gap:8px;align-items:flex-end;padding:12px 16px}
+.coach-textarea{flex:1;resize:none;min-height:38px;max-height:100px;background:var(--color-surface-hover);border:1px solid var(--color-border);border-radius:20px;padding:9px 14px;font-size:.875rem;color:var(--color-text-primary);font-family:var(--font-body);line-height:1.4;outline:none;transition:border-color .15s}
+.coach-textarea:focus{border-color:var(--color-brand)}.coach-textarea::placeholder{color:var(--text-muted)}
+.coach-send-btn{width:38px;height:38px;border-radius:50%;background:var(--color-brand);border:none;color:#fff;font-size:1rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .15s,transform .1s;flex-shrink:0}
+.coach-send-btn:hover{background:var(--color-brand-hover);transform:scale(1.05)}.coach-send-btn:active{transform:scale(.96)}
+.coach-drawer{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden}
+.coach-drawer-toggle{display:flex;align-items:center;justify-content:space-between;padding:13px 16px;cursor:pointer;user-select:none;transition:background .15s}
+.coach-drawer-toggle:hover{background:var(--color-surface-hover)}
+.coach-drawer-toggle-label{font-size:.82rem;font-weight:600;color:var(--color-text-secondary);display:flex;align-items:center;gap:8px}
+.coach-drawer-caret{font-size:.7rem;color:var(--text-muted);transition:transform .2s}
+.coach-drawer.open .coach-drawer-caret{transform:rotate(180deg)}
+.coach-drawer-body{display:none;padding:0 16px 16px;border-top:1px solid var(--color-border)}
+.coach-drawer.open .coach-drawer-body{display:block}
+.coach-drawer-section{padding-top:14px}
+.coach-drawer-section-title{font-size:.7rem;font-weight:700;text-transform:uppercase;letter-spacing:.7px;color:var(--text-muted);margin-bottom:10px}
+.coach-msg{padding:10px 12px;border-radius:var(--radius-sm);border-left:2px solid;margin-bottom:8px;background:var(--color-surface-hover)}
+.coach-msg h4{font-size:.8rem;font-weight:600;margin-bottom:2px}.coach-msg p{font-size:.75rem;color:var(--color-text-secondary)}
+.coach-mood-row{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+.mood-btn{width:40px;height:40px;border-radius:10px;border:1.5px solid var(--color-border);background:var(--color-surface-hover);font-size:1.3rem;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all .15s}
+.mood-btn:hover,.mood-btn.selected{border-color:var(--color-brand);background:rgba(79,70,229,0.1);transform:scale(1.1)}
+
+/* ═══════════════════════════════════════════════════
    QUIZ FEATURE
 ═══════════════════════════════════════════════════ */
 
 /* Subject cards on quiz home */
-.quiz-subject-card {
-    background: var(--color-surface);
-    border: 1px solid var(--color-border);
-    border-radius: var(--radius);
-    padding: 18px;
-    cursor: pointer;
-    transition: border-color .15s, background .15s;
-    position: relative;
-    overflow: hidden;
-}
-.quiz-subject-card:hover { border-color: var(--border-hover); background: var(--color-surface-hover); }
-.quiz-subject-card.due { border-color: var(--color-warning); }
-.quiz-subject-card.due-urgent { border-color: var(--color-danger); }
+.quiz-page-header{margin-bottom:20px}
+.quiz-page-title{font-size:1.1rem;font-weight:800;color:var(--color-text-primary);margin-bottom:3px}
+.quiz-page-sub{font-size:.78rem;color:var(--text-muted)}
+.quiz-due-banner{display:flex;align-items:center;gap:10px;padding:11px 14px;border-radius:var(--radius-sm);background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-left:3px solid var(--color-warning);margin-bottom:18px;font-size:.82rem;color:var(--color-warning);font-weight:600}
+.quiz-due-banner span{color:var(--color-text-secondary);font-weight:400}
+.quiz-score-row{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.quiz-score-bar-wrap{flex:1;height:5px;background:var(--color-border);border-radius:3px;overflow:hidden}
+.quiz-score-bar-fill{height:100%;border-radius:3px;transition:width .4s ease}
+.quiz-score-label{font-size:.72rem;color:var(--text-muted);white-space:nowrap;display:flex;align-items:center;gap:5px}
+.quiz-score-label strong{font-family:var(--font-mono);font-weight:700;color:var(--color-text-primary)}
+.quiz-subject-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);position:relative;overflow:hidden;transition:border-color .15s,background .15s}
+.quiz-subject-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:transparent;transition:background .15s}
+.quiz-subject-card:hover{border-color:var(--border-hover);background:var(--color-surface-hover)}
+.quiz-subject-card.due::before{background:var(--color-warning)}.quiz-subject-card.due{border-color:rgba(245,158,11,0.25);background:rgba(245,158,11,0.03)}
+.quiz-subject-card.due-urgent::before{background:var(--color-danger)}.quiz-subject-card.due-urgent{border-color:rgba(239,68,68,0.25);background:rgba(239,68,68,0.03)}
 
 .quiz-subject-header {
     display: flex;
@@ -2431,21 +2473,10 @@ body { overscroll-behavior-y: contain; }
     flex-wrap: wrap;
 }
 .quiz-interval-label { font-size: .72rem; color: var(--text-muted); flex-shrink: 0; }
-.quiz-interval-chips { display: flex; gap: 4px; }
-.quiz-interval-chip {
-    font-size: .68rem;
-    font-weight: 600;
-    padding: 3px 9px;
-    border-radius: 20px;
-    border: 1px solid var(--color-border);
-    background: var(--color-surface-hover);
-    color: var(--text-secondary);
-    cursor: pointer;
-    transition: all .15s;
-    font-family: var(--font-mono);
-}
-.quiz-interval-chip:hover { border-color: var(--color-brand); color: var(--color-brand); }
-.quiz-interval-chip.selected { background: var(--color-brand); color: #fff; border-color: var(--color-brand); }
+.quiz-interval-chips{display:flex;gap:3px;background:var(--color-surface-hover);border-radius:8px;padding:2px;border:1px solid var(--color-border)}
+.quiz-interval-chip{font-size:.68rem;font-weight:700;padding:4px 10px;border-radius:6px;border:none;background:transparent;color:var(--text-muted);cursor:pointer;transition:all .15s;font-family:var(--font-mono)}
+.quiz-interval-chip:hover{color:var(--color-text-primary)}
+.quiz-interval-chip.selected{background:var(--color-brand);color:#fff;box-shadow:0 1px 4px rgba(79,70,229,0.35)}
 
 /* Quiz session screen */
 .quiz-session-wrap {
@@ -3129,13 +3160,85 @@ const App={
         {id:'resource-king',name:'Resource King',desc:'Save 15 resources',icon:'📎'}
     ],
 
-    CBSE_DATA:[
+    // ── CLASS 9 ──────────────────────────────────────────────────────────
+    CLASS9_DATA:[
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Number Systems','Polynomials','Coordinate Geometry','Linear Equations in Two Variables','Introduction to Euclid\'s Geometry','Lines and Angles','Triangles','Quadrilaterals','Circles','Heron\'s Formula','Surface Areas and Volumes','Statistics']},
+        {name:'Science',icon:'🔬',color:'#10b981',chapters:['Matter in Our Surroundings','Is Matter Around Us Pure','Atoms and Molecules','Structure of the Atom','The Fundamental Unit of Life','Tissues','Motion','Force and Laws of Motion','Gravitation','Work and Energy','Sound','Why Do We Fall Ill','Natural Resources']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Fun They Had','The Sound of Music','The Little Girl','A Truly Beautiful Mind','The Snake and the Mirror','My Childhood','Packing','Reach for the Top','The Bond of Love','Kathmandu','If I Were You','The Road Not Taken (Poem)','Wind (Poem)','Rain on the Roof (Poem)','The Lake Isle of Innisfree (Poem)','A Legend of the Northland (Poem)','No Men Are Foreign (Poem)','The Duck and the Kangaroo (Poem)','On Killing a Tree (Poem)','The Snake Trying (Poem)','A Slumber Did My Spirit Seal (Poem)']},
+        {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:['The French Revolution','Socialism in Europe and the Russian Revolution','Nazism and the Rise of Hitler','Forest Society and Colonialism','Pastoralists in the Modern World','India — Size and Location','Physical Features of India','Drainage','Climate','Natural Vegetation and Wildlife','Population','What is Democracy? Why Democracy?','Constitutional Design','Electoral Politics','Working of Institutions','Democratic Rights','The Story of Village Palampur','People as Resource','Poverty as a Challenge','Food Security in India']},
+        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:['दो बैलों की कथा','ल्हासा की ओर','उपभोक्तावाद की संस्कृति','साँवले सपनों की याद','नाना साहब की पुत्री देवी मैना को भस्म कर दिया गया','प्रेमचंद के फटे जूते','मेरे बचपन के दिन','एक कुत्ता और एक मैना','इस जल प्रलय में','रैदास के पद','रहीम के दोहे','कबीर की साखियाँ','ललद्यद','वाख','सवैये','कैदी और कोकिला','ग्राम श्री','चंद्र गहना से लौटती बेर','मेघ आए','यमराज की दिशा','बच्चे काम पर जा रहे हैं']}
+    ],
+
+    // ── CLASS 10 (original — untouched) ──────────────────────────────────
+    CLASS10_DATA:[
         {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Real Numbers','Polynomials','Linear Equations in Two Variables','Quadratic Equations','Arithmetic Progressions','Triangles','Coordinate Geometry','Intro to Trigonometry','Applications of Trigonometry','Circles','Areas Related to Circles','Surface Areas & Volumes','Statistics','Probability']},
         {name:'Science',icon:'🔬',color:'#10b981',chapters:['Chemical Reactions & Equations','Acids, Bases & Salts','Metals & Non-metals','Carbon & its Compounds','Life Processes','Control & Coordination','How do Organisms Reproduce','Heredity & Evolution','Light: Reflection & Refraction','Human Eye & Colourful World','Electricity','Magnetic Effects of Current','Our Environment']},
         {name:'English',icon:'📝',color:'#f59e0b',chapters:['A Letter to God','Dust of Snow (Poem)','Fire and Ice (Poem)','Nelson Mandela','A Tiger in the Zoo (Poem)','Two Stories about Flying','How to Tell Wild Animals (Poem)','The Ball Poem (Poem)','Anne Frank Diary','Amanda! (Poem)','Glimpses of India','The Trees (Poem)','Mijbil the Otter','Fog (Poem)','Madam Rides the Bus','The Tale of Custrd the Dragon (Poem)','The Sermon at Benares','For Anne Gregory (Poem)','The Proposal']},
         {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:['Rise of Nationalism in Europe','Nationalism in India','Making of a Global World','Age of Industrialisation','Print Culture & Modern World','Resources & Development','Forest & Wildlife Resources','Water Resources','Agriculture','Minerals & Energy Resources','Manufacturing Industries','Lifelines of National Economy','Power Sharing','Federalism','Political Parties','Outcomes of Democracy','Development','Sectors of Indian Economy','Money & Credit','Globalisation & Indian Economy']},
-        {name: 'Hindi',icon: '📜',color: '#ef4444',chapters: ['साखी','पद','मनुष्यता','पर्वत प्रदेश में पावस','तोप','कर चले हम फ़िदा','आत्मत्राण','बड़े भाई साहब','डायरी का एक पन्ना','तताँरा-वामीरो कथा','तीसरी कसम के शिल्पकार शैलेन्द्र','अब कहाँ दूसरे के दुख से दुखी होने वाले','पतझर में टूटी पत्तियाँ','कारतूस','हरिहर काका','सपनों के-से दिन','टोपी शुक्ला','व्याकरण']}
-],
+        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:['साखी','पद','मनुष्यता','पर्वत प्रदेश में पावस','तोप','कर चले हम फ़िदा','आत्मत्राण','बड़े भाई साहब','डायरी का एक पन्ना','तताँरा-वामीरो कथा','तीसरी कसम के शिल्पकार शैलेन्द्र','अब कहाँ दूसरे के दुख से दुखी होने वाले','पतझर में टूटी पत्तियाँ','कारतूस','हरिहर काका','सपनों के-से दिन','टोपी शुक्ला','व्याकरण']}
+    ],
+
+    // ── CLASS 11 PCM ─────────────────────────────────────────────────────
+    CLASS11_PCM_DATA:[
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Physical World','Units and Measurements','Motion in a Straight Line','Motion in a Plane','Laws of Motion','Work, Energy and Power','System of Particles and Rotational Motion','Gravitation','Mechanical Properties of Solids','Mechanical Properties of Fluids','Thermal Properties of Matter','Thermodynamics','Kinetic Theory','Oscillations','Waves']},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['Some Basic Concepts of Chemistry','Structure of Atom','Classification of Elements and Periodicity in Properties','Chemical Bonding and Molecular Structure','Thermodynamics','Equilibrium','Redox Reactions','Organic Chemistry — Some Basic Principles and Techniques','Hydrocarbons','Environmental Chemistry','States of Matter','The s-Block Elements','The p-Block Elements (Groups 13 and 14)','Hydrogen']},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Sets','Relations and Functions','Trigonometric Functions','Principle of Mathematical Induction','Complex Numbers and Quadratic Equations','Linear Inequalities','Permutations and Combinations','Binomial Theorem','Sequences and Series','Straight Lines','Conic Sections','Introduction to Three Dimensional Geometry','Limits and Derivatives','Statistics','Probability']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Portrait of a Lady','We\'re Not Afraid to Die','Discovering Tut: The Saga Continues','Landscape of the Soul','The Ailing Planet','The Browning Version','The Adventure','Silk Road','A Photograph (Poem)','The Laburnum Top (Poem)','The Voice of the Rain (Poem)','Childhood (Poem)','Father to Son (Poem)','The Summer of the Beautiful White Horse','The Address','Ranga\'s Marriage','Albert Einstein at School','Mother\'s Day','The Ghat of the Only World','Birth','The Tale of Melon City']},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Changing Trends and Career in Physical Education','Olympic Movement','Physical Fitness, Wellness and Lifestyle','Physical Education and Sports for CWSN','Yoga','Physical Activity and Leadership Training','Test, Measurement and Evaluation','Fundamentals of Anatomy and Physiology','Fundamentals of Kinesiology and Biomechanics','Psychology and Sports','Training in Sports','Doping']}
+    ],
+
+    // ── CLASS 11 PCB ─────────────────────────────────────────────────────
+    CLASS11_PCB_DATA:[
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Physical World','Units and Measurements','Motion in a Straight Line','Motion in a Plane','Laws of Motion','Work, Energy and Power','System of Particles and Rotational Motion','Gravitation','Mechanical Properties of Solids','Mechanical Properties of Fluids','Thermal Properties of Matter','Thermodynamics','Kinetic Theory','Oscillations','Waves']},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['Some Basic Concepts of Chemistry','Structure of Atom','Classification of Elements and Periodicity in Properties','Chemical Bonding and Molecular Structure','Thermodynamics','Equilibrium','Redox Reactions','Organic Chemistry — Some Basic Principles and Techniques','Hydrocarbons','Environmental Chemistry','States of Matter','The s-Block Elements','The p-Block Elements (Groups 13 and 14)','Hydrogen']},
+        {name:'Biology',icon:'🌿',color:'#22c55e',chapters:['The Living World','Biological Classification','Plant Kingdom','Animal Kingdom','Morphology of Flowering Plants','Anatomy of Flowering Plants','Structural Organisation in Animals','Cell: The Unit of Life','Biomolecules','Cell Cycle and Cell Division','Transport in Plants','Mineral Nutrition','Photosynthesis in Higher Plants','Respiration in Plants','Plant Growth and Development','Digestion and Absorption','Breathing and Exchange of Gases','Body Fluids and Circulation','Excretory Products and their Elimination','Locomotion and Movement','Neural Control and Coordination','Chemical Coordination and Integration']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Portrait of a Lady','We\'re Not Afraid to Die','Discovering Tut: The Saga Continues','Landscape of the Soul','The Ailing Planet','The Browning Version','The Adventure','Silk Road','A Photograph (Poem)','The Laburnum Top (Poem)','The Voice of the Rain (Poem)','Childhood (Poem)','Father to Son (Poem)','The Summer of the Beautiful White Horse','The Address','Ranga\'s Marriage','Albert Einstein at School','Mother\'s Day','The Ghat of the Only World','Birth','The Tale of Melon City']},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Changing Trends and Career in Physical Education','Olympic Movement','Physical Fitness, Wellness and Lifestyle','Physical Education and Sports for CWSN','Yoga','Physical Activity and Leadership Training','Test, Measurement and Evaluation','Fundamentals of Anatomy and Physiology','Fundamentals of Kinesiology and Biomechanics','Psychology and Sports','Training in Sports','Doping']}
+    ],
+
+    // ── CLASS 11 COMMERCE ────────────────────────────────────────────────
+    CLASS11_COMMERCE_DATA:[
+        {name:'Accountancy',icon:'💰',color:'#a855f7',chapters:['Introduction to Accounting','Theory Base of Accounting','Recording of Transactions I','Recording of Transactions II','Bank Reconciliation Statement','Trial Balance and Rectification of Errors','Depreciation, Provisions and Reserves','Bill of Exchange','Financial Statements I','Financial Statements II','Accounts from Incomplete Records','Applications of Computers in Accounting','Computerised Accounting System']},
+        {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:['Business, Trade and Commerce','Forms of Business Organisation','Private, Public and Global Enterprises','Business Services','Emerging Modes of Business','Social Responsibilities of Business and Business Ethics','Formation of a Company','Sources of Business Finance','Small Business','Internal Trade','International Business']},
+        {name:'Economics',icon:'📈',color:'#f97316',chapters:['Introduction to Statistics','Collection of Data','Organisation of Data','Presentation of Data','Measures of Central Tendency','Measures of Dispersion','Correlation','Index Numbers','Use of Statistical Tools','Indian Economy on the Eve of Independence','Indian Economy 1950–1990','Liberalisation, Privatisation and Globalisation: An Appraisal','Poverty','Human Capital Formation in India','Rural Development','Employment: Growth, Informalisation and Other Issues','Infrastructure','Environment and Sustainable Development','Comparative Development Experiences of India and Its Neighbours']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Portrait of a Lady','We\'re Not Afraid to Die','Discovering Tut: The Saga Continues','Landscape of the Soul','The Ailing Planet','The Browning Version','The Adventure','Silk Road','A Photograph (Poem)','The Laburnum Top (Poem)','The Voice of the Rain (Poem)','Childhood (Poem)','Father to Son (Poem)','The Summer of the Beautiful White Horse','The Address','Ranga\'s Marriage','Albert Einstein at School','Mother\'s Day','The Ghat of the Only World','Birth','The Tale of Melon City']},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Sets','Relations and Functions','Trigonometric Functions','Principle of Mathematical Induction','Complex Numbers and Quadratic Equations','Linear Inequalities','Permutations and Combinations','Binomial Theorem','Sequences and Series','Straight Lines','Conic Sections','Introduction to Three Dimensional Geometry','Limits and Derivatives','Statistics','Probability']}
+    ],
+
+    // ── CLASS 12 PCM ─────────────────────────────────────────────────────
+    CLASS12_PCM_DATA:[
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Electric Charges and Fields','Electrostatic Potential and Capacitance','Current Electricity','Moving Charges and Magnetism','Magnetism and Matter','Electromagnetic Induction','Alternating Current','Electromagnetic Waves','Ray Optics and Optical Instruments','Wave Optics','Dual Nature of Radiation and Matter','Atoms','Nuclei','Semiconductor Electronics','Communication Systems']},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['The Solid State','Solutions','Electrochemistry','Chemical Kinetics','Surface Chemistry','General Principles and Processes of Isolation of Elements','The p-Block Elements','The d- and f-Block Elements','Coordination Compounds','Haloalkanes and Haloarenes','Alcohols, Phenols and Ethers','Aldehydes, Ketones and Carboxylic Acids','Amines','Biomolecules','Polymers','Chemistry in Everyday Life']},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Relations and Functions','Inverse Trigonometric Functions','Matrices','Determinants','Continuity and Differentiability','Application of Derivatives','Integrals','Application of Integrals','Differential Equations','Vector Algebra','Three Dimensional Geometry','Linear Programming','Probability']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Last Lesson','Lost Spring','Deep Water','The Rattrap','Indigo','Poets and Pancakes','The Interview','Going Places','My Mother at Sixty-six (Poem)','Keeping Quiet (Poem)','A Thing of Beauty (Poem)','A Roadside Stand (Poem)','Aunt Jennifer\'s Tigers (Poem)','Third Level','The Tiger King','Journey to the End of the Earth','The Enemy','Should Wizard Hit Mommy','On the Face of It','Evans Tries an O-level','Memories of Childhood']},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Planning in Sports','Sports and Nutrition','Yoga and Lifestyle','Physical Education and Sports for CWSN','Children and Women in Sports','Test, Measurement and Evaluation in Sports','Physiology and Injuries in Sports','Biomechanics and Sports','Psychology and Sports','Training in Sports']}
+    ],
+
+    // ── CLASS 12 PCB ─────────────────────────────────────────────────────
+    CLASS12_PCB_DATA:[
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Electric Charges and Fields','Electrostatic Potential and Capacitance','Current Electricity','Moving Charges and Magnetism','Magnetism and Matter','Electromagnetic Induction','Alternating Current','Electromagnetic Waves','Ray Optics and Optical Instruments','Wave Optics','Dual Nature of Radiation and Matter','Atoms','Nuclei','Semiconductor Electronics','Communication Systems']},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['The Solid State','Solutions','Electrochemistry','Chemical Kinetics','Surface Chemistry','General Principles and Processes of Isolation of Elements','The p-Block Elements','The d- and f-Block Elements','Coordination Compounds','Haloalkanes and Haloarenes','Alcohols, Phenols and Ethers','Aldehydes, Ketones and Carboxylic Acids','Amines','Biomolecules','Polymers','Chemistry in Everyday Life']},
+        {name:'Biology',icon:'🌿',color:'#22c55e',chapters:['Reproduction in Organisms','Sexual Reproduction in Flowering Plants','Human Reproduction','Reproductive Health','Principles of Inheritance and Variation','Molecular Basis of Inheritance','Evolution','Human Health and Disease','Strategies for Enhancement in Food Production','Microbes in Human Welfare','Biotechnology: Principles and Processes','Biotechnology and its Applications','Organisms and Populations','Ecosystem','Biodiversity and Conservation','Environmental Issues']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Last Lesson','Lost Spring','Deep Water','The Rattrap','Indigo','Poets and Pancakes','The Interview','Going Places','My Mother at Sixty-six (Poem)','Keeping Quiet (Poem)','A Thing of Beauty (Poem)','A Roadside Stand (Poem)','Aunt Jennifer\'s Tigers (Poem)','Third Level','The Tiger King','Journey to the End of the Earth','The Enemy','Should Wizard Hit Mommy','On the Face of It','Evans Tries an O-level','Memories of Childhood']},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Planning in Sports','Sports and Nutrition','Yoga and Lifestyle','Physical Education and Sports for CWSN','Children and Women in Sports','Test, Measurement and Evaluation in Sports','Physiology and Injuries in Sports','Biomechanics and Sports','Psychology and Sports','Training in Sports']}
+    ],
+
+    // ── CLASS 12 COMMERCE ────────────────────────────────────────────────
+    CLASS12_COMMERCE_DATA:[
+        {name:'Accountancy',icon:'💰',color:'#a855f7',chapters:['Accounting for Not-for-Profit Organisation','Accounting for Partnership: Basic Concepts','Reconstitution of a Partnership Firm — Admission of a Partner','Reconstitution of a Partnership Firm — Retirement/Death of a Partner','Dissolution of Partnership Firm','Accounting for Share Capital','Issue and Redemption of Debentures','Financial Statements of a Company','Analysis of Financial Statements','Accounting Ratios','Cash Flow Statement','Computerised Accounting System']},
+        {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:['Nature and Significance of Management','Principles of Management','Business Environment','Planning','Organising','Staffing','Directing','Controlling','Financial Management','Financial Markets','Marketing Management','Consumer Protection','Entrepreneurship Development']},
+        {name:'Economics',icon:'📈',color:'#f97316',chapters:['Introduction to Macroeconomics','National Income Accounting','Money and Banking','Determination of Income and Employment','Government Budget and the Economy','Open Economy Macroeconomics','Indian Economy on the Eve of Independence','Indian Economy 1950–1990','Liberalisation, Privatisation and Globalisation','Poverty','Human Capital Formation in India','Rural Development','Employment: Growth, Informalisation and Other Issues','Infrastructure','Environment and Sustainable Development']},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Last Lesson','Lost Spring','Deep Water','The Rattrap','Indigo','Poets and Pancakes','The Interview','Going Places','My Mother at Sixty-six (Poem)','Keeping Quiet (Poem)','A Thing of Beauty (Poem)','A Roadside Stand (Poem)','Aunt Jennifer\'s Tigers (Poem)','Third Level','The Tiger King','Journey to the End of the Earth','The Enemy','Should Wizard Hit Mommy','On the Face of It','Evans Tries an O-level','Memories of Childhood']},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Relations and Functions','Inverse Trigonometric Functions','Matrices','Determinants','Continuity and Differentiability','Application of Derivatives','Integrals','Application of Integrals','Differential Equations','Vector Algebra','Three Dimensional Geometry','Linear Programming','Probability']}
+    ],
+
+    // ── CBSE_DATA master object (keyed by class) ─────────────────────────
+    CBSE_DATA:{
+        9:  null, // resolved in init() after named arrays are defined
+        10: null,
+        11: { PCM: null, PCB: null, Commerce: null },
+        12: { PCM: null, PCB: null, Commerce: null }
+    },
 
     DAILY_CHALLENGES:[
         {text:'Study 3 different subjects today',check:s=>{const t=new Set(s.sessions.filter(x=>x.date===s.today).map(x=>x.subjectId));return t.size>=3},xp:30},
@@ -3151,6 +3254,12 @@ const App={
     ],
 
     async init(){
+        // ── Wire syllabus arrays into keyed CBSE_DATA object ─────────────────
+        this.CBSE_DATA[9]  = this.CLASS9_DATA;
+        this.CBSE_DATA[10] = this.CLASS10_DATA;
+        this.CBSE_DATA[11] = { PCM: this.CLASS11_PCM_DATA, PCB: this.CLASS11_PCB_DATA, Commerce: this.CLASS11_COMMERCE_DATA };
+        this.CBSE_DATA[12] = { PCM: this.CLASS12_PCM_DATA, PCB: this.CLASS12_PCB_DATA, Commerce: this.CLASS12_COMMERCE_DATA };
+
         // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
         await new Promise((resolve) => {
             const { data: { subscription } } = window.supabase.auth.onAuthStateChange((event, session) => {
@@ -3164,6 +3273,9 @@ const App={
             window.location.href = '/auth.html';
             return;
         }
+        // Store session + email globally for use in renderSettings and API calls
+        window._supabaseSession = session;
+        window._supabaseUserEmail = session.user?.email || '';
 
         // ── Step 2: Load UI-only state from localStorage (theme, page, etc.) ──
         this.load();
@@ -3908,7 +4020,7 @@ const App={
     },
     loadCBSE(){
         const _lcUid=window._supabaseUserId;
-        this.CBSE_DATA.forEach(sub=>{
+        this.CLASS10_DATA.forEach(sub=>{
             const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
             sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
@@ -3969,11 +4081,26 @@ const App={
                 }
             }
         });
-        const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings'};
+        const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();this.renderPage(page);
         this.closeSidebar();document.getElementById('content').scrollTop=0;
     },
-    updatePageSubtitle(){const n=new Date(),o={month:'short',weekday:'short',day:'numeric'};let sub=n.toLocaleDateString('en-US',o);const dte=this.getDaysToExam();if(dte!==null&&dte>0)sub+=` • ${dte} days left`;document.getElementById('page-subtitle').textContent=sub},
+    updatePageSubtitle(){
+        const n=new Date();
+        const dateStr=n.toLocaleDateString('en-US',{weekday:'short',month:'short',day:'numeric'});
+        const page=this.state.currentPage;
+        const subtitles={
+            dashboard:dateStr,tasks:dateStr,log:dateStr,
+            subjects:'Your syllabus',revisions:'Spaced repetition',
+            coach:'Powered by Groq',quiz:'Active recall',
+            planning:'Stay on track',weekly:'Analytics & plan',
+            pomodoro:'Focus timer',notes:'Notes & formulas',
+            resources:'Study links',doubts:'Track your doubts',
+            exams:'Score history',exercises:'Chapter exercises',
+            rewards:'XP & badges',settings:'Preferences',
+        };
+        document.getElementById('page-subtitle').textContent=subtitles[page]||dateStr;
+    },
 
     updateTopbarPills(){
         // ── Streak pill ──
@@ -5302,101 +5429,92 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         const udoubtsCount=this.state.doubts.filter(d=>d.status==='unresolved').length;
         const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
         const plan=this.getTomorrowPlan();
-        const weekPlan=this.generateWeeklyPlan();
         const dte=this.getDaysToExam();
-
-        // Quick suggestion chips based on data
+        const goalPct=Math.min(100,Math.round(tm/gm*100));
         const suggestions=[];
-        if(od.length>0)suggestions.push(`What should I do about my ${od.length} overdue chapters?`);
-        if(rd.length>0)suggestions.push('Help me plan my revisions for today');
+        if(od.length>0)suggestions.push('My '+od.length+' overdue chapters — help me catch up');
+        if(rd.length>0)suggestions.push('Plan my revisions for today');
         suggestions.push('What should I study right now?');
-        if(ws.length>0)suggestions.push(`How do I improve in ${ws[0].name}?`);
-        suggestions.push('Quiz me on '+( this.getAllChapters().find(c=>c.status==='in-progress')?.name || 'Electricity'));
+        if(ws.length>0)suggestions.push('How do I improve in '+ws[0].name+'?');
+        suggestions.push('Quiz me on '+(this.getAllChapters().find(c=>c.status==='in-progress')?.name||'Electricity'));
         suggestions.push('How do I stay consistent?');
-
         el.innerHTML=`
-<!-- Stats strip -->
-<div class="grid grid-4" style="margin-bottom:20px">
-    <div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)">📊</div><div class="stat-info"><h3>${sp}%</h3><p>Syllabus done</p></div></div>
-    <div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)">⚠️</div><div class="stat-info"><h3>${od.length}</h3><p>Overdue</p></div></div>
-    <div class="card stat-card"><div class="stat-icon" style="background:rgba(6,182,212,0.12)">🔄</div><div class="stat-info"><h3>${rd.length}</h3><p>Revisions due</p></div></div>
-    <div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)">🎯</div><div class="stat-info"><h3>${Math.min(100,Math.round(tm/gm*100))}%</h3><p>Goal today</p></div></div>
+<div class="coach-stat-strip">
+    <div class="coach-stat-item"><div class="coach-stat-val">${sp}%</div><div class="coach-stat-lbl">Done</div></div>
+    <div class="coach-stat-item"><div class="coach-stat-val ${od.length>0?'danger':''}">${od.length}</div><div class="coach-stat-lbl">Overdue</div></div>
+    <div class="coach-stat-item"><div class="coach-stat-val ${rd.length>0?'warning':''}">${rd.length}</div><div class="coach-stat-lbl">Revisions</div></div>
+    <div class="coach-stat-item"><div class="coach-stat-val ${goalPct>=100?'success':''}">${goalPct}%</div><div class="coach-stat-lbl">Goal</div></div>
 </div>
-
-<!-- AI Chat -->
-<div class="card" style="margin-bottom:20px">
-    <div style="display:flex;align-items:center;gap:12px;margin-bottom:16px;padding-bottom:14px;border-bottom:1px solid var(--border)">
-        <div style="width:42px;height:42px;border-radius:50%;background:var(--gradient-1);display:flex;align-items:center;justify-content:center;font-size:1.4rem">🤖</div>
-        <div><h3 style="font-size:1rem;font-weight:700">AI Study Coach</h3><p style="font-size:.72rem;color:var(--text-muted)">Powered by Groq • Knows your real progress</p></div>
-        <button class="btn btn-sm btn-ghost" style="margin-left:auto" onclick="App.clearCoachHistory()" title="Clear chat">🗑</button>
+<div class="coach-card">
+    <div class="coach-card-header">
+        <div class="coach-avatar">🤖</div>
+        <div class="coach-title">AI Study Coach</div>
+        <div class="coach-status-dot"></div>
+        <button class="btn btn-sm btn-ghost" onclick="App.clearCoachHistory()" title="Clear chat" style="margin-left:4px;padding:4px 8px;min-height:unset">🗑</button>
     </div>
-
-    <!-- Chat messages -->
-    <div id="coach-chat-box" style="height:340px;overflow-y:auto;margin-bottom:14px;padding-right:4px">
+    <div class="coach-chat-body" id="coach-chat-box">
         <div id="coach-messages"></div>
         <div id="coach-typing" style="display:none;align-items:center;gap:10px;margin-bottom:10px">
-            <div style="width:32px;height:32px;border-radius:50%;background:rgba(99,102,241,0.15);display:flex;align-items:center;justify-content:center">🤖</div>
-            <div style="background:var(--bg-card);border:1px solid var(--border);border-radius:4px 14px 14px 14px;padding:10px 16px">
-                <div style="display:flex;gap:4px;align-items:center"><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s infinite"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s .2s infinite"></span><span style="width:7px;height:7px;border-radius:50%;background:var(--accent);animation:blink 1s .4s infinite"></span></div>
+            <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--color-brand),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.9rem">🤖</div>
+            <div style="background:var(--color-surface-hover);border:1px solid var(--color-border);border-radius:4px 14px 14px 14px;padding:10px 14px">
+                <div style="display:flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-brand);animation:blink 1s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--color-brand);animation:blink 1s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--color-brand);animation:blink 1s .4s infinite"></span></div>
             </div>
         </div>
     </div>
-
-    <!-- Quick suggestions -->
-    <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
-        ${suggestions.slice(0,4).map(s=>`<button class="btn btn-sm btn-secondary" style="font-size:.72rem" onclick="App.askQuickQuestion('${s.replace(/'/g,"\\'")}')">💬 ${s.length>35?s.slice(0,35)+'...':s}</button>`).join('')}
+    <div class="coach-chips-row">
+        ${suggestions.slice(0,4).map(s=>`<button class="coach-chip" onclick="App.askQuickQuestion('${s.replace(/'/g,"\\'")}')")">💬 ${s.length>38?s.slice(0,38)+'…':s}</button>`).join('')}
     </div>
-
-    <!-- Input -->
-    <div style="display:flex;gap:8px;align-items:flex-end">
-        <textarea id="coach-input" class="form-input" placeholder="Ask anything — what to study, explain a concept, quiz me..." style="flex:1;resize:none;min-height:42px;max-height:120px;line-height:1.5;padding:10px 14px" rows="1"
+    <div class="coach-input-row">
+        <textarea id="coach-input" class="coach-textarea" placeholder="Ask anything…" rows="1"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.sendCoachMessage()}"
             oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
-        <button class="btn btn-primary" onclick="App.sendCoachMessage()" style="height:42px;padding:0 16px">Send ➤</button>
+        <button class="coach-send-btn" onclick="App.sendCoachMessage()">➤</button>
     </div>
 </div>
-
-<!-- Insights + Plan grid -->
-<div class="grid grid-2" style="margin-bottom:20px">
-    <div class="card"><div class="card-header"><span class="card-title">📋 Study Now</span></div>
-        ${plan.slice(0,5).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} • ${p.reason}</p></div></div>`).join('')||'<p style="color:var(--text-muted);padding:10px">All caught up! 🎉</p>'}
+<div class="coach-drawer" id="coach-drawer">
+    <div class="coach-drawer-toggle" onclick="App._toggleCoachDrawer()">
+        <span class="coach-drawer-toggle-label">
+            📋 Study Now &amp; Insights
+            ${od.length>0||rd.length>0?`<span style="background:var(--color-danger);color:#fff;font-size:.6rem;font-weight:700;padding:1px 6px;border-radius:10px">${od.length+rd.length}</span>`:''}
+        </span>
+        <span class="coach-drawer-caret">▼</span>
     </div>
-    <div class="card"><div class="card-header"><span class="card-title">💡 Quick Insights</span></div>
-        ${tm<gm?`<div class="coach-msg" style="border-color:var(--warning)"><h4>📖 ${this.formatMin(gm-tm)} left for goal</h4><p>You've studied ${this.formatMin(tm)} today</p></div>`:`<div class="coach-msg" style="border-color:var(--success)"><h4>🎯 Daily Goal Hit!</h4><p>${this.formatMin(tm)} studied today 🔥</p></div>`}
-        ${od.length>0?`<div class="coach-msg" style="border-color:var(--danger)"><h4>⚠️ ${od.length} Overdue</h4><p>${od.slice(0,2).map(c=>c.name).join(', ')}</p></div>`:''}
-        ${rd.length>0?`<div class="coach-msg" style="border-color:var(--info)"><h4>🔄 ${rd.length} Revisions Due</h4><p>Spaced repetition builds memory</p></div>`:''}
-        ${ws.length>0?`<div class="coach-msg" style="border-color:var(--accent)"><h4>📉 Weak: ${ws.map(s=>s.icon).join(' ')}</h4><p>${ws.map(s=>s.name).join(', ')} need attention</p></div>`:''}
-        ${udoubtsCount>0?`<div class="coach-msg" style="border-color:var(--danger)"><h4>❓ ${udoubtsCount} Unresolved Doubts</h4><p>Clear these before they pile up</p></div>`:''}
-        ${dte!==null&&dte>0?`<div class="coach-msg" style="border-color:var(--success)"><h4>📅 ${dte} days to boards</h4><p>Readiness: ${this.getReadinessScore()}%</p></div>`:''}
+    <div class="coach-drawer-body">
+        <div class="coach-drawer-section">
+            <div class="coach-drawer-section-title">📖 Study Now</div>
+            ${plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} · ${p.reason}</p></div></div>`).join('')||'<p style="color:var(--text-muted);font-size:.82rem;padding:4px 0">All caught up! 🎉</p>'}
+        </div>
+        <div class="coach-drawer-section" style="border-top:1px solid var(--color-border);margin-top:12px">
+            <div class="coach-drawer-section-title" style="padding-top:14px">💡 Quick Insights</div>
+            ${tm<gm?`<div class="coach-msg" style="border-color:var(--color-warning)"><h4>📖 ${this.formatMin(gm-tm)} left for goal</h4><p>Studied ${this.formatMin(tm)} today</p></div>`:`<div class="coach-msg" style="border-color:var(--color-success)"><h4>🎯 Daily goal hit!</h4><p>${this.formatMin(tm)} today 🔥</p></div>`}
+            ${od.length>0?`<div class="coach-msg" style="border-color:var(--color-danger)"><h4>⚠️ ${od.length} overdue</h4><p>${od.slice(0,2).map(c=>c.name).join(', ')}</p></div>`:''}
+            ${rd.length>0?`<div class="coach-msg" style="border-color:var(--color-brand)"><h4>🔄 ${rd.length} revisions due</h4><p>Spaced repetition builds memory</p></div>`:''}
+            ${ws.length>0?`<div class="coach-msg" style="border-color:var(--text-muted)"><h4>📉 Weak subjects</h4><p>${ws.map(s=>s.name).join(', ')}</p></div>`:''}
+            ${udoubtsCount>0?`<div class="coach-msg" style="border-color:var(--color-danger)"><h4>❓ ${udoubtsCount} unresolved doubts</h4><p>Clear these before they pile up</p></div>`:''}
+            ${dte!==null&&dte>0?`<div class="coach-msg" style="border-color:var(--color-success)"><h4>📅 ${dte} days to boards</h4><p>Readiness: ${this.getReadinessScore()}%</p></div>`:''}
+        </div>
+        <div class="coach-drawer-section" style="border-top:1px solid var(--color-border);margin-top:12px">
+            <div class="coach-drawer-section-title" style="padding-top:14px">😊 Today's Mood</div>
+            <div class="coach-mood-row">
+                ${['🤩','😊','😐','😴','😤'].map(m=>`<button class="mood-btn ${todayMood?.mood===m?'selected':''}" onclick="App.setMood('${m}')">${m}</button>`).join('')}
+            </div>
+            ${todayMood?`<p style="font-size:.75rem;color:var(--text-muted)">${this.getMoodAdvice(todayMood.mood)}</p>`:''}
+        </div>
     </div>
-</div>
-
-<!-- Mood -->
-<div class="card" style="margin-bottom:20px">
-    <div class="card-header" style="margin-bottom:12px"><span class="card-title">😊 Today's Mood</span></div>
-    <div class="mood-picker" style="justify-content:flex-start;gap:8px">
-        ${['🤩','😊','😐','😴','😤'].map(m=>`<button class="mood-btn ${todayMood?.mood===m?'selected':''}" onclick="App.setMood('${m}')" style="font-size:1.5rem;padding:6px">${m}</button>`).join('')}
-    </div>
-    ${todayMood?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:10px">${this.getMoodAdvice(todayMood.mood)}</p>`:''}
-</div>
-
-<!-- Weekly Plan -->
-<div class="card"><div class="card-header"><span class="card-title">📅 Suggested Weekly Plan</span><button class="btn btn-sm btn-secondary" onclick="App.regenerateWeeklyPlan()">🔄 Refresh</button></div>
-    ${weekPlan.map(day=>`<div class="plan-day"><div class="plan-day-header">📆 ${day.dayName}</div>${day.items.map(item=>`<div class="plan-slot"><span style="font-size:1.1rem">${item.icon}</span><span style="flex:1">${item.text}</span><span style="font-size:.72rem;color:var(--text-muted)">${item.type}</span></div>`).join('')}</div>`).join('')}
 </div>`;
-
-        // Render existing chat history (persists during session)
         this.renderChatMessages();
         this.scrollChat();
-
-        // If first open with no history, send a greeting
         if(this.coachHistory.length===0){
-            const greeting=`Hey ${this.state.profile.name}! 👋 I'm your AI study coach. I can see your real progress — ${this.getCompletedCount()}/${this.getTotalChapters()} chapters done${od.length>0?`, ${od.length} overdue`:''}${rd.length>0?`, ${rd.length} revisions due`:''}. What do you need help with today?`;
+            const greeting='Hey '+this.state.profile.name+'! 👋 I\'m your AI study coach. I can see your real progress — '+this.getCompletedCount()+'/'+this.getTotalChapters()+' chapters done'+(od.length>0?', '+od.length+' overdue':'')+(rd.length>0?', '+rd.length+' revisions due':'')+'. What do you need help with today?';
             this.coachHistory.push({role:'model',parts:[{text:greeting}]});
             this.renderChatMessages();
         }
     },
 
+    _toggleCoachDrawer(){
+        const d=document.getElementById('coach-drawer');
+        if(d)d.classList.toggle('open');
+    },
     clearCoachHistory(){
         this.coachHistory=[];
         this.renderCoach();
@@ -5435,7 +5553,8 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     // SETTINGS
     renderSettings(){
         const el=document.getElementById('page-settings'),p=this.state.profile,stats=this.getStats();
-        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">👤 Profile</span></div><div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.updateSidebar();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App._syncFullProfile()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.updatePageSubtitle();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||90}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App._syncFullProfile()"></div></div>
+        const userEmail=window._supabaseSession?.user?.email||window._supabaseUserEmail||'';
+        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">👤 Profile</span></div>${userEmail?`<div class="form-group"><label class="form-label">Email</label><div class="form-input" style="background:var(--color-surface-hover);cursor:default;color:var(--text-muted);font-size:.82rem">${userEmail}</div></div>`:''}<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.updateSidebar();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App._syncFullProfile()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.updatePageSubtitle();App.updateTopbarPills();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||90}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App._syncFullProfile()"></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">🎨 Theme</span></div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm ${this.state.theme==='dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('dark')">🌙 Dark</button><button class="btn btn-sm ${this.state.theme==='light'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('light')">☀️ Light</button><button class="btn btn-sm ${this.state.theme==='warm-dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('warm-dark')">🌅 Warm Dark</button></div><div style="display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--border)"><input type="checkbox" id="auto-theme-check" ${this.state.autoTheme?'checked':''} onchange="App.toggleAutoTheme()" style="width:16px;height:16px;cursor:pointer"><label for="auto-theme-check" style="font-size:.82rem;cursor:pointer">🕐 Auto switch (Light 7AM–7PM, Dark at night)</label></div></div></div>
         <div class="card"><div class="card-header"><span class="card-title">📊 Statistics</span></div><div style="font-size:.85rem;color:var(--text-secondary);line-height:2"><p>📖 Sessions: <strong style="color:var(--text-primary)">${stats.totalSessions}</strong></p><p>⏱ Total Study Time: <strong style="color:var(--text-primary)">${this.formatMin(stats.totalMinutes)}</strong></p><p>✅ Chapters Done: <strong style="color:var(--text-primary)">${stats.completedChapters}/${this.getTotalChapters()}</strong></p><p>🔄 Total Revisions: <strong style="color:var(--text-primary)">${stats.totalRevisions}</strong></p><p>🔥 Current Streak: <strong style="color:var(--text-primary)">${stats.streak} days</strong></p><p>📝 Exams Logged: <strong style="color:var(--text-primary)">${this.state.examScores.length}</strong></p><p>❓ Doubts: <strong style="color:var(--text-primary)">${this.state.doubts.length} (${this.state.doubts.filter(d=>d.status==='unresolved').length} unresolved)</strong></p><p>📓 Notes: <strong style="color:var(--text-primary)">${(this.state.notes||[]).length}</strong></p><p>🔗 Resources: <strong style="color:var(--text-primary)">${(this.state.resources||[]).length}</strong></p><p>⚡ Level ${stats.level} (${p.xp} XP)</p></div></div></div><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">💾 Data Management</span></div><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-secondary" onclick="App.exportData()" style="justify-content:center">📤 Export Data (JSON)</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()" style="justify-content:center">📥 Import Data</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)"><hr style="border-color:var(--border)"><button class="btn btn-danger" onclick="App.resetAll()" style="justify-content:center">🗑 Reset All Data</button></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">⌨️ Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>
@@ -5655,42 +5774,30 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     renderQuiz(){
         const el=document.getElementById('page-quiz');
         if(!el) return;
-
-        // If a session is active, render the session
         if(this._quiz && this._quiz.active){
             this._renderQuizSession(el);
             return;
         }
-
-        // ── Quiz Home ──
         const subjects=this.state.subjects.filter(s=>s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length>0);
         const dueSubjects=this.getQuizDueSubjects();
         if(!this.state.quizData) this.state.quizData={};
         const today=this.today();
-
         if(subjects.length===0){
             el.innerHTML=`<div class="empty-state" style="padding:60px 20px;text-align:center">
                 <div style="font-size:3rem;margin-bottom:16px">🧠</div>
                 <h3 style="font-size:1.1rem;font-weight:700;margin-bottom:8px">No chapters completed yet</h3>
                 <p style="color:var(--text-muted);font-size:.875rem">Complete at least one chapter to unlock quizzes.</p>
-                <button class="btn btn-primary" style="margin-top:20px" onclick="App.navigate('subjects')">Go to Subjects</button>
+                <button class="btn btn-primary" style="margin-top:20px" onclick="App.navigate(\'subjects\')">Go to Subjects</button>
             </div>`;
             return;
         }
-
         const dueCount=dueSubjects.length;
-
         el.innerHTML=`
-<div style="margin-bottom:24px">
-    <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
-        <div>
-            <h2 style="font-size:1.15rem;font-weight:700;margin-bottom:4px">🧠 Active Recall Quiz</h2>
-            <p style="font-size:.8rem;color:var(--text-muted)">AI-generated MCQs from your completed chapters · Tests memory retention</p>
-        </div>
-        ${dueCount>0?`<div style="background:rgba(245,158,11,0.1);border:1px solid rgba(245,158,11,0.25);border-radius:var(--radius-sm);padding:8px 14px;font-size:.78rem;color:var(--color-warning);font-weight:600;flex-shrink:0">${dueCount} quiz${dueCount>1?'zes':''} due today</div>`:''}
-    </div>
+<div class="quiz-page-header">
+    <div class="quiz-page-title">🧠 Active Recall Quiz</div>
+    <div class="quiz-page-sub">AI-generated MCQs from your completed chapters</div>
 </div>
-
+${dueCount>0?`<div class="quiz-due-banner">⚡ ${dueCount} quiz${dueCount>1?'zes':''} due today <span>— test yourself to lock in memory</span></div>`:''}
 <div class="grid grid-2" id="quiz-subject-grid">
 ${subjects.map(s=>{
     const completed=s.chapters.filter(c=>c.status==='completed'||c.status==='revised');
@@ -5701,7 +5808,15 @@ ${subjects.map(s=>{
     const lastScore=qd.lastScore;
     const history=qd.history||[];
     const hasCached=qd.questions&&qd.questions.length>0;
-
+    const avgScore=history.length>0?Math.round(history.reduce((a,h)=>a+h.pct,0)/history.length):null;
+    let nextLabel='';
+    if(nextDate){
+        const diff=Math.round((new Date(nextDate)-new Date(today))/(1000*60*60*24));
+        if(diff===0)nextLabel='Today';
+        else if(diff===1)nextLabel='Tomorrow';
+        else if(diff>0)nextLabel='In '+diff+' days';
+        else nextLabel=Math.abs(diff)+'d overdue';
+    }
     let dueBadge='',cardClass='';
     if(!qd.lastQuizDate){
         dueBadge=`<span class="quiz-due-badge new">Never taken</span>`;
@@ -5710,28 +5825,26 @@ ${subjects.map(s=>{
         dueBadge=`<span class="quiz-due-badge ${overdue?'due-urgent':'due'}">${overdue?'Overdue':'Due today'}</span>`;
         cardClass=overdue?'due-urgent':'due';
     } else {
-        dueBadge=`<span class="quiz-due-badge ok">Next: ${nextDate}</span>`;
+        dueBadge=`<span class="quiz-due-badge ok">${nextLabel}</span>`;
     }
-
-    const avgScore=history.length>0?Math.round(history.reduce((a,h)=>a+h.pct,0)/history.length):null;
-
+    const barColor=lastScore>=80?'var(--color-success)':lastScore>=50?'var(--color-warning)':'var(--color-danger)';
     return `<div class="quiz-subject-card ${cardClass}">
-        <div class="quiz-subject-header">
-            <div class="quiz-subject-icon" style="background:${s.color}22">${s.icon}</div>
-            <div class="quiz-subject-info">
-                <div class="quiz-subject-name">${s.name}</div>
-                <div class="quiz-subject-meta">${completed.length} completed chapter${completed.length!==1?'s':''}</div>
+    <div style="padding:16px">
+        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
+            <div style="width:42px;height:42px;border-radius:10px;background:${s.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${s.icon}</div>
+            <div style="flex:1;min-width:0">
+                <div style="font-size:.88rem;font-weight:700;color:var(--color-text-primary)">${s.name}</div>
+                <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">${completed.length} chapter${completed.length!==1?'s':''} ready</div>
             </div>
             ${dueBadge}
         </div>
-        <div class="quiz-stats-row">
-            ${lastScore!==undefined?`<div class="quiz-stat-chip">Last score: <strong>${lastScore}%</strong></div>`:''}
-            ${avgScore!==null?`<div class="quiz-stat-chip">Avg: <strong>${avgScore}%</strong></div>`:''}
-            ${history.length>0?`<div class="quiz-stat-chip">Taken: <strong>${history.length}x</strong></div>`:''}
-            ${hasCached?`<div class="quiz-stat-chip" style="color:var(--color-success)">✓ Questions ready</div>`:''}
-        </div>
-        <div class="quiz-interval-row" style="margin-bottom:14px">
-            <span class="quiz-interval-label">Review every:</span>
+        ${lastScore!==undefined?`<div class="quiz-score-row">
+            <div class="quiz-score-bar-wrap"><div class="quiz-score-bar-fill" style="width:${lastScore}%;background:${barColor}"></div></div>
+            <div class="quiz-score-label">Last: <strong>${lastScore}%</strong>${avgScore!==null&&history.length>1?` · Avg <strong>${avgScore}%</strong>`:''}</div>
+        </div>`:''}
+        ${history.length>0?`<div class="quiz-stats-row"><div class="quiz-stat-chip">Taken <strong>${history.length}×</strong></div>${hasCached?'<div class="quiz-stat-chip" style="color:var(--color-success)">✓ Cached</div>':''}</div>`:''}
+        <div class="quiz-interval-row">
+            <span class="quiz-interval-label">Review every</span>
             <div class="quiz-interval-chips">
                 ${[3,5,7,14].map(d=>`<button class="quiz-interval-chip ${interval===d?'selected':''}" onclick="event.stopPropagation();App.setQuizInterval('${s.id}',${d})">${d}d</button>`).join('')}
             </div>
@@ -5739,10 +5852,12 @@ ${subjects.map(s=>{
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="App.startQuiz('${s.id}')">
             ${isDue||!qd.lastQuizDate?'⚡ Start Quiz':'🔁 Quiz Again'}
         </button>
-    </div>`;
+    </div>
+</div>`;
 }).join('')}
 </div>`;
     },
+
 
     async startQuiz(subjectId){
         const sub=this.getSubjectById(subjectId);
