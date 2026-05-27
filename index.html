@@ -6033,12 +6033,12 @@ ${subjects.map(s=>{
         const pool=[...qd.questions];
         const shuffled=pool.sort(()=>Math.random()-.5).slice(0,Math.min(10,pool.length));
         // Shuffle options for each question
-        shuffled.forEach(q=>{
-            const opts=[...q.options];
-            const correct=opts[q.correctIndex];
-            opts.sort(()=>Math.random()-.5);
-            q.correctIndex=opts.indexOf(correct);
-            q.options=opts;
+        shuffled.forEach((q, idx)=>{
+            const clone={...q, options:[...q.options]};
+            const correct=clone.options[clone.correctIndex];
+            clone.options.sort(()=>Math.random()-.5);
+            clone.correctIndex=clone.options.indexOf(correct);
+            shuffled[idx]=clone;
         });
 
         // Start session
@@ -6100,7 +6100,13 @@ Return ONLY a JSON array, no markdown, no extra text. Format:
     "chapter": "Chapter name",
     "difficulty": "easy|medium|hard"
   }
-]`;
+]
+  
+CRITICAL ACCURACY RULES:
+- For any calculation question (LCM, HCF, area, percentage, etc.), verify the answer step-by-step before setting correctIndex
+- correctIndex MUST point to the provably correct answer — never guess
+- If you are not 100% certain of the answer, skip that question and replace it with one you are certain about
+`;
 
         const { data: { session: authSession } } = await window.supabase.auth.getSession();
     const res=await fetch('/api/quiz',{
