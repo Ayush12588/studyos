@@ -3,3 +3,9 @@
     "@supabase/supabase-js": "^2.105.4"
   }
 }
+{
+  "type": "module",
+  "dependencies": {
+    "@supabase/supabase-js": "^2.105.4"
+  }
+}
