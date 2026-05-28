@@ -331,7 +331,7 @@ export const DB = {
           .select('*')
           .eq('user_id', userId)
           .eq('date', date)
-          .single()
+          .maybeSingle()
       );
     },
 
@@ -340,7 +340,7 @@ export const DB = {
         supabase.from('challenges')
           .upsert({ ...data, user_id: userId, date }, { onConflict: 'user_id,date' })
           .select()
-          .single()
+          .maybeSingle()
       );
     },
   },
