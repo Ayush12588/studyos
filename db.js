@@ -385,7 +385,7 @@ export const DB = {
             { onConflict: 'user_id,badge_id', ignoreDuplicates: true }
           )
           .select()
-          .single()
+          .maybeSingle()
       );
     },
   },
