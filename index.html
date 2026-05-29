@@ -4973,7 +4973,7 @@ const App={
         const unresolved=doubts.filter(d=>d.status==='unresolved');
         const asked=doubts.filter(d=>d.status==='asked');
         const understood=doubts.filter(d=>d.status==='understood');
-        let h=`<div style="display:flex;flex-wrap:wrap;justify-content:space-between;margin-bottom:18px;gap:12px"><div class="grid grid-3" style="gap:10px;flex:1;min-width:0"><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(239,68,68,0.12);width:36px;height:36px;font-size:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3 style="font-size:1.2rem">${unresolved.length}</h3><p>Unresolved</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(245,158,11,0.12);width:36px;height:36px;font-size:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="stat-info"><h3 style="font-size:1.2rem">${asked.length}</h3><p>Asked</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(16,185,129,0.12);width:36px;height:36px;font-size:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 style="font-size:1.2rem">${understood.length}</h3><p>Understood</p></div></div></div><button class="btn btn-primary" onclick="App.openDoubtModal()" style="align-self:flex-start">+ Add Doubt</button></div>`;
+        let h=`<div style="display:flex;flex-direction:column;gap:12px;margin-bottom:18px"><button class="btn btn-primary" onclick="App.openDoubtModal()" style="width:100%;justify-content:center">+ Add Doubt</button><div class="grid grid-3" style="gap:10px"><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(239,68,68,0.12);width:36px;height:36px;font-size:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3 style="font-size:1.2rem">${unresolved.length}</h3><p>Unresolved</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(245,158,11,0.12);width:36px;height:36px;font-size:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 8h1a4 4 0 0 1 0 8h-1"/><path d="M2 8h16v9a4 4 0 0 1-4 4H6a4 4 0 0 1-4-4V8z"/><line x1="6" y1="1" x2="6" y2="4"/><line x1="10" y1="1" x2="10" y2="4"/><line x1="14" y1="1" x2="14" y2="4"/></svg></div><div class="stat-info"><h3 style="font-size:1.2rem">${asked.length}</h3><p>Asked</p></div></div><div class="card stat-card" style="padding:14px"><div class="stat-icon" style="background:rgba(16,185,129,0.12);width:36px;height:36px;font-size:1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3 style="font-size:1.2rem">${understood.length}</h3><p>Understood</p></div></div></div></div>`;
 
         const renderDoubtList=(title,list,emoji)=>{
             if(list.length===0)return'';
@@ -5790,14 +5790,176 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         const f=e.target.files[0];if(!f)return;
         if(!confirm('This will replace ALL current data. Continue?')){e.target.value='';return}
         const r=new FileReader();
-        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();this.render();this.updateSidebar();this.applyTheme();this.toast('Data imported! 📥','success')}catch(err){this.toast('Invalid file format','error')}};
+        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();this.render();this.updateSidebar();this.applyTheme();this.toast('Data imported! 📥','success');this._importSyncToSupabase(parsed);}catch(err){this.toast('Invalid file format','error')}};
         r.readAsText(f);e.target.value='';
     },
     welcomeImport(e){
         const f=e.target.files[0];if(!f)return;
         const r=new FileReader();
-        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();document.getElementById('welcome-overlay').classList.add('hidden');this.render();this.updateSidebar();this.applyTheme();this.toast('Welcome back, '+this.state.profile.name+'! 📥','success')}catch(err){this.toast('Invalid backup file — could not import.','error')}};
+        r.onload=ev=>{try{const parsed=JSON.parse(ev.target.result);Object.assign(this.state,parsed);this.state.currentPage='dashboard';this.save();document.getElementById('welcome-overlay').classList.add('hidden');this.render();this.updateSidebar();this.applyTheme();this.toast('Welcome back, '+this.state.profile.name+'! 📥','success');this._importSyncToSupabase(parsed);}catch(err){this.toast('Invalid backup file — could not import.','error')}};
         r.readAsText(f);e.target.value='';
+    },
+    async _importSyncToSupabase(parsed){
+        const uid=window._supabaseUserId;
+        if(!uid)return; // not logged in — localStorage-only, nothing to do
+        this.toast('Syncing to cloud… ☁️','info');
+        try{
+            // ── 1. Profile ───────────────────────────────────────────────────
+            const p=parsed.profile||{};
+            await DB.profile.update(uid,{
+                name:                p.name||'',
+                xp:                  p.xp||0,
+                level:               p.level||1,
+                streak:              p.streak||0,
+                last_study_date:     p.lastStudyDate||p.last_study_date||null,
+                max_daily_minutes:   p.maxDailyMinutes||p.max_daily_minutes||0,
+                exam_date:           p.examDate||p.exam_date||null,
+                target_score:        p.targetScore||p.target_score||90,
+                daily_goal_minutes:  p.dailyGoalMinutes||p.daily_goal_minutes||120,
+                mood:                p.mood||null,
+                mood_history:        JSON.stringify(p.moodHistory||p.mood_history||[]),
+                selected_class:      p.selectedClass||p.selected_class||10,
+                selected_stream:     p.selectedStream||p.selected_stream||null,
+                streak_freezes:      p.streakFreezes||p.streak_freezes||1,
+                pomodoro_completed:  p.pomodoroCompleted||p.pomodoro_completed||0,
+                weekly_plan:         JSON.stringify(parsed.weeklyPlan||{}),
+            });
+
+            // ── 2. Subjects → build old-ID-to-new-ID map ────────────────────
+            const subjectIdMap={};   // oldId → newSupabaseId
+            const chapterIdMap={};   // oldId → newSupabaseId
+            const subjects=parsed.subjects||[];
+
+            for(const sub of subjects){
+                const {data:sd,error:se}=await DB.subjects.create(uid,{
+                    name:  sub.name,
+                    icon:  sub.icon,
+                    color: sub.color,
+                });
+                if(se||!sd||!sd.id){console.error('[import] subject create failed',se);continue;}
+                subjectIdMap[sub.id]=sd.id;
+
+                // ── 3. Chapters for this subject ─────────────────────────────
+                const chapters=sub.chapters||[];
+                for(let i=0;i<chapters.length;i++){
+                    const ch=chapters[i];
+                    const {data:cd,error:ce}=await DB.chapters.create({
+                        user_id:       uid,
+                        subject_id:    sd.id,
+                        name:          ch.name,
+                        status:        ch.status||'not-started',
+                        difficulty:    ch.difficulty||'medium',
+                        deadline:      ch.deadline||null,
+                        revision_count:ch.revisionCount||ch.revision_count||0,
+                        order_index:   ch.order??ch.order_index??i,
+                    });
+                    if(ce||!cd||!cd.id){console.error('[import] chapter create failed',ce);continue;}
+                    chapterIdMap[ch.id]=cd.id;
+                }
+            }
+
+            // ── 4. Sessions ──────────────────────────────────────────────────
+            const sessions=parsed.sessions||[];
+            await Promise.all(sessions.map(s=>
+                DB.sessions.create({
+                    user_id:    uid,
+                    subject_id: subjectIdMap[s.subjectId||s.subject_id]||null,
+                    chapter_id: chapterIdMap[s.chapterId||s.chapter_id]||null,
+                    time_spent: s.timeSpent||s.time_spent||0,
+                    date:       s.date||this.today(),
+                    type:       s.type||'learning',
+                    rating:     s.rating||3,
+                    notes:      s.notes||'',
+                }).then(({error})=>{if(error)console.error('[import] session:',error);})
+            ));
+
+            // ── 5. Tasks ─────────────────────────────────────────────────────
+            const tasks=parsed.tasks||[];
+            await Promise.all(tasks.map(t=>
+                DB.tasks.create({
+                    user_id: uid,
+                    text:    t.text,
+                    done:    t.done||false,
+                    date:    t.date||this.today(),
+                }).then(({error})=>{if(error)console.error('[import] task:',error);})
+            ));
+
+            // ── 6. Doubts ────────────────────────────────────────────────────
+            const doubts=parsed.doubts||[];
+            await Promise.all(doubts.map(d=>
+                DB.doubts.create({
+                    user_id:    uid,
+                    subject_id: subjectIdMap[d.subjectId||d.subject_id]||null,
+                    text:       d.text||d.question||'',
+                    status:     d.status||'unresolved',
+                }).then(({error})=>{if(error)console.error('[import] doubt:',error);})
+            ));
+
+            // ── 7. Exam scores ───────────────────────────────────────────────
+            const examScores=parsed.examScores||[];
+            await Promise.all(examScores.map(ex=>
+                DB.examScores.create({
+                    user_id:    uid,
+                    subject_id: subjectIdMap[ex.subjectId||ex.subject_id]||null,
+                    name:       ex.name||'',
+                    scored:     ex.scored||0,
+                    total:      ex.total||100,
+                    date:       ex.date||this.today(),
+                }).then(({error})=>{if(error)console.error('[import] examScore:',error);})
+            ));
+
+            // ── 8. Notes ─────────────────────────────────────────────────────
+            const notes=parsed.notes||[];
+            await Promise.all(notes.map(n=>
+                DB.notes.create({
+                    user_id:    uid,
+                    title:      n.title||'',
+                    content:    n.content||'',
+                    subject_id: subjectIdMap[n.subjectId||n.subject_id]||null,
+                }).then(({error})=>{if(error)console.error('[import] note:',error);})
+            ));
+
+            // ── 9. Resources ─────────────────────────────────────────────────
+            const resources=parsed.resources||[];
+            await Promise.all(resources.map(res=>
+                DB.resources.create({
+                    user_id:    uid,
+                    title:      res.title||'',
+                    url:        res.url||'',
+                    type:       res.type||'link',
+                    subject_id: subjectIdMap[res.subjectId||res.subject_id]||null,
+                }).then(({error})=>{if(error)console.error('[import] resource:',error);})
+            ));
+
+            // ── 10. Badges ───────────────────────────────────────────────────
+            const badges=parsed.earnedBadges||[];
+            await Promise.all(badges.map(bid=>
+                DB.badges.add(uid,bid)
+                    .then(({error})=>{if(error&&!error.message?.includes('duplicate'))console.error('[import] badge:',error);})
+            ));
+
+            // ── 11. Daily challenges ─────────────────────────────────────────
+            const dc=parsed.dailyChallenges||{};
+            if(dc.date){
+                await DB.challenges.upsert(uid,dc.date,{
+                    goal:      JSON.stringify(dc.challenges||[]),
+                    completed: JSON.stringify(dc.completed||[]),
+                }).then(({error})=>{if(error)console.error('[import] challenges:',error);});
+            }
+
+            // ── 12. Quiz data ────────────────────────────────────────────────
+            const quizData=parsed.quizData||{};
+            await Promise.all(Object.entries(quizData).map(([oldSubId,qd])=>{
+                const newSubId=subjectIdMap[oldSubId]||oldSubId;
+                return DB.quiz.upsert(uid,newSubId,{data:JSON.stringify(qd)})
+                    .then(({error})=>{if(error)console.error('[import] quiz:',error);});
+            }));
+
+            this.toast('Cloud sync complete ✅','success');
+        }catch(err){
+            console.error('[import] _importSyncToSupabase error:',err);
+            this.toast('Import saved locally. Cloud sync failed — try re-importing.','warning');
+        }
     },
     async resetAll(){
         if(!confirm('⚠️ Delete ALL data? This cannot be undone!'))return;
