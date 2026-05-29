@@ -4090,6 +4090,7 @@ const App={
     loadCBSE(){
         const _lcUid=window._supabaseUserId;
         this.CLASS10_DATA.forEach(sub=>{
+            if(this.state.subjects.some(s=>s.name.trim().toLowerCase()===sub.name.trim().toLowerCase()))return;
             const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
             sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
@@ -4124,6 +4125,7 @@ const App={
         this.state.profile.selectedStream = stream;
         const _lcUid = window._supabaseUserId;
         data.forEach(sub => {
+            if(this.state.subjects.some(s=>s.name.trim().toLowerCase()===sub.name.trim().toLowerCase()))return;
             const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
             sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
