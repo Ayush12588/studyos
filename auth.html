@@ -369,7 +369,12 @@
             if(supabase) {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) {
-                    showToast(error.message, 'error');
+                    const _msg = error.message || '';
+                    const _isCredErr = _msg.toLowerCase().includes('invalid login credentials') || _msg.toLowerCase().includes('invalid credentials');
+                    const _friendlyMsg = _isCredErr
+                        ? 'Wrong password, or this account uses Google sign-in — try the "Continue with Google" button below.'
+                        : _msg;
+                    showToast(_friendlyMsg, 'error');
                     btnText.innerText = originalText;
                 } else {
                     showToast('Logged in successfully!', 'success'); 
@@ -408,7 +413,12 @@
                     options: { data: { full_name: name } }
                 });
                 if (error) {
-                    showToast(error.message, 'error');
+                    const _msg = error.message || '';
+                    const _isCredErr = _msg.toLowerCase().includes('invalid login credentials') || _msg.toLowerCase().includes('invalid credentials');
+                    const _friendlyMsg = _isCredErr
+                        ? 'Wrong password, or this account uses Google sign-in — try the "Continue with Google" button below.'
+                        : _msg;
+                    showToast(_friendlyMsg, 'error');
                     btnText.innerText = originalText;
                 } else {
                     showToast('Account created! Please check your email.', 'success');
