@@ -113,6 +113,12 @@
 
     /* Layout */
     --sidebar-w: 240px;
+
+    /* AI Coach avatar */
+    --coach-avatar-bg: linear-gradient(135deg, rgba(129,140,248,0.26), rgba(79,70,229,0.14) 52%, rgba(56,189,248,0.16));
+    --coach-avatar-border: rgba(129,140,248,0.26);
+    --coach-avatar-icon: #C7D2FE;
+    --coach-avatar-glass: rgba(255,255,255,0.18);
 }
 
 /* ── Light theme (legacy toggle support) ── */
@@ -132,6 +138,10 @@
     --text-primary:        #12121A;
     --text-secondary:      #6B6B8A;
     --text-muted:          #9A9AB8;
+    --coach-avatar-bg: linear-gradient(135deg, rgba(79,70,229,0.18), rgba(129,140,248,0.12) 50%, rgba(56,189,248,0.16));
+    --coach-avatar-border: rgba(79,70,229,0.16);
+    --coach-avatar-icon: #4F46E5;
+    --coach-avatar-glass: rgba(255,255,255,0.55);
 }
 
 [data-theme="warm-dark"] {
@@ -190,6 +200,10 @@
     --gradient-2:          #C4724A;
     --gradient-3:          #4A9E6B;
     --gradient-4:          #D4891A;
+    --coach-avatar-bg: linear-gradient(135deg, rgba(212,137,26,0.24), rgba(184,117,15,0.14) 52%, rgba(232,171,82,0.16));
+    --coach-avatar-border: rgba(212,137,26,0.26);
+    --coach-avatar-icon: #F5C46F;
+    --coach-avatar-glass: rgba(255,235,190,0.14);
 }
 
 /* ── Base ── */
@@ -2386,7 +2400,15 @@ body { overscroll-behavior-y: contain; }
 .coach-stat-lbl{font-size:.62rem;color:var(--text-muted);font-weight:500;text-transform:uppercase;letter-spacing:.4px}
 .coach-card{background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius);overflow:hidden;margin-bottom:14px}
 .coach-card-header{display:flex;align-items:center;gap:10px;padding:14px 16px;border-bottom:1px solid var(--color-border)}
-.coach-avatar{width:36px;height:36px;border-radius:10px;background:linear-gradient(135deg,var(--color-brand),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.coach-avatar{width:36px;height:36px;border-radius:10px;background:var(--coach-avatar-bg);border:1px solid var(--coach-avatar-border);color:var(--coach-avatar-icon);display:flex;align-items:center;justify-content:center;flex-shrink:0;position:relative;overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.coach-avatar::before{content:'';position:absolute;inset:1px 1px auto 1px;height:48%;border-radius:9px 9px 6px 6px;background:linear-gradient(180deg,var(--coach-avatar-glass),transparent);pointer-events:none}
+.coach-avatar svg{width:28px;height:28px;display:block;stroke-width:3.6;position:relative;z-index:1}
+.coach-chat-avatar{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.coach-chat-avatar.user{background:var(--gradient-1);font-size:1rem}
+.coach-chat-avatar.bot{border-radius:9px;background:var(--coach-avatar-bg);border:1px solid var(--coach-avatar-border);color:var(--coach-avatar-icon);position:relative;overflow:hidden;backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px)}
+.coach-chat-avatar.bot::before{content:'';position:absolute;inset:1px 1px auto 1px;height:48%;border-radius:8px 8px 5px 5px;background:linear-gradient(180deg,var(--coach-avatar-glass),transparent);pointer-events:none}
+.coach-chat-avatar.bot svg{width:24px;height:24px;display:block;stroke-width:3.6;position:relative;z-index:1}
+.coach-chat-avatar.coach-typing-avatar{width:30px;height:30px;border-radius:8px}
 .coach-title{font-size:.9rem;font-weight:700;color:var(--color-text-primary);flex:1}
 .coach-status-dot{width:7px;height:7px;border-radius:50%;background:var(--color-success);flex-shrink:0;box-shadow:0 0 0 2px rgba(34,197,94,0.2)}
 .coach-chat-body{height:300px;overflow-y:auto;padding:14px 16px;scroll-behavior:smooth}
@@ -5512,6 +5534,15 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         this.scrollChat();
     },
 
+    coachIconSvg(){
+        return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M47 18C32 12 20 22 26 34C12 35 10 52 22 56C11 68 24 82 34 74C40 86 49 80 47 68" />
+            <path d="M53 18C68 12 80 22 74 34C88 35 90 52 78 56C89 68 76 82 66 74C60 86 51 80 53 68" />
+            <circle cx="50" cy="42" r="8" />
+            <path d="M35 68C35 53 65 53 65 68" />
+        </svg>`;
+    },
+
     renderChatMessages(){
         const container=document.getElementById('coach-messages');
         if(!container)return;
@@ -5521,7 +5552,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
             // Simple markdown: **bold**, newlines
             const formatted=text.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
             return`<div style="display:flex;gap:10px;margin-bottom:14px;${isUser?'flex-direction:row-reverse':''}">
-                <div style="width:32px;height:32px;border-radius:50%;background:${isUser?'var(--gradient-1)':'rgba(99,102,241,0.15)'};display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0">${isUser?'👤':'🤖'}</div>
+                <div class="coach-chat-avatar ${isUser?'user':'bot'}">${isUser?'👤':this.coachIconSvg()}</div>
                 <div style="max-width:78%;background:${isUser?'var(--gradient-1)':'var(--bg-card)'};border:1px solid ${isUser?'transparent':'var(--border)'};border-radius:${isUser?'14px 4px 14px 14px':'4px 14px 14px 14px'};padding:10px 14px;font-size:.85rem;line-height:1.6;color:${isUser?'#fff':'var(--text-primary)'}">
                     ${formatted}
                 </div>
@@ -5566,7 +5597,9 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
 </div>
 <div class="coach-card">
     <div class="coach-card-header">
-        <div class="coach-avatar">🤖</div>
+        <div class="coach-avatar" aria-hidden="true">
+            ${this.coachIconSvg()}
+        </div>
         <div class="coach-title">AI Study Coach</div>
         <div class="coach-status-dot"></div>
         <button class="btn btn-sm btn-ghost" onclick="App.clearCoachHistory()" title="Clear chat" style="margin-left:4px;padding:4px 8px;min-height:unset"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button>
@@ -5574,7 +5607,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     <div class="coach-chat-body" id="coach-chat-box">
         <div id="coach-messages"></div>
         <div id="coach-typing" style="display:none;align-items:center;gap:10px;margin-bottom:10px">
-            <div style="width:30px;height:30px;border-radius:8px;background:linear-gradient(135deg,var(--color-brand),#7C3AED);display:flex;align-items:center;justify-content:center;font-size:.9rem">🤖</div>
+            <div class="coach-chat-avatar bot coach-typing-avatar">${this.coachIconSvg()}</div>
             <div style="background:var(--color-surface-hover);border:1px solid var(--color-border);border-radius:4px 14px 14px 14px;padding:10px 14px">
                 <div style="display:flex;gap:4px;align-items:center"><span style="width:6px;height:6px;border-radius:50%;background:var(--color-brand);animation:blink 1s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--color-brand);animation:blink 1s .2s infinite"></span><span style="width:6px;height:6px;border-radius:50%;background:var(--color-brand);animation:blink 1s .4s infinite"></span></div>
             </div>
