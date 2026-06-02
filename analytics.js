@@ -19,7 +19,6 @@ const Analytics = (() => {
 
     // ── Track a page view (called on every App.navigate) ─────────────────────
     function trackPage(page) {
-        // Send time spent on the page we're leaving as a custom event
         if (_currentPage && _pageStart) {
             const seconds = Math.round((Date.now() - _pageStart) / 1000);
             _u()?.track('page_time', { page: _currentPage, seconds });
@@ -28,10 +27,9 @@ const Analytics = (() => {
         _currentPage = page;
         _pageStart   = Date.now();
 
-        // Umami pageview — url format makes pages readable in the dashboard
-        _u()?.track({ url: '/' + page, title: page });
+        // Use string format instead of object
+        _u()?.track('page-' + page);
     }
-
     // ── Track a feature interaction ───────────────────────────────────────────
     function trackFeature(name, props = {}) {
         const hasProps = Object.keys(props).length > 0;
