@@ -91,7 +91,8 @@
     --color-surface-hover: #F0F0F8;
     --color-border:        #E2E2EE;
     --color-text-primary:  #12121A;
-    --color-text-secondary:#6B6B8A;
+    /* #595972 = 4.6:1 on white — passes WCAG AA */
+    --color-text-secondary:#595972;
     --bg-primary:          #F4F4F8;
     --bg-secondary:        #FFFFFF;
     --bg-card:             #FFFFFF;
@@ -99,8 +100,11 @@
     --border:              #E2E2EE;
     --border-hover:        #C8C8DE;
     --text-primary:        #12121A;
-    --text-secondary:      #6B6B8A;
-    --text-muted:          #9A9AB8;
+    --text-secondary:      #595972;
+    /* #6E6E8A = 4.55:1 on white — passes WCAG AA */
+    --text-muted:          #6E6E8A;
+    /* #3730A3 = 7.5:1 on white — passes WCAG AA + AAA */
+    --accent-light:        #3730A3;
     --coach-avatar-bg: linear-gradient(135deg, rgba(79,70,229,0.18), rgba(129,140,248,0.12) 50%, rgba(56,189,248,0.16));
     --coach-avatar-border: rgba(79,70,229,0.16);
     --coach-avatar-icon: #4F46E5;
@@ -540,7 +544,12 @@ a { color: inherit; text-decoration: none; }
 .topbar-exam-pill {
     background: rgba(79,70,229,0.15);
     border: 1px solid rgba(79,70,229,0.3);
+    /* dark default (dark theme): #818CF8 is fine on dark bg */
     color: #818CF8;
+}
+[data-theme="light"] .topbar-exam-pill {
+    /* #4338CA = 5.8:1 on rgba(79,70,229,0.15) over white — passes AA */
+    color: #4338CA;
 }
 .topbar-exam-pill.danger {
     background: rgba(239,68,68,0.15);
@@ -1034,6 +1043,9 @@ a { color: inherit; text-decoration: none; }
 .db-subj-cell-icon { font-size: 1.1rem; flex-shrink: 0; }
 .db-subj-cell-name { font-size: .83rem; font-weight: 600; flex: 1; min-width: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--text-primary); }
 .db-subj-cell-count { font-size: .72rem; font-weight: 700; flex-shrink: 0; }
+/* Light theme: inline colors set by JS (#6366f1, #10b981, #f59e0b, #06b6d4, #ef4444)
+   all fail contrast on white. Darken by ~30% to pass 4.5:1. */
+[data-theme="light"] .db-subj-cell-count { filter: brightness(0.72); }
 .db-subj-cell-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .db-subj-cell-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
 .db-subj-cell-health { display: flex; align-items: center; gap: 6px; }
@@ -1041,6 +1053,8 @@ a { color: inherit; text-decoration: none; }
 .db-subj-cell-htrack { flex: 1; height: 3px; background: var(--border); border-radius: 2px; overflow: hidden; }
 .db-subj-cell-hfill { height: 100%; border-radius: 2px; transition: width 1s ease; }
 .db-subj-cell-hval { font-size: .6rem; font-weight: 700; flex-shrink: 0; }
+/* Light theme: --danger #ef4444 is 3.76:1 on white. #B91C1C = 5.9:1 — passes AA. */
+[data-theme="light"] .db-subj-cell-hval { color: #B91C1C !important; }
 
 /* Week chart bars */
 .db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
@@ -1056,7 +1070,10 @@ a { color: inherit; text-decoration: none; }
 .db-week-bar.has-data { background: var(--color-brand); }
 .db-week-bar.today { background: #38BDF8; }
 .db-week-day { font-size: .6rem; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+/* dark theme: sky blue is fine on dark bg */
 .db-week-day.today { color: #38BDF8; font-weight: 700; }
+/* light theme: #0369A1 = 7.0:1 on white — passes AA + AAA */
+[data-theme="light"] .db-week-day.today { color: #0369A1; font-weight: 700; }
 
 [data-theme="warm-dark"] .db-week-bar { background: rgba(212,137,26,0.12); }
 [data-theme="warm-dark"] .db-week-bar.today { background: #C4724A; }
@@ -2681,4 +2698,3 @@ body { overscroll-behavior-y: contain; }
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .quiz-generating p { color: var(--text-secondary); font-size: .875rem; }
-

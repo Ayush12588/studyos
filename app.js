@@ -1417,7 +1417,7 @@ const App={
                 ?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px 0">All caught up! 🎉</p>'
                 :plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')">
                     <div class="plan-emoji">${p.subjectIcon}</div>
-                    <div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName}</p></div>
+                    <div class="plan-info"><h3>${p.name}</h3><p>${p.subjectName}</p></div>
                     <span style="font-size:.65rem;padding:3px 8px;border-radius:6px;white-space:nowrap;background:${p.priority==='overdue'?'rgba(239,68,68,0.1)':p.priority==='revised'?'rgba(6,182,212,0.1)':'rgba(99,102,241,0.1)'};color:${p.priority==='overdue'?'var(--danger)':p.priority==='revised'?'var(--info)':'var(--accent-light)'}">${p.reason}</span>
                 </div>`).join('')}
         </div>`;
@@ -1455,7 +1455,7 @@ const App={
         </div>`:'';
 
         // ── SAVED INDICATOR ───────────────────────────────────────
-        const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a onclick="App.exportData()" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
+        const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a href="#" onclick="App.exportData();return false;" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
 
         // ── P0-3: WEAK CHAPTERS ───────────────────────────────────
         const weakChapters=this.getAllChapters().filter(c=>c.weakFlag);
@@ -1467,7 +1467,7 @@ const App={
             <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px">These chapters had low confidence ratings across multiple sessions. Revisit before boards.</p>
             ${weakChapters.slice(0,5).map(c=>`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="border-color:rgba(239,68,68,0.25)">
                 <div class="plan-emoji">${c.subjectIcon}</div>
-                <div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName}</p></div>
+                <div class="plan-info"><h3>${c.name}</h3><p>${c.subjectName}</p></div>
                 <span style="font-size:.72rem;color:var(--danger);font-weight:600">⚠️ Weak</span>
             </div>`).join('')}
             ${weakChapters.length>5?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:6px;text-align:center">+${weakChapters.length-5} more · <span style="color:var(--accent-light);cursor:pointer" onclick="App.navigate('subjects')">View all →</span></p>`:''}
