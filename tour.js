@@ -298,6 +298,13 @@
         color: #000;
       }
       .sos-next:hover { opacity: 0.88; }
+      .sos-back {
+        background: transparent;
+        color: var(--color-text-secondary, #64748b);
+        border: 1px solid rgba(255,255,255,0.1);
+        padding: 6px 11px;
+      }
+      .sos-back:hover { color: var(--color-text, #f1f5f9); border-color: rgba(255,255,255,0.2); }
       .sos-ring {
         outline: 2px solid var(--color-warning, #f59e0b) !important;
         outline-offset: 4px !important;
@@ -339,7 +346,8 @@
       <div class="sos-footer">
         <div class="sos-dots">${dots}</div>
         <div class="sos-btns">
-          <button class="sos-btn sos-skip" id="sos-skip-btn">Skip tour</button>
+          <button class="sos-btn sos-skip" id="sos-skip-btn">Skip</button>
+          ${index > 0 ? '<button class="sos-btn sos-back" id="sos-back-btn">← Back</button>' : ''}
           <button class="sos-btn sos-next" id="sos-next-btn">
             ${isLast ? 'Done 🎉' : 'Next →'}
           </button>
@@ -349,6 +357,7 @@
 
     document.getElementById('sos-next-btn').onclick = advance;
     document.getElementById('sos-skip-btn').onclick = end;
+    if (index > 0) document.getElementById('sos-back-btn').onclick = back;
   }
 
   // ─── Position ─────────────────────────────────────────────────────────────
@@ -462,12 +471,19 @@
     });
   }
 
-  // ─── Advance / End ────────────────────────────────────────────────────────
+  // ─── Advance / Back / End ─────────────────────────────────────────────────
   function advance() {
     currentStep++;
     if (currentStep >= steps.length) {
       end();
     } else {
+      showStep(currentStep);
+    }
+  }
+
+  function back() {
+    if (currentStep > 0) {
+      currentStep--;
       showStep(currentStep);
     }
   }
@@ -502,7 +518,11 @@
 
   window.StudyOSTour = {
     start,
-    reset: () => localStorage.removeItem(TOUR_KEY), // dev/testing helper
+    reset: () => localStorage.removeItem(TOUR_KEY),   // dev/testing helper
+    replay: () => {                                     // for Settings page button
+      localStorage.removeItem(TOUR_KEY);
+      start();
+    },
   };
 
 })();
