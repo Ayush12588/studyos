@@ -1060,6 +1060,7 @@ const App={
         setTimeout(_patchSidebarExam,300);
         this.celebrate();
         this.toast('Welcome, '+this.state.profile.name+'! 🚀','success');
+        setTimeout(() => window.StudyOSTour && window.StudyOSTour.start(), 3000);
     },
 
     // NAV
