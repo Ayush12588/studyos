@@ -2603,6 +2603,27 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         <div class="card"><div class="card-header"><span class="card-title">Statistics</span></div><div style="font-size:.85rem;color:var(--text-secondary);line-height:2"><p>Sessions: <strong style="color:var(--text-primary)">${stats.totalSessions}</strong></p><p>Total Study Time: <strong style="color:var(--text-primary)">${this.formatMin(stats.totalMinutes)}</strong></p><p>Chapters Done: <strong style="color:var(--text-primary)">${stats.completedChapters}/${this.getTotalChapters()}</strong></p><p>Total Revisions: <strong style="color:var(--text-primary)">${stats.totalRevisions}</strong></p><p>Current Streak: <strong style="color:var(--text-primary)">${stats.streak} days</strong></p><p>Exams Logged: <strong style="color:var(--text-primary)">${this.state.examScores.length}</strong></p><p>Doubts: <strong style="color:var(--text-primary)">${this.state.doubts.length} (${this.state.doubts.filter(d=>d.status==='unresolved').length} unresolved)</strong></p><p>Notes: <strong style="color:var(--text-primary)">${(this.state.notes||[]).length}</strong></p><p>Resources: <strong style="color:var(--text-primary)">${(this.state.resources||[]).length}</strong></p><p>Level ${stats.level} (${p.xp} XP)</p></div></div></div><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Data Management</span></div><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-secondary" onclick="App.exportData()" style="justify-content:center">Export Data (JSON)</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()" style="justify-content:center">Import Data</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)"><hr style="border-color:var(--border)"><button class="btn btn-danger" onclick="App.resetAll()" style="justify-content:center">Reset All Data</button></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>
         <div class="card"><div class="card-header"><span class="card-title">About StudyOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">StudyOS is your personal study OS. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p><hr style="border-color:var(--border);margin:12px 0"><button class="btn btn-secondary" onclick="window.StudyOSTour&&window.StudyOSTour.replay();App.navigate('dashboard')" style="justify-content:center;width:100%">🗺️ Replay Onboarding Tour</button></div></div></div>`;
+        // Inject Install App card after render
+        this._renderPWACard();
+    },
+
+    _renderPWACard(){
+        const el = document.getElementById('page-settings');
+        if (!el) return;
+        const isInstalled = window._pwaIsInstalled && window._pwaIsInstalled();
+        const isIOS       = window._pwaIsIOS && window._pwaIsIOS();
+        const hasPrompt   = !!window._pwaInstallPrompt;
+        let card = '';
+        if (isInstalled || window._pwaInstalled) {
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(16,185,129,0.3)"><div class="card-header"><span class="card-title">📲 Install App</span></div><div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--success,#10b981)"><span style="font-size:1.4rem">✅</span><span>StudyOS is installed on your device. You&apos;re all set!</span></div></div>`;
+        } else if (isIOS) {
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">📲 Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Add StudyOS to your home screen for instant access — no browser needed.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">📋 How to Install on iPhone / iPad</button><div id="pwa-ios-tip" style="display:none;margin-top:12px;background:var(--color-surface-hover,rgba(255,255,255,0.05));border-radius:10px;padding:14px;font-size:.8rem;color:var(--text-secondary);line-height:2.1"><p style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Follow these steps:</p><p>1. Tap the <strong style="color:var(--text-primary)">Share button ⎋</strong> at the bottom of Safari</p><p>2. Scroll down and tap <strong style="color:var(--text-primary)">"Add to Home Screen"</strong></p><p>3. Tap <strong style="color:var(--text-primary)">"Add"</strong> in the top right corner</p><p style="margin-top:8px;font-size:.74rem;color:var(--text-muted)">⚠️ Must be opened in Safari. Chrome on iPhone won&apos;t show this option.</p></div></div>`;
+        } else if (hasPrompt) {
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">📲 Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Install StudyOS as an app for faster access, offline support, and a distraction-free study experience.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">⬇️ Install StudyOS</button><p style="font-size:.72rem;color:var(--text-muted);margin-top:8px;text-align:center">Works offline · No app store needed · Instant launch</p></div>`;
+        } else {
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid var(--border)"><div class="card-header"><span class="card-title">📲 Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8"><strong style="color:var(--text-primary)">Chrome / Edge:</strong> Click the <strong>⊕ install icon</strong> in the address bar.<br><strong style="color:var(--text-primary)">Android:</strong> Tap <strong>⋮ Menu → Add to Home Screen</strong>.<br><strong style="color:var(--text-primary)">iPhone (Safari):</strong> Tap <strong>Share ⎋ → Add to Home Screen</strong>.</p></div>`;
+        }
+        el.insertAdjacentHTML('afterbegin', card);
     },
 
     // SEARCH
@@ -3515,3 +3536,57 @@ if ('serviceWorker' in navigator) {
             });
     });
 }
+
+// ─── PWA Install Engine ───────────────────────────────────────────────────
+(function () {
+    window._pwaInstallPrompt = null;   // captured deferred event
+    window._pwaInstalled = false;      // flips true after install
+
+    // Detect iOS Safari
+    window._pwaIsIOS = () =>
+        /iphone|ipad|ipod/i.test(navigator.userAgent) && !window.MSStream;
+
+    // Detect if already running as installed PWA
+    window._pwaIsInstalled = () =>
+        window.matchMedia('(display-mode: standalone)').matches ||
+        window.navigator.standalone === true;
+
+    // Capture the install prompt — fires on Chrome/Edge/Android
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        window._pwaInstallPrompt = e;
+        // Re-render settings if it's currently open so button appears
+        if (window.App && App.state && App.state.currentPage === 'settings') {
+            App.renderSettings();
+        }
+    });
+
+    // After install completes, flip flag and re-render settings
+    window.addEventListener('appinstalled', () => {
+        window._pwaInstalled = true;
+        window._pwaInstallPrompt = null;
+        if (window.App && App.state && App.state.currentPage === 'settings') {
+            App.renderSettings();
+        }
+    });
+
+    // Called by the Install button in Settings
+    window._pwaDoInstall = function () {
+        if (window._pwaIsIOS()) {
+            // Toggle iOS tooltip
+            const tip = document.getElementById('pwa-ios-tip');
+            if (tip) tip.style.display = tip.style.display === 'none' ? 'block' : 'none';
+            return;
+        }
+        if (window._pwaInstallPrompt) {
+            window._pwaInstallPrompt.prompt();
+            window._pwaInstallPrompt.userChoice.then((result) => {
+                if (result.outcome === 'accepted') {
+                    window._pwaInstalled = true;
+                    window._pwaInstallPrompt = null;
+                    if (window.App) App.renderSettings();
+                }
+            });
+        }
+    };
+})();
