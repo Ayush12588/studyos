@@ -29,5 +29,3 @@ coverage/
 .DS_Store
 Thumbs.db
 
-styles.min.css
-app.min.js
