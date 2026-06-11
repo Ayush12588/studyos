@@ -235,16 +235,37 @@ const App={
         // Apply theme early so the loading screen inherits correct colours
         this.applyTheme();
 
-        // ── Step 4: Fetch all user data from Supabase ────────────────────────
+        // ── Step 4: MINIMAL bootstrap — only profile + today's challenge ─────
+        //
+        // PERF: The old loadFromSupabase() made 13+ sequential Supabase calls
+        // on every page load, blocking the first render for 16 530 ms.
+        //
+        // New contract:
+        //   • _loadBootstrap()  → 2 parallel calls (profile + challenge).
+        //                         Runs NOW, before first render.
+        //   • _loadTabData(tab) → lazy per-tab fetch, called from navigate().
+        //                         Each tab fetches its own data the first time
+        //                         the user navigates there.  Subsequent visits
+        //                         are served from in-memory state (no re-fetch).
+        //
+        // Result: first paint happens after ~1 network round-trip instead of 13.
         this.showLoadingScreen();
-        await this.loadFromSupabase(session.user.id);
+        await this._loadBootstrap(session.user.id);
         this.hideLoadingScreen();
 
         // ── Step 5: Welcome overlay — only for brand-new users ───────────────
-        // An existing/migrated user must never see this.
+        // subjects haven't loaded yet at this point; we check after the first
+        // navigate-to-subjects fetch instead.  For the welcome check we rely on
+        // the migration flag — new users never have it set.
         const migrationDone = localStorage.getItem('studyos_migration_done');
         if (!migrationDone && this.state.subjects.length === 0) {
-            document.getElementById('welcome-overlay').classList.remove('hidden');
+            // Eagerly fetch subjects in the background so the welcome check is
+            // accurate (subjects may already exist if user refreshed mid-onboard).
+            this._loadTabData('subjects').then(() => {
+                if (this.state.subjects.length === 0) {
+                    document.getElementById('welcome-overlay').classList.remove('hidden');
+                }
+            });
         }
 
         // ── Step 6: Boot the rest of the app ────────────────────────────────
@@ -297,15 +318,31 @@ const App={
         }
     },
 
-    // ── Fetch all user data from Supabase ─────────────────────────────────────
-    async loadFromSupabase(userId){
-        // Store globally so fire-and-forget write helpers can access it
+    // ── MINIMAL BOOTSTRAP (2 parallel calls, runs at every page load) ────────
+    //
+    // Fetches ONLY what the dashboard needs to render its first frame:
+    //   1. profile  — name, streak, exam date, daily goal, XP/level
+    //   2. challenge — today's challenge widget on the home screen
+    //
+    // Everything else (subjects, sessions, tasks, doubts, notes, resources,
+    // badges, checkins, quiz) is fetched lazily by _loadTabData() the first
+    // time the user navigates to the relevant tab.
+    async _loadBootstrap(userId){
         window._supabaseUserId = userId;
-        const warn = (label, error) => console.warn(`[StudyOS] loadFromSupabase — ${label} failed:`, error);
+        const warn = (label, error) => console.warn(`[StudyOS] bootstrap — ${label} failed:`, error);
 
-        // ── a. Profile ───────────────────────────────────────────────────────
+        const today = this.today();
+
+        // Run the two bootstrap calls in parallel — neither depends on the other.
+        const [profileResult, challengeResult] = await Promise.allSettled([
+            DB.profile.get(userId),
+            DB.challenges.getToday(userId, today),
+        ]);
+
+        // ── Profile (basic fields for the header/sidebar) ──────────────────
         try {
-            const { data: profile, error } = await DB.profile.get(userId);
+            if (profileResult.status === 'rejected') throw profileResult.reason;
+            const { data: profile, error } = profileResult.value;
             if (error) throw error;
             if (profile) {
                 this.state.profile = {
@@ -316,208 +353,265 @@ const App={
                     targetScore:      profile.target_score   ?? this.state.profile.targetScore,
                     selectedClass:    profile.selected_class  ?? this.state.profile.selectedClass,
                     selectedStream:   profile.selected_stream ?? this.state.profile.selectedStream,
+                    // Extended fields needed for streak/XP/level — all come from
+                    // the same single profile row so no extra round-trip.
+                    xp:               profile.xp                   ?? this.state.profile.xp,
+                    level:            profile.level                ?? this.state.profile.level,
+                    streak:           profile.streak               ?? this.state.profile.streak,
+                    lastStudyDate:    profile.last_study_date      ?? this.state.profile.lastStudyDate,
+                    maxDailyMinutes:  profile.max_daily_minutes    ?? this.state.profile.maxDailyMinutes,
+                    pomodoroCompleted:profile.pomodoro_completed   ?? this.state.profile.pomodoroCompleted,
+                    mood:             profile.mood                 ?? this.state.profile.mood,
+                    moodHistory:      profile.mood_history         ? (Array.isArray(profile.mood_history) ? profile.mood_history : (() => { try { return JSON.parse(profile.mood_history); } catch(e){ return this.state.profile.moodHistory; } })()) : this.state.profile.moodHistory,
                 };
+                this.state.streakFreezes         = profile.streak_freezes         ?? this.state.streakFreezes;
+                this.state.lastFreezeUsedDate    = profile.last_freeze_used_date  ?? this.state.lastFreezeUsedDate;
+                this.state.lastFreezeEarnedDate  = profile.last_freeze_earned_date ?? this.state.lastFreezeEarnedDate;
+                this.state.pendingFreezeNotice   = profile.pending_freeze_notice  ?? this.state.pendingFreezeNotice;
+                if (profile.weekly_plan) { try { this.state.weeklyPlan = JSON.parse(profile.weekly_plan); } catch(e){} }
+                if (profile.pomodoro_settings)  { try { this.state.pomodoroSettings = JSON.parse(profile.pomodoro_settings); } catch(e){} }
             }
         } catch(e){ warn('profile', e); }
 
-        // ── b. Subjects + Chapters ───────────────────────────────────────────
+        // ── Today's challenge (home screen widget) ─────────────────────────
         try {
-            const { data: subjects, error } = await DB.subjects.getAll(userId);
-            if (error) throw error;
-            if (subjects) {
-                // Fetch chapters for every subject in parallel
-                const withChapters = await Promise.all(subjects.map(async (sub) => {
-                    let chapters = [];
-                    try {
-                        const { data: chData, error: chErr } = await DB.chapters.getBySubject(sub.id);
-                        if (!chErr && chData) {
-                            chapters = chData.map(ch => ({
-                                ...ch,
-                                subjectId:      ch.subject_id,
-                                revisionCount:  ch.revision_count ?? 0,
-                                revisionDates:  ch.revision_dates ?? [],
-                                order:          ch.order_index    ?? 0,
-                                status:         ch.status         ?? 'not-started',
-                                difficulty:     ch.difficulty      ?? 'medium',
-                                notes:          ch.notes           ?? '',
-                                deadline:       ch.deadline        ?? '',
-                                completionDate: ch.completion_date ?? null,
-                                // remove raw snake_case duplicates
-                                subject_id:      undefined,
-                                revision_count:  undefined,
-                                order_index:     undefined,
-                                revision_dates:  undefined,
-                                completion_date: undefined,
-                            }));
-                        }
-                    } catch(chE){ warn(`chapters for subject ${sub.id}`, chE); }
-                    return { ...sub, chapters };
-                }));
-                this.state.subjects = withChapters;
-            }
-        } catch(e){ warn('subjects', e); }
-
-        // ── c. Sessions ──────────────────────────────────────────────────────
-        try {
-            const { data: sessions, error } = await DB.sessions.getAll(userId);
-            if (error) throw error;
-            if (sessions) {
-                this.state.sessions = sessions.map(s => ({
-                    ...s,
-                    timeSpent:  s.time_spent  ?? s.timeSpent  ?? 0,
-                    subjectId:  s.subject_id  ?? s.subjectId  ?? '',
-                    chapterId:  s.chapter_id  ?? s.chapterId  ?? '',
-                    createdAt:  s.created_at  ?? s.createdAt  ?? Date.now(),
-                    time_spent:  undefined,
-                    subject_id:  undefined,
-                    chapter_id:  undefined,
-                    created_at:  undefined,
-                }));
-            }
-        } catch(e){ warn('sessions', e); }
-
-        // ── d. Tasks (today only) ────────────────────────────────────────────
-        try {
-            const { data: tasks, error } = await DB.tasks.getByDate(userId, this.today());
-            if (error) throw error;
-            if (tasks) this.state.tasks = tasks;
-        } catch(e){ warn('tasks', e); }
-
-        // ── e. Doubts ────────────────────────────────────────────────────────
-        try {
-            const { data: doubts, error } = await DB.doubts.getAll(userId);
-            if (error) throw error;
-            if (doubts) this.state.doubts = doubts.map(d => ({
-                ...d,
-                text:         d.question    ?? d.text,
-                subjectId:    d.subject_id  ?? d.subjectId,
-                createdAt:    d.created_at  ?? d.createdAt  ?? Date.now(),
-                resolvedDate: d.resolved_date ?? d.resolvedDate ?? null,
-                question:      undefined,
-                subject_id:    undefined,
-                created_at:    undefined,
-                resolved_date: undefined,
-            }));
-        } catch(e){ warn('doubts', e); }
-
-        // ── f. Exam scores ────────────────────────────────────────────────────
-        try {
-            const { data: examScores, error } = await DB.examScores.getAll(userId);
-            if (error) throw error;
-            if (examScores) {
-                this.state.examScores = examScores.map(s => ({
-                    ...s,
-                    subjectId:  s.subject_id ?? s.subjectId,
-                    createdAt:  s.created_at ?? s.createdAt ?? Date.now(),
-                    subject_id:  undefined,
-                    created_at:  undefined,
-                }));
-            }
-        } catch(e){ warn('examScores', e); }
-
-        // ── g. Notes ─────────────────────────────────────────────────────────
-        try {
-            const { data: notes, error } = await DB.notes.getAll(userId);
-            if (error) throw error;
-            if (notes) this.state.notes = notes.map(n => ({
-                ...n,
-                subjectId:  n.subject_id  ?? n.subjectId,
-                createdAt:  n.created_at  ?? n.createdAt  ?? Date.now(),
-                updatedAt:  n.updated_at  ?? n.updatedAt  ?? Date.now(),
-                subject_id:  undefined,
-                created_at:  undefined,
-                updated_at:  undefined,
-            }));
-        } catch(e){ warn('notes', e); }
-
-        // ── h. Resources ─────────────────────────────────────────────────────
-        try {
-            const { data: resources, error } = await DB.resources.getAll(userId);
-            if (error) throw error;
-            if (resources) this.state.resources = resources.map(r => ({
-                ...r,
-                subjectId:  r.subject_id ?? r.subjectId,
-                createdAt:  r.created_at ?? r.createdAt ?? Date.now(),
-                subject_id:  undefined,
-                created_at:  undefined,
-            }));
-        } catch(e){ warn('resources', e); }
-
-        // ── i. Badges ─────────────────────────────────────────────────────────
-        try {
-            const { data: badges, error } = await DB.badges.getAll(userId);
-            if (error) throw error;
-            if (badges && badges.length > 0) {
-                this.state.earnedBadges = badges.map(b => b.badge_id);
-            }
-        } catch(e){ warn('badges', e); }
-
-        // ── j. Checkins ───────────────────────────────────────────────────────
-        try {
-            const { data: checkinRows, error } = await supabase
-                .from('checkins').select('*').eq('user_id', userId);
-            if (error) throw error;
-            if (checkinRows) {
-                const obj = {};
-                checkinRows.forEach(c => { obj[c.date] = { understood: c.understood||'', unclear: c.unclear||'', date: c.date, createdAt: c.created_at ? new Date(c.created_at).getTime() : Date.now() }; });
-                this.state.checkins = obj;
-            }
-        } catch(e){ warn('checkins', e); }
-
-        // ── k. Quiz progress ──────────────────────────────────────────────────
-        try {
-            const { data: quizRows, error } = await supabase
-                .from('quiz_progress').select('*').eq('user_id', userId);
-            if (error) throw error;
-            if (quizRows && quizRows.length > 0) {
-                const qd = {};
-                quizRows.forEach(r => {
-                    if (r.data) { try { qd[r.subject_id] = JSON.parse(r.data); } catch(e){} }
-                });
-                if (Object.keys(qd).length > 0) this.state.quizData = qd;
-            }
-        } catch(e){ warn('quiz', e); }
-
-        // ── k2. Daily challenges (today) ──────────────────────────────────────
-        try {
-            const today = new Date().toLocaleDateString('en-CA'); // YYYY-MM-DD
-            const { data: todayChallenge } = await DB.challenges.getToday(userId, today);
+            if (challengeResult.status === 'rejected') throw challengeResult.reason;
+            const { data: todayChallenge } = challengeResult.value;
             if (todayChallenge && todayChallenge.goal) {
                 try {
                     this.state.dailyChallenges = {
-                        date: todayChallenge.date,
-                        challenges: JSON.parse(todayChallenge.goal || '[]'),
-                        completed: JSON.parse(todayChallenge.completed || '[]'),
+                        date:       todayChallenge.date,
+                        challenges: JSON.parse(todayChallenge.goal      || '[]'),
+                        completed:  JSON.parse(todayChallenge.completed || '[]'),
                     };
                 } catch(e){}
             }
         } catch(e){ warn('dailyChallenges', e); }
+    },
 
-        // ── l. Extended profile fields ────────────────────────────────────────
-        // (Re-read profile to pick up columns added after initial load)
-        try {
-            const { data: ep } = await DB.profile.get(userId);
-            if (ep) {
-                this.state.profile.xp                  = ep.xp                   ?? this.state.profile.xp;
-                if (ep.weekly_plan) {
-                    try { this.state.weeklyPlan = JSON.parse(ep.weekly_plan); } catch(e){}
-                }
-                this.state.profile.level               = ep.level                ?? this.state.profile.level;
-                this.state.profile.streak              = ep.streak               ?? this.state.profile.streak;
-                this.state.profile.lastStudyDate       = ep.last_study_date      ?? this.state.profile.lastStudyDate;
-                this.state.profile.maxDailyMinutes     = ep.max_daily_minutes    ?? this.state.profile.maxDailyMinutes;
-                this.state.profile.pomodoroCompleted   = ep.pomodoro_completed   ?? this.state.profile.pomodoroCompleted;
-                this.state.profile.mood                = ep.mood                 ?? this.state.profile.mood;
-                this.state.profile.moodHistory         = ep.mood_history         ? (Array.isArray(ep.mood_history) ? ep.mood_history : JSON.parse(ep.mood_history)) : this.state.profile.moodHistory;
-                this.state.streakFreezes               = ep.streak_freezes       ?? this.state.streakFreezes;
-                this.state.lastFreezeUsedDate          = ep.last_freeze_used_date ?? this.state.lastFreezeUsedDate;
-                this.state.lastFreezeEarnedDate        = ep.last_freeze_earned_date ?? this.state.lastFreezeEarnedDate;
-                this.state.pendingFreezeNotice         = ep.pending_freeze_notice ?? this.state.pendingFreezeNotice;
-                if (ep.pomodoro_settings) {
-                    try { this.state.pomodoroSettings = JSON.parse(ep.pomodoro_settings); } catch(e){}
-                }
+    // ── PER-TAB LAZY DATA LOADER ──────────────────────────────────────────────
+    //
+    // Called from navigate() the first time a tab becomes active.
+    // A simple Set (_loadedTabs) acts as the guard — once a tab's data is in
+    // memory the flag is set and subsequent navigations skip the fetch entirely.
+    //
+    // Tabs that can receive NEW data (e.g. tasks changes daily, sessions grows)
+    // do NOT set the flag so they always re-fetch — but they are cheap point
+    // queries (date-scoped), not full table scans.
+    //
+    // Design principle: this function only sets state and calls render() if the
+    // data actually changed.  It never touches UI rendering logic directly.
+    _loadedTabs: new Set(),
+
+    async _loadTabData(tab){
+        const userId = window._supabaseUserId;
+        if (!userId) return;
+        const warn = (label, e) => console.warn(`[StudyOS] _loadTabData(${tab}) — ${label} failed:`, e);
+
+        // ── subjects + chapters ──────────────────────────────────────────────
+        // Used by: subjects, revisions, planning, weekly, dashboard (subject list),
+        //          quiz, exams, log modal, task auto-plan, rewards (badge checks).
+        // We load this lazily on the first navigate to ANY content tab that
+        // needs subjects, because the dashboard itself doesn't require them for
+        // its first paint (streak / goal / challenge render without subjects).
+        if (tab === 'subjects' || tab === 'revisions' || tab === 'planning' ||
+            tab === 'weekly'   || tab === 'quiz'      || tab === 'exercises') {
+            if (!this._loadedTabs.has('subjects')) {
+                try {
+                    const { data: subjects, error } = await DB.subjects.getAll(userId);
+                    if (error) throw error;
+                    if (subjects) {
+                        // All subjects' chapters in parallel — same logic as before
+                        const withChapters = await Promise.all(subjects.map(async (sub) => {
+                            let chapters = [];
+                            try {
+                                const { data: chData, error: chErr } = await DB.chapters.getBySubject(sub.id);
+                                if (!chErr && chData) {
+                                    chapters = chData.map(ch => ({
+                                        ...ch,
+                                        subjectId:      ch.subject_id,
+                                        revisionCount:  ch.revision_count ?? 0,
+                                        revisionDates:  ch.revision_dates ?? [],
+                                        order:          ch.order_index    ?? 0,
+                                        status:         ch.status         ?? 'not-started',
+                                        difficulty:     ch.difficulty     ?? 'medium',
+                                        notes:          ch.notes          ?? '',
+                                        deadline:       ch.deadline       ?? '',
+                                        completionDate: ch.completion_date ?? null,
+                                        subject_id:      undefined,
+                                        revision_count:  undefined,
+                                        order_index:     undefined,
+                                        revision_dates:  undefined,
+                                        completion_date: undefined,
+                                    }));
+                                }
+                            } catch(chE){ warn(`chapters for subject ${sub.id}`, chE); }
+                            return { ...sub, chapters };
+                        }));
+                        this.state.subjects = withChapters;
+                    }
+                    this._loadedTabs.add('subjects');
+                } catch(e){ warn('subjects', e); }
             }
-        } catch(e){ warn('profile-extended', e); }
+        }
+
+        // ── sessions (full history) ──────────────────────────────────────────
+        // Used by: log, weekly, dashboard heatmap / week graph.
+        // Re-fetched every time the log tab opens (sessions grow with each log).
+        if (tab === 'log' || tab === 'weekly') {
+            try {
+                const { data: sessions, error } = await DB.sessions.getAll(userId);
+                if (error) throw error;
+                if (sessions) {
+                    this.state.sessions = sessions.map(s => ({
+                        ...s,
+                        timeSpent:  s.time_spent  ?? s.timeSpent  ?? 0,
+                        subjectId:  s.subject_id  ?? s.subjectId  ?? '',
+                        chapterId:  s.chapter_id  ?? s.chapterId  ?? '',
+                        createdAt:  s.created_at  ?? s.createdAt  ?? Date.now(),
+                        time_spent:  undefined,
+                        subject_id:  undefined,
+                        chapter_id:  undefined,
+                        created_at:  undefined,
+                    }));
+                }
+            } catch(e){ warn('sessions', e); }
+        }
+
+        // ── tasks (today only) ───────────────────────────────────────────────
+        // Date-scoped — always re-fetch so yesterday→today transitions work.
+        if (tab === 'tasks') {
+            try {
+                const { data: tasks, error } = await DB.tasks.getByDate(userId, this.today());
+                if (error) throw error;
+                if (tasks) this.state.tasks = tasks;
+            } catch(e){ warn('tasks', e); }
+        }
+
+        // ── doubts ───────────────────────────────────────────────────────────
+        if (tab === 'doubts' && !this._loadedTabs.has('doubts')) {
+            try {
+                const { data: doubts, error } = await DB.doubts.getAll(userId);
+                if (error) throw error;
+                if (doubts) this.state.doubts = doubts.map(d => ({
+                    ...d,
+                    text:         d.question      ?? d.text,
+                    subjectId:    d.subject_id    ?? d.subjectId,
+                    createdAt:    d.created_at    ?? d.createdAt    ?? Date.now(),
+                    resolvedDate: d.resolved_date ?? d.resolvedDate ?? null,
+                    question:      undefined,
+                    subject_id:    undefined,
+                    created_at:    undefined,
+                    resolved_date: undefined,
+                }));
+                this._loadedTabs.add('doubts');
+            } catch(e){ warn('doubts', e); }
+        }
+
+        // ── exam scores ──────────────────────────────────────────────────────
+        if (tab === 'exams' && !this._loadedTabs.has('exams')) {
+            try {
+                const { data: examScores, error } = await DB.examScores.getAll(userId);
+                if (error) throw error;
+                if (examScores) {
+                    this.state.examScores = examScores.map(s => ({
+                        ...s,
+                        subjectId:  s.subject_id ?? s.subjectId,
+                        createdAt:  s.created_at ?? s.createdAt ?? Date.now(),
+                        subject_id:  undefined,
+                        created_at:  undefined,
+                    }));
+                }
+                this._loadedTabs.add('exams');
+            } catch(e){ warn('examScores', e); }
+        }
+
+        // ── notes ────────────────────────────────────────────────────────────
+        if (tab === 'notes' && !this._loadedTabs.has('notes')) {
+            try {
+                const { data: notes, error } = await DB.notes.getAll(userId);
+                if (error) throw error;
+                if (notes) this.state.notes = notes.map(n => ({
+                    ...n,
+                    subjectId:  n.subject_id  ?? n.subjectId,
+                    createdAt:  n.created_at  ?? n.createdAt  ?? Date.now(),
+                    updatedAt:  n.updated_at  ?? n.updatedAt  ?? Date.now(),
+                    subject_id:  undefined,
+                    created_at:  undefined,
+                    updated_at:  undefined,
+                }));
+                this._loadedTabs.add('notes');
+            } catch(e){ warn('notes', e); }
+        }
+
+        // ── resources ────────────────────────────────────────────────────────
+        if (tab === 'resources' && !this._loadedTabs.has('resources')) {
+            try {
+                const { data: resources, error } = await DB.resources.getAll(userId);
+                if (error) throw error;
+                if (resources) this.state.resources = resources.map(r => ({
+                    ...r,
+                    subjectId:  r.subject_id ?? r.subjectId,
+                    createdAt:  r.created_at ?? r.createdAt ?? Date.now(),
+                    subject_id:  undefined,
+                    created_at:  undefined,
+                }));
+                this._loadedTabs.add('resources');
+            } catch(e){ warn('resources', e); }
+        }
+
+        // ── badges ───────────────────────────────────────────────────────────
+        if (tab === 'rewards' && !this._loadedTabs.has('badges')) {
+            try {
+                const { data: badges, error } = await DB.badges.getAll(userId);
+                if (error) throw error;
+                if (badges && badges.length > 0) {
+                    this.state.earnedBadges = badges.map(b => b.badge_id);
+                }
+                this._loadedTabs.add('badges');
+            } catch(e){ warn('badges', e); }
+        }
+
+        // ── checkins (all history — needed for the EOD widget) ───────────────
+        // Loaded on first coach/checkin access; the EOD banner only needs
+        // today's entry which arrives via checkins.get() in saveEodCheckin.
+        if (tab === 'coach' && !this._loadedTabs.has('checkins')) {
+            try {
+                const { data: checkinRows, error } = await window.supabase
+                    .from('checkins').select('*').eq('user_id', userId);
+                if (error) throw error;
+                if (checkinRows) {
+                    const obj = {};
+                    checkinRows.forEach(c => {
+                        obj[c.date] = {
+                            understood: c.understood || '',
+                            unclear:    c.unclear    || '',
+                            date:       c.date,
+                            createdAt:  c.created_at ? new Date(c.created_at).getTime() : Date.now(),
+                        };
+                    });
+                    this.state.checkins = obj;
+                }
+                this._loadedTabs.add('checkins');
+            } catch(e){ warn('checkins', e); }
+        }
+
+        // ── quiz progress (all subjects) ─────────────────────────────────────
+        if (tab === 'quiz' && !this._loadedTabs.has('quiz')) {
+            try {
+                const { data: quizRows, error } = await window.supabase
+                    .from('quiz_progress').select('*').eq('user_id', userId);
+                if (error) throw error;
+                if (quizRows && quizRows.length > 0) {
+                    const qd = {};
+                    quizRows.forEach(r => {
+                        if (r.data) { try { qd[r.subject_id] = JSON.parse(r.data); } catch(e){} }
+                    });
+                    if (Object.keys(qd).length > 0) this.state.quizData = qd;
+                }
+                this._loadedTabs.add('quiz');
+            } catch(e){ warn('quiz', e); }
+        }
     },
 
     // ── localStorage: UI state + local-only state ────────────────────────────
@@ -1087,7 +1181,18 @@ const App={
             }
         });
         const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz'};
-        document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();this.renderPage(page);
+        document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
+
+        // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
+        // _loadTabData() resolves instantly for tabs with the loaded-guard set,
+        // so subsequent navigations to the same tab have zero async overhead.
+        this._loadTabData(page).then(() => {
+            this.renderPage(page);
+        }).catch(() => {
+            // Data fetch failed — render anyway with whatever state we have
+            this.renderPage(page);
+        });
+
         this.closeSidebar();document.getElementById('content').scrollTop=0;
     },
     updatePageSubtitle(){
