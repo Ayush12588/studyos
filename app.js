@@ -3708,15 +3708,3 @@ if ('serviceWorker' in navigator) {
         }
     };
 })();
-
-// ── bfcache compatibility ────────────────────────────────────────────────────
-// Supabase JS holds an internal WebSocket for auth state even when no explicit
-// realtime channels are open. That persistent connection blocks bfcache, so we
-// tear everything down on pagehide (bfcache-safe) instead of unload (which
-// would itself block bfcache). The client reconnects automatically if the user
-// navigates forward again.
-window.addEventListener('pagehide', () => {
-    if (window.supabase && typeof window.supabase.removeAllChannels === 'function') {
-        window.supabase.removeAllChannels();
-    }
-});
