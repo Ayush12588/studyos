@@ -307,9 +307,14 @@ export const DB = {
       return run(supabase.from('chapters').insert(chapter).select().single());
     },
 
-    async update(id, subjectId, data) {
+    async update(id, subjectIdOrData, maybeData) {
       await requireAuth();
-      _cache.delete(`chapters:${subjectId}`);
+      // Support both call signatures that exist in the codebase:
+      //   update(id, subjectId, data)  — original 3-arg form
+      //   update(id, data)             — 2-arg form used throughout app.js
+      const data      = maybeData !== undefined ? maybeData : subjectIdOrData;
+      const subjectId = maybeData !== undefined ? subjectIdOrData : null;
+      if (subjectId) _cache.delete(`chapters:${subjectId}`);
       return run(
         supabase.from('chapters').update(data).eq('id', id).select().single()
       );
