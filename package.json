@@ -2,5 +2,15 @@
   "type": "module",
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4"
+  },
+  "scripts": {
+    "build": "mkdir -p dist && npm run build:css && npm run build:js && npm run build:html",
+    "build:css": "cleancss -o dist/styles.css styles.css",
+    "build:js": "terser app.js --compress --mangle --output dist/app.js",
+    "build:html": "cp index.html dist/index.html"
+  },
+  "devDependencies": {
+    "clean-css-cli": "^5.6.3",
+    "terser": "^5.39.0"
   }
 }
