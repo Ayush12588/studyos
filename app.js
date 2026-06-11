@@ -273,6 +273,19 @@ const App={
         this._badgesLoaded=true; // flag: earnedBadges is now populated from Supabase
         this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();
         this.updatePageTitle();
+
+        // ── Background subjects prefetch ─────────────────────────────────────
+        // Dashboard hero needs subjects to show the next chapter to study.
+        // Subjects are lazy-loaded on first tab visit, which means the hero
+        // shows the "All Caught Up" empty state on first load. This background
+        // fetch runs immediately after first paint and re-renders the dashboard
+        // hero once data arrives (~300-600ms later). Zero impact on first paint.
+        if (!this._loadedTabs.has('subjects')) {
+            this._loadTabData('subjects').then(() => {
+                if (this.state.currentPage === 'dashboard') this.renderDashboard();
+            });
+        }
+
         this.checkBadges();
         setInterval(()=>{this.updatePageSubtitle();this.updateTopbarPills();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
         setTimeout(()=>{this.checkStreakReminder();this.checkEodCheckin()},5000);
