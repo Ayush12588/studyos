@@ -129,7 +129,7 @@
     --color-text-secondary:#A8957E;
     --text-primary:        #F0E8D8;
     --text-secondary:      #A8957E;
-    --text-muted:          #6E5E4A;
+    --text-muted:          #948470; /* was #6E5E4A — lifted to pass WCAG AA on all warm-dark surfaces */
 
     /* ── Brand — warm amber-gold (replaces cold indigo) ── */
     --color-brand:         #D4891A;
@@ -144,7 +144,7 @@
     --color-xp:            #D4891A;
     --success:             #4A9E6B;
     --warning:             #D4891A;
-    --danger:              #C0533A;
+    --danger:              #D4674E; /* was #C0533A — lifted to pass WCAG AA on all warm-dark surfaces */
 
     /* ── Semantic status tokens ── */
     --color-done:          #4A9E6B;
@@ -153,10 +153,10 @@
     --color-warn:          #D4891A;
     --color-warn-bg:       rgba(212,137,26,0.10);
     --color-warn-border:   rgba(212,137,26,0.25);
-    --color-danger:        #C0533A;
+    --color-danger:        #D4674E; /* was #C0533A — lifted to pass WCAG AA on all warm-dark surfaces */
     --color-danger-bg:     rgba(192,83,58,0.10);
     --color-danger-border: rgba(192,83,58,0.25);
-    --color-streak:        #C0533A;
+    --color-streak:        #D4674E; /* was #C0533A */
     --color-streak-bg:     rgba(192,83,58,0.10);
     --color-xp-bg:         rgba(212,137,26,0.10);
 
@@ -692,6 +692,9 @@ a { color: inherit; text-decoration: none; }
     box-shadow: none !important;
 }
 .btn-primary:hover { background: var(--color-brand-hover); }
+/* warm-dark: amber #D4891A gives only 2.84:1 with white. Darken to #AF6400 (4.52:1) */
+[data-theme="warm-dark"] .btn-primary { background: #AF6400; }
+[data-theme="warm-dark"] .btn-primary:hover { background: #9A5700; }
 
 .btn-secondary {
     background: var(--color-surface-hover);
@@ -1058,6 +1061,8 @@ a { color: inherit; text-decoration: none; }
 /* Light theme: inline colors set by JS (#6366f1, #10b981, #f59e0b, #06b6d4, #ef4444)
    all fail contrast on white. Darken by ~30% to pass 4.5:1. */
 [data-theme="light"] .db-subj-cell-count { filter: brightness(0.72); }
+/* warm-dark: JS injects #6366f1 inline which only gives 3.95:1 on #1c1812. Lighten to pass. */
+[data-theme="warm-dark"] .db-subj-cell-count { color: #6D70FB; filter: none; }
 .db-subj-cell-bar-track { height: 5px; background: var(--border); border-radius: 3px; overflow: hidden; }
 .db-subj-cell-bar-fill { height: 100%; border-radius: 3px; transition: width 1s ease; }
 .db-subj-cell-health { display: flex; align-items: center; gap: 6px; }
@@ -1067,6 +1072,8 @@ a { color: inherit; text-decoration: none; }
 .db-subj-cell-hval { font-size: .6rem; font-weight: 700; flex-shrink: 0; }
 /* Light theme: --danger #ef4444 is 3.76:1 on white. #B91C1C = 5.9:1 — passes AA. */
 [data-theme="light"] .db-subj-cell-hval { color: #B91C1C !important; }
+/* warm-dark: --danger #C0533A is 3.81:1 on surface. #D4674E = 4.92:1 — passes AA. */
+[data-theme="warm-dark"] .db-subj-cell-hval { color: #D4674E !important; }
 
 /* Week chart bars */
 .db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
