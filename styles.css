@@ -2070,12 +2070,7 @@ a { color: inherit; text-decoration: none; }
 ═══════════════════════════════════════════════════ */
 .celebration { position: fixed; inset: 0; z-index: 400; pointer-events: none; display: none; }
 .celebration.show { display: block; }
-.confetti {
-    position: absolute;
-    width: 8px; height: 8px;
-    border-radius: 2px;
-    animation: fall linear forwards;
-}
+
 @keyframes fall { to { transform: translateY(100vh) rotate(720deg); opacity: 0; } }
 
 .level-up-overlay {

@@ -19,8 +19,8 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <link rel="manifest" href="/manifest.json">
-    <link rel="icon" type="image/png" href="/icons/icon-192.webp">
-    <link rel="apple-touch-icon" href="/icons/icon-192.webp">
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
@@ -152,7 +152,10 @@
 <div id="sidebar-backdrop" onclick="App.closeSidebar()"></div>
     <aside id="sidebar">
         <div class="logo">
-            <img src="/icons/icon-192.webp" width="43" height="43" style="flex-shrink:0;border-radius:8px" alt="StudyOS">
+            <picture>
+                <source srcset="/icons/icon-43.webp 1x, /icons/icon-86.webp 2x" type="image/webp">
+                <img src="/icons/icon-192.png" width="43" height="43" style="flex-shrink:0;border-radius:8px" alt="StudyOS">
+            </picture>
             <div>
                 <div class="logo-text"><span class="logo-study">Study</span><span class="logo-os">OS</span></div>
                 <div class="logo-sub" id="sidebar-class-label">CBSE · Class 10</div>
