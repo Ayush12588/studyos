@@ -22,7 +22,7 @@ try {
   // 2. Minify CSS using npx
   console.log('🎨 Minifying CSS...');
   const cssStart = fs.statSync('styles.css').size;
-  execSync('npx cleancss -o dist/styles.css styles.css', { stdio: 'inherit' });
+  execSync('npx clean-css-cli -o dist/styles.css styles.css', { stdio: 'inherit' });
   const cssEnd = fs.statSync('dist/styles.css').size;
   console.log(`✓ CSS: ${cssStart} → ${cssEnd} bytes (${Math.round(100 * cssEnd / cssStart)}%)\n`);
 
