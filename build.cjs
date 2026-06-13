@@ -11,6 +11,10 @@ const { execSync } = require('child_process');
 
 const distDir = 'dist';
 
+// Full paths to binaries in node_modules
+const cleancss = path.join(__dirname, 'node_modules', '.bin', 'cleancss');
+const terser = path.join(__dirname, 'node_modules', '.bin', 'terser');
+
 // Step 1: Clean dist directory
 if (fs.existsSync(distDir)) {
   console.log('🧹 Cleaning dist/...');
@@ -22,7 +26,7 @@ console.log('✓ dist/ ready');
 // Step 2: Minify CSS
 console.log('🎨 Minifying CSS...');
 try {
-  execSync('cleancss -o dist/styles.css styles.css', { stdio: 'inherit' });
+  execSync(`"${cleancss}" -o dist/styles.css styles.css`, { stdio: 'inherit' });
   const cssSize = fs.statSync('dist/styles.css').size;
   const cssOrigSize = fs.statSync('styles.css').size;
   console.log(`✓ CSS minified: ${cssOrigSize} → ${cssSize} bytes (${Math.round(100 * cssSize / cssOrigSize)}%)`);
@@ -34,7 +38,7 @@ try {
 // Step 3: Minify JavaScript
 console.log('📦 Minifying JavaScript...');
 try {
-  execSync('terser app.js -o dist/app.js -c -m', { stdio: 'inherit' });
+  execSync(`"${terser}" app.js -o dist/app.js -c -m`, { stdio: 'inherit' });
   const jsSize = fs.statSync('dist/app.js').size;
   const jsOrigSize = fs.statSync('app.js').size;
   console.log(`✓ JS minified: ${jsOrigSize} → ${jsSize} bytes (${Math.round(100 * jsSize / jsOrigSize)}%)`);
