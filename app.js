@@ -1489,6 +1489,25 @@ const App={
         })();
 
         // ── SUBJECT PROGRESS ──────────────────────────────────────
+        // PERF FIX (LCP): state.subjects is [] on the FIRST dashboard render —
+        // subjects are fetched lazily in the background (see init()) and
+        // renderDashboard() re-runs once that fetch resolves. Previously
+        // render #1 painted a tiny "No subjects yet" card here, then render #2
+        // swapped it for a full db-subj-grid of N subject cells — THAT size
+        // jump (not the heatmap) is the "Element render delay" Lighthouse is
+        // flagging, because it lands below the heatmap card in db-col-main.
+        //
+        // Fix: while subjects are still loading, render a db-subj-grid
+        // SKELETON with the same cell count we expect once data arrives
+        // (derived from the student's CBSE class/stream — already known from
+        // bootstrap, zero extra fetches). When the real subjects load, the
+        // skeleton cells are replaced in place by real ones: same grid, same
+        // dimensions, only the content inside each cell changes.
+        //
+        // NOTE: getHeatmapData() / the heatmap card below is intentionally
+        // UNCHANGED — it always returns exactly 90 entries regardless of
+        // subjects/sessions state, so its size is identical on render #1 and
+        // render #2. It was not actually the source of the resize.
         const subjectsHTML=this.state.subjects.length>0?`<div class="card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">Subjects</span>
@@ -1519,12 +1538,45 @@ const App={
                 </div>`;
             }).join('')}
             </div>
-        </div>`:`<div class="card" style="text-align:center;padding:32px 20px">
+        </div>`:(this._loadedTabs.has('subjects')?`<div class="card" style="text-align:center;padding:32px 20px">
             <div style="font-size:2.5rem;margin-bottom:10px">📚</div>
             <div style="font-weight:600;margin-bottom:6px">No subjects yet</div>
             <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">Load your CBSE syllabus or add subjects manually</div>
             <button class="btn btn-primary btn-sm" onclick="App.navigate('subjects')">Get Started →</button>
-        </div>`;
+        </div>`:(()=>{
+            // Subjects haven't loaded yet (first paint). Estimate the cell
+            // count for the skeleton from the student's selected CBSE
+            // class/stream — every CBSE class/stream combo ships exactly 5
+            // subjects, so this matches the real grid for the vast majority
+            // of users. Custom subject lists may differ by a cell or two,
+            // which is a one-time, minor resize vs. today's empty→full jump.
+            const _cls=this.state.profile.selectedClass||10;
+            const _stream=this.state.profile.selectedStream;
+            const _cbse=this.CBSE_DATA[_cls];
+            let _expected=5;
+            if(Array.isArray(_cbse))_expected=_cbse.length;
+            else if(_cbse)_expected=(_stream&&_cbse[_stream])?_cbse[_stream].length:Math.max(...Object.values(_cbse).map(a=>a.length));
+            const _skelCell=`<div class="db-subj-cell db-subj-cell-skeleton">
+                <div class="db-subj-cell-top">
+                    <span class="db-subj-cell-icon skeleton-pulse" style="width:18px;height:18px;border-radius:5px"></span>
+                    <span class="db-subj-cell-name skeleton-pulse" style="width:60%;height:11px;border-radius:4px"></span>
+                    <span class="db-subj-cell-count skeleton-pulse" style="width:30px;height:9px;border-radius:4px"></span>
+                </div>
+                <div class="db-subj-cell-bar-track"></div>
+                <div class="db-subj-cell-health">
+                    <span class="db-subj-cell-hlabel skeleton-pulse" style="width:34px;height:8px;border-radius:4px"></span>
+                    <div class="db-subj-cell-htrack"></div>
+                    <span class="db-subj-cell-hval skeleton-pulse" style="width:18px;height:8px;border-radius:4px"></span>
+                </div>
+            </div>`;
+            return `<div class="card">
+                <div class="card-header" style="margin-bottom:14px">
+                    <span class="card-title">Subjects</span>
+                    <button class="btn btn-ghost btn-sm" onclick="App.navigate('subjects')" style="font-size:.72rem">See all →</button>
+                </div>
+                <div class="db-subj-grid">${_skelCell.repeat(_expected)}</div>
+            </div>`;
+        })());
 
         // ── UP NEXT ───────────────────────────────────────────────
         const upNextHTML=`<div class="card">
