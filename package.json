@@ -1,5 +1,8 @@
 {
   "type": "module",
+  "scripts": {
+    "build": "node build.cjs"
+  },
   "dependencies": {
     "@supabase/supabase-js": "^2.105.4"
   }
