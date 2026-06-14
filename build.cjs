@@ -33,25 +33,28 @@ try {
   const jsEnd = fs.statSync('dist/app.js').size;
   console.log(`✓ JS: ${jsStart} → ${jsEnd} bytes (${Math.round(100 * jsEnd / jsStart)}%)\n`);
 
-  // 4. Copy static files
-  console.log('📋 Copying static assets...');
-  ['index.html', 'manifest.json'].forEach(file => {
-    if (fs.existsSync(file)) {
-      fs.copyFileSync(file, path.join(distDir, file));
-      console.log(`  ✓ ${file}`);
+  // 4. Copy all static files except those already processed or excluded
+  console.log('Copying static assets...');
+  const EXCLUDE = new Set([
+    'app.js', 'styles.css',       // already minified above
+    'build.cjs', 'package.json', 'package-lock.json',
+    'vercel.json', '.gitignore', 'README.md',
+    'node_modules', '.git', '.vercel', 'dist', 'api',
+  ]);
+
+  fs.readdirSync('.').forEach(entry => {
+    if (EXCLUDE.has(entry)) return;
+    if (entry.startsWith('.')) return; // skip dotfiles/dirs
+    const srcPath = entry;
+    const stat = fs.statSync(srcPath);
+    if (stat.isDirectory()) {
+      fs.cpSync(srcPath, path.join(distDir, entry), { recursive: true });
+      console.log(`  - ${entry}/ (directory)`);
+    } else if (entry.endsWith('.js') || entry.endsWith('.json') || entry.endsWith('.html')) {
+      fs.copyFileSync(srcPath, path.join(distDir, entry));
+      console.log(`  - ${entry}`);
     }
   });
-
-  // 5. Copy icons directory
-  const iconsDir = 'icons';
-  if (fs.existsSync(iconsDir)) {
-    const distIconsDir = path.join(distDir, iconsDir);
-    fs.mkdirSync(distIconsDir, { recursive: true });
-    fs.readdirSync(iconsDir).forEach(file => {
-      fs.copyFileSync(path.join(iconsDir, file), path.join(distIconsDir, file));
-    });
-    console.log(`  ✓ icons/ (${fs.readdirSync(iconsDir).length} files)\n`);
-  }
 
   // 6. Verify and summarize
   const distFiles = fs.readdirSync(distDir);
