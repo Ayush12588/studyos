@@ -434,34 +434,47 @@ const App={
                     const { data: subjects, error } = await DB.subjects.getAll(userId);
                     if (error) throw error;
                     if (subjects) {
-                        // All subjects' chapters in parallel — same logic as before
-                        const withChapters = await Promise.all(subjects.map(async (sub) => {
-                            let chapters = [];
-                            try {
-                                const { data: chData, error: chErr } = await DB.chapters.getBySubject(sub.id);
-                                if (!chErr && chData) {
-                                    chapters = chData.map(ch => ({
-                                        ...ch,
-                                        subjectId:      ch.subject_id,
-                                        revisionCount:  ch.revision_count ?? 0,
-                                        revisionDates:  ch.revision_dates ?? [],
-                                        order:          ch.order_index    ?? 0,
-                                        status:         ch.status         ?? 'not-started',
-                                        difficulty:     ch.difficulty     ?? 'medium',
-                                        notes:          ch.notes          ?? '',
-                                        deadline:       ch.deadline       ?? '',
-                                        completionDate: ch.completion_date ?? null,
-                                        subject_id:      undefined,
-                                        revision_count:  undefined,
-                                        order_index:     undefined,
-                                        revision_dates:  undefined,
-                                        completion_date: undefined,
-                                    }));
+                        // Fetch ALL chapters for ALL subjects in one query,
+                        // then group them in memory — replaces the N-request loop.
+                        const allSubjectIds = subjects.map(s => s.id);
+                        const { data: allChData, error: allChErr } =
+                            await DB.chapters.getBySubjects(allSubjectIds);
+
+                        // Build a Map<subjectId, chapter[]> for O(1) lookup.
+                        const chaptersBySubject = new Map();
+                        if (!allChErr && allChData) {
+                            for (const ch of allChData) {
+                                const normalised = {
+                                    ...ch,
+                                    subjectId:      ch.subject_id,
+                                    revisionCount:  ch.revision_count ?? 0,
+                                    revisionDates:  ch.revision_dates ?? [],
+                                    order:          ch.order_index    ?? 0,
+                                    status:         ch.status         ?? 'not-started',
+                                    difficulty:     ch.difficulty     ?? 'medium',
+                                    notes:          ch.notes          ?? '',
+                                    deadline:       ch.deadline       ?? '',
+                                    completionDate: ch.completion_date ?? null,
+                                    subject_id:      undefined,
+                                    revision_count:  undefined,
+                                    order_index:     undefined,
+                                    revision_dates:  undefined,
+                                    completion_date: undefined,
+                                };
+                                if (!chaptersBySubject.has(ch.subject_id)) {
+                                    chaptersBySubject.set(ch.subject_id, []);
                                 }
-                            } catch(chE){ warn(`chapters for subject ${sub.id}`, chE); }
-                            return { ...sub, chapters };
+                                chaptersBySubject.get(ch.subject_id).push(normalised);
+                            }
+                        } else if (allChErr) {
+                            warn('chapters bulk fetch', allChErr);
+                        }
+
+                        // Attach each subject's chapter array — same shape as before.
+                        this.state.subjects = subjects.map(sub => ({
+                            ...sub,
+                            chapters: chaptersBySubject.get(sub.id) ?? [],
                         }));
-                        this.state.subjects = withChapters;
                     }
                     this._loadedTabs.add('subjects');
                 } catch(e){ warn('subjects', e); }

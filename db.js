@@ -301,6 +301,35 @@ export const DB = {
       return _cache.get(k);
     },
 
+    /**
+     * getBySubjects — bulk fetch chapters for multiple subjects in ONE query.
+     *
+     * Use this instead of calling getBySubject() in a loop when you already
+     * have a list of subject IDs (e.g. after DB.subjects.getAll()).
+     *
+     * The caller is responsible for grouping the flat result array back onto
+     * each subject by subject_id.  The order_index ordering is preserved so
+     * each subject's chapters still arrive in display order.
+     *
+     * This function intentionally bypasses the per-subject _cache because:
+     *   a) it is a bulk bootstrap call — individual per-subject cache entries
+     *      would not be populated by it anyway, so callers that later call
+     *      getBySubject(id) will still re-use their own cache correctly.
+     *   b) caching a combined multi-subject result here would complicate
+     *      invalidation without meaningful benefit (the subjects tab is only
+     *      loaded once per session).
+     */
+    async getBySubjects(subjectIds) {
+      await requireAuth();
+      if (!subjectIds || subjectIds.length === 0) return ok([]);
+      return run(
+        supabase.from('chapters')
+          .select('*')
+          .in('subject_id', subjectIds)
+          .order('order_index')
+      );
+    },
+
     async create(chapter) {
       await requireAuth();
       _cache.delete(`chapters:${chapter.subject_id}`);
