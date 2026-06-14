@@ -301,32 +301,24 @@ export const DB = {
       return _cache.get(k);
     },
 
-    /**
-     * getBySubjects — bulk fetch chapters for multiple subjects in ONE query.
-     *
-     * Use this instead of calling getBySubject() in a loop when you already
-     * have a list of subject IDs (e.g. after DB.subjects.getAll()).
-     *
-     * The caller is responsible for grouping the flat result array back onto
-     * each subject by subject_id.  The order_index ordering is preserved so
-     * each subject's chapters still arrive in display order.
-     *
-     * This function intentionally bypasses the per-subject _cache because:
-     *   a) it is a bulk bootstrap call — individual per-subject cache entries
-     *      would not be populated by it anyway, so callers that later call
-     *      getBySubject(id) will still re-use their own cache correctly.
-     *   b) caching a combined multi-subject result here would complicate
-     *      invalidation without meaningful benefit (the subjects tab is only
-     *      loaded once per session).
-     */
+    // ── PERF: batched chapter fetch for initial subjects load ────────────────
+    //
+    // Why: the per-subject loop in app.js (_loadTabData('subjects')) called
+    // getBySubject(id) once per subject — 5 subjects = 5 sequential/parallel
+    // `chapters?select=...&subject_id=eq.X` requests, each landing at ~3.8s
+    // in the network trace and dominating the LCP "element render delay".
+    //
+    // This single query replaces all 5: one `chapters?select=...&subject_id=
+    // in.(id1,id2,...)` request, ordered by order_index so per-subject
+    // grouping in app.js can simply filter the combined result set.
+    //
+    // Does NOT replace getBySubject(id) above — that's still used by
+    // single-subject call sites (e.g. subject expand) and is left untouched.
     async getBySubjects(subjectIds) {
       await requireAuth();
       if (!subjectIds || subjectIds.length === 0) return ok([]);
       return run(
-        supabase.from('chapters')
-          .select('*')
-          .in('subject_id', subjectIds)
-          .order('order_index')
+        supabase.from('chapters').select('*').in('subject_id', subjectIds).order('order_index')
       );
     },
 

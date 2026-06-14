@@ -434,47 +434,49 @@ const App={
                     const { data: subjects, error } = await DB.subjects.getAll(userId);
                     if (error) throw error;
                     if (subjects) {
-                        // Fetch ALL chapters for ALL subjects in one query,
-                        // then group them in memory — replaces the N-request loop.
-                        const allSubjectIds = subjects.map(s => s.id);
-                        const { data: allChData, error: allChErr } =
-                            await DB.chapters.getBySubjects(allSubjectIds);
+                        // PERF: was Promise.all(subjects.map(... DB.chapters.getBySubject(sub.id) ...))
+                        // — N subjects = N separate `chapters?select=...&subject_id=eq.X`
+                        // requests, each ~3.8s in the LCP-blocking critical path.
+                        // Now: ONE `chapters?select=...&subject_id=in.(id1,id2,...)`
+                        // request, then group results back onto each subject by
+                        // subject_id in memory. Resulting state.subjects shape is
+                        // IDENTICAL to before — only the fetch strategy changed.
+                        const subjectIds = subjects.map(sub => sub.id);
+                        let allChapters = [];
+                        try {
+                            const { data: chData, error: chErr } = await DB.chapters.getBySubjects(subjectIds);
+                            if (chErr) throw chErr;
+                            if (chData) allChapters = chData;
+                        } catch(chE){ warn('chapters (batched)', chE); }
 
-                        // Build a Map<subjectId, chapter[]> for O(1) lookup.
                         const chaptersBySubject = new Map();
-                        if (!allChErr && allChData) {
-                            for (const ch of allChData) {
-                                const normalised = {
-                                    ...ch,
-                                    subjectId:      ch.subject_id,
-                                    revisionCount:  ch.revision_count ?? 0,
-                                    revisionDates:  ch.revision_dates ?? [],
-                                    order:          ch.order_index    ?? 0,
-                                    status:         ch.status         ?? 'not-started',
-                                    difficulty:     ch.difficulty     ?? 'medium',
-                                    notes:          ch.notes          ?? '',
-                                    deadline:       ch.deadline       ?? '',
-                                    completionDate: ch.completion_date ?? null,
-                                    subject_id:      undefined,
-                                    revision_count:  undefined,
-                                    order_index:     undefined,
-                                    revision_dates:  undefined,
-                                    completion_date: undefined,
-                                };
-                                if (!chaptersBySubject.has(ch.subject_id)) {
-                                    chaptersBySubject.set(ch.subject_id, []);
-                                }
-                                chaptersBySubject.get(ch.subject_id).push(normalised);
-                            }
-                        } else if (allChErr) {
-                            warn('chapters bulk fetch', allChErr);
-                        }
+                        allChapters.forEach(ch => {
+                            const sid = ch.subject_id;
+                            if (!chaptersBySubject.has(sid)) chaptersBySubject.set(sid, []);
+                            chaptersBySubject.get(sid).push({
+                                ...ch,
+                                subjectId:      ch.subject_id,
+                                revisionCount:  ch.revision_count ?? 0,
+                                revisionDates:  ch.revision_dates ?? [],
+                                order:          ch.order_index    ?? 0,
+                                status:         ch.status         ?? 'not-started',
+                                difficulty:     ch.difficulty     ?? 'medium',
+                                notes:          ch.notes          ?? '',
+                                deadline:       ch.deadline       ?? '',
+                                completionDate: ch.completion_date ?? null,
+                                subject_id:      undefined,
+                                revision_count:  undefined,
+                                order_index:     undefined,
+                                revision_dates:  undefined,
+                                completion_date: undefined,
+                            });
+                        });
 
-                        // Attach each subject's chapter array — same shape as before.
-                        this.state.subjects = subjects.map(sub => ({
+                        const withChapters = subjects.map(sub => ({
                             ...sub,
-                            chapters: chaptersBySubject.get(sub.id) ?? [],
+                            chapters: chaptersBySubject.get(sub.id) || [],
                         }));
+                        this.state.subjects = withChapters;
                     }
                     this._loadedTabs.add('subjects');
                 } catch(e){ warn('subjects', e); }
