@@ -1,8 +1,7 @@
-const CACHE_NAME = 'studyos-v2'; // bumped to purge old cache immediately
+const CACHE_NAME = 'studyos-v3'; // bumped to purge lucide.min.js from old cache
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
-  'https://unpkg.com/lucide@latest/dist/umd/lucide.min.js',
 ];
 
 // App files — always fetched from network, never served stale from cache
