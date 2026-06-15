@@ -36,6 +36,16 @@
     --danger:              var(--color-danger);
     --info:                #38BDF8;
 
+    /* Text-safe variants for use as `color:` (not background/border).
+       Default themes pass AA already; light theme overrides below. */
+    --text-success:        var(--success);
+    --text-warning:        var(--warning);
+    --text-danger:         var(--danger);
+
+    /* Dashboard stat-trend colors — 7.5:1+ on dark surfaces, overridden for light theme below */
+    --trend-green:         #22C55E;
+    --trend-purple:        #A855F7;
+
     /* Legacy gradient vars – mapped to flat colors to strip gradients */
     --gradient-1:          var(--color-brand);
     --gradient-2:          #0EA5E9;
@@ -105,6 +115,16 @@
     --text-muted:          #6E6E8A;
     /* #3730A3 = 7.5:1 on white — passes WCAG AA + AAA */
     --accent-light:        #3730A3;
+    /* #15803D = 5.0:1 on white — passes AA (default #22C55E is only 2.28:1) */
+    --trend-green:         #15803D;
+    /* #7E22CE = 7.0:1 on white — passes AA (default #A855F7 is only 3.96:1) */
+    --trend-purple:        #7E22CE;
+    /* #15803D = 5.0:1 on white — passes AA (default #22C55E is only 2.28:1) */
+    --text-success:        #15803D;
+    /* #B45309 = 5.0:1 on white — passes AA (default #F59E0B is only 2.15:1) */
+    --text-warning:        #B45309;
+    /* #B91C1C = 6.47:1 on white — passes AA (default #EF4444 is only 3.76:1) */
+    --text-danger:         #B91C1C;
     --coach-avatar-bg: linear-gradient(135deg, rgba(79,70,229,0.18), rgba(129,140,248,0.12) 50%, rgba(56,189,248,0.16));
     --coach-avatar-border: rgba(79,70,229,0.16);
     --coach-avatar-icon: #4F46E5;
@@ -145,6 +165,10 @@
     --success:             #4A9E6B;
     --warning:             #D4891A;
     --danger:              #D4674E; /* was #C0533A — lifted to pass WCAG AA on all warm-dark surfaces */
+
+    /* Dashboard stat-trend colors — tuned for warm-dark palette, both pass AA */
+    --trend-green:         #4A9E6B;
+    --trend-purple:        #C77DD4;
 
     /* ── Semantic status tokens ── */
     --color-done:          #4A9E6B;

@@ -189,31 +189,37 @@ const App={
         {text:'Score 80%+ on practice test',check:s=>s.examScores.filter(x=>x.date===s.today).some(x=>x.scored/x.total>=0.8),xp:40}
     ],
 
-    async init(){
-        // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
-        await new Promise((resolve) => {
-            const { data: { subscription } } = window.supabase.auth.onAuthStateChange((event, session) => {
-                subscription.unsubscribe();
-                resolve(session);
-            });
-        });
+    // ── SHELL RENDER — no Supabase/DB dependency, runs immediately ──────────
+    //
+    // PERF ROOT CAUSE (3,630ms LCP element render delay):
+    //   db.js is a blocking `type="module"` script in <head> whose import of
+    //   @supabase/supabase-js@2 pulls down ~8 additional jsdelivr ES modules
+    //   (auth-js, realtime-js, postgrest-js, storage-js, functions-js,
+    //   phoenix, tslib, iceberg-js — each 1.2-1.5s per the network trace).
+    //   The old init() polled via _waitForDB() until window.DB/window.supabase
+    //   existed — meaning NOTHING rendered, including the dashboard shell,
+    //   until that entire CDN chain resolved. The full-screen loading
+    //   spinner that covered this wait was itself the LCP element.
+    //
+    // Fix: this function does the localStorage load, state defaults, theme,
+    // and first render() using ONLY default/empty state (profile defaults to
+    // "Student" / 0 streak / empty subjects → renders the existing "All
+    // Caught Up" empty hero). It has zero dependency on window.DB or
+    // window.supabase, so it runs the instant app.js finishes executing —
+    // giving the browser a real LCP candidate almost immediately. init()
+    // (below) then waits for DB, checks auth, fetches profile/challenge in
+    // the background, and re-renders with real data.
+    renderShell(){
+        if (this._shellRendered) return;
+        this._shellRendered = true;
 
-        const { data: { session } } = await window.supabase.auth.getSession();
-        if (!session) {
-            window.location.href = '/auth.html';
-            return;
-        }
-        // Store session + email globally for use in renderSettings and API calls
-        window._supabaseSession = session;
-        window._supabaseUserEmail = session.user?.email || '';
-
-        // ── Step 2: Load UI-only state from localStorage (theme, page, etc.) ──
+        // Load UI-only state from localStorage (theme, page, etc.)
         this.load();
 
         // Always start on dashboard on refresh
         this.state.currentPage = 'dashboard';
 
-        // ── Step 3: Ensure state field defaults (fields with no Supabase home) ──
+        // Ensure state field defaults (fields with no Supabase home)
         if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
         if(!this.state.quizData)this.state.quizData={};
         if(!this.state.exercises)this.state.exercises={};
@@ -232,28 +238,61 @@ const App={
         if(this.state.pendingFreezeNotice===undefined)this.state.pendingFreezeNotice=false;
         if(this.state.lastFreezeEarnedDate===undefined)this.state.lastFreezeEarnedDate=null;
 
-        // Apply theme early so the loading screen inherits correct colours
+        // Apply theme early so first paint inherits correct colours
         this.applyTheme();
 
-        // ── Step 4: MINIMAL bootstrap — only profile + today's challenge ─────
+        // FIRST PAINT — render dashboard shell with default/empty state.
+        this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
+        this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();
+        this.updatePageTitle();this.updatePageSubtitle();this.updateTopbarPills();
+    },
+
+    async init(){
+        // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
+        await new Promise((resolve) => {
+            const { data: { subscription } } = window.supabase.auth.onAuthStateChange((event, session) => {
+                subscription.unsubscribe();
+                resolve(session);
+            });
+        });
+
+        const { data: { session } } = await window.supabase.auth.getSession();
+        if (!session) {
+            window.location.href = '/auth.html';
+            return;
+        }
+        // Store session + email globally for use in renderSettings and API calls
+        window._supabaseSession = session;
+        window._supabaseUserEmail = session.user?.email || '';
+
+        // Shell may not have rendered yet if DB resolved unusually fast —
+        // ensure it has before we proceed (idempotent, no-op if already done).
+        this.renderShell();
+
+        // ── Step 5: Bootstrap — profile + today's challenge (background) ─────
         //
         // PERF: The old loadFromSupabase() made 13+ sequential Supabase calls
         // on every page load, blocking the first render for 16 530 ms.
         //
         // New contract:
         //   • _loadBootstrap()  → 2 parallel calls (profile + challenge).
-        //                         Runs NOW, before first render.
+        //                         Runs in the background; does NOT block
+        //                         first paint (see Step 4 above).
         //   • _loadTabData(tab) → lazy per-tab fetch, called from navigate().
         //                         Each tab fetches its own data the first time
         //                         the user navigates there.  Subsequent visits
         //                         are served from in-memory state (no re-fetch).
-        //
-        // Result: first paint happens after ~1 network round-trip instead of 13.
-        this.showLoadingScreen();
         await this._loadBootstrap(session.user.id);
-        this.hideLoadingScreen();
+        this._badgesLoaded=true; // flag: earnedBadges is now populated from Supabase
 
-        // ── Step 5: Welcome overlay — only for brand-new users ───────────────
+        // Re-render with real profile data (name, streak, exam date, XP/level,
+        // daily goal) now that it has arrived. Cheap no-op if user has already
+        // navigated away from the dashboard.
+        this.updateStreak();this.generateDailyChallenges();
+        if (this.state.currentPage === 'dashboard') this.renderDashboard();
+        this.updateSidebar();this.updatePageTitle();this.updatePageSubtitle();this.updateTopbarPills();
+
+        // ── Step 6: Welcome overlay — only for brand-new users ───────────────
         // subjects haven't loaded yet at this point; we check after the first
         // navigate-to-subjects fetch instead.  For the welcome check we rely on
         // the migration flag — new users never have it set.
@@ -268,13 +307,7 @@ const App={
             });
         }
 
-        // ── Step 6: Boot the rest of the app ────────────────────────────────
-        this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
-        this._badgesLoaded=true; // flag: earnedBadges is now populated from Supabase
-        this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();
-        this.updatePageTitle();
-
-        // ── Background subjects prefetch ─────────────────────────────────────
+        // ── Step 7: Background subjects prefetch ──────────────────────────────
         // Dashboard hero needs subjects to show the next chapter to study.
         // Subjects are lazy-loaded on first tab visit, which means the hero
         // shows the "All Caught Up" empty state on first load. This background
@@ -289,46 +322,8 @@ const App={
         this.checkBadges();
         setInterval(()=>{this.updatePageSubtitle();this.updateTopbarPills();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
         setTimeout(()=>{this.checkStreakReminder();this.checkEodCheckin()},5000);
-        this.updatePageSubtitle();
-        this.updateTopbarPills();
         if(this.state.autoTheme)this.autoThemeCheck();
         if(this.state.stopwatch.running)this.startStopwatchTimer();
-    },
-
-    // ── Loading screen ────────────────────────────────────────────────────────
-    showLoadingScreen(){
-        if(document.getElementById('studyos-loading-screen'))return;
-        const el=document.createElement('div');
-        el.id='studyos-loading-screen';
-        el.style.cssText=`
-            position:fixed;inset:0;z-index:9999;
-            background:var(--color-bg);
-            display:flex;flex-direction:column;
-            align-items:center;justify-content:center;gap:20px;
-        `;
-        el.innerHTML=`
-            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"
-                style="animation:studyos-spin 0.9s linear infinite;flex-shrink:0">
-                <circle cx="20" cy="20" r="16" stroke="var(--color-border)" stroke-width="3"/>
-                <path d="M20 4 A16 16 0 0 1 36 20" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
-            </svg>
-            <span style="font-family:var(--font-body);font-size:.875rem;font-weight:500;color:var(--color-text-secondary);letter-spacing:.2px">
-                Loading your data…
-            </span>
-            <style>
-                @keyframes studyos-spin{to{transform:rotate(360deg)}}
-            </style>
-        `;
-        document.body.appendChild(el);
-    },
-
-    hideLoadingScreen(){
-        const el=document.getElementById('studyos-loading-screen');
-        if(el){
-            el.style.transition='opacity .25s ease';
-            el.style.opacity='0';
-            setTimeout(()=>el.remove(),280);
-        }
     },
 
     // ── MINIMAL BOOTSTRAP (2 parallel calls, runs at every page load) ────────
@@ -1316,7 +1311,7 @@ const App={
         const ringColor=gp>=100?'#22C55E':'#22d3ee';
         // Find subject color for hero chapter subject tag
         const heroSubject=heroChapter?this.state.subjects.find(s=>s.id===heroChapter.subjectId):null;
-        const heroSubjectColor=heroSubject?heroSubject.color:'#6366f1';
+        const heroSubjectColor=heroSubject?heroSubject.color:'#6F72FD';
         const heroSubjectColorRgba=heroSubjectColor.startsWith('#')
             ?(()=>{const r=parseInt(heroSubjectColor.slice(1,3),16),g=parseInt(heroSubjectColor.slice(3,5),16),b=parseInt(heroSubjectColor.slice(5,7),16);return`rgba(${r},${g},${b},0.15)`})()
             :'rgba(99,102,241,0.15)';
@@ -1401,17 +1396,17 @@ const App={
             <div class="db-stat db-stat-indigo">
                 <div class="db-stat-val">${this.formatMin(tm)}</div>
                 <div class="db-stat-lbl">Today${avgMin>0?' · avg '+this.formatMin(avgMin):''}</div>
-                <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'#6366f1':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>
+                <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--accent-light)':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>
             </div>
             <div class="db-stat db-stat-green">
                 <div class="db-stat-val">${comp}<span style="font-size:.9rem;font-weight:400;opacity:.5">/${tot}</span></div>
                 <div class="db-stat-lbl">Chapters done</div>
-                <div class="db-stat-trend" style="color:${sp>=50?'#22C55E':'var(--text-muted)'}">${sp>=50?'↑ Strong':'—'}</div>
+                <div class="db-stat-trend" style="color:${sp>=50?'var(--trend-green)':'var(--text-muted)'}">${sp>=50?'↑ Strong':'—'}</div>
             </div>
             <div class="db-stat db-stat-purple">
                 <div class="db-stat-val">${dte!==null&&dte>0?dte:'—'}</div>
                 <div class="db-stat-lbl">${dte!==null&&dte>0?'Days to boards':'Exam date'}</div>
-                <div class="db-stat-trend" style="color:${dte!==null&&dte<30?'var(--danger)':dte!==null&&dte<60?'#a855f7':'var(--text-muted)'}">${dte!==null&&dte>0?(dte<30?'↓ Very soon':dte<60?'Getting close':'Plenty of time'):'Not set'}</div>
+                <div class="db-stat-trend" style="color:${dte!==null&&dte<30?'var(--text-danger)':dte!==null&&dte<60?'var(--trend-purple)':'var(--text-muted)'}">${dte!==null&&dte>0?(dte<30?'↓ Very soon':dte<60?'Getting close':'Plenty of time'):'Not set'}</div>
             </div>
         </div>`;
 
@@ -1499,7 +1494,7 @@ const App={
                         <span style="font-size:.7rem;font-weight:700;background:rgba(99,102,241,0.12);color:var(--accent-light);padding:3px 8px;border-radius:8px;white-space:nowrap">+${ch.xp} XP</span>
                     </div>`;
                 }).join('')}
-                ${_allDone?`<div style="font-size:.75rem;color:var(--success);text-align:center;padding-top:10px">All done! +${_totalXP} XP earned</div>`:''}
+                ${_allDone?`<div style="font-size:.75rem;color:var(--text-success);text-align:center;padding-top:10px">All done! +${_totalXP} XP earned</div>`:''}
             </div>`;
         })();
 
@@ -1538,7 +1533,7 @@ const App={
                     <div class="db-subj-cell-top">
                         <span class="db-subj-cell-icon">${s.icon}</span>
                         <span class="db-subj-cell-name">${s.name}</span>
-                        <span class="db-subj-cell-count" style="color:${s.color}">${dn}/${s.chapters.length}</span>
+                        <span class="db-subj-cell-count">${dn}/${s.chapters.length}</span>
                     </div>
                     <div class="db-subj-cell-bar-track">
                         <div class="db-subj-cell-bar-fill" style="width:${pc}%;background:${s.color}"></div>
@@ -1604,7 +1599,7 @@ const App={
                 :plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')">
                     <div class="plan-emoji">${p.subjectIcon}</div>
                     <div class="plan-info"><h3>${p.name}</h3><p>${p.subjectName}</p></div>
-                    <span style="font-size:.65rem;padding:3px 8px;border-radius:6px;white-space:nowrap;background:${p.priority==='overdue'?'rgba(239,68,68,0.1)':p.priority==='revised'?'rgba(6,182,212,0.1)':'rgba(99,102,241,0.1)'};color:${p.priority==='overdue'?'var(--danger)':p.priority==='revised'?'var(--info)':'var(--accent-light)'}">${p.reason}</span>
+                    <span style="font-size:.65rem;padding:3px 8px;border-radius:6px;white-space:nowrap;background:${p.priority==='overdue'?'rgba(239,68,68,0.1)':p.priority==='revised'?'rgba(6,182,212,0.1)':'rgba(99,102,241,0.1)'};color:${p.priority==='overdue'?'var(--text-danger)':p.priority==='revised'?'var(--info)':'var(--accent-light)'}">${p.reason}</span>
                 </div>`).join('')}
         </div>`;
 
@@ -1631,7 +1626,7 @@ const App={
                         stroke-dasharray="${2*Math.PI*34}" stroke-dashoffset="${2*Math.PI*34*(1-rs/100)}"
                         stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s ease"/>
                 </svg>
-                <div class="readiness-value" style="font-size:1.1rem;color:${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}">${rs}%</div>
+                <div class="readiness-value" style="font-size:1.1rem;color:${rs>=70?'var(--text-success)':rs>=40?'var(--text-warning)':'var(--text-danger)'}">${rs}%</div>
             </div>
             <div style="flex:1">
                 <div style="font-weight:700;font-size:.95rem;margin-bottom:4px">Board Readiness</div>
@@ -1648,13 +1643,13 @@ const App={
         const weakHTML=weakChapters.length>0?`<div class="card" style="border-left:3px solid var(--danger);margin-bottom:0">
             <div class="card-header" style="margin-bottom:10px">
                 <span class="card-title">Needs Attention</span>
-                <span style="font-size:.7rem;color:var(--danger);font-weight:600">${weakChapters.length} weak chapter${weakChapters.length>1?'s':''}</span>
+                <span style="font-size:.7rem;color:var(--text-danger);font-weight:600">${weakChapters.length} weak chapter${weakChapters.length>1?'s':''}</span>
             </div>
             <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:10px">These chapters had low confidence ratings across multiple sessions. Revisit before boards.</p>
             ${weakChapters.slice(0,5).map(c=>`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="border-color:rgba(239,68,68,0.25)">
                 <div class="plan-emoji">${c.subjectIcon}</div>
                 <div class="plan-info"><h3>${c.name}</h3><p>${c.subjectName}</p></div>
-                <span style="font-size:.72rem;color:var(--danger);font-weight:600">⚠️ Weak</span>
+                <span style="font-size:.72rem;color:var(--text-danger);font-weight:600">⚠️ Weak</span>
             </div>`).join('')}
             ${weakChapters.length>5?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:6px;text-align:center">+${weakChapters.length-5} more · <span style="color:var(--accent-light);cursor:pointer" onclick="App.navigate('subjects')">View all →</span></p>`:''}
         </div>`:'';
@@ -1754,7 +1749,7 @@ const App={
             const health=this.computeSubjectHealth(s);
             const healthColor=health>=70?'var(--success)':health>=40?'var(--warning)':'var(--danger)';
             const healthLabel=health>=70?'Strong':'Needs work';
-            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:.65rem;color:var(--text-muted);flex-shrink:0">Health</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${health}%;background:${healthColor};border-radius:3px;transition:width .8s ease"></div></div><span style="font-size:.65rem;font-weight:700;color:${healthColor};flex-shrink:0">${health} · ${healthLabel}</span></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';return`<div class="chapter-item" style="box-sizing:border-box"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span style="font-size:.65rem">🔄${c.revisionCount}</span>`:''}${confTag}${c.weakFlag?'<span class="tag" style="background:rgba(239,68,68,0.1);color:var(--danger)">weak</span>':''}${ov?'<span class="tag tag-overdue">!</span>':''}</div></div><div class="chapter-actions" style="flex-shrink:0"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`}).join('')}</div></div>`})}
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:.65rem;color:var(--text-muted);flex-shrink:0">Health</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${health}%;background:${healthColor};border-radius:3px;transition:width .8s ease"></div></div><span style="font-size:.65rem;font-weight:700;color:${healthColor};flex-shrink:0">${health} · ${healthLabel}</span></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';return`<div class="chapter-item" style="box-sizing:border-box"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span style="font-size:.65rem">🔄${c.revisionCount}</span>`:''}${confTag}${c.weakFlag?'<span class="tag" style="background:rgba(239,68,68,0.1);color:var(--text-danger)">weak</span>':''}${ov?'<span class="tag tag-overdue">!</span>':''}</div></div><div class="chapter-actions" style="flex-shrink:0"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`}).join('')}</div></div>`})}
         el.innerHTML=h;
     },
     filterSubject(id){this.state.selectedSubjectFilter=id;this.renderSubjects()},
@@ -1784,7 +1779,7 @@ const App={
         const ov=ch.deadline&&ch.deadline<this.today()&&ch.status!=='completed'&&ch.status!=='revised';
         const exKey=sId+'_'+cId;
         const exercises=this.state.exercises[exKey]||[];
-        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div><div class="grid grid-3" style="margin-bottom:18px"><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${this.formatMin(tt)}</p><p style="font-size:.7rem;color:var(--text-muted)">Time</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ch.revisionCount}</p><p style="font-size:.7rem;color:var(--text-muted)">Revisions</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ss.length}</p><p style="font-size:.7rem;color:var(--text-muted)">Sessions</p></div></div><div class="form-row" style="margin-bottom:16px"><div class="form-group" style="margin:0"><label class="form-label">Status</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','status',this.value)"><option value="not-started" ${ch.status==='not-started'?'selected':''}>Not Started</option><option value="in-progress" ${ch.status==='in-progress'?'selected':''}>In Progress</option><option value="completed" ${ch.status==='completed'?'selected':''}>Completed</option><option value="revised" ${ch.status==='revised'?'selected':''}>Revised</option></select></div><div class="form-group" style="margin:0"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div></div><div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--danger);font-size:.75rem;margin-top:4px">Overdue!</p>':''}</div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Study notes..." onchange="App.updateChapterField('${sId}','${cId}','notes',this.value)">${ch.notes||''}</textarea></div><div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>`;
+        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div><div class="grid grid-3" style="margin-bottom:18px"><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${this.formatMin(tt)}</p><p style="font-size:.7rem;color:var(--text-muted)">Time</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ch.revisionCount}</p><p style="font-size:.7rem;color:var(--text-muted)">Revisions</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ss.length}</p><p style="font-size:.7rem;color:var(--text-muted)">Sessions</p></div></div><div class="form-row" style="margin-bottom:16px"><div class="form-group" style="margin:0"><label class="form-label">Status</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','status',this.value)"><option value="not-started" ${ch.status==='not-started'?'selected':''}>Not Started</option><option value="in-progress" ${ch.status==='in-progress'?'selected':''}>In Progress</option><option value="completed" ${ch.status==='completed'?'selected':''}>Completed</option><option value="revised" ${ch.status==='revised'?'selected':''}>Revised</option></select></div><div class="form-group" style="margin:0"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div></div><div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--text-danger);font-size:.75rem;margin-top:4px">Overdue!</p>':''}</div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Study notes..." onchange="App.updateChapterField('${sId}','${cId}','notes',this.value)">${ch.notes||''}</textarea></div><div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>`;
         document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">Log Study</button>`;
         this.openModal('modal-detail');
     },
@@ -2012,17 +2007,17 @@ const App={
                 const latest=exams[exams.length-1];const pct=Math.round(latest.scored/latest.total*100);
                 const prevPct=exams.length>1?Math.round(exams[exams.length-2].scored/exams[exams.length-2].total*100):null;
                 const trend=prevPct!==null?(pct>prevPct?'↑':'↓'):'';
-                h+=`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name} ${trend}</span><span class="sp-pct" style="color:${pct>=80?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${sub.color}"></div></div>${prevPct!==null?`<p style="font-size:.68rem;color:var(--text-muted);margin-top:2px">Previous: ${prevPct}% → Current: ${pct}% (${pct-prevPct>=0?'+':''}${pct-prevPct}%)</p>`:''}</div>`;
+                h+=`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name} ${trend}</span><span class="sp-pct" style="color:${pct>=80?'var(--text-success)':pct>=50?'var(--text-warning)':'var(--text-danger)'}">${pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${sub.color}"></div></div>${prevPct!==null?`<p style="font-size:.68rem;color:var(--text-muted);margin-top:2px">Previous: ${prevPct}% → Current: ${pct}% (${pct-prevPct>=0?'+':''}${pct-prevPct}%)</p>`:''}</div>`;
             });
             h+='</div>';
             // Target vs actual
             if(this.state.profile.targetScore){
-                h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${avg>=this.state.profile.targetScore?'var(--success)':'var(--warning)'}"><div class="card-header"><span class="card-title">Target vs Actual</span></div><p style="font-size:.9rem">Target: <strong>${this.state.profile.targetScore}%</strong> | Average: <strong style="color:${avg>=this.state.profile.targetScore?'var(--success)':'var(--danger)'}">${avg}%</strong> ${avg>=this.state.profile.targetScore?'On track!':'Needs improvement'}</p></div>`;
+                h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${avg>=this.state.profile.targetScore?'var(--success)':'var(--warning)'}"><div class="card-header"><span class="card-title">Target vs Actual</span></div><p style="font-size:.9rem">Target: <strong>${this.state.profile.targetScore}%</strong> | Average: <strong style="color:${avg>=this.state.profile.targetScore?'var(--text-success)':'var(--text-danger)'}">${avg}%</strong> ${avg>=this.state.profile.targetScore?'On track!':'Needs improvement'}</p></div>`;
             }
         }
         h+=`<div class="card"><div class="card-header"><span class="card-title">All Scores</span></div>`;
         if(scores.length===0)h+='<p style="color:var(--text-muted);font-size:.85rem">No scores yet. Log your first exam!</p>';
-        else{[...scores].reverse().forEach(e=>{const sub=this.getSubjectById(e.subjectId);const pct=Math.round(e.scored/e.total*100);h+=`<div class="rev-item"><div class="rev-info"><h4>${sub?sub.icon:''} ${e.name}</h4><p>${sub?sub.name:''} • ${e.date} • ${e.scored}/${e.total}</p></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.85rem;font-weight:700;color:${pct>=80?'var(--success)':pct>=50?'var(--warning)':'var(--danger)'}">${pct}%</span><button class="ch-btn" onclick="App.deleteExam('${e.id}')" style="width:24px;height:24px;font-size:.65rem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`})}
+        else{[...scores].reverse().forEach(e=>{const sub=this.getSubjectById(e.subjectId);const pct=Math.round(e.scored/e.total*100);h+=`<div class="rev-item"><div class="rev-info"><h4>${sub?sub.icon:''} ${e.name}</h4><p>${sub?sub.name:''} • ${e.date} • ${e.scored}/${e.total}</p></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.85rem;font-weight:700;color:${pct>=80?'var(--text-success)':pct>=50?'var(--text-warning)':'var(--text-danger)'}">${pct}%</span><button class="ch-btn" onclick="App.deleteExam('${e.id}')" style="width:24px;height:24px;font-size:.65rem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`})}
         h+='</div>';el.innerHTML=h;
     },
     openExamModal(){
@@ -2206,14 +2201,14 @@ const App={
             sprintHTML=`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--warning)">
                 <div class="card-header" style="margin-bottom:12px">
                     <span class="card-title">Exam Sprint — ${dte} Days Left</span>
-                    <span style="font-size:.7rem;background:rgba(245,158,11,0.12);color:var(--warning);padding:3px 8px;border-radius:6px;font-weight:600">${sprint.coveredInSprint}/${sprint.totalChapters} chapters planned</span>
+                    <span style="font-size:.7rem;background:rgba(245,158,11,0.12);color:var(--text-warning);padding:3px 8px;border-radius:6px;font-weight:600">${sprint.coveredInSprint}/${sprint.totalChapters} chapters planned</span>
                 </div>
-                <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:14px">Auto-prioritized: weak chapters first, then overdue, then hard topics. ${coveredPct<100?`<strong style="color:var(--danger)">${sprint.totalChapters-sprint.coveredInSprint} chapters won't fit — focus on these first.</strong>`:'All pending chapters covered ✅'}</p>
+                <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:14px">Auto-prioritized: weak chapters first, then overdue, then hard topics. ${coveredPct<100?`<strong style="color:var(--text-danger)">${sprint.totalChapters-sprint.coveredInSprint} chapters won't fit — focus on these first.</strong>`:'All pending chapters covered ✅'}</p>
                 <div style="display:flex;flex-direction:column;gap:6px">
                 ${sprint.days.map(day=>`<div style="border-radius:8px;padding:10px 12px;background:${day.isToday?'rgba(79,70,229,0.1)':'var(--color-surface-hover)'};border:1px solid ${day.isToday?'var(--color-brand)':'transparent'}">
                     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${day.chapters.length>0||day.revisions.length>0?'7px':'0'}">
                         <span style="font-size:.75rem;font-weight:700;color:${day.isToday?'var(--accent-light)':'var(--text-secondary)'}">${day.isToday?'TODAY':day.label} <span style="font-weight:400;color:var(--text-muted)">${day.date}</span>${day.isWeekend?' 🏖️':''}</span>
-                        ${day.chapters.length===0&&day.revisions.length===0?'<span style="font-size:.65rem;color:var(--success)">✅ Rest day</span>':''}
+                        ${day.chapters.length===0&&day.revisions.length===0?'<span style="font-size:.65rem;color:var(--text-success)">✅ Rest day</span>':''}
                     </div>
                     ${day.chapters.map(c=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 0"><span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0">${c.sprintReason}</span><span style="font-size:.78rem;font-weight:500;flex:1">${c.subjectIcon} ${c.name}</span></div>`).join('')}
                     ${day.revisions.map(c=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 0"><span style="font-size:.7rem;color:var(--info);flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> Revise</span><span style="font-size:.78rem;flex:1">${c.subjectIcon} ${c.name}</span></div>`).join('')}
@@ -2224,7 +2219,7 @@ const App={
         let predHtml='';
         if(pred&&dte!==null){
             const onTrack=this.daysBetween(this.today(),pred.date)<=dte;
-            predHtml=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${onTrack?'var(--success)':'var(--danger)'}"><div class="card-header"><span class="card-title">Predicted Completion</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${onTrack?'var(--success)':'var(--danger)'}">${onTrack?'On track for boards!':'Won\'t finish before exams — speed up!'}</p>${!onTrack&&dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: ${Math.ceil((this.getTotalChapters()-this.getCompletedCount())/dte*10)/10} chapters/day to finish on time</p>`:''}</div>`;
+            predHtml=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${onTrack?'var(--success)':'var(--danger)'}"><div class="card-header"><span class="card-title">Predicted Completion</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${onTrack?'var(--text-success)':'var(--text-danger)'}">${onTrack?'On track for boards!':'Won\'t finish before exams — speed up!'}</p>${!onTrack&&dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: ${Math.ceil((this.getTotalChapters()-this.getCompletedCount())/dte*10)/10} chapters/day to finish on time</p>`:''}</div>`;
         }
 
         el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3>${od.length}</h3><p>Overdue</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${up.length}</h3><p>Upcoming</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3>${nd.length}</h3><p>No deadline</p></div></div></div>${sprintHTML}${predHtml}${od.length>0?`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--danger)"><div class="card-header"><span class="card-title">Overdue</span></div>${od.map(c=>`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}</div>`:''}<div class="card"><div class="card-header"><span class="card-title">Upcoming Deadlines</span></div>${up.length===0?'<p style="color:var(--text-muted)">None</p>':up.map(c=>{const dl=this.daysBetween(this.today(),c.deadline);return`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${c.deadline}</p></div><span class="tag" style="color:var(--${dl<=3?'danger':dl<=7?'warning':'success'})">${dl}d</span></div>`}).join('')}</div>`;
@@ -2298,27 +2293,27 @@ const App={
                     <div style="text-align:center;padding:10px;background:var(--color-surface-hover);border-radius:8px">
                         <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary)">${this.formatMin(tm)}</div>
                         <div style="font-size:.65rem;color:var(--text-muted)">Time this week</div>
-                        ${timeVsLast!==null?`<div style="font-size:.65rem;font-weight:600;color:${timeVsLast>=0?'var(--success)':'var(--danger)'}">${timeVsLast>=0?'▲':'▼'} ${Math.abs(timeVsLast)}% vs last week</div>`:''}
+                        ${timeVsLast!==null?`<div style="font-size:.65rem;font-weight:600;color:${timeVsLast>=0?'var(--text-success)':'var(--text-danger)'}">${timeVsLast>=0?'▲':'▼'} ${Math.abs(timeVsLast)}% vs last week</div>`:''}
                     </div>
                     <div style="text-align:center;padding:10px;background:var(--color-surface-hover);border-radius:8px">
                         <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary)">${thisWeekChapters}</div>
                         <div style="font-size:.65rem;color:var(--text-muted)">Chapters done</div>
-                        ${lastWeekChapters>0?`<div style="font-size:.65rem;font-weight:600;color:${thisWeekChapters>=lastWeekChapters?'var(--success)':'var(--danger)'}">${thisWeekChapters>=lastWeekChapters?'▲':'▼'} vs ${lastWeekChapters} last week</div>`:''}
+                        ${lastWeekChapters>0?`<div style="font-size:.65rem;font-weight:600;color:${thisWeekChapters>=lastWeekChapters?'var(--text-success)':'var(--text-danger)'}">${thisWeekChapters>=lastWeekChapters?'▲':'▼'} vs ${lastWeekChapters} last week</div>`:''}
                     </div>
                     <div style="text-align:center;padding:10px;background:var(--color-surface-hover);border-radius:8px">
                         <div style="font-size:1.1rem;font-weight:700;color:var(--text-primary)">${ds}/7</div>
                         <div style="font-size:.65rem;color:var(--text-muted)">Days studied</div>
-                        <div style="font-size:.65rem;font-weight:600;color:${ds>=5?'var(--success)':ds>=3?'var(--warning)':'var(--danger)'}">${ds>=5?'Consistent ✅':ds>=3?'Almost there':'Needs work'}</div>
+                        <div style="font-size:.65rem;font-weight:600;color:${ds>=5?'var(--text-success)':ds>=3?'var(--text-warning)':'var(--text-danger)'}">${ds>=5?'Consistent ✅':ds>=3?'Almost there':'Needs work'}</div>
                     </div>
                 </div>
-                ${weakest?`<div style="margin-bottom:10px;padding:8px 10px;background:rgba(239,68,68,0.07);border-radius:6px;font-size:.78rem"><span style="color:var(--danger);font-weight:600">📉 Weakest chapter: </span>${weakest.name} <span style="color:var(--text-muted)">(${weakest.sub})</span> — avg confidence ${['','🔴','🟡','🟢','⚡'][Math.round(weakest.avg)]||'🔴'}</div>`:''}
+                ${weakest?`<div style="margin-bottom:10px;padding:8px 10px;background:rgba(239,68,68,0.07);border-radius:6px;font-size:.78rem"><span style="color:var(--text-danger);font-weight:600">📉 Weakest chapter: </span>${weakest.name} <span style="color:var(--text-muted)">(${weakest.sub})</span> — avg confidence ${['','🔴','🟡','🟢','⚡'][Math.round(weakest.avg)]||'🔴'}</div>`:''}
                 <div style="padding:10px;background:rgba(79,70,229,0.07);border-radius:6px;font-size:.8rem;line-height:1.5"><span style="font-weight:600;color:var(--accent-light)">💡 Recommendation: </span>${rec}</div>
             </div>`;
         }
         el.innerHTML=weeklyReportHTML+`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>This week</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${ds}/7</h3><p>Days studied</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${this.formatMin(tmMin)}</h3><p>This month</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="stat-info"><h3>${avgSession}m</h3><p>Avg session</p></div></div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Daily Study Time</span></div><div class="week-graph">${dd.map(d=>{const pc=d.minutes/mx*100;const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T12:00').getDay()];return`<div class="bar-col"><div class="bar-value">${d.minutes>0?this.formatMin(d.minutes):''}</div><div class="bar" style="height:${Math.max(2,pc)}%;${d.date===this.today()?'background:var(--gradient-3)':''}"></div><div class="bar-label">${dn}</div></div>`}).join('')}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
-        <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--success)':'var(--danger)'};font-weight:600">${tmMin>=lmMin?'↑':'↓'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'Improving!':'Study more!'}</p></div><div class="card"><div class="card-header"><span class="card-title">Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
-        <div class="card"><div class="card-header"><span class="card-title">Subject Balance — All Time</span></div><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">${this.state.subjects.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);const isLow=pc<(100/Math.max(1,this.state.subjects.length))*0.5;return`<div style="text-align:center;min-width:60px;flex:0 0 auto"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ${s.color};display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.5rem;${isLow?'opacity:.5':''}">${s.icon}</div><p style="font-size:.78rem;font-weight:600">${s.name}</p><p style="font-size:.72rem;color:${isLow?'var(--danger)':s.color}">${pc}%</p>${isLow?'<p style="font-size:.6rem;color:var(--danger)">⚠️ Low</p>':''}`}).join('')}</div></div>`;
+        <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--text-success)':'var(--text-danger)'};font-weight:600">${tmMin>=lmMin?'↑':'↓'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'Improving!':'Study more!'}</p></div><div class="card"><div class="card-header"><span class="card-title">Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Subject Balance — All Time</span></div><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">${this.state.subjects.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);const isLow=pc<(100/Math.max(1,this.state.subjects.length))*0.5;return`<div style="text-align:center;min-width:60px;flex:0 0 auto"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ${s.color};display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.5rem;${isLow?'opacity:.5':''}">${s.icon}</div><p style="font-size:.78rem;font-weight:600">${s.name}</p><p style="font-size:.72rem;color:${isLow?'var(--text-danger)':s.color}">${pc}%</p>${isLow?'<p style="font-size:.6rem;color:var(--text-danger)">⚠️ Low</p>':''}`}).join('')}</div></div>`;
     },
 
     // POMODORO + STOPWATCH
@@ -3675,7 +3670,8 @@ CRITICAL ACCURACY RULES:
     // ── END QUIZ FEATURE ──
 };
 
-// Wait for db.js module to populate window.DB and window.supabase before booting
+// Wait for db.js module to populate window.DB and window.supabase before
+// running the auth/bootstrap-dependent parts of init().
 function _waitForDB(cb, attempts) {
     attempts = attempts || 0;
     if (window.DB && window.supabase) { cb(); return; }
@@ -3683,10 +3679,19 @@ function _waitForDB(cb, attempts) {
     setTimeout(function(){ _waitForDB(cb, attempts + 1); }, 50);
 }
 
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', function(){ _waitForDB(function(){ App.init(); }); });
-} else {
+function _boot() {
+    // Render the dashboard shell immediately — no DB/Supabase dependency.
+    // This is the LCP candidate; it paints before the Supabase SDK's CDN
+    // module chain (8 jsdelivr imports) has even started resolving.
+    App.renderShell();
+    // Auth check + data bootstrap, once db.js is ready.
     _waitForDB(function(){ App.init(); });
+}
+
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', _boot);
+} else {
+    _boot();
 }
 
 // Close modals on overlay click
