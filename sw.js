@@ -1,35 +1,45 @@
-const CACHE_NAME = 'studyos-v3'; // bumped to purge lucide.min.js from old cache
+const CACHE_NAME = 'studyos-v4'; // bumped to purge old caches
 
-const EXTERNAL_ASSETS = [
+// Only cache truly immutable external assets — things with no cache-busting
+// that we want available offline. Our own JS/CSS/HTML are handled by the
+// browser's HTTP cache (Cache-Control: immutable in vercel.json) which is
+// faster than SW interception for network-first assets.
+const PRECACHE_URLS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
+  'https://fonts.gstatic.com/s/inter/v20/UcC73FwrK3iLTeHuS_nVMrMxCp50SjIa2JL7.woff2',
+  'https://fonts.gstatic.com/s/jetbrainsmono/v24/tDbv2o-flEEny0FZhsfKu5WU4xD-IQ.woff2',
 ];
 
-// App files — always fetched from network, never served stale from cache
-const NETWORK_FIRST = ['/', '/index.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
-
-// ── Install: cache only external assets ──────────────────────────────
+// ── Install: pre-cache fonts only ────────────────────────────────────
 self.addEventListener('install', event => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then(cache =>
-      Promise.allSettled(
-        EXTERNAL_ASSETS.map(url =>
-          cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
+    caches.open(CACHE_NAME)
+      .then(cache =>
+        Promise.allSettled(
+          PRECACHE_URLS.map(url =>
+            cache.add(url).catch(err => console.warn('[SW] Failed to cache:', url, err))
+          )
         )
       )
-    ).then(() => self.skipWaiting())
+      .then(() => self.skipWaiting())
   );
 });
 
 // ── Activate: purge old caches ────────────────────────────────────────
 self.addEventListener('activate', event => {
   event.waitUntil(
-    caches.keys().then(keys =>
-      Promise.all(
-        keys
-          .filter(key => key !== CACHE_NAME)
-          .map(key => { console.log('[SW] Deleting old cache:', key); return caches.delete(key); })
+    caches.keys()
+      .then(keys =>
+        Promise.all(
+          keys
+            .filter(key => key !== CACHE_NAME)
+            .map(key => {
+              console.log('[SW] Deleting old cache:', key);
+              return caches.delete(key);
+            })
+        )
       )
-    ).then(() => self.clients.claim())
+      .then(() => self.clients.claim())
   );
 });
 
@@ -37,50 +47,48 @@ self.addEventListener('activate', event => {
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
 
-  // Network-only: API routes, Supabase, non-GET requests
+  // 1. Always bypass SW for: non-GET, Supabase API, own API routes.
+  //    Let the browser handle these directly — no caching ever.
   if (
-    url.pathname.startsWith('/api/') ||
+    event.request.method !== 'GET' ||
     url.hostname.includes('supabase.co') ||
-    event.request.method !== 'GET'
+    url.pathname.startsWith('/api/')
   ) {
-    event.respondWith(fetch(event.request));
-    return;
+    return; // don't call event.respondWith — browser handles it natively
   }
 
-  // Network-first: own app files — always get fresh code
-  const isAppFile = NETWORK_FIRST.some(p => url.pathname === p || url.pathname.endsWith(p));
-  if (url.hostname === self.location.hostname || isAppFile) {
+  // 2. Own app files (JS, CSS, HTML, images, manifest): network-first,
+  //    NO SW cache write. The browser's HTTP cache (Cache-Control: immutable
+  //    from vercel.json) handles this more efficiently than SW interception.
+  //    SW only provides the offline fallback.
+  if (url.hostname === self.location.hostname) {
     event.respondWith(
-      fetch(event.request)
-        .then(response => {
-          // Update cache with fresh version
-          if (response && response.status === 200) {
-            const clone = response.clone();
-            caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
-          }
-          return response;
+      fetch(event.request).catch(() =>
+        caches.match(event.request).then(cached => {
+          if (cached) return cached;
+          // For navigation requests, fall back to cached index.html
+          if (event.request.mode === 'navigate') return caches.match('/');
         })
-        .catch(() => {
-          // Offline fallback: serve cached version if available
-          return caches.match(event.request).then(cached => {
-            if (cached) return cached;
-            if (event.request.mode === 'navigate') return caches.match('/');
-          });
-        })
+      )
     );
     return;
   }
 
-  // Cache-first: external fonts and libraries (these never change)
+  // 3. External assets (fonts, CDN): cache-first.
+  //    These are truly immutable — font files never change at a given URL.
   event.respondWith(
     caches.match(event.request).then(cached => {
       if (cached) return cached;
       return fetch(event.request).then(response => {
+        // Only cache successful, non-opaque responses
         if (response && response.status === 200 && response.type !== 'opaque') {
           const clone = response.clone();
           caches.open(CACHE_NAME).then(cache => cache.put(event.request, clone));
         }
         return response;
+      }).catch(() => {
+        // External asset unavailable offline — just fail gracefully
+        return new Response('', { status: 503 });
       });
     })
   );
