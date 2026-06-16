@@ -189,64 +189,6 @@ const App={
         {text:'Score 80%+ on practice test',check:s=>s.examScores.filter(x=>x.date===s.today).some(x=>x.scored/x.total>=0.8),xp:40}
     ],
 
-    // ── SHELL RENDER — no Supabase/DB dependency, runs immediately ──────────
-    //
-    // PERF ROOT CAUSE (3,630ms LCP element render delay):
-    //   db.js is a blocking `type="module"` script in <head> whose import of
-    //   @supabase/supabase-js@2 pulls down ~8 additional jsdelivr ES modules
-    //   (auth-js, realtime-js, postgrest-js, storage-js, functions-js,
-    //   phoenix, tslib, iceberg-js — each 1.2-1.5s per the network trace).
-    //   The old init() polled via _waitForDB() until window.DB/window.supabase
-    //   existed — meaning NOTHING rendered, including the dashboard shell,
-    //   until that entire CDN chain resolved. The full-screen loading
-    //   spinner that covered this wait was itself the LCP element.
-    //
-    // Fix: this function does the localStorage load, state defaults, theme,
-    // and first render() using ONLY default/empty state (profile defaults to
-    // "Student" / 0 streak / empty subjects → renders the existing "All
-    // Caught Up" empty hero). It has zero dependency on window.DB or
-    // window.supabase, so it runs the instant app.js finishes executing —
-    // giving the browser a real LCP candidate almost immediately. init()
-    // (below) then waits for DB, checks auth, fetches profile/challenge in
-    // the background, and re-renders with real data.
-    renderShell(){
-        if (this._shellRendered) return;
-        this._shellRendered = true;
-
-        // Load UI-only state from localStorage (theme, page, etc.)
-        this.load();
-
-        // Always start on dashboard on refresh
-        this.state.currentPage = 'dashboard';
-
-        // Ensure state field defaults (fields with no Supabase home)
-        if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
-        if(!this.state.quizData)this.state.quizData={};
-        if(!this.state.exercises)this.state.exercises={};
-        if(!this.state.theme)this.state.theme='warm-dark';
-        if(!this.state.stopwatch)this.state.stopwatch={running:false,elapsed:0,subjectId:'',chapterId:''};
-        if(!this.state.dailyChallenges)this.state.dailyChallenges={date:'',challenges:[],completed:[]};
-        if(!this.state.weeklyPlan)this.state.weeklyPlan={};
-        if(!this.state.checkins)this.state.checkins={};
-        if(!this.state.profile.selectedClass) this.state.profile.selectedClass = 10;
-        if(!this.state.profile.selectedStream) this.state.profile.selectedStream = null;
-        if(!this.state.profile.mood)this.state.profile.mood='';
-        if(!this.state.profile.moodHistory)this.state.profile.moodHistory=[];
-        if(this.state.autoTheme===undefined)this.state.autoTheme=false;
-        if(this.state.streakFreezes===undefined)this.state.streakFreezes=1;
-        if(this.state.lastFreezeUsedDate===undefined)this.state.lastFreezeUsedDate=null;
-        if(this.state.pendingFreezeNotice===undefined)this.state.pendingFreezeNotice=false;
-        if(this.state.lastFreezeEarnedDate===undefined)this.state.lastFreezeEarnedDate=null;
-
-        // Apply theme early so first paint inherits correct colours
-        this.applyTheme();
-
-        // FIRST PAINT — render dashboard shell with default/empty state.
-        this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
-        this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();
-        this.updatePageTitle();this.updatePageSubtitle();this.updateTopbarPills();
-    },
-
     async init(){
         // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
         await new Promise((resolve) => {
@@ -265,34 +207,53 @@ const App={
         window._supabaseSession = session;
         window._supabaseUserEmail = session.user?.email || '';
 
-        // Shell may not have rendered yet if DB resolved unusually fast —
-        // ensure it has before we proceed (idempotent, no-op if already done).
-        this.renderShell();
+        // ── Step 2: Load UI-only state from localStorage (theme, page, etc.) ──
+        this.load();
 
-        // ── Step 5: Bootstrap — profile + today's challenge (background) ─────
+        // Always start on dashboard on refresh
+        this.state.currentPage = 'dashboard';
+
+        // ── Step 3: Ensure state field defaults (fields with no Supabase home) ──
+        if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
+        if(!this.state.quizData)this.state.quizData={};
+        if(!this.state.exercises)this.state.exercises={};
+        if(!this.state.theme)this.state.theme='warm-dark';
+        if(!this.state.stopwatch)this.state.stopwatch={running:false,elapsed:0,subjectId:'',chapterId:''};
+        if(!this.state.dailyChallenges)this.state.dailyChallenges={date:'',challenges:[],completed:[]};
+        if(!this.state.weeklyPlan)this.state.weeklyPlan={};
+        if(!this.state.checkins)this.state.checkins={};
+        if(!this.state.profile.selectedClass) this.state.profile.selectedClass = 10;
+        if(!this.state.profile.selectedStream) this.state.profile.selectedStream = null;
+        if(!this.state.profile.mood)this.state.profile.mood='';
+        if(!this.state.profile.moodHistory)this.state.profile.moodHistory=[];
+        if(this.state.autoTheme===undefined)this.state.autoTheme=false;
+        if(this.state.streakFreezes===undefined)this.state.streakFreezes=1;
+        if(this.state.lastFreezeUsedDate===undefined)this.state.lastFreezeUsedDate=null;
+        if(this.state.pendingFreezeNotice===undefined)this.state.pendingFreezeNotice=false;
+        if(this.state.lastFreezeEarnedDate===undefined)this.state.lastFreezeEarnedDate=null;
+
+        // Apply theme early so the loading screen inherits correct colours
+        this.applyTheme();
+
+        // ── Step 4: MINIMAL bootstrap — only profile + today's challenge ─────
         //
         // PERF: The old loadFromSupabase() made 13+ sequential Supabase calls
         // on every page load, blocking the first render for 16 530 ms.
         //
         // New contract:
         //   • _loadBootstrap()  → 2 parallel calls (profile + challenge).
-        //                         Runs in the background; does NOT block
-        //                         first paint (see Step 4 above).
+        //                         Runs NOW, before first render.
         //   • _loadTabData(tab) → lazy per-tab fetch, called from navigate().
         //                         Each tab fetches its own data the first time
         //                         the user navigates there.  Subsequent visits
         //                         are served from in-memory state (no re-fetch).
+        //
+        // Result: first paint happens after ~1 network round-trip instead of 13.
+        this.showLoadingScreen();
         await this._loadBootstrap(session.user.id);
-        this._badgesLoaded=true; // flag: earnedBadges is now populated from Supabase
+        this.hideLoadingScreen();
 
-        // Re-render with real profile data (name, streak, exam date, XP/level,
-        // daily goal) now that it has arrived. Cheap no-op if user has already
-        // navigated away from the dashboard.
-        this.updateStreak();this.generateDailyChallenges();
-        if (this.state.currentPage === 'dashboard') this.renderDashboard();
-        this.updateSidebar();this.updatePageTitle();this.updatePageSubtitle();this.updateTopbarPills();
-
-        // ── Step 6: Welcome overlay — only for brand-new users ───────────────
+        // ── Step 5: Welcome overlay — only for brand-new users ───────────────
         // subjects haven't loaded yet at this point; we check after the first
         // navigate-to-subjects fetch instead.  For the welcome check we rely on
         // the migration flag — new users never have it set.
@@ -307,7 +268,13 @@ const App={
             });
         }
 
-        // ── Step 7: Background subjects prefetch ──────────────────────────────
+        // ── Step 6: Boot the rest of the app ────────────────────────────────
+        this.pomodoro.timeLeft=(this.state.pomodoroSettings.workMin||25)*60;
+        this._badgesLoaded=true; // flag: earnedBadges is now populated from Supabase
+        this.updateStreak();this.generateDailyChallenges();this.render();this.updateSidebar();
+        this.updatePageTitle();
+
+        // ── Background subjects prefetch ─────────────────────────────────────
         // Dashboard hero needs subjects to show the next chapter to study.
         // Subjects are lazy-loaded on first tab visit, which means the hero
         // shows the "All Caught Up" empty state on first load. This background
@@ -315,15 +282,63 @@ const App={
         // hero once data arrives (~300-600ms later). Zero impact on first paint.
         if (!this._loadedTabs.has('subjects')) {
             this._loadTabData('subjects').then(() => {
-                if (this.state.currentPage === 'dashboard') this.renderDashboard();
+                // Use requestIdleCallback so the re-render doesn't compete with
+                // the main thread immediately after first paint, which was causing
+                // a 300ms forced reflow and contributing to TBT.
+                const rerender = () => {
+                    if (this.state.currentPage === 'dashboard') this.renderDashboard();
+                };
+                if (window.requestIdleCallback) {
+                    requestIdleCallback(rerender, { timeout: 1000 });
+                } else {
+                    setTimeout(rerender, 100);
+                }
             });
         }
 
         this.checkBadges();
         setInterval(()=>{this.updatePageSubtitle();this.updateTopbarPills();if(this.state.autoTheme)this.autoThemeCheck();this.checkStreakReminder();this.checkEodCheckin()},60000);
         setTimeout(()=>{this.checkStreakReminder();this.checkEodCheckin()},5000);
+        this.updatePageSubtitle();
+        this.updateTopbarPills();
         if(this.state.autoTheme)this.autoThemeCheck();
         if(this.state.stopwatch.running)this.startStopwatchTimer();
+    },
+
+    // ── Loading screen ────────────────────────────────────────────────────────
+    showLoadingScreen(){
+        if(document.getElementById('studyos-loading-screen'))return;
+        const el=document.createElement('div');
+        el.id='studyos-loading-screen';
+        el.style.cssText=`
+            position:fixed;inset:0;z-index:9999;
+            background:var(--color-bg);
+            display:flex;flex-direction:column;
+            align-items:center;justify-content:center;gap:20px;
+        `;
+        el.innerHTML=`
+            <svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg"
+                style="animation:studyos-spin 0.9s linear infinite;flex-shrink:0">
+                <circle cx="20" cy="20" r="16" stroke="var(--color-border)" stroke-width="3"/>
+                <path d="M20 4 A16 16 0 0 1 36 20" stroke="var(--color-brand)" stroke-width="3" stroke-linecap="round"/>
+            </svg>
+            <span style="font-family:var(--font-body);font-size:.875rem;font-weight:500;color:var(--color-text-secondary);letter-spacing:.2px">
+                Loading your data…
+            </span>
+            <style>
+                @keyframes studyos-spin{to{transform:rotate(360deg)}}
+            </style>
+        `;
+        document.body.appendChild(el);
+    },
+
+    hideLoadingScreen(){
+        const el=document.getElementById('studyos-loading-screen');
+        if(el){
+            el.style.transition='opacity .25s ease';
+            el.style.opacity='0';
+            setTimeout(()=>el.remove(),280);
+        }
     },
 
     // ── MINIMAL BOOTSTRAP (2 parallel calls, runs at every page load) ────────
@@ -998,7 +1013,7 @@ const App={
     _syncExercises(subjectId,chapterId){const _uid=window._supabaseUserId;if(!_uid)return;const key=subjectId+'_'+chapterId;const exData=this.state.exercises[key]||[];this.state.subjects.forEach(s=>{if(s.id===subjectId){s.chapters.forEach(ch=>{if(ch.id===chapterId&&ch._dbId){DB.chapters.update(ch._dbId||ch.id,{exercises:JSON.stringify(exData)}).then(({error})=>{if(error)console.error('[DB] exercises update:',error);});}});}});const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);const sub=this.state.subjects.find(s=>s.id===subjectId);if(sub){const ch=sub.chapters.find(c=>c.id===chapterId);if(ch&&_isUUID(ch.id)){DB.chapters.update(ch.id,{exercises:JSON.stringify(exData)}).then(({error})=>{if(error)console.error('[DB] exercises update:',error);})}}},
     xpForLevel(l){return l*l*50},
     showLevelUp(l){const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='↑';document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');this.celebrate()},
-    updateSidebar(){const p=this.state.profile;document.getElementById('sb-name').textContent=p.name;document.getElementById('sb-level').textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);document.getElementById('sb-xp-fill').style.width=pct+'%';document.getElementById('sb-xp-text').textContent=`${p.xp-c} / ${n-c} XP`},
+    updateSidebar(){const p=this.state.profile;document.getElementById('sb-name').textContent=p.name;document.getElementById('sb-level').textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);document.getElementById('sb-xp-fill').style.transform=`scaleX(${Math.min(1,pct/100)})`;document.getElementById('sb-xp-text').textContent=`${p.xp-c} / ${n-c} XP`},
     updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');rb.style.display=r>0?'inline':'none';rb.textContent=r;ob.style.display=o>0?'inline':'none';ob.textContent=o;db.style.display=ud>0?'inline':'none';db.textContent=ud;const qDue=this.getQuizDueSubjects().length;const qb=document.getElementById('quiz-badge');if(qb){qb.style.display=qDue>0?'inline':'none';qb.textContent=qDue;}},
 
     checkBadges(){const _priorBadges=new Set(this.state.earnedBadges);const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){const _bUid=window._supabaseUserId;if(_bUid&&this._badgesLoaded){const _newBadges=nb.filter(b=>!_priorBadges.has(b.id));_newBadges.forEach(b=>DB.badges.add(_bUid,b.id).then(({error})=>{if(error&&!error.message?.includes('duplicate'))console.error('[DB] badge add:',error);}));}nb.forEach(b=>setTimeout(()=>this.toast(`🏅 Badge: ${b.icon} ${b.name}!`,'success'),800))}},
@@ -3670,8 +3685,7 @@ CRITICAL ACCURACY RULES:
     // ── END QUIZ FEATURE ──
 };
 
-// Wait for db.js module to populate window.DB and window.supabase before
-// running the auth/bootstrap-dependent parts of init().
+// Wait for db.js module to populate window.DB and window.supabase before booting
 function _waitForDB(cb, attempts) {
     attempts = attempts || 0;
     if (window.DB && window.supabase) { cb(); return; }
@@ -3679,19 +3693,10 @@ function _waitForDB(cb, attempts) {
     setTimeout(function(){ _waitForDB(cb, attempts + 1); }, 50);
 }
 
-function _boot() {
-    // Render the dashboard shell immediately — no DB/Supabase dependency.
-    // This is the LCP candidate; it paints before the Supabase SDK's CDN
-    // module chain (8 jsdelivr imports) has even started resolving.
-    App.renderShell();
-    // Auth check + data bootstrap, once db.js is ready.
-    _waitForDB(function(){ App.init(); });
-}
-
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', _boot);
+    document.addEventListener('DOMContentLoaded', function(){ _waitForDB(function(){ App.init(); }); });
 } else {
-    _boot();
+    _waitForDB(function(){ App.init(); });
 }
 
 // Close modals on overlay click

@@ -35,16 +35,16 @@
     --warning:             var(--color-warning);
     --danger:              var(--color-danger);
     --info:                #38BDF8;
-
-    /* Text-safe variants for use as `color:` (not background/border).
-       Default themes pass AA already; light theme overrides below. */
+    /* Text-safe colour vars: same as base on dark themes (already pass AA);
+       light theme overrides below give darker shades for white backgrounds.  */
     --text-success:        var(--success);
     --text-warning:        var(--warning);
     --text-danger:         var(--danger);
 
-    /* Dashboard stat-trend colors — 7.5:1+ on dark surfaces, overridden for light theme below */
-    --trend-green:         #22C55E;
-    --trend-purple:        #A855F7;
+    /* Dashboard stat-trend colours — distinct from --success/--warning so we
+       can tune them independently without touching badge/border/background.   */
+    --trend-green:         #22C55E;   /* 7.57:1 on dark surface — AA ✓        */
+    --trend-purple:        #A855F7;   /* 4.46:1 on dark surface — AA ✓        */
 
     /* Legacy gradient vars – mapped to flat colors to strip gradients */
     --gradient-1:          var(--color-brand);
@@ -113,18 +113,17 @@
     --text-secondary:      #595972;
     /* #6E6E8A = 4.55:1 on white — passes WCAG AA */
     --text-muted:          #6E6E8A;
-    /* #3730A3 = 7.5:1 on white — passes WCAG AA + AAA */
+    /* #3730A3 = 7.5:1 on white  */
     --accent-light:        #3730A3;
-    /* #15803D = 5.0:1 on white — passes AA (default #22C55E is only 2.28:1) */
-    --trend-green:         #15803D;
-    /* #7E22CE = 7.0:1 on white — passes AA (default #A855F7 is only 3.96:1) */
-    --trend-purple:        #7E22CE;
-    /* #15803D = 5.0:1 on white — passes AA (default #22C55E is only 2.28:1) */
+    /* Text-safe overrides for light theme (defaults fail AA on white):
+       #15803D = 5.0:1 (#22C55E was 2.28:1), #B45309 = 5.0:1 (#F59E0B was
+       2.15:1), #B91C1C = 6.5:1 (#EF4444 was 3.76:1)                        */
     --text-success:        #15803D;
-    /* #B45309 = 5.0:1 on white — passes AA (default #F59E0B is only 2.15:1) */
     --text-warning:        #B45309;
-    /* #B91C1C = 6.47:1 on white — passes AA (default #EF4444 is only 3.76:1) */
     --text-danger:         #B91C1C;
+    /* Trend colours also need darkening on white                             */
+    --trend-green:         #15803D;
+    --trend-purple:        #7E22CE;   /* 7.0:1 on white — AA ✓               */
     --coach-avatar-bg: linear-gradient(135deg, rgba(79,70,229,0.18), rgba(129,140,248,0.12) 50%, rgba(56,189,248,0.16));
     --coach-avatar-border: rgba(79,70,229,0.16);
     --coach-avatar-icon: #4F46E5;
@@ -165,10 +164,9 @@
     --success:             #4A9E6B;
     --warning:             #D4891A;
     --danger:              #D4674E; /* was #C0533A — lifted to pass WCAG AA on all warm-dark surfaces */
-
-    /* Dashboard stat-trend colors — tuned for warm-dark palette, both pass AA */
-    --trend-green:         #4A9E6B;
-    --trend-purple:        #C77DD4;
+    /* Warm-dark stat-trend colours, tuned to the walnut palette            */
+    --trend-green:         #4A9E6B;   /* 5.38:1 on warm surface — AA ✓       */
+    --trend-purple:        #C77DD4;   /* 6.15:1 on warm surface — AA ✓       */
 
     /* ── Semantic status tokens ── */
     --color-done:          #4A9E6B;
@@ -345,7 +343,7 @@ a { color: inherit; text-decoration: none; }
     align-items: center;
     justify-content: space-between;
     user-select: none;
-    transition: color .2s;
+    /* color transition removed — non-composited, flagged by Lighthouse */
 }
 .nav-collapsible:hover { color: var(--text-secondary); }
 
@@ -372,7 +370,7 @@ a { color: inherit; text-decoration: none; }
     padding: 9px 12px;
     border-radius: var(--radius-sm);
     cursor: pointer;
-    transition: background .15s, color .15s;
+    transition: background .15s;
     color: var(--color-text-secondary);
     font-size: .825rem;
     font-weight: 500;
@@ -461,9 +459,13 @@ a { color: inherit; text-decoration: none; }
 }
 .xp-fill {
     height: 100%;
+    width: 100%;                      /* always full-width; scale controls fill */
     background: var(--color-brand);
     border-radius: 2px;
-    transition: width .5s ease;
+    transform-origin: left center;
+    transform: scaleX(0);
+    transition: transform .5s ease;   /* composited — no layout/paint cost */
+    will-change: transform;
 }
 .xp-text {
     font-size: .62rem;
@@ -1257,7 +1259,7 @@ a { color: inherit; text-decoration: none; }
     cursor: pointer;
     display: flex; align-items: center; justify-content: center;
     font-size: .75rem;
-    transition: background .15s, color .15s;
+    transition: background .15s;
 }
 .ch-btn:hover { background: var(--color-surface-hover); color: var(--color-text-primary); border-color: var(--border-hover); }
 
@@ -1331,7 +1333,7 @@ a { color: inherit; text-decoration: none; }
     border: 1px solid var(--color-border);
     background: var(--color-surface-hover);
     color: var(--color-text-primary);
-    transition: border-color .15s;
+    transition: border .15s, box-shadow .15s;
     outline: none;
     font-family: var(--font-body);
     font-size: .875rem;
@@ -1938,7 +1940,6 @@ a { color: inherit; text-decoration: none; }
     color: var(--text-muted);
     font-size: .6rem;
     font-weight: 500;
-    transition: color .15s;
     border-radius: 10px;
     position: relative;
     -webkit-tap-highlight-color: transparent;
@@ -2681,7 +2682,7 @@ body { overscroll-behavior-y: contain; }
     flex-shrink: 0;
     margin-top: 1px;
     color: var(--text-secondary);
-    transition: background .15s, color .15s;
+    transition: background .15s;
 }
 .quiz-option.selected .quiz-option-key { background: var(--color-brand); color: #fff; }
 .quiz-option.correct .quiz-option-key { background: var(--color-success); color: #fff; }
