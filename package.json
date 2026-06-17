@@ -1,1 +1,18 @@
-{"name":"studyos","version":"1.0.0","private":true,"scripts":{"build":"npx esbuild db.js --bundle --format=iife --minify --target=es2020 --outfile=dist/db.js && npx terser app.js --compress --mangle -o dist/app.min.js && npx cleancss -o dist/styles.min.css styles.css","dev":"echo 'Open index.html directly in browser for dev'"},"dependencies":{"@supabase/supabase-js":"^2.108.1"},"devDependencies":{"clean-css":"^5.3.3","esbuild":"^0.28.1","terser":"^5.36.0"}}
+{
+  "name": "studyos",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+  "build": "esbuild db.js --bundle --format=iife --minify --target=es2020 --outfile=dist/db.js && terser app.js --compress --mangle -o dist/app.min.js && cleancss -o dist/styles.min.css styles.css",
+  "dev": "echo 'Open index.html directly in browser for dev'"
+}
+,
+  "dependencies": {
+    "@supabase/supabase-js": "^2.108.1"
+  },
+  "devDependencies": {
+    "clean-css": "^5.3.3",
+    "esbuild": "^0.28.1",
+    "terser": "^5.36.0"
+  }
+}
