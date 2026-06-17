@@ -3,7 +3,6 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "builds": [
-    { "src": "index.html", "use": "@vercel/static" },
     { "src": "dist/**", "use": "@vercel/static" }
   ],
   "routes": [
