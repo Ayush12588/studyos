@@ -1,5 +1,5 @@
 /**
- * build.js — StudyOS build script
+ * build.cjs — StudyOS build script
  * Runs on every Vercel deploy via "npm run build"
  *
  * What it does:
