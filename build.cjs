@@ -1,68 +1,97 @@
-#!/usr/bin/env node
 /**
- * StudyOS Build Script - Production-grade minification
- * Uses npx for reliable binary resolution across all environments
+ * build.js — StudyOS build script
+ * Runs on every Vercel deploy via "npm run build"
+ *
+ * What it does:
+ *   1. Bundles db.js + @supabase/supabase-js into a single IIFE file
+ *      (eliminates the 8-request CDN waterfall that cost 1.2-2.1s)
+ *   2. Minifies app.js, migrate.js, tour.js, analytics.js with Terser
+ *   3. Minifies styles.css with CleanCSS
+ *   4. Copies index.html, sw.js, manifest.json, icons unchanged
+ *   All output goes to /dist — Vercel serves from there.
  */
 
-const fs = require('fs');
-const path = require('path');
-const { execSync } = require('child_process');
+const esbuild   = require('esbuild');
+const { minify } = require('terser');
+const CleanCSS  = require('clean-css');
+const fs        = require('fs');
+const path      = require('path');
 
-const distDir = 'dist';
+const OUT = path.join(__dirname, 'dist');
+if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
 
-try {
-  // 1. Clean dist directory
-  console.log('🧹 Cleaning dist/...');
-  if (fs.existsSync(distDir)) {
-    fs.rmSync(distDir, { recursive: true, force: true });
-  }
-  fs.mkdirSync(distDir, { recursive: true });
-  console.log('✓ dist/ ready\n');
+async function build() {
+  console.log('Building StudyOS...\n');
 
-  // 2. Minify CSS using npx
-  console.log('🎨 Minifying CSS...');
-  const cssStart = fs.statSync('styles.css').size;
-  execSync('npx clean-css-cli -o dist/styles.css styles.css', { stdio: 'inherit' });
-  const cssEnd = fs.statSync('dist/styles.css').size;
-  console.log(`✓ CSS: ${cssStart} → ${cssEnd} bytes (${Math.round(100 * cssEnd / cssStart)}%)\n`);
-
-  // 3. Minify JavaScript using npx
-  console.log('📦 Minifying JavaScript...');
-  const jsStart = fs.statSync('app.js').size;
-  execSync('npx terser app.js -o dist/app.js -c -m', { stdio: 'inherit' });
-  const jsEnd = fs.statSync('dist/app.js').size;
-  console.log(`✓ JS: ${jsStart} → ${jsEnd} bytes (${Math.round(100 * jsEnd / jsStart)}%)\n`);
-
-  // 4. Copy all static files except those already processed or excluded
-  console.log('Copying static assets...');
-  const EXCLUDE = new Set([
-    'app.js', 'styles.css',       // already minified above
-    'build.cjs', 'package.json', 'package-lock.json',
-    'vercel.json', '.gitignore', 'README.md',
-    'node_modules', '.git', '.vercel', 'dist', 'api',
-  ]);
-
-  fs.readdirSync('.').forEach(entry => {
-    if (EXCLUDE.has(entry)) return;
-    if (entry.startsWith('.')) return; // skip dotfiles/dirs
-    const srcPath = entry;
-    const stat = fs.statSync(srcPath);
-    if (stat.isDirectory()) {
-      fs.cpSync(srcPath, path.join(distDir, entry), { recursive: true });
-      console.log(`  - ${entry}/ (directory)`);
-    } else if (entry.endsWith('.js') || entry.endsWith('.json') || entry.endsWith('.html')) {
-      fs.copyFileSync(srcPath, path.join(distDir, entry));
-      console.log(`  - ${entry}`);
-    }
+  // 1. Bundle db.js + Supabase SDK → single IIFE
+  console.log('Bundling db.js + @supabase/supabase-js...');
+  await esbuild.build({
+    entryPoints: ['db.js'],
+    bundle: true,
+    format: 'iife',
+    minify: true,
+    target: 'es2020',
+    outfile: path.join(OUT, 'db.js'),
   });
+  const dbSize = fs.statSync(path.join(OUT, 'db.js')).size;
+  console.log(`  ✓ dist/db.js (${(dbSize/1024).toFixed(1)} KB)\n`);
 
-  // 6. Verify and summarize
-  const distFiles = fs.readdirSync(distDir);
-  console.log('✨ Build complete!');
-  console.log(`📊 ${distFiles.length} items in dist/`);
-  console.log(`📈 Total savings: ${Math.round((cssStart + jsStart - cssEnd - jsEnd) / 1024)} KB\n`);
+  // 2. Minify JS files with Terser
+  const jsFiles = ['app.js', 'migrate.js', 'tour.js', 'analytics.js'];
+  for (const file of jsFiles) {
+    console.log(`Minifying ${file}...`);
+    const src = fs.readFileSync(file, 'utf8');
+    const result = await minify(src, {
+      compress: { passes: 2, ecma: 2020 },
+      mangle: true,
+    });
+    fs.writeFileSync(path.join(OUT, file), result.code);
+    const origKB = (src.length / 1024).toFixed(1);
+    const minKB  = (result.code.length / 1024).toFixed(1);
+    console.log(`  ✓ dist/${file} (${origKB} KB → ${minKB} KB)\n`);
+  }
 
-} catch (error) {
-  console.error('❌ Build failed:', error.message);
-  process.exit(1);
+  // 3. Minify CSS
+  console.log('Minifying styles.css...');
+  const srcCSS = fs.readFileSync('styles.css', 'utf8');
+  const cssResult = new CleanCSS({ level: 2 }).minify(srcCSS);
+  if (cssResult.errors.length) throw new Error(cssResult.errors.join('\n'));
+  fs.writeFileSync(path.join(OUT, 'styles.css'), cssResult.styles);
+  const origKB = (srcCSS.length / 1024).toFixed(1);
+  const minKB  = (cssResult.styles.length / 1024).toFixed(1);
+  console.log(`  ✓ dist/styles.css (${origKB} KB → ${minKB} KB)\n`);
+
+  // 4. Copy static files unchanged
+  const staticFiles = ['index.html', 'sw.js', 'manifest.json'];
+  for (const file of staticFiles) {
+    if (fs.existsSync(file)) {
+      fs.copyFileSync(file, path.join(OUT, file));
+      console.log(`  ✓ dist/${file} (copied)`);
+    }
+  }
+
+  // Copy icons folder if present
+  if (fs.existsSync('icons')) {
+    fs.mkdirSync(path.join(OUT, 'icons'), { recursive: true });
+    for (const f of fs.readdirSync('icons')) {
+      fs.copyFileSync(path.join('icons', f), path.join(OUT, 'icons', f));
+    }
+    console.log('  ✓ dist/icons/ (copied)');
+  }
+
+  // Copy api folder if present (Vercel serverless functions)
+  if (fs.existsSync('api')) {
+    fs.mkdirSync(path.join(OUT, 'api'), { recursive: true });
+    for (const f of fs.readdirSync('api')) {
+      fs.copyFileSync(path.join('api', f), path.join(OUT, 'api', f));
+    }
+    console.log('  ✓ dist/api/ (copied)');
+  }
+
+  console.log('\nBuild complete ✓');
 }
+
+build().catch(err => {
+  console.error('Build failed:', err);
+  process.exit(1);
+});

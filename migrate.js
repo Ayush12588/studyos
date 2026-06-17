@@ -1,4 +1,4 @@
-import { DB } from './db.js';
+// DB is available as window.DB (set by bundled db.js)
 // supabase client is exposed on window by db.js
 const supabase = window.supabase;
 
@@ -409,17 +409,17 @@ async function runMigration(userId, localData) {
     await step('profile', async () => {
       const profile = localData.profile || {};
       const name = profile.name || localData.user?.name || 'User';
-      const { error } = await DB.profile.update(userId, {
+      const { error } = await window.DB.profile.update(userId, {
         name,
         ...(profile.avatar_url && { avatar_url: profile.avatar_url }),
         migration_done: true,
       });
       // If update fails because row doesn't exist, create it
       if (error) {
-        const { error: createErr } = await DB.profile.createDefault(userId, name);
+        const { error: createErr } = await window.DB.profile.createDefault(userId, name);
         if (createErr) throw createErr;
         // Try setting migration_done again after creation
-        await DB.profile.update(userId, { migration_done: true });
+        await window.DB.profile.update(userId, { migration_done: true });
       }
     });
 
@@ -431,7 +431,7 @@ async function runMigration(userId, localData) {
       for (const s of subjects) {
         const oldId = s.id;
         const payload = { name: s.name, color: s.color, icon: s.icon, target_hours: s.target_hours };
-        const { data, error } = await DB.subjects.create(userId, payload);
+        const { data, error } = await window.DB.subjects.create(userId, payload);
         if (error) throw error;
         subjectIdMap[oldId] = data.id;
       }
@@ -451,7 +451,7 @@ async function runMigration(userId, localData) {
           order_index: c.order_index,
           completed: c.completed,
         };
-        const { data, error } = await DB.chapters.create(payload);
+        const { data, error } = await window.DB.chapters.create(payload);
         if (error) throw error;
         chapterIdMap[oldId] = data.id;
       }
@@ -481,7 +481,7 @@ async function runMigration(userId, localData) {
           duration_seconds: s.duration_seconds,
           note: s.note,
         };
-        const { error } = await DB.sessions.create(payload);
+        const { error } = await window.DB.sessions.create(payload);
         if (error) throw error;
       }
     });
@@ -502,7 +502,7 @@ async function runMigration(userId, localData) {
           text: t.text,
           completed: t.completed,
         };
-        const { error } = await DB.tasks.create(payload);
+        const { error } = await window.DB.tasks.create(payload);
         if (error) throw error;
       }
     });
@@ -520,7 +520,7 @@ async function runMigration(userId, localData) {
           resolved: d.resolved,
           created_at: d.created_at,
         };
-        const { error } = await DB.doubts.create(payload);
+        const { error } = await window.DB.doubts.create(payload);
         if (error) throw error;
       }
     });
@@ -539,7 +539,7 @@ async function runMigration(userId, localData) {
           total: e.total ?? e.max_score ?? 100,
           date: e.date || e.exam_date || new Date().toISOString().split('T')[0],
         };
-        const { error } = await DB.examScores.create(payload);
+        const { error } = await window.DB.examScores.create(payload);
         if (error) throw error;
       }
     });
@@ -557,7 +557,7 @@ async function runMigration(userId, localData) {
           created_at: n.created_at,
           updated_at: n.updated_at,
         };
-        const { error } = await DB.notes.create(payload);
+        const { error } = await window.DB.notes.create(payload);
         if (error) throw error;
       }
     });
@@ -575,7 +575,7 @@ async function runMigration(userId, localData) {
           subject_id: r.subject_id ? (subjectIdMap[r.subject_id] ?? r.subject_id) : null,
           created_at: r.created_at,
         };
-        const { error } = await DB.resources.create(payload);
+        const { error } = await window.DB.resources.create(payload);
         if (error) throw error;
       }
     });
@@ -592,7 +592,7 @@ async function runMigration(userId, localData) {
       for (const c of challenges) {
         const istDate = c.created_at ? (toISTDateString(toUTCISOString(c.created_at)) ?? c.date) : c.date;
         if (!istDate) continue;
-        const { error } = await DB.challenges.upsert(userId, istDate, {
+        const { error } = await window.DB.challenges.upsert(userId, istDate, {
           goal: c.goal,
           completed: c.completed,
           streak: c.streak,
@@ -612,7 +612,7 @@ async function runMigration(userId, localData) {
       for (const c of checkins) {
         const istDate = c.created_at ? (toISTDateString(toUTCISOString(c.created_at)) ?? c.date) : c.date;
         if (!istDate) continue;
-        const { error } = await DB.checkins.upsert(userId, istDate, {
+        const { error } = await window.DB.checkins.upsert(userId, istDate, {
           mood: c.mood,
           note: c.note,
           energy: c.energy,
@@ -627,7 +627,7 @@ async function runMigration(userId, localData) {
     await step('badges', async () => {
       for (const b of badges) {
         const badgeId = b.badge_id ?? b.id;
-        const { error } = await DB.badges.add(userId, badgeId);
+        const { error } = await window.DB.badges.add(userId, badgeId);
         // Ignore duplicate errors (badge already exists)
         if (error && !error.message?.includes('duplicate')) throw error;
       }
@@ -640,7 +640,7 @@ async function runMigration(userId, localData) {
       for (const [subjectId, qd] of Object.entries(quizData)) {
         const newSubjectId = subjectIdMap[subjectId] ?? subjectId;
         if (!newSubjectId) continue;
-        const { error } = await DB.quiz.upsert(userId, newSubjectId, { data: JSON.stringify(qd) });
+        const { error } = await window.DB.quiz.upsert(userId, newSubjectId, { data: JSON.stringify(qd) });
         if (error) throw error;
       }
     });
@@ -668,7 +668,7 @@ async function runMigration(userId, localData) {
     // 15. Extended profile fields
     await step('profile', async () => {
       const p = localData.profile || {};
-      await DB.profile.update(userId, {
+      await window.DB.profile.update(userId, {
         xp:                      p.xp ?? 0,
         level:                   p.level ?? 1,
         streak:                  p.streak ?? 0,
@@ -706,7 +706,7 @@ async function runMigration(userId, localData) {
 
 // ─── Entry Point ──────────────────────────────────────────────────────────────
 
-export async function initMigration() {
+async function initMigration() {
   // 1. Check for local data (try legacy key first, fall back to exported JSON)
   const raw = localStorage.getItem(LS_KEY) || localStorage.getItem('studyos_ui');
   if (!raw) return;
@@ -718,7 +718,7 @@ export async function initMigration() {
   if (!Array.isArray(subjects) || subjects.length === 0) return;
 
   // 2. Get current user
-  const { data: sessionData } = await DB.auth.getSession();
+  const { data: sessionData } = await window.DB.auth.getSession();
   const userId = sessionData?.session?.user?.id;
   if (!userId) return; // Not authenticated — nothing to migrate yet
 
@@ -731,7 +731,7 @@ export async function initMigration() {
 
   // Also check Supabase profile flag (may fail if schema cache is stale — that's OK)
   try {
-    const { data: profile } = await DB.profile.get(userId);
+    const { data: profile } = await window.DB.profile.get(userId);
     if (profile?.migration_done) {
       localStorage.setItem('studyos_migration_done', userId);
       localStorage.removeItem(LS_KEY);
@@ -770,7 +770,7 @@ export async function initMigration() {
     localStorage.removeItem(LS_KEY);
     // Mark migration_done locally so modal never reappears even if Supabase fails
     localStorage.setItem('studyos_migration_done', userId);
-    DB.profile.update(userId, { migration_done: true }).catch(() => {});
+    window.DB.profile.update(userId, { migration_done: true }).catch(() => {});
     removeOverlay();
   });
 }

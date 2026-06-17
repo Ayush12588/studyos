@@ -41,7 +41,7 @@
  *   • On navigate('checkin')          → await DB.checkins.get(uid, date)
  */
 
-import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm';
+import { createClient } from '@supabase/supabase-js';
 
 // ─── Supabase client ─────────────────────────────────────────────────────────
 

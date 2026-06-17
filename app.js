@@ -282,9 +282,6 @@ const App={
         // hero once data arrives (~300-600ms later). Zero impact on first paint.
         if (!this._loadedTabs.has('subjects')) {
             this._loadTabData('subjects').then(() => {
-                // Use requestIdleCallback so the re-render doesn't compete with
-                // the main thread immediately after first paint, which was causing
-                // a 300ms forced reflow and contributing to TBT.
                 const rerender = () => {
                     if (this.state.currentPage === 'dashboard') this.renderDashboard();
                 };

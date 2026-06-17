@@ -35,16 +35,16 @@
     --warning:             var(--color-warning);
     --danger:              var(--color-danger);
     --info:                #38BDF8;
-    /* Text-safe colour vars: same as base on dark themes (already pass AA);
-       light theme overrides below give darker shades for white backgrounds.  */
+
+    /* Text-safe colour vars — same as base on dark themes (already pass AA).
+       Light theme overrides these below with darker shades for white backgrounds. */
     --text-success:        var(--success);
     --text-warning:        var(--warning);
     --text-danger:         var(--danger);
 
-    /* Dashboard stat-trend colours — distinct from --success/--warning so we
-       can tune them independently without touching badge/border/background.   */
-    --trend-green:         #22C55E;   /* 7.57:1 on dark surface — AA ✓        */
-    --trend-purple:        #A855F7;   /* 4.46:1 on dark surface — AA ✓        */
+    /* Dashboard stat-trend colours */
+    --trend-green:         #22C55E;  /* 7.57:1 on dark surface */
+    --trend-purple:        #A855F7;  /* 4.46:1 on dark surface */
 
     /* Legacy gradient vars – mapped to flat colors to strip gradients */
     --gradient-1:          var(--color-brand);
@@ -113,17 +113,16 @@
     --text-secondary:      #595972;
     /* #6E6E8A = 4.55:1 on white — passes WCAG AA */
     --text-muted:          #6E6E8A;
-    /* #3730A3 = 7.5:1 on white  */
+    /* #3730A3 = 7.5:1 on white */
     --accent-light:        #3730A3;
-    /* Text-safe overrides for light theme (defaults fail AA on white):
-       #15803D = 5.0:1 (#22C55E was 2.28:1), #B45309 = 5.0:1 (#F59E0B was
-       2.15:1), #B91C1C = 6.5:1 (#EF4444 was 3.76:1)                        */
+    /* Text-safe overrides: defaults fail AA on white background
+       #15803D=5.0:1 (vs #22C55E=2.28:1), #B45309=5.0:1 (vs #F59E0B=2.15:1),
+       #B91C1C=6.5:1 (vs #EF4444=3.76:1)                                     */
     --text-success:        #15803D;
     --text-warning:        #B45309;
     --text-danger:         #B91C1C;
-    /* Trend colours also need darkening on white                             */
     --trend-green:         #15803D;
-    --trend-purple:        #7E22CE;   /* 7.0:1 on white — AA ✓               */
+    --trend-purple:        #7E22CE;  /* 7.0:1 on white */
     --coach-avatar-bg: linear-gradient(135deg, rgba(79,70,229,0.18), rgba(129,140,248,0.12) 50%, rgba(56,189,248,0.16));
     --coach-avatar-border: rgba(79,70,229,0.16);
     --coach-avatar-icon: #4F46E5;
@@ -164,9 +163,8 @@
     --success:             #4A9E6B;
     --warning:             #D4891A;
     --danger:              #D4674E; /* was #C0533A — lifted to pass WCAG AA on all warm-dark surfaces */
-    /* Warm-dark stat-trend colours, tuned to the walnut palette            */
-    --trend-green:         #4A9E6B;   /* 5.38:1 on warm surface — AA ✓       */
-    --trend-purple:        #C77DD4;   /* 6.15:1 on warm surface — AA ✓       */
+    --trend-green:         #4A9E6B;  /* 5.38:1 on warm surface */
+    --trend-purple:        #C77DD4;  /* 6.15:1 on warm surface */
 
     /* ── Semantic status tokens ── */
     --color-done:          #4A9E6B;
@@ -343,7 +341,6 @@ a { color: inherit; text-decoration: none; }
     align-items: center;
     justify-content: space-between;
     user-select: none;
-    /* color transition removed — non-composited, flagged by Lighthouse */
 }
 .nav-collapsible:hover { color: var(--text-secondary); }
 
@@ -459,12 +456,12 @@ a { color: inherit; text-decoration: none; }
 }
 .xp-fill {
     height: 100%;
-    width: 100%;                      /* always full-width; scale controls fill */
+    width: 100%;
     background: var(--color-brand);
     border-radius: 2px;
     transform-origin: left center;
     transform: scaleX(0);
-    transition: transform .5s ease;   /* composited — no layout/paint cost */
+    transition: transform .5s ease;  /* composited — no layout/paint cost */
     will-change: transform;
 }
 .xp-text {
