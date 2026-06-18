@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studyos-v3'; // bumped to purge lucide.min.js from old cache
+const CACHE_NAME = 'studyos-v4'; // bumped to purge lucide.min.js from old cache
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
