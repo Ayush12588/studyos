@@ -5,512 +5,742 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>StudyOS — Hybrid Auth Experience</title>
     
-    <!-- Fonts: Inter Inter -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     
-    <!-- Icons: Phosphor -->
-    <script src="https://unpkg.com/@phosphor-icons/web"></script>
-    
-    <!-- Tailwind CSS v4 -->
-    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    
     <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
         :root {
-            --bg-color: #070605;
-            --panel-bg: rgba(30, 18, 16, 0.82);
-            --panel-border: rgba(255, 255, 255, 0.08);
+            --bg: #070605;
+            --panel-bg: rgba(17,12,12,0.82);
+            --panel-border: rgba(255,255,255,0.08);
             --text-primary: #f8f7f6;
             --text-secondary: #b5a59a;
             --text-muted: #7b6d67;
-            --accent-warm: #f97316;
+            --accent: #f97316;
             --accent-soft: #fb7185;
-            --shadow-soft: 0 0 60px rgba(249, 115, 22, 0.15);
+            --amber: #fcd34d;
+            --gray-300: #d1d5db;
+            --gray-400: #9ca3af;
+            --gray-500: #6b7280;
         }
-        html {
-            scroll-behavior: smooth;
-        }
+
+        html { scroll-behavior: smooth; }
+
         body {
             font-family: 'Inter', sans-serif;
-            background-color: var(--bg-color);
+            background: var(--bg);
             color: var(--text-primary);
             min-height: 100vh;
-            margin: 0;
             overflow-x: hidden;
             -webkit-font-smoothing: antialiased;
             -moz-osx-font-smoothing: grayscale;
         }
 
-        .custom-scrollbar::-webkit-scrollbar {
-            width: 6px;
+        ::selection { background: rgba(249,115,22,0.2); color: #fed7aa; }
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 999px; }
+        ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.22); }
+
+        /* ── Layout ── */
+        .layout {
+            display: flex;
+            flex-direction: column;
+            min-height: 100vh;
+            position: relative;
+            z-index: 10;
         }
-        .custom-scrollbar::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-            background: rgba(255, 255, 255, 0.12);
-            border-radius: 999px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-            background: rgba(255, 255, 255, 0.22);
+        @media (min-width: 1024px) {
+            .layout { flex-direction: row; }
         }
 
-        .glass-card {
-            background: rgba(17, 12, 12, 0.82);
-            backdrop-filter: blur(28px);
-            -webkit-backdrop-filter: blur(28px);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.35);
+        /* ── Background blobs ── */
+        .bg-layer {
+            position: fixed;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
         }
-
-        .accent-ring {
-            box-shadow: 0 0 40px rgba(249, 115, 22, 0.18);
-        }
-
-        @keyframes blob {
-            0% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(25px, -40px) scale(1.05); }
-            66% { transform: translate(-20px, 18px) scale(0.95); }
-            100% { transform: translate(0px, 0px) scale(1); }
-        }
-        .animate-blob {
+        .blob {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(120px);
+            mix-blend-mode: screen;
             animation: blob 12s infinite alternate ease-in-out;
         }
+        .blob-1 { top: -10%; left: -10%; width: 38vw; height: 38vw; background: rgba(249,115,22,0.12); }
+        .blob-2 { top: 18%; right: -10%; width: 35vw; height: 35vw; background: rgba(251,113,133,0.10); animation-delay: -4s; }
+        .blob-3 { bottom: -15%; left: 16%; width: 45vw; height: 45vw; background: rgba(245,158,11,0.08); filter: blur(140px); animation-delay: -8s; }
 
+        @keyframes blob {
+            0%   { transform: translate(0,0) scale(1); }
+            33%  { transform: translate(25px,-40px) scale(1.05); }
+            66%  { transform: translate(-20px,18px) scale(0.95); }
+            100% { transform: translate(0,0) scale(1); }
+        }
+
+        canvas#particleCanvas { position: absolute; inset: 0; opacity: 0.3; }
+
+        /* ── Left branding panel ── */
+        .brand-panel {
+            display: none;
+            flex-direction: column;
+            padding: 3rem 3rem;
+            justify-content: center;
+            height: 100vh;
+            overflow-y: auto;
+            width: 45%;
+        }
+        @media (min-width: 1024px) { .brand-panel { display: flex; } }
+        @media (min-width: 1280px) { .brand-panel { padding: 3rem 5rem; } }
+
+        .brand-inner { max-width: 520px; }
+
+        .logo-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2.5rem; }
+        .logo-wrap {
+            width: 3rem; height: 3rem; border-radius: 1.5rem; overflow: hidden;
+            background: #110b08; border: 1px solid rgba(255,255,255,0.1);
+            box-shadow: 0 0 35px rgba(249,115,22,0.2);
+            flex-shrink: 0;
+        }
+        .logo-wrap img { width: 100%; height: 100%; object-fit: cover; }
+        .logo-name { font-size: 1.5rem; font-weight: 700; letter-spacing: -0.025em; color: #fff; }
+        .logo-badge {
+            font-size: 0.625rem; text-transform: uppercase; font-weight: 600;
+            letter-spacing: 0.35em; color: #fcd34d;
+            background: rgba(255,255,255,0.05); padding: 0.25rem 0.5rem; border-radius: 999px;
+        }
+        .logo-sub { font-size: 0.6875rem; color: var(--gray-400); margin-top: 0.25rem; }
+
+        .eyebrow {
+            font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.3em;
+            color: #fcd34d; margin-bottom: 1.25rem;
+        }
+
+        .headline {
+            font-size: clamp(2.5rem, 4vw, 3.75rem);
+            font-weight: 800; line-height: 1.03; color: #fff; margin-bottom: 2rem;
+        }
+        .headline-grad {
+            background: linear-gradient(to right, #fdba74, #fcd34d, #fb7185);
+            -webkit-background-clip: text; background-clip: text; color: transparent;
+        }
+
+        .brand-desc { color: var(--gray-300); font-size: 1.125rem; line-height: 2rem; max-width: 540px; margin-bottom: 3rem; }
+        .brand-desc .hi { color: #fdba74; }
+        .brand-desc .ha { color: #fcd34d; }
+
+        /* Feature cards */
+        .features { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2.5rem; }
+        .feature-card {
+            display: flex; align-items: flex-start; gap: 1rem;
+            padding: 1rem; border-radius: 1.5rem;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            transition: background 0.3s;
+        }
+        .feature-card:hover { background: rgba(255,255,255,0.1); }
+        .feature-icon {
+            flex-shrink: 0; margin-top: 0.125rem;
+            padding: 0.75rem; border-radius: 1rem;
+            display: flex; align-items: center; justify-content: center;
+            transition: background 0.3s;
+        }
+        .feature-icon svg { width: 20px; height: 20px; }
+        .fi-orange { background: rgba(249,115,22,0.1); color: #fdba74; }
+        .fi-rose   { background: rgba(251,113,133,0.1); color: #fda4af; }
+        .fi-amber  { background: rgba(245,158,11,0.1); color: #fcd34d; }
+        .feature-card:hover .fi-orange { background: rgba(249,115,22,0.2); }
+        .feature-card:hover .fi-rose   { background: rgba(251,113,133,0.2); }
+        .feature-card:hover .fi-amber  { background: rgba(245,158,11,0.2); }
+        .feature-title { font-size: 0.875rem; font-weight: 600; color: #fff; margin-bottom: 0.25rem; }
+        .feature-desc  { font-size: 0.875rem; color: var(--gray-400); line-height: 1.6; }
+
+        /* Badges */
+        .badges { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 2.5rem; }
+        .badge {
+            display: flex; align-items: center; gap: 0.5rem;
+            padding: 0.375rem 0.75rem; border-radius: 999px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.75rem; font-weight: 500; color: var(--gray-300);
+        }
+        .badge svg { width: 14px; height: 14px; }
+        .badge-orange { color: #fb923c; }
+        .badge-rose   { color: #fb7185; }
+        .badge-amber  { color: #fbbf24; }
+
+        /* Social proof */
+        .social-proof { display: flex; align-items: center; gap: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,0.1); }
+        .avatars { display: flex; }
+        .avatar {
+            width: 2.5rem; height: 2.5rem; border-radius: 50%;
+            border: 2px solid #070605;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 0.625rem; font-weight: 700; color: #fff;
+            margin-left: -0.75rem;
+        }
+        .avatars .avatar:first-child { margin-left: 0; }
+        .av1 { background: linear-gradient(135deg,#f97316,#fb7185); }
+        .av2 { background: linear-gradient(135deg,#fbbf24,#f97316); }
+        .av3 { background: linear-gradient(135deg,#fb7185,#d946ef); }
+        .av4 { background: #1f1a18; color: var(--gray-300); font-size: 0.625rem; }
+        .social-text { font-size: 0.75rem; color: var(--gray-400); line-height: 1.4; }
+        .social-text strong { color: #fff; font-weight: 500; }
+
+        /* ── Right auth panel ── */
+        .auth-panel {
+            width: 100%;
+            display: flex; align-items: center; justify-content: center;
+            min-height: 100vh; padding: 2.5rem 1rem;
+            order: -1;
+        }
+        @media (min-width: 640px)  { .auth-panel { padding: 2.5rem 2rem; } }
+        @media (min-width: 1024px) { .auth-panel { width: 55%; order: 1; } }
+
+        .auth-card {
+            width: 100%; max-width: 440px;
+            background: rgba(17,12,12,0.82);
+            backdrop-filter: blur(28px);
+            -webkit-backdrop-filter: blur(28px);
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: 0 30px 80px rgba(0,0,0,0.35);
+            border-radius: 2rem; padding: 2rem;
+            position: relative; overflow: hidden;
+            transition: border-color 0.5s;
+        }
+        .auth-card:hover { border-color: rgba(255,255,255,0.15); }
+        @media (min-width: 640px) { .auth-card { padding: 2.5rem; } }
+
+        .card-glow {
+            position: absolute; top: -7rem; right: -7rem;
+            width: 18rem; height: 18rem;
+            background: rgba(249,115,22,0.12); filter: blur(75px); border-radius: 50%;
+            pointer-events: none; transition: background 0.7s;
+        }
+        .auth-card:hover .card-glow { background: rgba(249,115,22,0.18); }
+
+        /* Card header */
+        .card-header { text-align: center; margin-bottom: 2rem; position: relative; z-index: 10; }
+        .card-logo-pill {
+            display: inline-flex; align-items: center; gap: 0.5rem;
+            padding: 0.5rem 1rem; border-radius: 999px;
+            background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 1rem;
+        }
+        .card-logo-pill img { width: 2rem; height: 2rem; border-radius: 0.5rem; object-fit: cover; }
+        .card-logo-pill span { font-size: 0.875rem; font-weight: 600; color: #fff; letter-spacing: -0.025em; }
+        .card-eyebrow { font-size: 0.6875rem; font-weight: 700; letter-spacing: 0.15em; text-transform: uppercase; color: #fcd34d; margin-bottom: 0.75rem; }
+        .card-title { font-size: 1.5rem; font-weight: 700; color: #fff; margin-bottom: 0.5rem; letter-spacing: -0.025em; }
+        .card-subtitle { font-size: 0.875rem; color: var(--gray-400); }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex; position: relative;
+            padding: 0.25rem; background: rgba(255,255,255,0.05);
+            border-radius: 1rem; border: 1px solid rgba(255,255,255,0.1);
+            margin-bottom: 2rem; z-index: 10;
+        }
+        .tab-indicator {
+            position: absolute; top: 0.25rem; bottom: 0.25rem; left: 0.25rem;
+            width: calc(50% - 0.25rem);
+            background: #181212; border-radius: 0.75rem;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: transform 0.3s ease-out;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+        }
+        .tab-btn {
+            position: relative; z-index: 10; width: 50%;
+            padding: 0.5rem 0; font-size: 0.875rem; font-weight: 600;
+            border: none; background: none; cursor: pointer;
+            border-radius: 0.5rem; transition: color 0.3s;
+        }
+        .tab-btn.active { color: #fff; }
+        .tab-btn.inactive { color: var(--gray-400); }
+        .tab-btn.inactive:hover { color: #fff; }
+
+        /* Forms */
+        .form-group { margin-bottom: 1rem; }
+        .form-label { display: block; font-size: 0.75rem; font-weight: 500; color: var(--gray-400); margin-bottom: 0.5rem; }
+        .form-label-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem; }
+        .form-label-row .form-label { margin-bottom: 0; }
+        .forgot-btn {
+            font-size: 0.75rem; font-weight: 500; color: #fcd34d;
+            background: none; border: none; cursor: pointer; transition: color 0.2s;
+        }
+        .forgot-btn:hover { color: #fde68a; }
+        .form-input {
+            width: 100%; padding: 0.75rem 1rem;
+            border-radius: 1rem; background: #111010;
+            border: 1px solid rgba(255,255,255,0.1);
+            color: #fff; font-size: 0.875rem; font-family: inherit;
+            transition: border-color 0.3s, box-shadow 0.3s;
+            outline: none;
+        }
+        .form-input::placeholder { color: var(--gray-500); }
+        .form-input:focus {
+            border-color: rgba(251,146,60,0.5);
+            box-shadow: 0 0 0 2px rgba(251,146,60,0.15);
+        }
+
+        .submit-btn {
+            width: 100%; position: relative; overflow: hidden;
+            border-radius: 1rem; padding: 0.875rem 1rem; margin-top: 0.5rem;
+            background: linear-gradient(to right, #f97316, #fb7185);
+            border: none; cursor: pointer; font-family: inherit;
+            font-size: 0.875rem; font-weight: 600; color: #fff;
+            box-shadow: 0 0 25px rgba(249,115,22,0.25);
+            transition: box-shadow 0.3s, transform 0.2s;
+        }
+        .submit-btn:hover {
+            box-shadow: 0 0 35px rgba(249,115,22,0.35);
+            transform: translateY(-2px);
+        }
+        .submit-btn:active { transform: translateY(0); }
+        .submit-btn-shine {
+            position: absolute; inset: 0; background: rgba(255,255,255,0.2);
+            opacity: 0; transition: opacity 0.3s;
+        }
+        .submit-btn:hover .submit-btn-shine { opacity: 1; }
+        .submit-btn-inner { position: relative; display: flex; align-items: center; justify-content: center; gap: 0.5rem; }
+
+        /* Divider */
+        .divider { display: flex; align-items: center; gap: 1rem; margin: 1.75rem 0; position: relative; z-index: 10; }
+        .divider-line { flex: 1; height: 1px; background: rgba(255,255,255,0.1); }
+        .divider-text { font-size: 0.6875rem; color: var(--gray-400); font-weight: 600; text-transform: uppercase; letter-spacing: 0.1em; }
+
+        /* Google button */
+        .google-btn {
+            width: 100%; display: flex; align-items: center; justify-content: center; gap: 0.75rem;
+            padding: 0.875rem 1rem; border-radius: 1rem;
+            background: #111010; border: 1px solid rgba(255,255,255,0.1);
+            font-size: 0.875rem; font-weight: 500; color: #e5e7eb;
+            cursor: pointer; font-family: inherit;
+            transition: background 0.3s, color 0.3s, border-color 0.3s, box-shadow 0.3s;
+            position: relative; z-index: 10;
+        }
+        .google-btn:hover {
+            background: #1e1a19; color: #fff;
+            border-color: rgba(255,255,255,0.2);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+        }
+        .google-btn:active { transform: scale(0.98); }
+        .google-btn svg { width: 18px; height: 18px; flex-shrink: 0; }
+
+        .terms { text-align: center; font-size: 0.75rem; color: var(--gray-400); margin-top: 2rem; position: relative; z-index: 10; }
+        .terms a { color: var(--gray-400); text-decoration: underline; text-decoration-color: rgba(255,255,255,0.2); text-underline-offset: 4px; }
+        .terms a:hover { color: #fff; }
+
+        /* Animations */
         @keyframes fadeIn {
             from { opacity: 0; transform: translateY(10px); }
-            to { opacity: 1; transform: translateY(0); }
+            to   { opacity: 1; transform: translateY(0); }
         }
-        .animate-fade-in {
-            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        .fade-in { animation: fadeIn 0.4s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .hidden  { display: none; }
+
+        /* Toast */
+        #toastContainer { position: fixed; bottom: 1.5rem; right: 1.5rem; z-index: 50; display: flex; flex-direction: column; gap: 0.75rem; pointer-events: none; }
+        .toast {
+            display: flex; align-items: center; gap: 0.75rem;
+            padding: 0.75rem 1rem; border-radius: 0.75rem;
+            backdrop-filter: blur(16px); border: 1px solid;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            transform: translateY(2rem); opacity: 0;
+            transition: all 0.4s cubic-bezier(0.16,1,0.3,1);
         }
+        .toast.show { transform: translateY(0); opacity: 1; }
+        .toast.success { background: rgba(16,185,129,0.1); border-color: rgba(16,185,129,0.2); }
+        .toast.error   { background: rgba(239,68,68,0.1);  border-color: rgba(239,68,68,0.2); }
+        .toast svg { width: 20px; height: 20px; flex-shrink: 0; }
+        .toast.success svg { color: #34d399; }
+        .toast.error   svg { color: #f87171; }
+        .toast span { font-size: 0.875rem; font-weight: 500; color: #fff; }
     </style>
 </head>
-<body class="min-h-screen selection:bg-orange-500/20 selection:text-orange-200">
+<body>
 
-    <!-- Background Elements -->
-    <div class="fixed inset-0 z-0 overflow-hidden pointer-events-none">
-        <div class="absolute top-[-10%] left-[-10%] w-[38vw] h-[38vw] rounded-full bg-orange-500/12 blur-[120px] mix-blend-screen animate-blob"></div>
-        <div class="absolute top-[18%] right-[-10%] w-[35vw] h-[35vw] rounded-full bg-rose-500/10 blur-[120px] mix-blend-screen animate-blob animation-delay-2000"></div>
-        <div class="absolute bottom-[-15%] left-[16%] w-[45vw] h-[45vw] rounded-full bg-amber-500/08 blur-[140px] mix-blend-screen animate-blob animation-delay-4000"></div>
-        <canvas id="particleCanvas" class="absolute inset-0 opacity-30"></canvas>
-    </div>
+<!-- Background -->
+<div class="bg-layer">
+    <div class="blob blob-1"></div>
+    <div class="blob blob-2"></div>
+    <div class="blob blob-3"></div>
+    <canvas id="particleCanvas"></canvas>
+</div>
 
-    <!-- Main Layout -->
-    <div class="flex flex-col lg:flex-row min-h-screen w-full relative z-10">
+<!-- Layout -->
+<div class="layout">
 
-        <!-- Left Branding Panel -->
-        <div class="hidden lg:flex w-[45%] flex-col px-12 xl:px-20 py-12 justify-center h-screen overflow-y-auto custom-scrollbar">
-            <div class="max-w-[520px]">
-                <div class="flex items-center gap-3 mb-10">
-                    <div class="w-12 h-12 rounded-3xl overflow-hidden bg-[#110b08] border border-white/10 shadow-[0_0_35px_rgba(249,115,22,0.2)]">
-                        <img src="./icons/icon-192.webp" alt="StudyOS logo" class="w-full h-full object-cover" />
+    <!-- Left branding panel -->
+    <div class="brand-panel">
+        <div class="brand-inner">
+            <div class="logo-row">
+                <div class="logo-wrap">
+                    <img src="./icons/icon-192.webp" alt="StudyOS logo" />
+                </div>
+                <div>
+                    <div style="display:flex;align-items:center;gap:0.5rem;">
+                        <span class="logo-name">StudyOS</span>
+                        <span class="logo-badge">Board Edition</span>
+                    </div>
+                    <p class="logo-sub">Your warm, dark-powered study companion.</p>
+                </div>
+            </div>
+
+            <p class="eyebrow">Exam-ready workspace • Warm focus • Calm clarity</p>
+
+            <h1 class="headline">
+                Study smarter.<br>Revise faster.<br>
+                <span class="headline-grad">Score with confidence.</span>
+            </h1>
+
+            <p class="brand-desc">
+                The premium operating system for CBSE Class 10. Track chapters, solve doubts with
+                <span class="hi">AI guidance</span>, and prepare for boards with
+                <span class="ha">consistent momentum</span>.
+            </p>
+
+            <div class="features">
+                <div class="feature-card">
+                    <div class="feature-icon fi-orange">
+                        <!-- book-open icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
                     </div>
                     <div>
-                        <div class="flex items-center gap-2">
-                            <span class="text-2xl font-bold tracking-tight text-white">StudyOS</span>
-                            <span class="text-[10px] uppercase font-semibold tracking-[0.35em] text-amber-300 bg-white/5 px-2 py-1 rounded-full">Board Edition</span>
-                        </div>
-                        <p class="text-[11px] text-gray-400 mt-1">Your warm, dark-powered study companion.</p>
+                        <h3 class="feature-title">NCERT Chapter Tracking</h3>
+                        <p class="feature-desc">Visualize your syllabus completion and stay completely ahead of the schedule.</p>
                     </div>
                 </div>
-
-                <p class="text-xs uppercase tracking-[0.3em] text-amber-300 mb-5">Exam-ready workspace • Warm focus • Calm clarity</p>
-
-                <h1 class="text-5xl xl:text-6xl font-extrabold leading-[1.03] text-white mb-8">Study smarter.<br>Revise faster.<br><span class="bg-gradient-to-r from-orange-300 via-amber-300 to-rose-400 bg-clip-text text-transparent">Score with confidence.</span></h1>
-                <p class="text-gray-300 text-lg leading-8 max-w-[540px] mb-12">The premium operating system for CBSE Class 10. Track chapters, solve doubts with <span class="text-orange-300">AI guidance</span>, and prepare for boards with <span class="text-amber-300">consistent momentum</span>.</p>
-
-                <div class="space-y-4 mb-10">
-                    <div class="group flex items-start gap-4 p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
-                        <div class="mt-0.5 p-3 rounded-2xl bg-orange-500/10 text-orange-300 group-hover:bg-orange-500/20 transition-all duration-300">
-                            <i class="ph-fill ph-book-open-text text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold text-sm mb-1">NCERT Chapter Tracking</h3>
-                            <p class="text-gray-400 text-sm leading-relaxed">Visualize your syllabus completion and stay completely ahead of the schedule.</p>
-                        </div>
+                <div class="feature-card">
+                    <div class="feature-icon fi-rose">
+                        <!-- brain icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.66"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.66"/></svg>
                     </div>
-                    <div class="group flex items-start gap-4 p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
-                        <div class="mt-0.5 p-3 rounded-2xl bg-rose-500/10 text-rose-300 group-hover:bg-rose-500/20 transition-all duration-300">
-                            <i class="ph-fill ph-brain text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold text-sm mb-1">AI Study Coach</h3>
-                            <p class="text-gray-400 text-sm leading-relaxed">Instant doubt resolution and personalized study recommendations 24/7.</p>
-                        </div>
-                    </div>
-                    <div class="group flex items-start gap-4 p-4 rounded-3xl bg-white/5 border border-white/10 hover:bg-white/10 transition-all duration-300">
-                        <div class="mt-0.5 p-3 rounded-2xl bg-amber-500/10 text-amber-300 group-hover:bg-amber-500/20 transition-all duration-300">
-                            <i class="ph-fill ph-clock-counter-clockwise text-xl"></i>
-                        </div>
-                        <div>
-                            <h3 class="text-white font-semibold text-sm mb-1">Smart Revision Reminders</h3>
-                            <p class="text-gray-400 text-sm leading-relaxed">Spaced repetition alerts engineered to ensure you never forget what you learned.</p>
-                        </div>
+                    <div>
+                        <h3 class="feature-title">AI Study Coach</h3>
+                        <p class="feature-desc">Instant doubt resolution and personalized study recommendations 24/7.</p>
                     </div>
                 </div>
-
-                <div class="flex flex-wrap gap-3 mb-10">
-                    <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 flex items-center gap-2"><i class="ph-fill ph-check-circle text-orange-400"></i> Built for CBSE</span>
-                    <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 flex items-center gap-2"><i class="ph-fill ph-check-circle text-rose-400"></i> Secure Cloud Sync</span>
-                    <span class="px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium text-gray-300 flex items-center gap-2"><i class="ph-fill ph-check-circle text-amber-400"></i> AI-Powered Planning</span>
-                </div>
-
-                <div class="flex items-center gap-4 pt-4 border-t border-white/10">
-                    <div class="flex -space-x-3">
-                        <div class="w-10 h-10 rounded-full border-2 border-[#070605] bg-gradient-to-br from-orange-500 to-rose-500 flex items-center justify-center text-xs font-semibold text-white">AS</div>
-                        <div class="w-10 h-10 rounded-full border-2 border-[#070605] bg-gradient-to-br from-amber-400 to-orange-500 flex items-center justify-center text-xs font-semibold text-white">PR</div>
-                        <div class="w-10 h-10 rounded-full border-2 border-[#070605] bg-gradient-to-br from-rose-500 to-fuchsia-500 flex items-center justify-center text-xs font-semibold text-white">RH</div>
-                        <div class="w-10 h-10 rounded-full border-2 border-[#070605] bg-[#1f1a18] flex items-center justify-center text-[10px] font-bold text-gray-300">+2k</div>
+                <div class="feature-card">
+                    <div class="feature-icon fi-amber">
+                        <!-- clock icon -->
+                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
                     </div>
-                    <div class="text-xs text-gray-400 leading-tight">
-                        <span class="text-white font-medium">Helping thousands of students</span><br>stay consistent for boards.
+                    <div>
+                        <h3 class="feature-title">Smart Revision Reminders</h3>
+                        <p class="feature-desc">Spaced repetition alerts engineered to ensure you never forget what you learned.</p>
                     </div>
                 </div>
             </div>
-        </div>
 
-        <!-- Right Auth Panel -->
-        <div class="w-full lg:w-[55%] flex items-center justify-center min-h-screen px-4 py-10 sm:px-8 order-first lg:order-last">
-            <div class="w-full max-w-[440px]">
-                <div class="glass-card rounded-[2rem] p-8 sm:p-10 relative overflow-hidden group/card hover:border-white/15 transition-colors duration-500">
-                    <div class="absolute -top-28 -right-28 w-72 h-72 bg-orange-500/12 blur-[75px] rounded-full pointer-events-none group-hover/card:bg-orange-500/18 transition-all duration-700"></div>
+            <div class="badges">
+                <span class="badge">
+                    <svg class="badge-orange" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    Built for CBSE
+                </span>
+                <span class="badge">
+                    <svg class="badge-rose" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    Secure Cloud Sync
+                </span>
+                <span class="badge">
+                    <svg class="badge-amber" viewBox="0 0 24 24" fill="currentColor"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>
+                    AI-Powered Planning
+                </span>
+            </div>
 
-                    <div class="text-center mb-8 relative z-10">
-                        <div class="inline-flex items-center justify-center gap-2 mb-4 px-4 py-2 rounded-full bg-white/5 border border-white/10">
-                            <img src="./icons/icon-192.webp" alt="StudyOS logo" class="w-8 h-8 rounded-2xl object-cover" />
-                            <span class="text-sm font-semibold text-white tracking-tight">StudyOS</span>
-                        </div>
-                        <p class="text-amber-300 text-[11px] font-bold tracking-[0.15em] uppercase mb-3">Your Board Exam Workspace</p>
-                        <h2 class="text-2xl font-bold text-white mb-2 tracking-tight" id="authTitle">Welcome back</h2>
-                        <p class="text-sm text-gray-400" id="authSubtitle">Continue your preparation journey and stay consistent.</p>
-                    </div>
-
-                    <div class="relative flex p-1 bg-white/5 rounded-[1rem] mb-8 border border-white/10 z-10">
-                        <div class="absolute inset-y-1 left-1 w-[calc(50%-4px)] bg-[#181212] rounded-xl transition-transform duration-300 ease-out shadow-sm border border-white/10" id="tabIndicator"></div>
-                        <button type="button" class="relative z-10 w-1/2 py-2 text-sm font-semibold text-white transition-colors duration-300 rounded-lg" id="tabLogin" onclick="switchTab('login')">Log In</button>
-                        <button type="button" class="relative z-10 w-1/2 py-2 text-sm font-semibold text-gray-400 hover:text-white transition-colors duration-300 rounded-lg" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
-                    </div>
-
-                    <div class="relative z-10">
-                        <div id="loginFormContainer" class="block animate-fade-in">
-                            <form id="loginForm" class="space-y-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-400 mb-2" for="loginEmail">Email Address</label>
-                                    <input type="email" id="loginEmail" class="w-full px-4 py-3 rounded-2xl bg-[#111010] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/15 transition-all duration-300" placeholder="student@example.com" required>
-                                </div>
-                                <div>
-                                    <div class="flex items-center justify-between mb-2">
-                                        <label class="block text-xs font-medium text-gray-400" for="loginPassword">Password</label>
-                                        <button type="button" class="text-xs font-medium text-amber-300 hover:text-amber-200 transition-colors" onclick="forgotPassword()">Forgot password?</button>
-                                    </div>
-                                    <input type="password" id="loginPassword" class="w-full px-4 py-3 rounded-2xl bg-[#111010] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/15 transition-all duration-300" placeholder="••••••••" required>
-                                </div>
-                                <div class="pt-2">
-                                    <button type="submit" class="w-full relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 px-4 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(249,115,22,0.25)] hover:shadow-[0_0_35px_rgba(249,115,22,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
-                                        <div class="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                                        <span class="relative flex items-center justify-center gap-2">
-                                            <span id="loginBtnText">Log In to StudyOS</span>
-                                            <i class="ph-bold ph-arrow-right transition-transform duration-300 group-hover:translate-x-1"></i>
-                                        </span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-
-                        <div id="signupFormContainer" class="hidden">
-                            <form id="signupForm" class="space-y-4">
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-400 mb-2" for="signupName">Full Name</label>
-                                    <input type="text" id="signupName" class="w-full px-4 py-3 rounded-2xl bg-[#111010] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/15 transition-all duration-300" placeholder="Aarav Sharma" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-400 mb-2" for="signupEmail">Email Address</label>
-                                    <input type="email" id="signupEmail" class="w-full px-4 py-3 rounded-2xl bg-[#111010] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/15 transition-all duration-300" placeholder="student@example.com" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-400 mb-2" for="signupPassword">Password</label>
-                                    <input type="password" id="signupPassword" class="w-full px-4 py-3 rounded-2xl bg-[#111010] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/15 transition-all duration-300" placeholder="••••••••" required>
-                                </div>
-                                <div>
-                                    <label class="block text-xs font-medium text-gray-400 mb-2" for="signupConfirmPassword">Confirm Password</label>
-                                    <input type="password" id="signupConfirmPassword" class="w-full px-4 py-3 rounded-2xl bg-[#111010] border border-white/10 text-white placeholder-gray-500 focus:outline-none focus:border-orange-400/50 focus:ring-2 focus:ring-orange-400/15 transition-all duration-300" placeholder="••••••••" required>
-                                </div>
-                                <div class="pt-2">
-                                    <button type="submit" class="w-full relative overflow-hidden rounded-2xl bg-gradient-to-r from-orange-500 to-rose-500 px-4 py-3.5 text-sm font-semibold text-white shadow-[0_0_25px_rgba(249,115,22,0.25)] hover:shadow-[0_0_35px_rgba(249,115,22,0.35)] transition-all duration-300 hover:-translate-y-0.5 active:translate-y-0">
-                                        <div class="absolute inset-0 bg-white/20 opacity-0 hover:opacity-100 transition-opacity duration-300"></div>
-                                        <span class="relative flex items-center justify-center gap-2">
-                                            <span id="signupBtnText">Create Account</span>
-                                            <i class="ph-bold ph-arrow-right transition-transform duration-300 group-hover:translate-x-1"></i>
-                                        </span>
-                                    </button>
-                                </div>
-                            </form>
-                        </div>
-                    </div>
-
-                    <div class="flex items-center gap-4 my-7 relative z-10">
-                        <div class="h-px bg-white/10 flex-1"></div>
-                        <span class="text-[11px] text-gray-400 font-semibold uppercase tracking-wider">Or continue with</span>
-                        <div class="h-px bg-white/10 flex-1"></div>
-                    </div>
-
-                    <button type="button" onclick="loginWithGoogle()" class="w-full flex items-center justify-center gap-3 px-4 py-3.5 rounded-2xl bg-[#111010] border border-white/10 text-sm font-medium text-gray-200 hover:bg-[#1e1a19] hover:text-white hover:border-white/20 transition-all duration-300 hover:shadow-lg hover:shadow-black/20 active:scale-[0.98] relative z-10">
-                        <svg class="w-[18px] h-[18px]" viewBox="0 0 24 24" aria-hidden="true">
-                            <path fill="#EA4335" d="M5.26644 9.76453C6.19903 6.93863 8.85469 4.90909 12.0002 4.90909C13.6912 4.90909 15.2184 5.50909 16.4184 6.49091L19.9093 3C17.7821 1.14545 15.0548 0 12.0002 0C7.27031 0 3.19799 2.6983 1.24023 6.65002L5.26644 9.76453Z"/>
-                            <path fill="#34A853" d="M16.0406 18.0142C14.9508 18.718 13.5659 19.0926 11.9998 19.0926C8.86633 19.0926 6.21896 17.0785 5.27682 14.2695L1.2373 17.3366C3.19263 21.2953 7.26484 24.0002 11.9998 24.0002C14.9228 24.0002 17.4298 23.0364 19.2798 21.405L16.0406 18.0142Z"/>
-                            <path fill="#4A90E2" d="M19.9876 20.3644C22.0152 18.4682 23.1818 15.421 23.1818 12.0002C23.1818 11.0002 23.0909 10.0002 22.8182 9.0002H12.0002V13.0911H18.2866C18.0984 15.0863 17.2047 16.8582 16.0409 18.0144L19.9876 20.3644Z"/>
-                            <path fill="#FBBC05" d="M5.27698 14.2689C5.03708 13.5547 4.90909 12.7922 4.90909 12.0002C4.90909 11.2082 5.03708 10.4457 5.2662 9.73144L1.23999 6.61694C0.436587 8.22044 0 10.0547 0 12.0002C0 13.9457 0.436587 15.78 1.23746 17.3835L5.27698 14.2689Z"/>
-                        </svg>
-                        Continue with Google
-                    </button>
-
-                    <p class="text-center text-gray-400 text-xs mt-8 relative z-10">By continuing, you agree to StudyOS's <br class="sm:hidden" /> <a href="#" class="text-gray-400 hover:text-white underline decoration-white/20 underline-offset-4">Terms of Service</a> and <a href="#" class="text-gray-400 hover:text-white underline decoration-white/20 underline-offset-4">Privacy Policy</a>.</p>
+            <div class="social-proof">
+                <div class="avatars">
+                    <div class="avatar av1">AS</div>
+                    <div class="avatar av2">PR</div>
+                    <div class="avatar av3">RH</div>
+                    <div class="avatar av4">+2k</div>
                 </div>
+                <p class="social-text"><strong>Helping thousands of students</strong><br>stay consistent for boards.</p>
             </div>
         </div>
     </div>
 
-    <div id="toastContainer" class="fixed bottom-6 right-6 z-50 flex flex-col gap-3 pointer-events-none"></div>
-    
-    <script type="module">
-        import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+    <!-- Right auth panel -->
+    <div class="auth-panel">
+        <div class="auth-card">
+            <div class="card-glow"></div>
 
-        const supabaseUrl = 'https://lutkwbxjnzhctgtomran.supabase.co';
-        const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dGt3YnhqbnpoY3RndG9tcmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjQxNDgsImV4cCI6MjA5NDY0MDE0OH0.-AAKheuquEqnKRqMkVWPcHlq89FFbaaim7dbS2fbgRY';
-        let supabase = null;
+            <div class="card-header">
+                <div class="card-logo-pill">
+                    <img src="./icons/icon-192.webp" alt="StudyOS logo" />
+                    <span>StudyOS</span>
+                </div>
+                <p class="card-eyebrow">Your Board Exam Workspace</p>
+                <h2 class="card-title" id="authTitle">Welcome back</h2>
+                <p class="card-subtitle" id="authSubtitle">Continue your preparation journey and stay consistent.</p>
+            </div>
 
-        try {
-        supabase = createClient(supabaseUrl, supabaseKey);
-        } catch(e) {
-            console.warn("Supabase initialization failed:", e);
-        }
+            <!-- Tabs -->
+            <div class="tab-bar">
+                <div class="tab-indicator" id="tabIndicator"></div>
+                <button type="button" class="tab-btn active" id="tabLogin" onclick="switchTab('login')">Log In</button>
+                <button type="button" class="tab-btn inactive" id="tabSignup" onclick="switchTab('signup')">Sign Up</button>
+            </div>
 
-        window.addEventListener('DOMContentLoaded', async () => {
-            if(supabase) {
-                // Handle OAuth callback — Supabase puts token in URL hash
-                const { data: { session } } = await supabase.auth.getSession();
-                if(session) {
-                    window.location.href = '/index.html';
-                    return;
-                }
+            <!-- Login form -->
+            <div id="loginFormContainer" style="position:relative;z-index:10;">
+                <form id="loginForm">
+                    <div class="form-group">
+                        <label class="form-label" for="loginEmail">Email Address</label>
+                        <input type="email" id="loginEmail" class="form-input" placeholder="student@example.com" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <div class="form-label-row">
+                            <label class="form-label" for="loginPassword">Password</label>
+                            <button type="button" class="forgot-btn" onclick="forgotPassword()">Forgot password?</button>
+                        </div>
+                        <input type="password" id="loginPassword" class="form-input" placeholder="••••••••" autocomplete="current-password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <div class="submit-btn-shine"></div>
+                        <span class="submit-btn-inner">
+                            <span id="loginBtnText">Log In to StudyOS</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                </form>
+            </div>
 
-                // Also listen for auth state changes (catches OAuth redirect)
-                supabase.auth.onAuthStateChange((event, session) => {
-                    if (event === 'SIGNED_IN' && session) {
-                        window.location.href = '/index.html';
-                    }
-                });
-            }
-        });
+            <!-- Signup form -->
+            <div id="signupFormContainer" class="hidden" style="position:relative;z-index:10;">
+                <form id="signupForm">
+                    <div class="form-group">
+                        <label class="form-label" for="signupName">Full Name</label>
+                        <input type="text" id="signupName" class="form-input" placeholder="Aarav Sharma" autocomplete="name" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="signupEmail">Email Address</label>
+                        <input type="email" id="signupEmail" class="form-input" placeholder="student@example.com" autocomplete="email" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="signupPassword">Password</label>
+                        <input type="password" id="signupPassword" class="form-input" placeholder="••••••••" autocomplete="new-password" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label" for="signupConfirmPassword">Confirm Password</label>
+                        <input type="password" id="signupConfirmPassword" class="form-input" placeholder="••••••••" autocomplete="new-password" required>
+                    </div>
+                    <button type="submit" class="submit-btn">
+                        <div class="submit-btn-shine"></div>
+                        <span class="submit-btn-inner">
+                            <span id="signupBtnText">Create Account</span>
+                            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+                        </span>
+                    </button>
+                </form>
+            </div>
 
-        let currentTab = 'login';
-        window.switchTab = function(tab) {
-            if (tab === currentTab) return;
+            <!-- Divider + Google -->
+            <div class="divider">
+                <div class="divider-line"></div>
+                <span class="divider-text">Or continue with</span>
+                <div class="divider-line"></div>
+            </div>
 
-            const indicator = document.getElementById('tabIndicator');
-            const tabLogin = document.getElementById('tabLogin');
-            const tabSignup = document.getElementById('tabSignup');
-            const loginContainer = document.getElementById('loginFormContainer');
-            const signupContainer = document.getElementById('signupFormContainer');
-            const authTitle = document.getElementById('authTitle');
-            const authSubtitle = document.getElementById('authSubtitle');
+            <button type="button" onclick="loginWithGoogle()" class="google-btn">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                    <path fill="#EA4335" d="M5.26644 9.76453C6.19903 6.93863 8.85469 4.90909 12.0002 4.90909C13.6912 4.90909 15.2184 5.50909 16.4184 6.49091L19.9093 3C17.7821 1.14545 15.0548 0 12.0002 0C7.27031 0 3.19799 2.6983 1.24023 6.65002L5.26644 9.76453Z"/>
+                    <path fill="#34A853" d="M16.0406 18.0142C14.9508 18.718 13.5659 19.0926 11.9998 19.0926C8.86633 19.0926 6.21896 17.0785 5.27682 14.2695L1.2373 17.3366C3.19263 21.2953 7.26484 24.0002 11.9998 24.0002C14.9228 24.0002 17.4298 23.0364 19.2798 21.405L16.0406 18.0142Z"/>
+                    <path fill="#4A90E2" d="M19.9876 20.3644C22.0152 18.4682 23.1818 15.421 23.1818 12.0002C23.1818 11.0002 23.0909 10.0002 22.8182 9.0002H12.0002V13.0911H18.2866C18.0984 15.0863 17.2047 16.8582 16.0409 18.0144L19.9876 20.3644Z"/>
+                    <path fill="#FBBC05" d="M5.27698 14.2689C5.03708 13.5547 4.90909 12.7922 4.90909 12.0002C4.90909 11.2082 5.03708 10.4457 5.2662 9.73144L1.23999 6.61694C0.436587 8.22044 0 10.0547 0 12.0002C0 13.9457 0.436587 15.78 1.23746 17.3835L5.27698 14.2689Z"/>
+                </svg>
+                Continue with Google
+            </button>
 
-            if (tab === 'login') {
-                indicator.style.transform = 'translateX(0)';
-                tabLogin.classList.replace('text-gray-400', 'text-white');
-                tabSignup.classList.replace('text-white', 'text-gray-400');
-                signupContainer.classList.add('hidden');
-                signupContainer.classList.remove('animate-fade-in');
-                loginContainer.classList.remove('hidden');
-                void loginContainer.offsetWidth;
-                loginContainer.classList.add('animate-fade-in');
-                authTitle.innerText = 'Welcome back';
-                authSubtitle.innerText = 'Continue your preparation journey and stay consistent.';
-            } else {
-                indicator.style.transform = 'translateX(100%)';
-                tabSignup.classList.replace('text-gray-400', 'text-white');
-                tabLogin.classList.replace('text-white', 'text-gray-400');
-                loginContainer.classList.add('hidden');
-                loginContainer.classList.remove('animate-fade-in');
-                signupContainer.classList.remove('hidden');
-                void signupContainer.offsetWidth;
-                signupContainer.classList.add('animate-fade-in');
-                authTitle.innerText = 'Create an account';
-                authSubtitle.innerText = 'Start your journey to scoring better in boards.';
-            }
-            currentTab = tab;
-        };
+            <p class="terms">
+                By continuing, you agree to StudyOS's
+                <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
+            </p>
+        </div>
+    </div>
+</div>
 
-        window.showToast = function(message, type = 'success') {
-            const container = document.getElementById('toastContainer');
-            const toast = document.createElement('div');
-            toast.className = `transform transition-all duration-400 translate-y-8 opacity-0 flex items-center gap-3 px-4 py-3 rounded-xl shadow-2xl border backdrop-blur-xl ${type === 'success' ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-red-500/10 border-red-500/20 text-red-400'}`;
-            const icon = type === 'success' ? '<i class="ph-fill ph-check-circle text-xl"></i>' : '<i class="ph-fill ph-warning-circle text-xl"></i>';
-            toast.innerHTML = `${icon}<span class="text-sm font-medium text-white">${message}</span>`;
-            container.appendChild(toast);
-            requestAnimationFrame(() => {
-                toast.classList.remove('translate-y-8', 'opacity-0');
+<div id="toastContainer"></div>
+
+<script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL = 'https://lutkwbxjnzhctgtomran.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dGt3YnhqbnpoY3RndG9tcmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjQxNDgsImV4cCI6MjA5NDY0MDE0OH0.-AAKheuquEqnKRqMkVWPcHlq89FFbaaim7dbS2fbgRY';
+    let supabase = null;
+    try { supabase = createClient(SUPABASE_URL, SUPABASE_KEY); } catch(e) { console.warn('Supabase init failed:', e); }
+
+    // Auth state
+    window.addEventListener('DOMContentLoaded', async () => {
+        if (supabase) {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (session) { window.location.href = '/index.html'; return; }
+            supabase.auth.onAuthStateChange((event, session) => {
+                if (event === 'SIGNED_IN' && session) window.location.href = '/index.html';
             });
-            setTimeout(() => {
-                toast.classList.add('translate-y-8', 'opacity-0');
-                setTimeout(() => toast.remove(), 400);
-            }, 4000);
-        };
+        }
+    });
 
-        document.getElementById('loginForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const email = document.getElementById('loginEmail').value;
-            const password = document.getElementById('loginPassword').value;
-            const btnText = document.getElementById('loginBtnText');
-            const originalText = btnText.innerText;
-            btnText.innerText = 'Authenticating...';
-            if(supabase) {
-                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
-                if (error) {
-                    const _msg = error.message || '';
-                    const _isCredErr = _msg.toLowerCase().includes('invalid login credentials') || _msg.toLowerCase().includes('invalid credentials');
-                    const _friendlyMsg = _isCredErr
-                        ? 'Wrong password, or this account uses Google sign-in — try the "Continue with Google" button below.'
-                        : _msg;
-                    showToast(_friendlyMsg, 'error');
-                    btnText.innerText = originalText;
-                } else {
-                    showToast('Logged in successfully!', 'success'); 
-                    setTimeout(() => window.location.href = '/index.html', 1000);
-                }
+    // Tab switching
+    let currentTab = 'login';
+    window.switchTab = function(tab) {
+        if (tab === currentTab) return;
+        const indicator    = document.getElementById('tabIndicator');
+        const tabLogin     = document.getElementById('tabLogin');
+        const tabSignup    = document.getElementById('tabSignup');
+        const loginCont    = document.getElementById('loginFormContainer');
+        const signupCont   = document.getElementById('signupFormContainer');
+        const authTitle    = document.getElementById('authTitle');
+        const authSubtitle = document.getElementById('authSubtitle');
+
+        if (tab === 'login') {
+            indicator.style.transform = 'translateX(0)';
+            tabLogin.className  = 'tab-btn active';
+            tabSignup.className = 'tab-btn inactive';
+            signupCont.classList.add('hidden'); signupCont.classList.remove('fade-in');
+            loginCont.classList.remove('hidden');
+            void loginCont.offsetWidth;
+            loginCont.classList.add('fade-in');
+            authTitle.textContent    = 'Welcome back';
+            authSubtitle.textContent = 'Continue your preparation journey and stay consistent.';
+        } else {
+            indicator.style.transform = 'translateX(100%)';
+            tabSignup.className = 'tab-btn active';
+            tabLogin.className  = 'tab-btn inactive';
+            loginCont.classList.add('hidden'); loginCont.classList.remove('fade-in');
+            signupCont.classList.remove('hidden');
+            void signupCont.offsetWidth;
+            signupCont.classList.add('fade-in');
+            authTitle.textContent    = 'Create an account';
+            authSubtitle.textContent = 'Start your journey to scoring better in boards.';
+        }
+        currentTab = tab;
+    };
+
+    // Toast
+    window.showToast = function(message, type = 'success') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast ${type}`;
+        const iconSuccess = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>`;
+        const iconError   = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`;
+        toast.innerHTML = `${type === 'success' ? iconSuccess : iconError}<span>${message}</span>`;
+        container.appendChild(toast);
+        requestAnimationFrame(() => toast.classList.add('show'));
+        setTimeout(() => {
+            toast.classList.remove('show');
+            setTimeout(() => toast.remove(), 400);
+        }, 4000);
+    };
+
+    // Login
+    document.getElementById('loginForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const email    = document.getElementById('loginEmail').value;
+        const password = document.getElementById('loginPassword').value;
+        const btnText  = document.getElementById('loginBtnText');
+        const orig     = btnText.textContent;
+        btnText.textContent = 'Authenticating...';
+        if (supabase) {
+            const { error } = await supabase.auth.signInWithPassword({ email, password });
+            if (error) {
+                const isCredErr = error.message.toLowerCase().includes('invalid');
+                showToast(isCredErr ? 'Wrong password, or this account uses Google sign-in — try "Continue with Google" below.' : error.message, 'error');
+                btnText.textContent = orig;
             } else {
-                setTimeout(() => {
-                    showToast('Logged in successfully! (Mock)', 'success');
-                    btnText.innerText = originalText;
-                    document.getElementById('loginForm').reset();
-                }, 1500);
+                showToast('Logged in successfully!', 'success');
+                setTimeout(() => window.location.href = '/index.html', 1000);
             }
-        });
+        } else {
+            setTimeout(() => { showToast('Logged in! (Mock)', 'success'); btnText.textContent = orig; }, 1500);
+        }
+    });
 
-        document.getElementById('signupForm').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const name = document.getElementById('signupName').value;
-            const email = document.getElementById('signupEmail').value;
-            const password = document.getElementById('signupPassword').value;
-            const confirmPassword = document.getElementById('signupConfirmPassword').value;
-            const btnText = document.getElementById('signupBtnText');
-            const originalText = btnText.innerText;
-            if (password !== confirmPassword) {
-                showToast('Passwords do not match', 'error');
-                return;
-            }
-            if (password.length < 6) {
-                showToast('Password must be at least 6 characters', 'error');
-                return;
-            }
-            btnText.innerText = 'Creating account...';
-            if(supabase) {
-                const { data, error } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: { data: { full_name: name } }
-                });
-                if (error) {
-                    const _msg = error.message || '';
-                    const _isCredErr = _msg.toLowerCase().includes('invalid login credentials') || _msg.toLowerCase().includes('invalid credentials');
-                    const _friendlyMsg = _isCredErr
-                        ? 'Wrong password, or this account uses Google sign-in — try the "Continue with Google" button below.'
-                        : _msg;
-                    showToast(_friendlyMsg, 'error');
-                    btnText.innerText = originalText;
-                } else {
-                    showToast('Account created! Please check your email.', 'success');
-                    btnText.innerText = originalText;
-                    document.getElementById('signupForm').reset();
-                    switchTab('login');
-                }
-            } else {
-                setTimeout(() => {
-                    showToast('Account created successfully! (Mock)', 'success');
-                    btnText.innerText = originalText;
-                    document.getElementById('signupForm').reset();
-                    switchTab('login');
-                }, 1500);
-            }
-        });
+    // Signup
+    document.getElementById('signupForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const name     = document.getElementById('signupName').value;
+        const email    = document.getElementById('signupEmail').value;
+        const password = document.getElementById('signupPassword').value;
+        const confirm  = document.getElementById('signupConfirmPassword').value;
+        const btnText  = document.getElementById('signupBtnText');
+        const orig     = btnText.textContent;
+        if (password !== confirm)  { showToast('Passwords do not match', 'error'); return; }
+        if (password.length < 6)   { showToast('Password must be at least 6 characters', 'error'); return; }
+        btnText.textContent = 'Creating account...';
+        if (supabase) {
+            const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
+            if (error) { showToast(error.message, 'error'); btnText.textContent = orig; }
+            else { showToast('Account created! Please check your email.', 'success'); btnText.textContent = orig; document.getElementById('signupForm').reset(); switchTab('login'); }
+        } else {
+            setTimeout(() => { showToast('Account created! (Mock)', 'success'); btnText.textContent = orig; switchTab('login'); }, 1500);
+        }
+    });
 
-        window.loginWithGoogle = async function() {
-            if(supabase) {
-                const { data, error } = await supabase.auth.signInWithOAuth({
-                    provider: 'google',
-                    options: { redirectTo: 'https://studyos-edu.vercel.app/index.html' }
-                });
-                if (error) showToast(error.message, 'error');
-            } else {
-                showToast('Redirecting to Google... (Mock)', 'success');
-            }
-        };
+    // Google OAuth
+    window.loginWithGoogle = async function() {
+        if (supabase) {
+            const { error } = await supabase.auth.signInWithOAuth({
+                provider: 'google',
+                options: { redirectTo: 'https://studyos-edu.vercel.app/index.html' }
+            });
+            if (error) showToast(error.message, 'error');
+        } else {
+            showToast('Redirecting to Google... (Mock)', 'success');
+        }
+    };
 
-        window.forgotPassword = async function() {
-            const email = document.getElementById('loginEmail').value;
-            if(!email) {
-                showToast('Please enter your email address first to reset password', 'error');
-                document.getElementById('loginEmail').focus();
-                return;
-            }
-            if(supabase) {
-                const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
-                    redirectTo: window.location.origin + '/reset-password',
-                });
-                if(error) showToast(error.message, 'error');
-                else showToast('Password reset link sent to your email', 'success');
-            } else {
-                showToast('Password reset link sent! (Mock)', 'success');
-            }
-        };
+    // Forgot password
+    window.forgotPassword = async function() {
+        const email = document.getElementById('loginEmail').value;
+        if (!email) { showToast('Please enter your email address first', 'error'); document.getElementById('loginEmail').focus(); return; }
+        if (supabase) {
+            const { error } = await supabase.auth.resetPasswordForEmail(email, { redirectTo: window.location.origin + '/reset-password' });
+            if (error) showToast(error.message, 'error');
+            else showToast('Password reset link sent to your email', 'success');
+        } else {
+            showToast('Password reset link sent! (Mock)', 'success');
+        }
+    };
 
-        class ParticleNetwork {
-            constructor() {
-                this.canvas = document.getElementById('particleCanvas');
-                this.ctx = this.canvas.getContext('2d');
-                this.particles = [];
-                this.resize();
-                window.addEventListener('resize', () => this.resize());
-                this.init();
-                this.animate();
-            }
-            resize() {
-                this.canvas.width = window.innerWidth;
-                this.canvas.height = window.innerHeight;
-            }
-            init() {
-                this.particles = [];
-                const count = window.innerWidth < 768 ? 30 : 60;
-                for(let i = 0; i < count; i++) {
-                    this.particles.push({
-                        x: Math.random() * this.canvas.width,
-                        y: Math.random() * this.canvas.height,
-                        vx: (Math.random() - 0.5) * 0.3,
-                        vy: (Math.random() - 0.5) * 0.3,
-                        radius: Math.random() * 1.5 + 0.5,
-                        opacity: Math.random() * 0.5 + 0.2
-                    });
-                }
-            }
-            animate() {
-                requestAnimationFrame(() => this.animate());
-                this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-                for(let i = 0; i < this.particles.length; i++) {
-                    let p = this.particles[i];
-                    p.x += p.vx;
-                    p.y += p.vy;
-                    if(p.x < 0 || p.x > this.canvas.width) p.vx *= -1;
-                    if(p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
-                    this.ctx.beginPath();
-                    this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI * 2);
-                    this.ctx.fillStyle = `rgba(255, 255, 255, ${p.opacity})`;
-                    this.ctx.fill();
-                }
+    // Particle network
+    class ParticleNetwork {
+        constructor() {
+            this.canvas = document.getElementById('particleCanvas');
+            this.ctx = this.canvas.getContext('2d');
+            this.particles = [];
+            this.resize();
+            window.addEventListener('resize', () => this.resize());
+            this.init();
+            this.animate();
+        }
+        resize() { this.canvas.width = window.innerWidth; this.canvas.height = window.innerHeight; }
+        init() {
+            this.particles = [];
+            const count = window.innerWidth < 768 ? 30 : 60;
+            for (let i = 0; i < count; i++) {
+                this.particles.push({ x: Math.random()*this.canvas.width, y: Math.random()*this.canvas.height, vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3, radius: Math.random()*1.5+0.5, opacity: Math.random()*0.5+0.2 });
             }
         }
-        new ParticleNetwork();
-    </script>
+        animate() {
+            requestAnimationFrame(() => this.animate());
+            this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+            for (const p of this.particles) {
+                p.x += p.vx; p.y += p.vy;
+                if (p.x < 0 || p.x > this.canvas.width)  p.vx *= -1;
+                if (p.y < 0 || p.y > this.canvas.height) p.vy *= -1;
+                this.ctx.beginPath();
+                this.ctx.arc(p.x, p.y, p.radius, 0, Math.PI*2);
+                this.ctx.fillStyle = `rgba(255,255,255,${p.opacity})`;
+                this.ctx.fill();
+            }
+        }
+    }
+    new ParticleNetwork();
+</script>
 </body>
 </html>
