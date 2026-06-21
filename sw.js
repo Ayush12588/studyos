@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studyos-v4'; // bumped to purge lucide.min.js from old cache
+const CACHE_NAME = 'studyos-v5'; // bumped: force network fetch (cache:'no-store') to bypass browser HTTP cache on app files
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
@@ -51,7 +51,7 @@ self.addEventListener('fetch', event => {
   const isAppFile = NETWORK_FIRST.some(p => url.pathname === p || url.pathname.endsWith(p));
   if (url.hostname === self.location.hostname || isAppFile) {
     event.respondWith(
-      fetch(event.request)
+      fetch(event.request, { cache: 'no-store' })
         .then(response => {
           // Update cache with fresh version
           if (response && response.status === 200) {
