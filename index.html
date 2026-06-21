@@ -44,14 +44,43 @@
     window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
     </script>
     <!-- Auto-reload when a new service worker takes control, so users
-         never have to manually clear site data to pick up new code -->
+         never have to manually clear site data to pick up new code.
+         Deferred: won't interrupt an open modal or active typing — it
+         waits until the user is idle, checking every 2s, then reloads. -->
     <script>
     if ('serviceWorker' in navigator) {
         let swRefreshed = false;
-        navigator.serviceWorker.addEventListener('controllerchange', () => {
+        let pendingCheckId = null;
+
+        function isUserMidTask() {
+            const modalOpen = document.querySelector('.modal-overlay.show') !== null;
+            const welcomeEl = document.getElementById('welcome-overlay');
+            const welcomeOpen = welcomeEl ? !welcomeEl.classList.contains('hidden') : false;
+            const eodEl = document.getElementById('eod-checkin');
+            const eodOpen = eodEl ? eodEl.classList.contains('show') : false;
+            const active = document.activeElement;
+            const typingActive = active &&
+                (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA') &&
+                active.value && active.value.length > 0;
+            return modalOpen || welcomeOpen || eodOpen || typingActive;
+        }
+
+        function reloadNow() {
             if (swRefreshed) return;
             swRefreshed = true;
+            if (pendingCheckId) clearInterval(pendingCheckId);
             window.location.reload();
+        }
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!isUserMidTask()) {
+                reloadNow();
+                return;
+            }
+            // User is busy — wait until they're free, checking every 2s
+            pendingCheckId = setInterval(() => {
+                if (!isUserMidTask()) reloadNow();
+            }, 2000);
         });
     }
     </script>
