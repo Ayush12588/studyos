@@ -356,7 +356,6 @@ const App={
         // Run bootstrap calls in parallel — none depend on each other.
         // todaySessionsResult  → today's study time for the dashboard stat tile
         // firstSessionResult   → earliest session date for pace/predicted-completion calc
-        // Both are cheap, date-scoped queries and don't block first paint.
         const [profileResult, challengeResult, todaySessionsResult, firstSessionResult] = await Promise.allSettled([
             DB.profile.get(userId),
             DB.challenges.getToday(userId, today),
@@ -413,15 +412,12 @@ const App={
             }
         } catch(e){ warn('dailyChallenges', e); }
 
-        // ── Today's sessions (dashboard stat tile + avg minutes) ───────────────
-        // Only today's rows — cheap date-scoped query, not a full history scan.
-        // The full sessions history (heatmap, log page) stays lazy in _loadTabData.
+        // ── Today's sessions (dashboard stat tile) ────────────────────────────
         try {
             if (todaySessionsResult.status === 'rejected') throw todaySessionsResult.reason;
             const { data: todaySessions, error } = todaySessionsResult.value;
             if (error) throw error;
             if (todaySessions && todaySessions.length > 0) {
-                // Normalize column names to match the shape used everywhere else in state
                 const normalized = todaySessions.map(s => ({
                     ...s,
                     timeSpent:  s.time_spent  ?? 0,
@@ -437,15 +433,12 @@ const App={
                     covered_note: undefined,
                     streak_eligible: undefined,
                 }));
-                // Merge into state.sessions without duplicating entries already
-                // pushed in-memory by saveStudyLog() during the same page session
                 const existingIds = new Set(this.state.sessions.map(s => s.id));
                 normalized.forEach(s => { if (!existingIds.has(s.id)) this.state.sessions.push(s); });
             }
         } catch(e){ warn('todaySessions', e); }
 
         // ── Earliest session date (for getPredictedCompletion pace calc) ──────
-        // Without this, daysActive = 1 on every fresh load → wildly wrong pace.
         try {
             if (firstSessionResult.status === 'rejected') throw firstSessionResult.reason;
             const { data: firstRows, error } = firstSessionResult.value;
@@ -953,9 +946,10 @@ const App={
     getPredictedCompletion(){
         const totalCh=this.getTotalChapters(),compCh=this.getCompletedCount();
         if(compCh===0||totalCh===0)return null;
-        // Prefer in-memory sessions; fall back to _firstSessionDate set during bootstrap.
-        // Without this, daysActive collapses to 1 on every fresh load → wildly wrong pace.
-        const firstSession=this.state.sessions.length>0?this.state.sessions[0].date:(this._firstSessionDate||null);
+        // Always prefer _firstSessionDate (oldest session from bootstrap DB query).
+        // state.sessions on dashboard load = only TODAY — full history lazy-loads on Log tab.
+        // So state.sessions[0].date = today → daysActive=1 → rate inflated (5 vs 0.1 ch/day).
+        const firstSession=this._firstSessionDate||(this.state.sessions.length>0?this.state.sessions[0].date:null);
         if(!firstSession)return null;
         const daysActive=Math.max(1,this.daysBetween(firstSession,this.today()));
         const rate=compCh/daysActive;
