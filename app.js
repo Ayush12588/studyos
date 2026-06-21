@@ -356,11 +356,12 @@ const App={
         // Run bootstrap calls in parallel — none depend on each other.
         // todaySessionsResult  → today's study time for the dashboard stat tile
         // firstSessionResult   → earliest session date for pace/predicted-completion calc
-        const [profileResult, challengeResult, todaySessionsResult, firstSessionResult] = await Promise.allSettled([
+        const [profileResult, challengeResult, todaySessionsResult, firstSessionResult, activeDaysResult] = await Promise.allSettled([
             DB.profile.get(userId),
             DB.challenges.getToday(userId, today),
             window.supabase.from('sessions').select('time_spent,date,subject_id,chapter_id,type,confidence,intention,covered_note,streak_eligible,created_at,id').eq('user_id', userId).eq('date', today),
             window.supabase.from('sessions').select('date').eq('user_id', userId).order('date', { ascending: true }).limit(1),
+            window.supabase.from('sessions').select('date').eq('user_id', userId),
         ]);
 
         // ── Profile (basic fields for the header/sidebar) ──────────────────
@@ -447,6 +448,18 @@ const App={
                 this._firstSessionDate = firstRows[0].date;
             }
         } catch(e){ warn('firstSession', e); }
+
+        // ── Active study days count (for accurate pace calc) ──────────────────
+        // Counts unique dates with at least one session — excludes idle days.
+        // Stored as this._activeDays so getPredictedCompletion() uses real pace.
+        try {
+            if (activeDaysResult.status === 'rejected') throw activeDaysResult.reason;
+            const { data: allDateRows, error } = activeDaysResult.value;
+            if (error) throw error;
+            if (allDateRows && allDateRows.length > 0) {
+                this._activeDays = new Set(allDateRows.map(r => r.date)).size;
+            }
+        } catch(e){ warn('activeDays', e); }
     },
 
     // ── PER-TAB LAZY DATA LOADER ──────────────────────────────────────────────
@@ -946,12 +959,17 @@ const App={
     getPredictedCompletion(){
         const totalCh=this.getTotalChapters(),compCh=this.getCompletedCount();
         if(compCh===0||totalCh===0)return null;
-        // Always prefer _firstSessionDate (oldest session from bootstrap DB query).
-        // state.sessions on dashboard load = only TODAY — full history lazy-loads on Log tab.
-        // So state.sessions[0].date = today → daysActive=1 → rate inflated (5 vs 0.1 ch/day).
-        const firstSession=this._firstSessionDate||(this.state.sessions.length>0?this.state.sessions[0].date:null);
-        if(!firstSession)return null;
-        const daysActive=Math.max(1,this.daysBetween(firstSession,this.today()));
+        // Use _activeDays (unique days with at least one session) for accurate pace.
+        // Calendar days since signup unfairly penalises students who took breaks —
+        // e.g. signed up 87 days ago but only studied 20 days → real pace is
+        // 5/20 = 0.25 ch/day, not 5/87 = 0.057 ch/day.
+        // _activeDays is fetched during bootstrap; fall back to calendar days if unavailable.
+        const activeDays=this._activeDays||null;
+        if(!activeDays){
+            const firstSession=this._firstSessionDate||(this.state.sessions.length>0?this.state.sessions[0].date:null);
+            if(!firstSession)return null;
+        }
+        const daysActive=Math.max(1, activeDays || this.daysBetween(this._firstSessionDate||(this.state.sessions.length>0?this.state.sessions[0].date:this.today()), this.today()));
         const rate=compCh/daysActive;
         if(rate<=0)return null;
         const remaining=totalCh-compCh;
