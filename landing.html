@@ -1,0 +1,2364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>StudyOS — The Free Study OS for CBSE Students</title>
+  <meta name="description" content="StudyOS helps CBSE Class 10 students track chapters, get AI-powered study guidance, and never miss a revision. Free, cloud-synced, built for board exams." />
+  <meta name="theme-color" content="#070605" />
+  <link rel="canonical" href="https://studyos-edu.vercel.app/landing.html" />
+  <meta property="og:type" content="website" />
+  <meta property="og:url" content="https://studyos-edu.vercel.app/landing.html" />
+  <meta property="og:title" content="StudyOS — The Free Study OS for CBSE Students" />
+  <meta property="og:description" content="Track chapters, solve doubts with AI, and prepare for boards with consistent momentum. Free and cloud-synced." />
+  <meta property="og:image" content="https://studyos-edu.vercel.app/icons/icon-192.webp" />
+  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:title" content="StudyOS — The Free Study OS for CBSE Students" />
+  <meta name="twitter:description" content="Track chapters, solve doubts with AI, and prepare for boards with consistent momentum." />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg: #070605;
+      --panel-bg: rgba(17,12,12,0.82);
+      --panel-border: rgba(255,255,255,0.08);
+      --text-primary: #f8f7f6;
+      --text-secondary: #b5a59a;
+      --text-muted: #7b6d67;
+      --accent: #f97316;
+      --accent-soft: #fb7185;
+      --amber: #fcd34d;
+      --gray-300: #d1d5db;
+      --gray-400: #9ca3af;
+      --gray-500: #6b7280;
+      --nav-h: 4.25rem;
+    }
+
+    html { scroll-behavior: smooth; }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: var(--bg);
+      color: var(--text-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+      -webkit-font-smoothing: antialiased;
+    }
+
+    ::selection { background: rgba(249,115,22,0.25); color: #fed7aa; }
+
+    ::-webkit-scrollbar { width: 5px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 999px; }
+
+    .skip { position:absolute; top:-999px; left:1rem; z-index:9999;
+      background:var(--accent); color:#fff; padding:.5rem 1rem;
+      border-radius:0 0 .5rem .5rem; font-size:.875rem; font-weight:700;
+      text-decoration:none; }
+    .skip:focus { top:0; }
+
+    .bg-stage {
+      position: fixed; inset: 0; z-index: 0;
+      overflow: hidden; pointer-events: none;
+    }
+    #bg-canvas {
+      position: absolute; inset: 0;
+      width: 100%; height: 100%; display: block;
+    }
+    .bg-stage::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='0.04'/%3E%3C/svg%3E");
+      opacity: .3; mix-blend-mode: overlay; pointer-events: none;
+    }
+    .bg-grid {
+      position: absolute; inset: 0;
+      background-image:
+        linear-gradient(rgba(255,255,255,0.018) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,0.018) 1px, transparent 1px);
+      background-size: 60px 60px;
+      mask-image: radial-gradient(ellipse 80% 60% at 50% 0%, black 30%, transparent 100%);
+    }
+
+    .grad-text {
+      background: linear-gradient(to right, #fdba74, #fcd34d, #fb7185);
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: .5rem;
+      font-size: .6875rem; font-weight: 700; letter-spacing: .25em;
+      text-transform: uppercase; color: var(--amber);
+    }
+    .eyebrow-pill {
+      padding: .3rem .875rem;
+      background: rgba(252,211,77,0.08);
+      border: 1px solid rgba(252,211,77,0.2);
+      border-radius: 999px;
+    }
+
+    .btn-cta {
+      position: relative; overflow: hidden;
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .875rem 1.75rem; border-radius: .875rem;
+      background: linear-gradient(135deg, #f97316, #fb7185);
+      border: none; cursor: pointer; font-family: inherit;
+      font-size: .9375rem; font-weight: 700; color: #fff;
+      text-decoration: none;
+      box-shadow: 0 0 0 0 rgba(249,115,22,0);
+      transition: transform .25s cubic-bezier(.16,1,.3,1), box-shadow .3s ease;
+    }
+    .btn-cta::before {
+      content:''; position:absolute; inset:0;
+      background: linear-gradient(135deg, rgba(255,255,255,.18), transparent);
+      opacity:0; transition: opacity .3s;
+    }
+    .btn-cta:hover { transform: translateY(-3px) scale(1.02); box-shadow: 0 8px 40px rgba(249,115,22,.45), 0 0 0 1px rgba(249,115,22,.3); }
+    .btn-cta:hover::before { opacity:1; }
+    .btn-cta:active { transform: translateY(-1px) scale(1); }
+    .btn-cta:focus-visible { outline: 2px solid #fcd34d; outline-offset: 3px; }
+
+    .btn-outline {
+      display: inline-flex; align-items: center; gap: .5rem;
+      padding: .875rem 1.75rem; border-radius: .875rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.13);
+      cursor: pointer; font-family: inherit;
+      font-size: .9375rem; font-weight: 600; color: var(--gray-300);
+      text-decoration: none;
+      transition: background .25s, border-color .25s, color .25s, transform .25s;
+    }
+    .btn-outline:hover { background: rgba(255,255,255,.08); border-color: rgba(255,255,255,.25); color: #fff; transform: translateY(-2px); }
+    .btn-outline:focus-visible { outline: 2px solid #fcd34d; outline-offset: 3px; }
+
+    .btn-sm {
+      display: inline-flex; align-items: center; gap: .375rem;
+      padding: .45rem 1rem; border-radius: .625rem;
+      background: transparent; border: 1px solid rgba(255,255,255,.12);
+      font-family: inherit; font-size: .8125rem; font-weight: 500;
+      color: var(--gray-400); text-decoration: none;
+      transition: background .2s, color .2s;
+    }
+    .btn-sm:hover { background: rgba(255,255,255,.07); color: #fff; }
+    .btn-sm:focus-visible { outline: 2px solid #fcd34d; outline-offset: 2px; }
+
+    .glass {
+      background: var(--panel-bg);
+      backdrop-filter: blur(28px); -webkit-backdrop-filter: blur(28px);
+      border: 1px solid var(--panel-border);
+      border-radius: 1.5rem;
+    }
+
+    #nav {
+      position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+      height: var(--nav-h);
+      display: flex; align-items: center;
+      padding: 0 1.25rem;
+      transition: background .4s, border-color .4s, backdrop-filter .4s;
+      border-bottom: 1px solid transparent;
+    }
+    #nav.solid {
+      background: rgba(7,6,5,0.92);
+      backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+      border-color: var(--panel-border);
+    }
+    .nav-inner {
+      max-width: 1280px; width: 100%; margin: 0 auto;
+      display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+    }
+    .nav-logo {
+      display: flex; align-items: center; gap: .625rem;
+      text-decoration: none; flex-shrink: 0;
+    }
+    .logo-icon {
+      width: 2.125rem; height: 2.125rem; border-radius: .75rem;
+      overflow: hidden; border: 1px solid rgba(255,255,255,.1);
+      box-shadow: 0 0 20px rgba(249,115,22,.2); flex-shrink: 0;
+      background: #110b08;
+    }
+    .logo-icon img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    .logo-name { font-size: 1.0625rem; font-weight: 800; letter-spacing: -.03em; color: #fff; }
+    .logo-badge {
+      font-size: .5625rem; font-weight: 700; letter-spacing: .2em;
+      text-transform: uppercase; color: var(--amber);
+      background: rgba(252,211,77,.08); border: 1px solid rgba(252,211,77,.2);
+      padding: .2rem .5rem; border-radius: 999px;
+    }
+    .nav-links {
+      display: none; list-style: none;
+      align-items: center; gap: .125rem;
+    }
+    @media (min-width: 768px) { .nav-links { display: flex; } }
+    .nav-links a {
+      font-size: .8125rem; font-weight: 500; color: var(--gray-400);
+      text-decoration: none; padding: .375rem .75rem; border-radius: .5rem;
+      transition: color .2s, background .2s;
+    }
+    .nav-links a:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .nav-links a:focus-visible { outline: 2px solid #fcd34d; outline-offset: 2px; border-radius: .5rem; }
+    .nav-right { display: flex; align-items: center; gap: .625rem; }
+    .nav-burger {
+      display: flex; align-items: center; justify-content: center;
+      width: 2.125rem; height: 2.125rem; border-radius: .625rem;
+      background: transparent; border: 1px solid rgba(255,255,255,.1);
+      cursor: pointer; color: var(--gray-300);
+      transition: background .2s, color .2s;
+    }
+    .nav-burger:hover { background: rgba(255,255,255,.08); color: #fff; }
+    .nav-burger:focus-visible { outline: 2px solid #fcd34d; outline-offset: 2px; }
+    @media (min-width: 768px) { .nav-burger { display: none; } }
+    .nav-drawer {
+      display: none; flex-direction: column; gap: .25rem;
+      position: fixed; top: var(--nav-h); left: 0; right: 0; z-index: 199;
+      background: rgba(7,6,5,.97); backdrop-filter: blur(28px);
+      border-bottom: 1px solid var(--panel-border);
+      padding: 1rem 1.25rem 1.5rem;
+    }
+    .nav-drawer.open { display: flex; }
+    .nav-drawer a {
+      font-size: .9375rem; font-weight: 500; color: var(--gray-400);
+      text-decoration: none; padding: .625rem .875rem; border-radius: .75rem;
+      transition: color .2s, background .2s;
+    }
+    .nav-drawer a:hover { color: #fff; background: rgba(255,255,255,.06); }
+    .nav-drawer .drawer-cta { margin-top: .5rem; justify-content: center; }
+
+    main { position: relative; z-index: 10; padding-top: var(--nav-h); }
+
+    .container {
+      max-width: 1280px; margin: 0 auto;
+      padding: 0 1.25rem;
+    }
+    @media (min-width: 640px) { .container { padding: 0 2rem; } }
+    @media (min-width: 1024px) { .container { padding: 0 3rem; } }
+
+    .section-pad { padding: 6rem 0; }
+    @media (min-width: 1024px) { .section-pad { padding: 8rem 0; } }
+
+    /* ─────────────────────────────────────────
+       HOW IT WORKS — desktop removes top padding
+       to connect visually with features above.
+       On mobile it must have the full top padding.
+    ───────────────────────────────────────── */
+    .how-container {
+      padding-top: 6rem;
+    }
+    @media (min-width: 1024px) {
+      .how-container {
+        padding-top: 0;
+      }
+    }
+
+    .section-head { text-align: center; margin-bottom: 4rem; }
+    .section-h2 {
+      font-size: clamp(2rem, 4.5vw, 3rem);
+      font-weight: 800; line-height: 1.08;
+      letter-spacing: -.03em; color: #fff;
+      margin: .875rem 0 1rem;
+    }
+    .section-sub {
+      font-size: 1.0625rem; color: var(--text-secondary);
+      line-height: 1.8; max-width: 500px; margin: 0 auto;
+    }
+
+    #hero {
+      min-height: calc(100vh - var(--nav-h));
+      display: flex; align-items: center;
+      padding: 3rem 0 5rem;
+      position: relative; overflow: hidden;
+    }
+    #hero::before {
+      content: '';
+      position: absolute; top: -10%; left: 50%;
+      transform: translateX(-50%);
+      width: 900px; height: 600px;
+      background: radial-gradient(ellipse at center, rgba(249,115,22,.07) 0%, transparent 65%);
+      pointer-events: none;
+    }
+
+    .hero-grid {
+      display: grid; grid-template-columns: 1fr;
+      gap: 3.5rem; align-items: center;
+    }
+    @media (min-width: 1024px) {
+      .hero-grid { grid-template-columns: 1fr 1fr; gap: 5rem; }
+    }
+
+    .hero-copy { text-align: center; }
+    @media (min-width: 1024px) { .hero-copy { text-align: left; } }
+
+    .hero-announce {
+      display: inline-flex; align-items: center; gap: .625rem;
+      padding: .375rem .875rem .375rem .375rem;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 999px; margin-bottom: 1.75rem;
+      font-size: .75rem; font-weight: 600;
+      color: var(--gray-300); cursor: default;
+      transition: border-color .3s;
+    }
+    .hero-announce:hover { border-color: rgba(249,115,22,.4); }
+    .hero-announce-badge {
+      background: linear-gradient(135deg, #f97316, #fb7185);
+      color: #fff; padding: .2rem .625rem;
+      border-radius: 999px; font-size: .625rem;
+      font-weight: 800; letter-spacing: .08em; text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .hero-h1 {
+      font-size: clamp(2.75rem, 6.5vw, 4.5rem);
+      font-weight: 900; line-height: 1.02;
+      letter-spacing: -.04em; color: #fff;
+      margin-bottom: 1.5rem;
+    }
+    .hero-sub {
+      font-size: clamp(1rem, 2vw, 1.175rem);
+      color: var(--text-secondary); line-height: 1.85;
+      max-width: 480px; margin: 0 auto 2.5rem;
+    }
+    @media (min-width: 1024px) { .hero-sub { margin: 0 0 2.5rem; } }
+
+    .hero-ctas {
+      display: flex; flex-wrap: wrap; gap: .875rem;
+      justify-content: center; margin-bottom: 2.5rem;
+    }
+    @media (min-width: 1024px) { .hero-ctas { justify-content: flex-start; } }
+
+    .trust-strip {
+      display: flex; align-items: center; gap: .875rem;
+      justify-content: center; flex-wrap: wrap;
+    }
+    @media (min-width: 1024px) { .trust-strip { justify-content: flex-start; } }
+
+    .trust-item {
+      display: flex; align-items: center; gap: .375rem;
+      font-size: .75rem; color: var(--text-muted); font-weight: 500;
+    }
+    .trust-item svg { flex-shrink: 0; }
+    .trust-dot { width: 3px; height: 3px; border-radius: 50%; background: var(--text-muted); }
+
+    .hero-visual {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+
+    .dash-card {
+      width: 100%; max-width: 420px;
+      background: rgba(14,10,9,0.95);
+      border: 1px solid rgba(255,255,255,.1);
+      border-radius: 1.5rem; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.04);
+      position: relative; z-index: 2;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .dash-card { animation: cardFloat 6s ease-in-out infinite; }
+    }
+    @keyframes cardFloat {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-10px); }
+    }
+
+    .dash-chrome {
+      display: flex; align-items: center; gap: .375rem;
+      padding: .75rem 1rem;
+      background: rgba(255,255,255,.03);
+      border-bottom: 1px solid rgba(255,255,255,.07);
+    }
+    .chrome-dot { width: .5rem; height: .5rem; border-radius: 50%; }
+    .cd-r { background: #ef4444; } .cd-y { background: #fbbf24; } .cd-g { background: #22c55e; }
+    .chrome-bar {
+      flex: 1; height: 1.375rem;
+      background: rgba(255,255,255,.05); border-radius: 999px;
+      margin-left: .5rem;
+      display: flex; align-items: center;
+      padding: 0 .75rem; gap: .375rem;
+    }
+    .chrome-lock { width: 8px; height: 8px; color: var(--gray-500); flex-shrink:0; }
+    .chrome-url { font-size: .5625rem; color: var(--gray-500); letter-spacing: .02em; }
+
+    .dash-body { padding: 1.125rem; display: flex; flex-direction: column; gap: .875rem; }
+
+    .db-header { display: flex; align-items: flex-start; justify-content: space-between; }
+    .db-greet { font-size: .75rem; font-weight: 800; color: #fff; }
+    .db-sub { font-size: .5rem; color: var(--gray-500); margin-top: .125rem; }
+    .db-streak-pill {
+      display: flex; align-items: center; gap: .3rem;
+      padding: .25rem .625rem; border-radius: 999px;
+      background: rgba(252,211,77,.1); border: 1px solid rgba(252,211,77,.2);
+      font-size: .5625rem; font-weight: 800; color: var(--amber);
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .db-streak-pill { animation: streakPop 2.5s ease-in-out infinite; }
+    }
+    @keyframes streakPop {
+      0%,100% { box-shadow: 0 0 0 0 rgba(252,211,77,0); }
+      50%      { box-shadow: 0 0 14px rgba(252,211,77,.25); }
+    }
+
+    .db-stats { display: grid; grid-template-columns: repeat(3,1fr); gap: .5rem; }
+    .db-stat {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+      border-radius: .875rem; padding: .625rem .5rem; text-align: center;
+    }
+    .db-stat-val { font-size: .9375rem; font-weight: 900; color: #fff; line-height: 1; margin-bottom: .2rem; }
+    .db-stat-lbl { font-size: .4375rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .08em; }
+
+    .db-prog-head { display: flex; justify-content: space-between; align-items: center; margin-bottom: .35rem; }
+    .db-prog-label { font-size: .5rem; font-weight: 700; color: var(--text-muted); text-transform: uppercase; letter-spacing: .1em; }
+    .db-prog-pct { font-size: .5rem; font-weight: 800; color: var(--accent); }
+    .db-prog-track {
+      height: .375rem; background: rgba(255,255,255,.07);
+      border-radius: 999px; overflow: hidden;
+    }
+    .db-prog-fill {
+      height: 100%; border-radius: 999px;
+      background: linear-gradient(to right, #f97316, #fb7185);
+      position: relative; overflow: hidden;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .db-prog-fill::after {
+        content: '';
+        position: absolute; inset: 0;
+        background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);
+        animation: shimmer 2.5s linear infinite;
+      }
+    }
+    @keyframes shimmer { 0%{transform:translateX(-100%)} 100%{transform:translateX(200%)} }
+
+    .db-chapters { display: flex; flex-direction: column; gap: .375rem; }
+    .db-chapter {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .5rem .625rem; border-radius: .625rem;
+      background: rgba(255,255,255,.035); border: 1px solid rgba(255,255,255,.06);
+    }
+    .db-ch-dot { width: .4375rem; height: .4375rem; border-radius: 50%; flex-shrink: 0; }
+    .dot-g { background: #22c55e; } .dot-o { background: #f97316; } .dot-x { background: rgba(255,255,255,.18); }
+    .db-ch-name { font-size: .5625rem; font-weight: 500; color: var(--gray-300); flex: 1; }
+    .db-ch-tag {
+      font-size: .4375rem; font-weight: 700; padding: .15rem .4rem;
+      border-radius: .25rem; text-transform: uppercase; letter-spacing: .06em;
+    }
+    .tag-done { background: rgba(34,197,94,.12); color: #86efac; }
+    .tag-prog { background: rgba(249,115,22,.12); color: #fdba74; }
+    .tag-todo { background: rgba(255,255,255,.06); color: var(--gray-500); }
+
+    .db-ai {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .5rem .75rem; border-radius: .75rem;
+      background: rgba(251,113,133,.07);
+      border: 1px solid rgba(251,113,133,.15);
+    }
+    .db-ai-orb {
+      width: .5rem; height: .5rem; border-radius: 50%;
+      background: #fb7185; flex-shrink: 0;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .db-ai-orb { animation: aiPulse 1.8s ease-in-out infinite; }
+    }
+    @keyframes aiPulse {
+      0%,100% { opacity:1; transform:scale(1); box-shadow:0 0 0 0 rgba(251,113,133,.5); }
+      50%      { opacity:.6; transform:scale(.8); box-shadow:0 0 8px rgba(251,113,133,.3); }
+    }
+    .db-ai-text { font-size: .5rem; color: #fda4af; font-weight: 500; line-height: 1.4; }
+
+    .float-card {
+      position: absolute; z-index: 3;
+      padding: .625rem .875rem;
+      background: rgba(12,9,8,0.96);
+      border: 1px solid rgba(255,255,255,.12);
+      border-radius: 1rem;
+      box-shadow: 0 20px 50px rgba(0,0,0,.5);
+      white-space: nowrap;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .float-card { animation: floatBob 5s ease-in-out infinite; }
+      .float-card:nth-child(2) { animation-delay: -2s; }
+      .float-card:nth-child(3) { animation-delay: -4s; }
+    }
+    @keyframes floatBob {
+      0%,100% { transform: translateY(0); }
+      50%      { transform: translateY(-8px); }
+    }
+
+    .fc-streak { top: 8%; right: -2%; }
+    @media (min-width: 1024px) { .fc-streak { right: -8%; } }
+    .fc-remind { bottom: 14%; left: -4%; }
+    @media (min-width: 1024px) { .fc-remind { left: -10%; } }
+
+    .fc-label { font-size: .4375rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); margin-bottom: .3rem; }
+    .fc-val { font-size: .875rem; font-weight: 900; color: #fff; }
+    .fc-sub { font-size: .4375rem; color: var(--text-muted); }
+    .fc-icon { font-size: .875rem; margin-right: .25rem; }
+    .fc-remind-row { display: flex; align-items: center; gap: .5rem; }
+    .fc-remind-dot { width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--amber); flex-shrink: 0; }
+    .fc-remind-text { font-size: .4375rem; color: var(--gray-300); font-weight: 500; }
+
+    .problem-band {
+      background: linear-gradient(135deg, rgba(249,115,22,.07), rgba(251,113,133,.05));
+      border: 1px solid rgba(249,115,22,.15);
+      border-radius: 1.5rem;
+      padding: 2.5rem 2rem; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .problem-band::before {
+      content:''; position:absolute; top:-3rem; left:50%;
+      transform:translateX(-50%);
+      width:16rem; height:8rem;
+      background: rgba(249,115,22,.1); filter:blur(50px); border-radius:50%;
+      pointer-events:none;
+    }
+    .problem-text {
+      font-size: clamp(1rem,2.5vw,1.25rem);
+      color: var(--text-secondary); line-height: 1.85;
+      max-width: 640px; margin: 0 auto;
+      position: relative; z-index: 1;
+    }
+    .problem-text strong { color: var(--text-primary); font-weight: 700; }
+    .problem-hi { color: #fdba74; font-weight: 600; }
+
+    .features-grid {
+      display: grid; gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 640px) { .features-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (min-width: 1024px) { .features-grid { grid-template-columns: repeat(3,1fr); } }
+
+    .feat-card {
+      padding: 1.625rem;
+      border-radius: 1.5rem;
+      background: var(--panel-bg);
+      border: 1px solid var(--panel-border);
+      backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px);
+      position: relative; overflow: hidden;
+      transition: border-color .35s, background .35s;
+      cursor: default;
+    }
+    .feat-card::after {
+      content: ''; position: absolute; top:0; left:0; right:0; height:1px;
+      background: linear-gradient(90deg,transparent,rgba(249,115,22,.5),transparent);
+      opacity: 0; transition: opacity .35s;
+    }
+    .feat-card:hover { border-color: rgba(255,255,255,.15); background: rgba(20,14,12,.9); }
+    .feat-card:hover::after { opacity:1; }
+    @media (prefers-reduced-motion: no-preference) {
+      .feat-card:hover { transform: translateY(-4px); }
+      .feat-card { transition: border-color .35s, background .35s, transform .35s cubic-bezier(.16,1,.3,1); }
+    }
+
+    .feat-icon {
+      width: 2.75rem; height: 2.75rem; border-radius: .875rem;
+      display: flex; align-items: center; justify-content: center;
+      margin-bottom: 1.125rem; flex-shrink: 0;
+    }
+    .feat-icon svg { width: 19px; height: 19px; }
+    .fi-or { background: rgba(249,115,22,.12); color: #fdba74; }
+    .fi-ro { background: rgba(251,113,133,.12); color: #fda4af; }
+    .fi-am { background: rgba(252,211,77,.12); color: #fcd34d; }
+    .fi-gn { background: rgba(34,197,94,.1); color: #86efac; }
+    .fi-bl { background: rgba(99,179,237,.1); color: #93c5fd; }
+    .fi-pu { background: rgba(168,85,247,.1); color: #d8b4fe; }
+
+    .feat-title { font-size: .9375rem; font-weight: 700; color: #fff; margin-bottom: .5rem; letter-spacing: -.01em; }
+    .feat-desc { font-size: .875rem; color: var(--gray-400); line-height: 1.7; }
+
+    @media (min-width: 1024px) {
+      .feat-card.wide { grid-column: span 2; }
+      .feat-card.wide .feat-inner { display: flex; align-items: flex-start; gap: 1.5rem; }
+      .feat-card.wide .feat-icon { margin-bottom: 0; }
+    }
+
+    .how-wrapper {
+      display: grid; gap: 3rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 1024px) {
+      .how-wrapper { grid-template-columns: 1fr 1fr; align-items: center; gap: 5rem; }
+    }
+
+    .steps-list { display: flex; flex-direction: column; gap: 0; }
+
+    .step-item {
+      display: flex; gap: 1.5rem;
+      position: relative;
+    }
+    .step-item:not(:last-child)::after {
+      content: '';
+      position: absolute; left: 1.25rem; top: 3.25rem;
+      bottom: -0.375rem; width: 1px;
+      background: linear-gradient(to bottom, rgba(249,115,22,.4), transparent);
+    }
+
+    .step-num {
+      flex-shrink: 0; width: 2.5rem; height: 2.5rem;
+      border-radius: 50%; margin-top: .1rem;
+      display: flex; align-items: center; justify-content: center;
+      font-size: .75rem; font-weight: 900; color: var(--accent);
+      background: rgba(249,115,22,.08);
+      border: 1px solid rgba(249,115,22,.25);
+      position: relative; z-index: 1;
+    }
+    .step-body { padding-bottom: 2.5rem; }
+    .step-item:last-child .step-body { padding-bottom: 0; }
+    .step-title { font-size: 1.0625rem; font-weight: 700; color: #fff; margin-bottom: .375rem; letter-spacing: -.01em; }
+    .step-desc { font-size: .9375rem; color: var(--gray-400); line-height: 1.7; }
+
+    .how-phone {
+      position: relative;
+      display: flex; align-items: center; justify-content: center;
+    }
+    .phone-frame {
+      width: 240px;
+      background: rgba(12,9,8,.97);
+      border: 1.5px solid rgba(255,255,255,.12);
+      border-radius: 2.5rem; overflow: hidden;
+      box-shadow: 0 40px 80px rgba(0,0,0,.6), 0 0 0 .5px rgba(255,255,255,.06), inset 0 1px 0 rgba(255,255,255,.08);
+      position: relative; z-index: 2;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .phone-frame { animation: phoneFloat 7s ease-in-out infinite; }
+    }
+    @keyframes phoneFloat {
+      0%,100% { transform: translateY(0) rotate(-1deg); }
+      50%      { transform: translateY(-12px) rotate(1deg); }
+    }
+
+    .phone-notch {
+      width: 6.5rem; height: 1.5rem;
+      background: rgba(12,9,8,.97);
+      border-radius: 0 0 1.25rem 1.25rem;
+      margin: 0 auto; position: relative; z-index: 2;
+    }
+    .phone-body { padding: .75rem .875rem 1.25rem; display: flex; flex-direction: column; gap: .625rem; }
+
+    .ph-stat-row { display: grid; grid-template-columns: repeat(2,1fr); gap: .4rem; }
+    .ph-stat {
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.07);
+      border-radius: .625rem; padding: .5rem .5rem; text-align:center;
+    }
+    .ph-stat-v { font-size: .8125rem; font-weight: 900; color: #fff; }
+    .ph-stat-l { font-size: .4rem; color: var(--gray-500); text-transform: uppercase; letter-spacing: .08em; }
+    .ph-label { font-size: .4375rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+    .ph-chapters { display: flex; flex-direction: column; gap: .3rem; }
+    .ph-ch {
+      display: flex; align-items: center; gap: .375rem;
+      padding: .4rem .5rem; border-radius: .5rem;
+      background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.06);
+    }
+    .ph-dot { width: .375rem; height: .375rem; border-radius: 50%; flex-shrink:0; }
+    .ph-ch-name { font-size: .4375rem; color: var(--gray-400); flex:1; font-weight: 500; }
+    .ph-ch-pct { font-size: .4rem; color: var(--gray-500); }
+    .ph-notif {
+      display: flex; align-items: center; gap: .5rem;
+      padding: .5rem .625rem; border-radius: .625rem;
+      background: rgba(252,211,77,.07); border: 1px solid rgba(252,211,77,.15);
+    }
+    .ph-notif-icon { font-size: .625rem; flex-shrink:0; }
+    .ph-notif-text { font-size: .4375rem; color: var(--gray-300); font-weight: 500; }
+    .phone-glow {
+      position: absolute; z-index: 1;
+      width: 300px; height: 300px; border-radius: 50%;
+      background: radial-gradient(circle, rgba(249,115,22,.12) 0%, transparent 65%);
+      filter: blur(40px);
+    }
+
+    .showcase-grid {
+      display: grid; gap: 1rem;
+      grid-template-columns: 1fr;
+    }
+    @media (min-width: 768px) { .showcase-grid { grid-template-columns: repeat(2,1fr); } }
+    @media (min-width: 1024px) { .showcase-grid { grid-template-columns: repeat(3,1fr); } }
+
+    .sc-card {
+      border-radius: 1.5rem; overflow: hidden;
+      border: 1px solid var(--panel-border);
+      background: var(--panel-bg);
+      position: relative;
+      transition: border-color .3s, transform .35s cubic-bezier(.16,1,.3,1);
+    }
+    .sc-card:hover { border-color: rgba(255,255,255,.14); }
+    @media (prefers-reduced-motion: no-preference) {
+      .sc-card:hover { transform: translateY(-4px); }
+    }
+
+    .sc-header {
+      padding: 1rem 1.125rem .75rem;
+      border-bottom: 1px solid var(--panel-border);
+      display: flex; align-items: center; gap: .5rem;
+    }
+    .sc-dot { width: .4375rem; height: .4375rem; border-radius: 50%; background: var(--accent); }
+    .sc-title { font-size: .625rem; font-weight: 700; text-transform: uppercase; letter-spacing: .12em; color: var(--text-muted); }
+    .sc-body { padding: 1rem 1.125rem 1.25rem; display: flex; flex-direction: column; gap: .5rem; }
+
+    .sc-subject { display: flex; flex-direction: column; gap: .3rem; }
+    .sc-subj-row { display: flex; justify-content: space-between; align-items: center; }
+    .sc-subj-name { font-size: .625rem; font-weight: 600; color: var(--gray-300); }
+    .sc-subj-count { font-size: .5rem; color: var(--gray-500); }
+    .sc-bar-t { height: .3125rem; background: rgba(255,255,255,.07); border-radius: 999px; overflow:hidden; }
+    .sc-bar-f { height:100%; border-radius:999px; }
+    .f-or { background: linear-gradient(to right,#f97316,#fb923c); }
+    .f-ro { background: linear-gradient(to right,#fb7185,#f472b6); }
+    .f-am { background: linear-gradient(to right,#fbbf24,#f59e0b); }
+    .f-bl { background: linear-gradient(to right,#60a5fa,#818cf8); }
+    .f-gn { background: linear-gradient(to right,#34d399,#22c55e); }
+
+    .sc-rem {
+      display: flex; align-items: flex-start; gap: .5rem;
+      padding: .5rem .625rem; border-radius: .75rem;
+      background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.06);
+    }
+    .sc-rem-icon {
+      flex-shrink:0; width: 1.5rem; height: 1.5rem;
+      border-radius: .5rem; display: flex; align-items:center; justify-content:center;
+    }
+    .sc-rem-icon svg { width:10px; height:10px; }
+    .ri-am { background:rgba(252,211,77,.12); color:var(--amber); }
+    .ri-ro { background:rgba(251,113,133,.12); color:#fb7185; }
+    .ri-bl { background:rgba(99,179,237,.12); color:#93c5fd; }
+    .ri-gn { background:rgba(34,197,94,.1); color:#86efac; }
+    .sc-rem-t { font-size: .5rem; color: var(--gray-300); font-weight:500; line-height:1.45; }
+    .sc-rem-s { font-size: .4375rem; color: var(--text-muted); margin-top:.1rem; }
+
+    .sc-streak-grid { display: grid; grid-template-columns: repeat(7,1fr); gap:.25rem; }
+    .sd { aspect-ratio:1; border-radius:.25rem; }
+    .sd-0 { background:rgba(255,255,255,.06); }
+    .sd-1 { background:rgba(249,115,22,.2); }
+    .sd-2 { background:rgba(249,115,22,.45); }
+    .sd-3 { background:#f97316; }
+    .sd-t { background:linear-gradient(135deg,#f97316,#fb7185); box-shadow:0 0 8px rgba(249,115,22,.5); }
+    .sc-streak-meta {
+      display:flex; align-items:center; justify-content:space-between;
+      margin-top:.625rem;
+    }
+    .sc-streak-num { font-size:1.25rem; font-weight:900; color:var(--accent); line-height:1; }
+    .sc-streak-unit { font-size:.4375rem; color:var(--gray-500); }
+    .sc-streak-best { font-size:.4375rem; color:var(--text-muted); text-align:right; }
+
+    .ticker-wrap {
+      overflow: hidden;
+      border-top: 1px solid var(--panel-border);
+      border-bottom: 1px solid var(--panel-border);
+      padding: .875rem 0; position: relative;
+    }
+    .ticker-wrap::before, .ticker-wrap::after {
+      content:''; position:absolute; top:0; bottom:0; z-index:1; width:6rem;
+      pointer-events:none;
+    }
+    .ticker-wrap::before { left:0; background:linear-gradient(to right, var(--bg), transparent); }
+    .ticker-wrap::after  { right:0; background:linear-gradient(to left, var(--bg), transparent); }
+    .ticker-track { display: flex; gap: 3rem; width: max-content; }
+    @media (prefers-reduced-motion: no-preference) {
+      .ticker-track { animation: ticker 30s linear infinite; }
+    }
+    @keyframes ticker { 0%{transform:translateX(0)} 100%{transform:translateX(-50%)} }
+    .ticker-item {
+      display: flex; align-items: center; gap: .625rem;
+      flex-shrink: 0; white-space: nowrap;
+      font-size: .8125rem; font-weight: 500; color: var(--text-muted);
+    }
+    .ticker-item svg { width:14px; height:14px; }
+    .tk-or { color: #fdba74; } .tk-ro { color: #fda4af; }
+    .tk-am { color: #fcd34d; } .tk-gn { color: #86efac; }
+    .tk-bl { color: #93c5fd; } .tk-pu { color: #d8b4fe; }
+
+    .founder-card {
+      max-width: 700px; margin: 0 auto;
+      padding: 2.5rem 2rem;
+      border-radius: 2rem;
+      position: relative; overflow: hidden;
+    }
+    @media (min-width: 640px) { .founder-card { padding: 3rem; } }
+    .founder-card::before {
+      content:''; position:absolute; top:-5rem; right:-5rem;
+      width:18rem; height:18rem; border-radius:50%;
+      background: rgba(249,115,22,.08); filter:blur(70px);
+      pointer-events:none;
+    }
+    .founder-head { display:flex; align-items:center; gap:1.125rem; margin-bottom:1.75rem; }
+    .founder-av {
+      width:3.25rem; height:3.25rem; border-radius:50%; flex-shrink:0;
+      background: linear-gradient(135deg,#f97316,#fb7185);
+      display:flex; align-items:center; justify-content:center;
+      font-size:1.125rem; font-weight:900; color:#fff;
+      border: 2px solid rgba(255,255,255,.1);
+    }
+    .founder-name { font-size:.9375rem; font-weight:700; color:#fff; margin-bottom:.2rem; }
+    .founder-role { font-size:.75rem; color:var(--text-muted); }
+    .founder-body {
+      font-size: clamp(.9375rem,2vw,1.0625rem);
+      color: var(--text-secondary); line-height:1.9;
+      position:relative; z-index:1;
+    }
+    .founder-body strong { color:var(--text-primary); font-weight:700; }
+    .founder-body em { font-style:normal; color:#fcd34d; }
+    .founder-badge {
+      display:inline-flex; align-items:center; gap:.5rem;
+      margin-top:1.5rem; padding:.5rem 1rem; border-radius:999px;
+      background:rgba(34,197,94,.08); border:1px solid rgba(34,197,94,.2);
+      font-size:.8125rem; font-weight:700; color:#86efac;
+    }
+    .founder-badge svg { width:14px; height:14px; }
+
+    .faq-list { display:flex; flex-direction:column; gap:.625rem; max-width:720px; margin:0 auto; }
+    .faq-item {
+      border-radius:1.125rem; border:1px solid var(--panel-border);
+      background:var(--panel-bg); overflow:hidden;
+      transition:border-color .3s;
+    }
+    .faq-item[open] { border-color:rgba(249,115,22,.3); }
+    .faq-sum {
+      display:flex; align-items:center; justify-content:space-between; gap:1rem;
+      padding:1.125rem 1.375rem; cursor:pointer; list-style:none;
+      font-size:.9375rem; font-weight:600; color:#fff;
+      user-select:none; transition:color .2s;
+    }
+    .faq-sum::-webkit-details-marker { display:none; }
+    .faq-sum:hover { color:#fdba74; }
+    .faq-sum:focus-visible { outline:2px solid #fcd34d; outline-offset:-2px; border-radius:1.125rem; }
+    .faq-chev {
+      flex-shrink:0; width:1.375rem; height:1.375rem; border-radius:50%;
+      border:1px solid rgba(255,255,255,.1); display:flex; align-items:center; justify-content:center;
+      color:var(--gray-500); transition:transform .3s, background .2s, border-color .2s;
+    }
+    .faq-chev svg { width:11px; height:11px; }
+    .faq-item[open] .faq-chev {
+      transform:rotate(180deg);
+      background:rgba(249,115,22,.1); border-color:rgba(249,115,22,.3); color:var(--accent);
+    }
+    .faq-ans {
+      padding:0 1.375rem 1.25rem;
+      font-size:.875rem; color:var(--gray-400); line-height:1.75;
+    }
+    .faq-ans a { color:#fdba74; text-underline-offset:3px; }
+
+    .cta-card {
+      border-radius:2rem; padding:4rem 2rem; text-align:center;
+      position:relative; overflow:hidden;
+      background: radial-gradient(ellipse 80% 60% at 50% -10%, rgba(249,115,22,.14) 0%, var(--panel-bg) 70%);
+      border:1px solid rgba(249,115,22,.18);
+    }
+    @media (min-width:640px) { .cta-card { padding:5rem 3rem; } }
+    .cta-card::before {
+      content:''; position:absolute; top:-8rem; left:50%;
+      transform:translateX(-50%);
+      width:20rem; height:20rem; border-radius:50%;
+      background:rgba(249,115,22,.12); filter:blur(80px);
+      pointer-events:none;
+    }
+    .cta-ring {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:600px; height:600px; border-radius:50%;
+      border:1px solid rgba(249,115,22,.06);
+      pointer-events:none;
+    }
+    .cta-ring-2 {
+      position:absolute; top:50%; left:50%;
+      transform:translate(-50%,-50%);
+      width:800px; height:800px; border-radius:50%;
+      border:1px solid rgba(251,113,133,.04);
+      pointer-events:none;
+    }
+    @media (prefers-reduced-motion: no-preference) {
+      .cta-ring { animation: ringPulse 4s ease-in-out infinite; }
+      .cta-ring-2 { animation: ringPulse 4s ease-in-out infinite reverse; animation-delay:-2s; }
+    }
+    @keyframes ringPulse {
+      0%,100% { opacity:1; transform:translate(-50%,-50%) scale(1); }
+      50%      { opacity:.4; transform:translate(-50%,-50%) scale(1.05); }
+    }
+    .cta-tagline {
+      font-size:clamp(2rem,5vw,3.25rem); font-weight:900;
+      line-height:1.05; letter-spacing:-.04em; color:#fff;
+      margin:.875rem 0 1.125rem; position:relative; z-index:1;
+    }
+    .cta-sub {
+      font-size:1.0625rem; color:var(--text-secondary);
+      line-height:1.75; max-width:440px; margin:0 auto 2.25rem;
+      position:relative; z-index:1;
+    }
+    .cta-actions { display:flex; flex-wrap:wrap; gap:.875rem; justify-content:center; position:relative; z-index:1; }
+    .cta-note { margin-top:1rem; font-size:.75rem; color:var(--text-muted); position:relative; z-index:1; }
+    .cta-note svg { display:inline-block; vertical-align:middle; width:13px; height:13px; margin-right:.25rem; }
+
+    footer {
+      position:relative; z-index:10;
+      border-top:1px solid var(--panel-border);
+      background:rgba(5,4,3,.85);
+      backdrop-filter:blur(12px); -webkit-backdrop-filter:blur(12px);
+    }
+    .foot-inner { max-width:1280px; margin:0 auto; padding:3rem 1.25rem; }
+    @media (min-width:640px) { .foot-inner { padding:3rem 2rem; } }
+    .foot-grid { display:flex; flex-direction:column; gap:2.5rem; }
+    @media (min-width:768px) {
+      .foot-grid { flex-direction:row; align-items:flex-start; justify-content:space-between; }
+    }
+    .foot-brand-tag { font-size:.8125rem; color:var(--text-muted); margin-top:.5rem; max-width:200px; line-height:1.6; }
+    .foot-col { display:flex; flex-direction:column; gap:.25rem; }
+    .foot-col-label { font-size:.625rem; font-weight:700; text-transform:uppercase; letter-spacing:.15em; color:var(--text-muted); margin-bottom:.5rem; }
+    .foot-col a { font-size:.8125rem; color:var(--gray-400); text-decoration:none; padding:.25rem 0; transition:color .2s; }
+    .foot-col a:hover { color:#fff; }
+    .foot-col a:focus-visible { outline:2px solid #fcd34d; outline-offset:2px; border-radius:2px; }
+    .foot-bottom {
+      margin-top:2.5rem; padding-top:1.5rem;
+      border-top:1px solid var(--panel-border);
+      display:flex; flex-wrap:wrap; align-items:center; justify-content:space-between; gap:.75rem;
+    }
+    .foot-copy { font-size:.75rem; color:var(--text-muted); }
+    .foot-legal { display:flex; gap:1.25rem; }
+    .foot-legal a { font-size:.75rem; color:var(--text-muted); text-decoration:none; transition:color .2s; }
+    .foot-legal a:hover { color:var(--gray-300); }
+
+    @media (prefers-reduced-motion: no-preference) {
+      .reveal {
+        opacity:0; transform:translateY(28px);
+        transition: opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1);
+      }
+      .reveal.in { opacity:1; transform:translateY(0); }
+      .reveal-l { opacity:0; transform:translateX(-28px); transition: opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1); }
+      .reveal-l.in { opacity:1; transform:translateX(0); }
+      .reveal-r { opacity:0; transform:translateX(28px); transition: opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1); }
+      .reveal-r.in { opacity:1; transform:translateX(0); }
+      .reveal-s { opacity:0; transform:scale(.96); transition: opacity .65s cubic-bezier(.16,1,.3,1), transform .65s cubic-bezier(.16,1,.3,1); }
+      .reveal-s.in { opacity:1; transform:scale(1); }
+      .reveal-d1 { transition-delay:.08s; }
+      .reveal-d2 { transition-delay:.16s; }
+      .reveal-d3 { transition-delay:.24s; }
+      .reveal-d4 { transition-delay:.32s; }
+      .reveal-d5 { transition-delay:.4s; }
+      .reveal-d6 { transition-delay:.48s; }
+    }
+
+    .before-after-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      max-width: 820px;
+      margin: 0 auto;
+    }
+    @media (max-width: 600px) {
+      .before-after-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* ─────────────────────────────────────────
+       MOBILE RESPONSIVENESS FIXES
+    ───────────────────────────────────────── */
+    img, svg, canvas {
+      max-width: 100%;
+      height: auto;
+    }
+
+    @media (max-width: 767px) {
+      html, body {
+        width: 100%;
+        overflow-x: clip;
+      }
+
+      main {
+        overflow-x: clip;
+      }
+
+      .container {
+        padding-left: 1rem;
+        padding-right: 1rem;
+      }
+
+      .section-pad {
+        padding: 4rem 0;
+      }
+
+      #nav {
+        padding: 0 .75rem;
+      }
+
+      .nav-inner {
+        gap: .5rem;
+      }
+
+      .nav-right > .btn-cta {
+        display: none;
+      }
+
+      .nav-logo {
+        gap: .5rem;
+        min-width: 0;
+      }
+
+      .logo-name {
+        font-size: .95rem;
+      }
+
+      .logo-badge {
+        display: none;
+      }
+
+      .hero-grid {
+        gap: 2rem;
+      }
+
+      .hero-copy,
+      .hero-visual {
+        width: 100%;
+      }
+
+      .hero-copy {
+        text-align: center;
+      }
+
+      .hero-announce {
+        width: 100%;
+        justify-content: center;
+        text-align: left;
+        white-space: normal;
+        line-height: 1.35;
+        border-radius: 1rem;
+      }
+
+      .hero-h1 {
+        font-size: clamp(2.15rem, 10vw, 3rem);
+        line-height: 1.02;
+      }
+
+      .hero-sub {
+        max-width: 100%;
+        margin-bottom: 1.5rem;
+        font-size: 1rem;
+      }
+
+      .hero-ctas {
+        flex-direction: column;
+        align-items: stretch;
+        width: 100%;
+      }
+
+      .hero-ctas .btn-cta,
+      .hero-ctas .btn-outline,
+      .cta-actions .btn-cta,
+      .cta-actions .btn-outline {
+        width: 100%;
+        justify-content: center;
+      }
+
+      .trust-strip {
+        gap: .5rem;
+        row-gap: .5rem;
+      }
+
+      .trust-dot {
+        display: none;
+      }
+
+      .hero-visual {
+        flex-direction: column;
+        gap: .75rem;
+        align-items: stretch;
+      }
+
+      .float-card {
+        position: static;
+        width: 100%;
+        max-width: 420px;
+        margin: 0 auto;
+        white-space: normal;
+      }
+
+      .fc-streak,
+      .fc-remind {
+        top: auto;
+        right: auto;
+        bottom: auto;
+        left: auto;
+      }
+
+      .dash-card {
+        max-width: 100%;
+        border-radius: 1.25rem;
+      }
+
+      .dash-body {
+        padding: .9rem;
+        gap: .75rem;
+      }
+
+      .db-header {
+        flex-direction: column;
+        gap: .75rem;
+        align-items: flex-start;
+      }
+
+      .db-streak-pill {
+        align-self: flex-start;
+      }
+
+      .db-stats {
+        grid-template-columns: 1fr;
+      }
+
+      .db-stat {
+        padding: .75rem .65rem;
+      }
+
+      .db-stat-val {
+        font-size: 1.1rem;
+      }
+
+      .db-stat-lbl {
+        font-size: .6rem;
+      }
+
+      .db-prog-label,
+      .db-prog-pct {
+        font-size: .65rem;
+      }
+
+      .db-chapter {
+        align-items: flex-start;
+        gap: .45rem;
+        padding: .6rem .65rem;
+        flex-wrap: wrap;
+      }
+
+      .db-ch-name {
+        min-width: 0;
+        font-size: .72rem;
+        line-height: 1.35;
+      }
+
+      .db-ch-tag {
+        font-size: .55rem;
+        margin-left: auto;
+      }
+
+      .db-ai {
+        align-items: flex-start;
+      }
+
+      .db-ai-text {
+        font-size: .72rem;
+      }
+
+      #transformation .container,
+      #problem .container {
+        padding-top: 2.5rem !important;
+        padding-bottom: 2.5rem !important;
+      }
+
+      .before-after-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .before-after-grid > div {
+        padding: 1.4rem 1.1rem !important;
+      }
+
+      .problem-band {
+        padding: 1.75rem 1.2rem;
+      }
+
+      .features-grid,
+      .showcase-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .feat-card {
+        padding: 1.35rem;
+      }
+
+      .feat-title {
+        font-size: .98rem;
+      }
+
+      .feat-desc {
+        font-size: .92rem;
+      }
+
+      .how-container {
+        padding-top: 4rem;
+      }
+
+      #how .section-head,
+      #how .section-head h2,
+      #how .section-head p {
+        text-align: center !important;
+      }
+
+      #how .section-head p {
+        margin-left: auto !important;
+        margin-right: auto !important;
+      }
+
+      .how-wrapper {
+        gap: 2rem;
+      }
+
+      .steps-list {
+        gap: .25rem;
+      }
+
+      .step-item {
+        gap: 1rem;
+      }
+
+      .step-item:not(:last-child)::after {
+        left: 1.2rem;
+      }
+
+      .step-body {
+        padding-bottom: 1.8rem;
+      }
+
+      .step-title {
+        font-size: 1rem;
+      }
+
+      .step-desc {
+        font-size: .92rem;
+      }
+
+      .phone-frame {
+        width: min(100%, 320px);
+        border-radius: 2rem;
+      }
+
+      .phone-notch {
+        width: 5.5rem;
+      }
+
+      .phone-body {
+        padding: .7rem .8rem 1rem;
+      }
+
+      .ph-stat-v {
+        font-size: .9rem;
+      }
+
+      .ph-ch-name,
+      .ph-notif-text {
+        font-size: .6rem;
+      }
+
+      .sc-card {
+        border-radius: 1.25rem;
+      }
+
+      .sc-header,
+      .sc-body {
+        padding-left: .95rem;
+        padding-right: .95rem;
+      }
+
+      .sc-body {
+        padding-bottom: 1rem;
+      }
+
+      .ticker-wrap {
+        padding: .65rem 0;
+      }
+
+      .ticker-track {
+        gap: 1.5rem;
+        animation-duration: 20s;
+      }
+
+      .ticker-item {
+        font-size: .72rem;
+      }
+
+      .founder-card {
+        padding: 1.4rem;
+        border-radius: 1.5rem;
+      }
+
+      .founder-head {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: .8rem;
+      }
+
+      .founder-body {
+        font-size: .96rem;
+        line-height: 1.8;
+      }
+
+      .cta-card {
+        padding: 3rem 1.25rem;
+        border-radius: 1.5rem;
+      }
+
+      .cta-tagline {
+        font-size: clamp(1.85rem, 9vw, 2.45rem);
+      }
+
+      .cta-sub {
+        font-size: 1rem;
+      }
+
+      .cta-actions {
+        flex-direction: column;
+        align-items: stretch;
+      }
+
+      .cta-note {
+        line-height: 1.6;
+      }
+
+      .foot-inner {
+        padding: 2.25rem 1rem;
+      }
+
+      .foot-grid {
+        gap: 1.5rem;
+      }
+
+      .foot-bottom {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+
+      .foot-legal {
+        flex-wrap: wrap;
+        gap: .75rem;
+      }
+    }
+
+    @media (max-width: 380px) {
+      .hero-h1 {
+        font-size: clamp(2rem, 12vw, 2.6rem);
+      }
+
+      .hero-announce {
+        font-size: .7rem;
+      }
+
+      .btn-cta,
+      .btn-outline {
+        padding: .85rem 1rem;
+        font-size: .92rem;
+      }
+
+      .section-h2 {
+        font-size: clamp(1.7rem, 9vw, 2.25rem);
+      }
+
+      .cta-note {
+        font-size: .7rem;
+      }
+    }
+
+    .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0; }
+  </style>
+</head>
+<body>
+
+<a class="skip" href="#main">Skip to main content</a>
+
+<div class="bg-stage" aria-hidden="true">
+  <canvas id="bg-canvas" aria-hidden="true"></canvas>
+  <div class="bg-grid"></div>
+</div>
+
+<nav id="nav" aria-label="Main navigation">
+  <div class="nav-inner">
+    <a class="nav-logo" href="landing.html" aria-label="StudyOS — home">
+      <div class="logo-icon">
+        <img src="./icons/icon-192.webp" alt="" aria-hidden="true" width="34" height="34" />
+      </div>
+      <span class="logo-name">StudyOS</span>
+      <span class="logo-badge">Free</span>
+    </a>
+    <ul class="nav-links" role="list">
+      <li><a href="#features">Features</a></li>
+      <li><a href="#how">How it works</a></li>
+      <li><a href="#showcase">Screenshots</a></li>
+      <li><a href="#founder">About</a></li>
+      <li><a href="#faq">FAQ</a></li>
+    </ul>
+    <div class="nav-right">
+      <a class="btn-sm" href="https://studyos-edu.vercel.app/auth.html" style="display:none;" id="nav-login">Log in</a>
+      <a class="btn-cta" href="https://studyos-edu.vercel.app/auth.html?tab=signup" style="font-size:.8125rem;padding:.5rem 1.125rem;border-radius:.625rem;">
+        Get started free
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+      </a>
+      <button class="nav-burger" id="nav-burger" aria-label="Open menu" aria-expanded="false" aria-controls="nav-drawer">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+        </svg>
+      </button>
+    </div>
+  </div>
+</nav>
+
+<script>document.getElementById('nav-login').style.display='inline-flex';</script>
+
+<div class="nav-drawer" id="nav-drawer" role="dialog" aria-label="Mobile navigation">
+  <a href="#features" onclick="closeDrawer()">Features</a>
+  <a href="#how" onclick="closeDrawer()">How it works</a>
+  <a href="#showcase" onclick="closeDrawer()">Screenshots</a>
+  <a href="#founder" onclick="closeDrawer()">About</a>
+  <a href="#faq" onclick="closeDrawer()">FAQ</a>
+  <a href="https://studyos-edu.vercel.app/auth.html">Log in</a>
+  <a class="btn-cta drawer-cta" href="https://studyos-edu.vercel.app/auth.html?tab=signup" style="justify-content:center;margin-top:.25rem;">Get started free</a>
+</div>
+
+<main id="main">
+
+  <!-- ─── HERO ─── -->
+  <section id="hero" aria-labelledby="hero-h1">
+    <div class="container">
+      <div class="hero-grid">
+        <div class="hero-copy">
+          <div class="hero-announce reveal">
+            <span class="hero-announce-badge">New</span>
+            Multi-device sync is now live — works everywhere
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
+          <h1 class="hero-h1 reveal reveal-d1" id="hero-h1">
+            Track every chapter.<br />
+            Never miss a revision.<br />
+            <span class="grad-text">Ace your CBSE boards.</span>
+          </h1>
+          <p class="hero-sub reveal reveal-d2">
+            The free study dashboard built for CBSE Class 9–12. Your full syllabus is pre-loaded — mark chapters, get AI-powered study plans, and let spaced repetition handle your revision schedule automatically.
+          </p>
+          <div class="hero-ctas reveal reveal-d3">
+            <a class="btn-cta" href="https://studyos-edu.vercel.app/auth.html?tab=signup">
+              Track my syllabus — it's free
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </a>
+            <a class="btn-outline" href="#features">
+              See what's inside
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+            </a>
+          </div>
+          <div class="trust-strip reveal reveal-d4">
+            <div class="trust-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>100% free</span>
+            </div>
+            <span class="trust-dot" aria-hidden="true"></span>
+            <div class="trust-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>CBSE syllabus pre-loaded</span>
+            </div>
+            <span class="trust-dot" aria-hidden="true"></span>
+            <div class="trust-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              <span>Cloud-synced</span>
+            </div>
+            <span class="trust-dot" aria-hidden="true"></span>
+            <div class="trust-item">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#fcd34d" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+              <span style="color:#fcd34d;">Trusted by students across India</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="hero-visual reveal-r">
+          <div class="float-card fc-streak glass" aria-hidden="true">
+            <div class="fc-label">Current streak</div>
+            <div class="fc-val"><span class="fc-icon">🔥</span>12 days</div>
+            <div class="fc-sub">Keep it up!</div>
+          </div>
+          <div class="dash-card" aria-label="StudyOS dashboard preview" role="img">
+            <div class="dash-chrome">
+              <span class="chrome-dot cd-r"></span>
+              <span class="chrome-dot cd-y"></span>
+              <span class="chrome-dot cd-g"></span>
+              <div class="chrome-bar">
+                <svg class="chrome-lock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+                <span class="chrome-url">studyos-edu.vercel.app</span>
+              </div>
+            </div>
+            <div class="dash-body">
+              <div class="db-header">
+                <div>
+                  <div class="db-greet">Good evening, Aarav 👋</div>
+                  <div class="db-sub">Tuesday · 14 weeks to boards</div>
+                </div>
+                <div class="db-streak-pill">
+                  <svg width="9" height="9" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2c0 6-6 8-6 14a6 6 0 0 0 12 0c0-6-6-8-6-14z"/></svg>
+                  12-day streak
+                </div>
+              </div>
+              <div class="db-stats">
+                <div class="db-stat">
+                  <div class="db-stat-val" style="color:#f97316;">68%</div>
+                  <div class="db-stat-lbl">Syllabus done</div>
+                </div>
+                <div class="db-stat">
+                  <div class="db-stat-val" style="color:#fcd34d;">24</div>
+                  <div class="db-stat-lbl">Chapters left</div>
+                </div>
+                <div class="db-stat">
+                  <div class="db-stat-val" style="color:#86efac;">4.2h</div>
+                  <div class="db-stat-lbl">Today</div>
+                </div>
+              </div>
+              <div>
+                <div class="db-prog-head">
+                  <span class="db-prog-label">Overall progress</span>
+                  <span class="db-prog-pct">68%</span>
+                </div>
+                <div class="db-prog-track">
+                  <div class="db-prog-fill" style="width:68%;"></div>
+                </div>
+              </div>
+              <div>
+                <div class="db-prog-label" style="margin-bottom:.375rem;">Today's plan</div>
+                <div class="db-chapters">
+                  <div class="db-chapter">
+                    <span class="db-ch-dot dot-g"></span>
+                    <span class="db-ch-name">Maths — Quadratic Equations</span>
+                    <span class="db-ch-tag tag-done">Done</span>
+                  </div>
+                  <div class="db-chapter">
+                    <span class="db-ch-dot dot-o"></span>
+                    <span class="db-ch-name">Science — Chemical Reactions</span>
+                    <span class="db-ch-tag tag-prog">60%</span>
+                  </div>
+                  <div class="db-chapter">
+                    <span class="db-ch-dot dot-x"></span>
+                    <span class="db-ch-name">English — First Flight Ch.4</span>
+                    <span class="db-ch-tag tag-todo">Pending</span>
+                  </div>
+                </div>
+              </div>
+              <div class="db-ai">
+                <div class="db-ai-orb"></div>
+                <div class="db-ai-text">AI Coach: "SST is falling behind — want a 3-day catch-up plan?"</div>
+              </div>
+            </div>
+          </div>
+          <div class="float-card fc-remind glass" aria-hidden="true">
+            <div class="fc-label">Upcoming revision</div>
+            <div class="fc-remind-row">
+              <span class="fc-remind-dot"></span>
+              <span class="fc-remind-text">Acids &amp; Bases — due today</span>
+            </div>
+            <div class="fc-remind-row" style="margin-top:.25rem;">
+              <span class="fc-remind-dot" style="background:#fb7185;"></span>
+              <span class="fc-remind-text">Arithmetic Progressions — tomorrow</span>
+            </div>
+          </div>
+        </div><!-- /.hero-visual -->
+      </div><!-- /.hero-grid -->
+    </div><!-- /.container -->
+  </section><!-- /#hero -->
+
+  <!-- ─── BEFORE / AFTER ─── -->
+  <section id="transformation" aria-labelledby="transformation-h">
+    <div class="container" style="padding-top:3.5rem;padding-bottom:3.5rem;">
+      <div class="section-head reveal" style="margin-bottom:2.5rem;">
+        <span class="eyebrow eyebrow-pill">The difference</span>
+        <h2 class="section-h2" id="transformation-h">
+          Board prep,<br />
+          <span class="grad-text">before and after.</span>
+        </h2>
+      </div>
+      <div class="before-after-grid reveal">
+        <!-- BEFORE -->
+        <div style="padding:1.75rem 1.5rem;border-radius:1.5rem;background:rgba(239,68,68,0.05);border:1px solid rgba(239,68,68,0.2);position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-3rem;left:-3rem;width:12rem;height:12rem;border-radius:50%;background:rgba(239,68,68,0.07);filter:blur(40px);pointer-events:none;" aria-hidden="true"></div>
+          <div style="display:inline-flex;align-items:center;gap:.4rem;font-size:.625rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#f87171;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.25);padding:.25rem .75rem;border-radius:999px;margin-bottom:1.25rem;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+            Without StudyOS
+          </div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:.75rem;" role="list">
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Forgetting which chapters you've actually covered
+            </li>
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Realising SST or English is far behind — 3 weeks before exams
+            </li>
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Revising the same chapters you enjoy, skipping the hard ones
+            </li>
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#f87171" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+              Walking into the exam hall not knowing what you forgot
+            </li>
+          </ul>
+        </div>
+        <!-- AFTER -->
+        <div style="padding:1.75rem 1.5rem;border-radius:1.5rem;background:rgba(34,197,94,0.05);border:1px solid rgba(34,197,94,0.2);position:relative;overflow:hidden;">
+          <div style="position:absolute;top:-3rem;right:-3rem;width:12rem;height:12rem;border-radius:50%;background:rgba(34,197,94,0.07);filter:blur(40px);pointer-events:none;" aria-hidden="true"></div>
+          <div style="display:inline-flex;align-items:center;gap:.4rem;font-size:.625rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;color:#86efac;background:rgba(34,197,94,0.1);border:1px solid rgba(34,197,94,0.25);padding:.25rem .75rem;border-radius:999px;margin-bottom:1.25rem;">
+            <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            With StudyOS
+          </div>
+          <ul style="list-style:none;display:flex;flex-direction:column;gap:.75rem;" role="list">
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Every subject, every chapter — tracked and visible at a glance
+            </li>
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              AI flags what's falling behind before it becomes a crisis
+            </li>
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              Spaced reminders ensure every chapter gets revisited — not just your favourites
+            </li>
+            <li style="display:flex;align-items:flex-start;gap:.625rem;font-size:.875rem;color:var(--text-secondary);line-height:1.55;">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#86efac" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0;margin-top:.15rem;" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+              You know your exact readiness — confident, not anxious, on exam day
+            </li>
+          </ul>
+        </div>
+      </div><!-- /.before-after-grid -->
+      <div class="reveal" style="text-align:center;margin-top:2.25rem;">
+        <a class="btn-cta" href="https://studyos-edu.vercel.app/auth.html?tab=signup" style="font-size:.9375rem;">
+          Build my revision plan — free
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+        </a>
+      </div>
+    </div><!-- /.container -->
+  </section><!-- /#transformation -->
+
+  <!-- ─── TICKER ─── -->
+  <div class="ticker-wrap" aria-hidden="true">
+    <div class="ticker-track">
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-or"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> NCERT Chapter Tracking</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-ro"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.66"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.66"/></svg> AI Study Coach</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-am"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Spaced Repetition Reminders</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-gn"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Works on Every Device</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-bl"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Secure Cloud Sync</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-pu"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Progress Dashboard &amp; Streaks</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-or"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Built for CBSE Class 9–12</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-am"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 100% Free — Always</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-or"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg> NCERT Chapter Tracking</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-ro"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.66"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.66"/></svg> AI Study Coach</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-am"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg> Spaced Repetition Reminders</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-gn"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg> Works on Every Device</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-bl"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg> Secure Cloud Sync</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-pu"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg> Progress Dashboard &amp; Streaks</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-or"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg> Built for CBSE Class 9–12</div>
+      <div class="ticker-item"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="tk-am"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg> 100% Free — Always</div>
+    </div>
+  </div>
+
+  <!-- ─── PROBLEM ─── -->
+  <section id="problem" aria-labelledby="problem-h">
+    <div class="container" style="padding-top:3.5rem;padding-bottom:3.5rem;">
+      <div class="problem-band reveal" style="max-width:740px;margin:0 auto;">
+        <p class="eyebrow eyebrow-pill" style="margin-bottom:1rem;" id="problem-h">The real problem with board prep</p>
+        <p class="problem-text">
+          Most students juggle <strong>five subjects across 60+ chapters</strong>, forget what they revised last week, and only realise how far behind they are when the exam is two weeks away.
+          <span class="problem-hi"> StudyOS closes that gap</span> — one workspace to track everything, get reminded on time, and never blank during boards.
+        </p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FEATURES ─── -->
+  <section id="features" aria-labelledby="features-h">
+    <div class="container section-pad">
+      <div class="section-head reveal">
+        <span class="eyebrow eyebrow-pill">What's inside</span>
+        <h2 class="section-h2" id="features-h">
+          Everything you need.<br />
+          <span class="grad-text">Nothing you don't.</span>
+        </h2>
+        <p class="section-sub">Built specifically for CBSE — not a generic to-do app in a dark theme.</p>
+      </div>
+      <div class="features-grid">
+        <div class="feat-card reveal reveal-d1">
+          <div class="feat-icon fi-or" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+          </div>
+          <h3 class="feat-title">NCERT Chapter Tracking</h3>
+          <p class="feat-desc">Always know exactly how far through the syllabus you are — per subject, per chapter. No more guessing whether you've covered enough before the exam.</p>
+        </div>
+        <div class="feat-card reveal reveal-d2">
+          <div class="feat-icon fi-ro" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 2A2.5 2.5 0 0 1 12 4.5v15a2.5 2.5 0 0 1-4.96-.44 2.5 2.5 0 0 1-2.96-3.08 3 3 0 0 1-.34-5.58 2.5 2.5 0 0 1 1.32-4.24 2.5 2.5 0 0 1 4.44-1.66"/><path d="M14.5 2A2.5 2.5 0 0 0 12 4.5v15a2.5 2.5 0 0 0 4.96-.44 2.5 2.5 0 0 0 2.96-3.08 3 3 0 0 0 .34-5.58 2.5 2.5 0 0 0-1.32-4.24 2.5 2.5 0 0 0-4.44-1.66"/></svg>
+          </div>
+          <h3 class="feat-title">AI Study Coach</h3>
+          <p class="feat-desc">Stuck on Carbon Compounds at 11 PM with no tutor available? Get a clear explanation, worked examples, or a catch-up plan — instantly, any time.</p>
+        </div>
+        <div class="feat-card reveal reveal-d3">
+          <div class="feat-icon fi-am" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+          </div>
+          <h3 class="feat-title">Smart Revision Reminders</h3>
+          <p class="feat-desc">Studied Acids &amp; Bases two weeks ago? You'll forget it before boards if you don't revisit it. StudyOS schedules the reminder automatically — at exactly the right time.</p>
+        </div>
+        <div class="feat-card reveal reveal-d4">
+          <div class="feat-icon fi-gn" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="2" width="14" height="20" rx="2"/><line x1="12" y1="18" x2="12.01" y2="18"/></svg>
+          </div>
+          <h3 class="feat-title">Works Across All Devices</h3>
+          <p class="feat-desc">Tick off a chapter on your phone after tuition, open your laptop at home — it's already updated. Your progress is always with you, on any device.</p>
+        </div>
+        <div class="feat-card reveal reveal-d5">
+          <div class="feat-icon fi-bl" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg>
+          </div>
+          <h3 class="feat-title">Secure Cloud Sync</h3>
+          <p class="feat-desc">Months of progress won't vanish. Your data is securely stored and encrypted — never sold, never shared. Delete your account any time and it's gone.</p>
+        </div>
+        <div class="feat-card reveal reveal-d6">
+          <div class="feat-icon fi-pu" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+          </div>
+          <h3 class="feat-title">Progress Dashboard &amp; Streaks</h3>
+          <p class="feat-desc">Open StudyOS and immediately know what to study today — no planning needed. The dashboard tells you what's lagging, and the streak keeps you showing up.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── HOW IT WORKS ─── -->
+  <!-- THE FIX: removed inline style="padding-top:0;" and replaced with class="how-container"
+       which applies padding-top:6rem on mobile and padding-top:0 on desktop via CSS -->
+  <section id="how" aria-labelledby="how-h">
+    <div class="container section-pad how-container">
+      <div class="how-wrapper">
+        <div>
+          <div class="section-head" style="text-align:left;margin-bottom:2.75rem;">
+            <span class="eyebrow eyebrow-pill reveal">Three steps</span>
+            <h2 class="section-h2 reveal" id="how-h" style="text-align:left;">
+              Up and running<br />
+              <span class="grad-text">in minutes.</span>
+            </h2>
+            <p class="section-sub reveal" style="text-align:left;margin:0;">No onboarding call. No credit card. Just sign up and start tracking.</p>
+          </div>
+          <div class="steps-list">
+            <div class="step-item reveal">
+              <div class="step-num" aria-hidden="true">1</div>
+              <div class="step-body">
+                <h3 class="step-title">Add your subjects and chapters</h3>
+                <p class="step-desc">Pick your class — from Class 9 to 12. Your NCERT chapter list loads automatically. Mark where you already are. Done in under two minutes.</p>
+              </div>
+            </div>
+            <div class="step-item reveal reveal-d1">
+              <div class="step-num" aria-hidden="true">2</div>
+              <div class="step-body">
+                <h3 class="step-title">Track your progress every day</h3>
+                <p class="step-desc">Tick off what you studied. The dashboard updates in real time, highlights what's falling behind, and your AI coach flags what needs attention.</p>
+              </div>
+            </div>
+            <div class="step-item reveal reveal-d2">
+              <div class="step-num" aria-hidden="true">3</div>
+              <div class="step-body">
+                <h3 class="step-title">Get reminders before it's too late</h3>
+                <p class="step-desc">Smart revision alerts surface topics at the right moment. Nothing slips. By exam day, every chapter has been revisited at least twice.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="how-phone reveal-r">
+          <div class="phone-glow"></div>
+          <div class="phone-frame" aria-label="StudyOS mobile app preview" role="img">
+            <div class="phone-notch"></div>
+            <div class="phone-body">
+              <div style="font-size:.625rem;font-weight:800;color:#fff;margin-bottom:.4rem;">My Progress</div>
+              <div class="ph-stat-row">
+                <div class="ph-stat">
+                  <div class="ph-stat-v" style="color:#f97316;">68%</div>
+                  <div class="ph-stat-l">Complete</div>
+                </div>
+                <div class="ph-stat">
+                  <div class="ph-stat-v" style="color:#fcd34d;">🔥12</div>
+                  <div class="ph-stat-l">Day streak</div>
+                </div>
+              </div>
+              <div class="ph-label">Mathematics</div>
+              <div class="ph-chapters">
+                <div class="ph-ch"><span class="ph-dot" style="background:#22c55e;"></span><span class="ph-ch-name">Real Numbers</span><span class="ph-ch-pct">Done</span></div>
+                <div class="ph-ch"><span class="ph-dot" style="background:#22c55e;"></span><span class="ph-ch-name">Polynomials</span><span class="ph-ch-pct">Done</span></div>
+                <div class="ph-ch"><span class="ph-dot" style="background:#f97316;"></span><span class="ph-ch-name">Linear Equations</span><span class="ph-ch-pct">70%</span></div>
+                <div class="ph-ch"><span class="ph-dot" style="background:rgba(255,255,255,.18);"></span><span class="ph-ch-name">Quadratic Equations</span><span class="ph-ch-pct">Pending</span></div>
+              </div>
+              <div class="ph-label" style="margin-top:.25rem;">Science</div>
+              <div class="ph-chapters">
+                <div class="ph-ch"><span class="ph-dot" style="background:#22c55e;"></span><span class="ph-ch-name">Chemical Reactions</span><span class="ph-ch-pct">Done</span></div>
+                <div class="ph-ch"><span class="ph-dot" style="background:#f97316;"></span><span class="ph-ch-name">Acids, Bases &amp; Salts</span><span class="ph-ch-pct">50%</span></div>
+              </div>
+              <div class="ph-notif">
+                <span class="ph-notif-icon">🔔</span>
+                <span class="ph-notif-text">Revision due: Acids &amp; Bases — tap to review</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── SHOWCASE ─── -->
+  <section id="showcase" aria-labelledby="showcase-h">
+    <div class="container section-pad" style="padding-top:0;">
+      <div class="section-head reveal">
+        <span class="eyebrow eyebrow-pill">Inside the app</span>
+        <h2 class="section-h2" id="showcase-h">
+          Built for how<br />
+          <span class="grad-text">students actually study.</span>
+        </h2>
+      </div>
+      <div class="showcase-grid">
+        <div class="sc-card reveal reveal-d1">
+          <div class="sc-header">
+            <span class="sc-dot"></span>
+            <span class="sc-title">Subject Tracker</span>
+          </div>
+          <div class="sc-body">
+            <div class="sc-subject">
+              <div class="sc-subj-row"><span class="sc-subj-name">Mathematics</span><span class="sc-subj-count">11 / 15 ch.</span></div>
+              <div class="sc-bar-t"><div class="sc-bar-f f-or" style="width:73%;"></div></div>
+            </div>
+            <div class="sc-subject">
+              <div class="sc-subj-row"><span class="sc-subj-name">Science</span><span class="sc-subj-count">8 / 16 ch.</span></div>
+              <div class="sc-bar-t"><div class="sc-bar-f f-ro" style="width:50%;"></div></div>
+            </div>
+            <div class="sc-subject">
+              <div class="sc-subj-row"><span class="sc-subj-name">Social Science</span><span class="sc-subj-count">6 / 20 ch.</span></div>
+              <div class="sc-bar-t"><div class="sc-bar-f f-am" style="width:30%;"></div></div>
+            </div>
+            <div class="sc-subject">
+              <div class="sc-subj-row"><span class="sc-subj-name">English</span><span class="sc-subj-count">7 / 10 ch.</span></div>
+              <div class="sc-bar-t"><div class="sc-bar-f f-bl" style="width:70%;"></div></div>
+            </div>
+            <div class="sc-subject">
+              <div class="sc-subj-row"><span class="sc-subj-name">Hindi</span><span class="sc-subj-count">9 / 12 ch.</span></div>
+              <div class="sc-bar-t"><div class="sc-bar-f f-gn" style="width:75%;"></div></div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-card reveal reveal-d2">
+          <div class="sc-header">
+            <span class="sc-dot" style="background:#fcd34d;"></span>
+            <span class="sc-title">Revision Reminders</span>
+          </div>
+          <div class="sc-body">
+            <div class="sc-rem">
+              <div class="sc-rem-icon ri-am"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+              <div><div class="sc-rem-t">Acids, Bases &amp; Salts — due today</div><div class="sc-rem-s">Science · Last studied 7 days ago</div></div>
+            </div>
+            <div class="sc-rem">
+              <div class="sc-rem-icon ri-ro"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+              <div><div class="sc-rem-t">Arithmetic Progressions — tomorrow</div><div class="sc-rem-s">Maths · Spaced repetition cycle</div></div>
+            </div>
+            <div class="sc-rem">
+              <div class="sc-rem-icon ri-bl"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg></div>
+              <div><div class="sc-rem-t">Nationalist Movement — in 3 days</div><div class="sc-rem-s">Social Science · On schedule</div></div>
+            </div>
+            <div class="sc-rem" style="border-color:rgba(34,197,94,.15);background:rgba(34,197,94,.05);">
+              <div class="sc-rem-icon ri-gn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg></div>
+              <div><div class="sc-rem-t" style="color:#86efac;">Carbon &amp; Its Compounds — strong recall ✓</div><div class="sc-rem-s">Revisited 3× · No reminder needed</div></div>
+            </div>
+          </div>
+        </div>
+        <div class="sc-card reveal reveal-d3">
+          <div class="sc-header">
+            <span class="sc-dot" style="background:#fbbf24;"></span>
+            <span class="sc-title">Daily Streak</span>
+          </div>
+          <div class="sc-body">
+            <div class="sc-streak-grid" aria-label="28-day study activity calendar">
+              <div class="sd sd-0"></div><div class="sd sd-1"></div><div class="sd sd-2"></div><div class="sd sd-3"></div><div class="sd sd-2"></div><div class="sd sd-3"></div><div class="sd sd-0"></div>
+              <div class="sd sd-1"></div><div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-2"></div><div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-1"></div>
+              <div class="sd sd-2"></div><div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-2"></div><div class="sd sd-3"></div><div class="sd sd-1"></div>
+              <div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-3"></div><div class="sd sd-t"></div><div class="sd sd-0"></div><div class="sd sd-0"></div>
+            </div>
+            <div class="sc-streak-meta">
+              <div>
+                <div class="sc-streak-num">12</div>
+                <div class="sc-streak-unit">day streak 🔥</div>
+              </div>
+              <div class="sc-streak-best">Best: 21 days<br/><span style="color:var(--gray-500);font-size:.4375rem;">Keep going!</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FOUNDER ─── -->
+  <section id="founder" aria-labelledby="founder-h">
+    <div class="container section-pad" style="padding-top:0;">
+      <div class="section-head reveal">
+        <span class="eyebrow eyebrow-pill">Why I built this</span>
+        <h2 class="section-h2" id="founder-h">
+          A note from<br />
+          <span class="grad-text">the founder.</span>
+        </h2>
+      </div>
+      <div class="founder-card glass reveal-s">
+        <div class="founder-head">
+          <div class="founder-av" aria-hidden="true">S</div>
+          <div>
+            <div class="founder-name">The Builder</div>
+            <div class="founder-role">Creator of StudyOS · Built this for CBSE students, by a CBSE student</div>
+          </div>
+        </div>
+        <p class="founder-body">
+          I built StudyOS because I kept watching the same thing happen every year — <strong>students who worked hard all year still panicking in the last month</strong> because they had no real picture of where they stood. Not because they were lazy. Because the tools were wrong for them.
+          <br /><br />
+          Notion is too blank. Google Sheets breaks when you need it most. Every "study app" out there was built for someone else's curriculum, someone else's exam pattern. <strong>None of them knew what NCERT chapters existed, let alone which ones needed revision first.</strong>
+          <br /><br />
+          So I built one specifically for <em>CBSE — Class 9 through 12</em> — with the full chapter list pre-loaded, spaced repetition built in, and an AI coach that actually understands the syllabus. <strong>It's completely free, and it stays that way.</strong> No ads, no paywalls, no premium tier. Just the tool I needed when I was preparing for boards.
+        </p>
+        <div style="display:flex;flex-wrap:wrap;gap:.625rem;margin-top:1.5rem;">
+          <div class="founder-badge">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+            Free forever — no credit card, no catch
+          </div>
+          <div class="founder-badge" style="background:rgba(252,211,77,.08);border-color:rgba(252,211,77,.2);color:#fcd34d;">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Full NCERT syllabus pre-loaded
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FAQ ─── -->
+  <section id="faq" aria-labelledby="faq-h">
+    <div class="container section-pad" style="padding-top:0;">
+      <div class="section-head reveal">
+        <span class="eyebrow eyebrow-pill">Questions</span>
+        <h2 class="section-h2" id="faq-h">Frequently asked</h2>
+      </div>
+      <div class="faq-list reveal">
+        <details class="faq-item">
+          <summary class="faq-sum">Is StudyOS actually free?
+            <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </summary>
+          <div class="faq-ans">Yes, completely. No credit card, no trial period, no premium tier hiding useful features. Everything on this page is free and stays that way.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-sum">Which classes and subjects does StudyOS support?
+            <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </summary>
+          <div class="faq-ans">StudyOS supports CBSE Class 9, 10, 11, and 12. For Classes 9 and 10, NCERT chapter lists for all five subjects are pre-loaded. Class 11/12 streams (PCM, PCB, Commerce) are also supported with the relevant syllabus.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-sum">Does my data sync between phone and laptop?
+            <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </summary>
+          <div class="faq-ans">Yes. StudyOS is cloud-synced via Supabase — your chapter progress, reminders, and streak stay in sync across every device you're signed in to. Open on your phone after class, pick up on your laptop at home.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-sum">How does the AI Study Coach work?
+            <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </summary>
+          <div class="faq-ans">The AI coach knows which chapters you're tracking and where you're behind. Ask it to explain a concept, give practice questions, or build a study plan — it gives you a direct answer, not a search result. Available any time from the dashboard.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-sum">What is spaced repetition?
+            <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </summary>
+          <div class="faq-ans">Spaced repetition is a technique backed by decades of memory science — you review material at increasing intervals so it moves into long-term memory. StudyOS schedules revision reminders automatically based on when you last studied each chapter.</div>
+        </details>
+        <details class="faq-item">
+          <summary class="faq-sum">Is my data private and secure?
+            <span class="faq-chev" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg></span>
+          </summary>
+          <div class="faq-ans">Your data is stored in Supabase (encrypted at rest and in transit) and is never sold or shared. You can delete your account and all data at any time. See our <a href="#">Privacy Policy</a> for the full details.</div>
+        </details>
+      </div>
+    </div>
+  </section>
+
+  <!-- ─── FINAL CTA ─── -->
+  <section id="cta" aria-labelledby="cta-h">
+    <div class="container section-pad" style="padding-top:0;max-width:900px;">
+      <div class="cta-card reveal-s">
+        <div class="cta-ring" aria-hidden="true"></div>
+        <div class="cta-ring-2" aria-hidden="true"></div>
+        <span class="eyebrow eyebrow-pill" style="position:relative;z-index:1;">Ready? It's free.</span>
+        <h2 class="cta-tagline" id="cta-h">
+          Know where you stand.<br />
+          <span class="grad-text">Walk into boards ready.</span>
+        </h2>
+        <p class="cta-sub">Set up your syllabus tracker in under two minutes. Your CBSE chapter list is already loaded — just mark where you are and start.</p>
+        <div class="cta-actions">
+          <a class="btn-cta" href="https://studyos-edu.vercel.app/auth.html?tab=signup" style="font-size:1rem;padding:1rem 2rem;">
+            Start tracking my syllabus
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </a>
+          <a class="btn-outline" href="https://studyos-edu.vercel.app/auth.html">Already have an account? Log in</a>
+        </div>
+        <p class="cta-note">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12"/></svg>
+          No credit card &nbsp;·&nbsp; No ads &nbsp;·&nbsp; No paywalls &nbsp;·&nbsp; Forever free
+        </p>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer>
+  <div class="foot-inner">
+    <div class="foot-grid">
+      <div>
+        <a class="nav-logo" href="landing.html" aria-label="StudyOS home" style="margin-bottom:.75rem;display:inline-flex;">
+          <div class="logo-icon">
+            <img src="./icons/icon-192.webp" alt="" aria-hidden="true" width="34" height="34" />
+          </div>
+          <span class="logo-name">StudyOS</span>
+        </a>
+        <p class="foot-brand-tag">Your free, AI-powered study companion for CBSE board exams.</p>
+      </div>
+      <nav class="foot-col" aria-label="Product links">
+        <p class="foot-col-label">Product</p>
+        <a href="#features">Features</a>
+        <a href="#how">How it works</a>
+        <a href="#showcase">Screenshots</a>
+        <a href="https://studyos-edu.vercel.app/auth.html?tab=signup">Get started</a>
+      </nav>
+      <nav class="foot-col" aria-label="About links">
+        <p class="foot-col-label">About</p>
+        <a href="#founder">Why we built this</a>
+        <a href="#faq">FAQ</a>
+        <a href="https://studyos-edu.vercel.app/auth.html">Log in</a>
+      </nav>
+      <nav class="foot-col" aria-label="Legal links">
+        <p class="foot-col-label">Legal</p>
+        <a href="#">Terms of Service</a>
+        <a href="#">Privacy Policy</a>
+      </nav>
+    </div>
+    <div class="foot-bottom">
+      <p class="foot-copy">&copy; 2025 StudyOS. Built with care for CBSE students.</p>
+      <div class="foot-legal">
+        <a href="#">Terms</a>
+        <a href="#">Privacy</a>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<script>
+(function(){
+  var nav = document.getElementById('nav');
+  var ticking = false;
+  function check(){
+    nav.classList.toggle('solid', window.scrollY > 16);
+    ticking = false;
+  }
+  window.addEventListener('scroll', function(){
+    if(!ticking){ requestAnimationFrame(check); ticking=true; }
+  }, {passive:true});
+  check();
+}());
+
+var burger = document.getElementById('nav-burger');
+var drawer = document.getElementById('nav-drawer');
+var drawerOpen = false;
+
+function openDrawer(){
+  drawerOpen = true;
+  drawer.classList.add('open');
+  burger.setAttribute('aria-expanded','true');
+  burger.setAttribute('aria-label','Close menu');
+  burger.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>';
+}
+function closeDrawer(){
+  drawerOpen = false;
+  drawer.classList.remove('open');
+  burger.setAttribute('aria-expanded','false');
+  burger.setAttribute('aria-label','Open menu');
+  burger.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>';
+}
+burger.addEventListener('click', function(){ drawerOpen ? closeDrawer() : openDrawer(); });
+document.addEventListener('click', function(e){
+  if(drawerOpen && !drawer.contains(e.target) && !burger.contains(e.target)) closeDrawer();
+});
+document.addEventListener('keydown', function(e){
+  if(e.key==='Escape' && drawerOpen){ closeDrawer(); burger.focus(); }
+});
+
+(function(){
+  var prefersMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+  var els = document.querySelectorAll('.reveal, .reveal-l, .reveal-r, .reveal-s');
+  if(!prefersMotion){
+    els.forEach(function(el){ el.classList.add('in'); });
+    return;
+  }
+  var io = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting){
+        entry.target.classList.add('in');
+        io.unobserve(entry.target);
+      }
+    });
+  }, { threshold: 0.1, rootMargin: '0px 0px -40px 0px' });
+  els.forEach(function(el){ io.observe(el); });
+}());
+
+document.querySelectorAll('a[href^="#"]').forEach(function(a){
+  a.addEventListener('click', function(e){
+    var t = document.querySelector(this.getAttribute('href'));
+    if(t){ e.preventDefault(); t.scrollIntoView({behavior:'smooth',block:'start'}); }
+  });
+});
+
+(function(){
+  if(!window.matchMedia('(prefers-reduced-motion: no-preference)').matches) return;
+  var hero = document.getElementById('hero');
+  var observed = false;
+  var io2 = new IntersectionObserver(function(entries){
+    entries.forEach(function(entry){
+      if(entry.isIntersecting && !observed){
+        observed = true;
+        var fill = document.querySelector('.db-prog-fill');
+        if(fill){ fill.style.width='0%'; setTimeout(function(){ fill.style.transition='width 1.4s cubic-bezier(.16,1,.3,1)'; fill.style.width='68%'; }, 300); }
+        io2.disconnect();
+      }
+    });
+  }, { threshold: 0.3 });
+  if(hero) io2.observe(hero);
+}());
+
+(function () {
+  'use strict';
+  var canvas = document.getElementById('bg-canvas');
+  if (!canvas) return;
+  var ctx = canvas.getContext('2d', { alpha: false });
+  var prefersMotion = window.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+  var isMobile = /Mobi|Android/i.test(navigator.userAgent) || window.innerWidth < 640;
+
+  var W = 0, H = 0;
+  function resize() {
+    W = canvas.width  = window.innerWidth;
+    H = canvas.height = window.innerHeight;
+  }
+  resize();
+  var resizeTimer;
+  window.addEventListener('resize', function () {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(resize, 120);
+  }, { passive: true });
+
+  var targetMX = 0, targetMY = 0, pMX = 0, pMY = 0;
+  document.addEventListener('mousemove', function (e) {
+    targetMX = e.clientX / W - 0.5;
+    targetMY = e.clientY / H - 0.5;
+  }, { passive: true });
+  if ('DeviceOrientationEvent' in window) {
+    window.addEventListener('deviceorientation', function (e) {
+      if (e.gamma != null) targetMX = Math.max(-0.5, Math.min(0.5, e.gamma / 55));
+      if (e.beta  != null) targetMY = Math.max(-0.5, Math.min(0.5, (e.beta - 30) / 55));
+    }, { passive: true });
+  }
+
+  var N =
+  window.innerWidth >= 1920 ? 600 :
+  window.innerWidth >= 1440 ? 500 :
+  window.innerWidth >= 1024 ? 400 :
+  160;
+  var FOCAL = 700;
+  var SPEED = 1.1;
+  var MAX_Z = 1600;
+
+  var xs   = new Float32Array(N);
+  var ys   = new Float32Array(N);
+  var zs   = new Float32Array(N);
+  var pzs  = new Float32Array(N);
+  var sR   = new Uint8Array(N);
+  var sG   = new Uint8Array(N);
+  var sB   = new Uint8Array(N);
+  var twPh = new Float32Array(N);
+  var twSp = new Float32Array(N);
+
+  var PAL = [
+    [255,255,255],[255,255,255],[255,255,255],[255,255,255],
+    [255,238,220],[255,238,220],
+    [210,225,255],
+    [249,185,95],
+    [252,211,77],
+  ];
+
+  function initStar(i, spread) {
+    xs[i]  = (Math.random() - 0.5) * W  * 2.3;
+    ys[i]  = (Math.random() - 0.5) * H  * 2.3;
+    zs[i]  = spread ? (50 + Math.random() * (MAX_Z - 50)) : (MAX_Z + Math.random() * 250);
+    pzs[i] = zs[i];
+    var c  = PAL[Math.floor(Math.random() * PAL.length)];
+    sR[i] = c[0]; sG[i] = c[1]; sB[i] = c[2];
+    twPh[i] = Math.random() * 6.2832;
+    twSp[i] = 0.007 + Math.random() * 0.022;
+  }
+  for (var i = 0; i < N; i++) initStar(i, true);
+
+  var NEBS = [
+    { rx:0.12, ry:0.18, rad:0.52, r:249, g:115, b:22,  a:0.078, ph:0,   sp:0.0007 },
+    { rx:0.86, ry:0.26, rad:0.40, r:251, g:113, b:133, a:0.058, ph:2.0, sp:0.0005 },
+    { rx:0.50, ry:0.82, rad:0.56, r:245, g:158, b:11,  a:0.042, ph:4.0, sp:0.0006 },
+    { rx:0.72, ry:0.68, rad:0.30, r:120, g:58,  b:230, a:0.024, ph:1.5, sp:0.0009 },
+  ];
+
+  function drawNebulae() {
+    for (var j = 0; j < NEBS.length; j++) {
+      var n  = NEBS[j];
+      n.ph  += n.sp;
+      var nx = n.rx * W + Math.cos(n.ph)        * 38;
+      var ny = n.ry * H + Math.sin(n.ph * 0.71) * 26;
+      var nr = n.rad * Math.max(W, H);
+      var pulse = 0.84 + Math.sin(n.ph * 1.6) * 0.16;
+      var ga = ctx.createRadialGradient(nx, ny, 0, nx, ny, nr);
+      var aOuter = (n.a * pulse).toFixed(3);
+      var aInner = (n.a * pulse * 0.28).toFixed(3);
+      ga.addColorStop(0,    'rgba('+n.r+','+n.g+','+n.b+','+aOuter+')');
+      ga.addColorStop(0.42, 'rgba('+n.r+','+n.g+','+n.b+','+aInner+')');
+      ga.addColorStop(1,    'rgba('+n.r+','+n.g+','+n.b+',0)');
+      ctx.beginPath();
+      ctx.arc(nx, ny, nr, 0, 6.2832);
+      ctx.fillStyle = ga;
+      ctx.fill();
+    }
+  }
+
+  function drawStars() {
+    var pcx = W * 0.5 + pMX * 28;
+    var pcy = H * 0.5 + pMY * 20;
+    ctx.lineCap = 'round';
+    for (var i = 0; i < N; i++) {
+      pzs[i] = zs[i];
+      zs[i] -= SPEED;
+      twPh[i] += twSp[i];
+      if (zs[i] <= 1) { initStar(i, false); continue; }
+      var depth  = 1 - zs[i] / MAX_Z;
+      var scrX   = xs[i] / zs[i]  * FOCAL + pcx;
+      var scrY   = ys[i] / zs[i]  * FOCAL + pcy;
+      if (scrX < -14 || scrX > W + 14 || scrY < -14 || scrY > H + 14) continue;
+      var twinkle = 0.52 + Math.sin(twPh[i]) * 0.48;
+      var alpha   = Math.min(1, depth * 1.15) * twinkle;
+      var size    = Math.max(0.18, depth * 2.75);
+      var R = sR[i], G = sG[i], B = sB[i];
+      if (prefersMotion && depth > 0.32) {
+        var prevX = xs[i] / pzs[i] * FOCAL + pcx;
+        var prevY = ys[i] / pzs[i] * FOCAL + pcy;
+        var dx = scrX - prevX, dy = scrY - prevY;
+        if (dx * dx + dy * dy > 0.18) {
+          ctx.beginPath();
+          ctx.moveTo(prevX, prevY);
+          ctx.lineTo(scrX, scrY);
+          ctx.strokeStyle = 'rgba('+R+','+G+','+B+','+(alpha * 0.38 * depth).toFixed(3)+')';
+          ctx.lineWidth = size * 0.48;
+          ctx.stroke();
+        }
+      }
+      ctx.beginPath();
+      ctx.arc(scrX, scrY, size, 0, 6.2832);
+      ctx.fillStyle = 'rgba('+R+','+G+','+B+','+alpha.toFixed(3)+')';
+      ctx.fill();
+      if (size > 1.05 && alpha > 0.4) {
+        var hR  = size * 2.9;
+        var hrd = ctx.createRadialGradient(scrX, scrY, 0, scrX, scrY, hR);
+        hrd.addColorStop(0, 'rgba('+R+','+G+','+B+','+(alpha * 0.28).toFixed(3)+')');
+        hrd.addColorStop(1, 'rgba('+R+','+G+','+B+',0)');
+        ctx.beginPath();
+        ctx.arc(scrX, scrY, hR, 0, 6.2832);
+        ctx.fillStyle = hrd;
+        ctx.fill();
+      }
+    }
+  }
+
+  var shots = [];
+  var lastShotTs = 0;
+  var nextShotDelay = 11000 + Math.random() * 16000;
+
+  function spawnShot() {
+    shots.push({
+      x: W * (0.04 + Math.random() * 0.58),
+      y: H * (0.02 + Math.random() * 0.32),
+      vx: 11 + Math.random() * 9,
+      vy: 3.5 + Math.random() * 5,
+      life: 0,
+      max: 48 + Math.floor(Math.random() * 38),
+      a: 0,
+      len: 85 + Math.random() * 145,
+    });
+  }
+
+  function drawShots(ts) {
+    if (prefersMotion && ts - lastShotTs > nextShotDelay) {
+      spawnShot();
+      lastShotTs = ts;
+      nextShotDelay = 9000 + Math.random() * 22000;
+    }
+    for (var k = shots.length - 1; k >= 0; k--) {
+      var s = shots[k];
+      s.x += s.vx; s.y += s.vy; s.life++;
+      if      (s.life < 11)         s.a = s.life / 11;
+      else if (s.life > s.max - 11) s.a = (s.max - s.life) / 11;
+      else                          s.a = 1;
+      if (s.life >= s.max) { shots.splice(k, 1); continue; }
+      var mag = Math.sqrt(s.vx * s.vx + s.vy * s.vy);
+      var tx  = s.x - (s.vx / mag) * s.len;
+      var ty  = s.y - (s.vy / mag) * s.len;
+      var sg  = ctx.createLinearGradient(tx, ty, s.x, s.y);
+      sg.addColorStop(0,    'rgba(255,255,255,0)');
+      sg.addColorStop(0.65, 'rgba(255,255,255,'+(s.a * 0.38).toFixed(2)+')');
+      sg.addColorStop(1,    'rgba(255,255,255,'+s.a.toFixed(2)+')');
+      ctx.beginPath();
+      ctx.moveTo(tx, ty);
+      ctx.lineTo(s.x, s.y);
+      ctx.strokeStyle = sg;
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = 'round';
+      ctx.stroke();
+    }
+  }
+
+  function drawVignette() {
+    var vg = ctx.createRadialGradient(W * 0.5, H * 0.5, 0, W * 0.5, H * 0.5, Math.max(W, H) * 0.75);
+    vg.addColorStop(0,    'rgba(0,0,0,0)');
+    vg.addColorStop(0.52, 'rgba(0,0,0,0)');
+    vg.addColorStop(1,    'rgba(0,0,0,0.60)');
+    ctx.fillStyle = vg;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  function drawStatic() {
+    ctx.fillStyle = '#070605';
+    ctx.fillRect(0, 0, W, H);
+    drawNebulae();
+    for (var i = 0; i < N; i++) {
+      var depth = 1 - zs[i] / MAX_Z;
+      var sx2   = xs[i] / zs[i] * FOCAL + W * 0.5;
+      var sy2   = ys[i] / zs[i] * FOCAL + H * 0.5;
+      if (sx2 < 0 || sx2 > W || sy2 < 0 || sy2 > H) continue;
+      ctx.beginPath();
+      ctx.arc(sx2, sy2, Math.max(0.18, depth * 2.2), 0, 6.2832);
+      ctx.fillStyle = 'rgba('+sR[i]+','+sG[i]+','+sB[i]+','+(depth * 0.88).toFixed(2)+')';
+      ctx.fill();
+    }
+    drawVignette();
+  }
+
+  function frame(ts) {
+    pMX += (targetMX - pMX) * 0.042;
+    pMY += (targetMY - pMY) * 0.042;
+    ctx.fillStyle = '#070605';
+    ctx.fillRect(0, 0, W, H);
+    drawNebulae();
+    drawStars();
+    drawShots(ts);
+    drawVignette();
+    requestAnimationFrame(frame);
+  }
+
+  if (!prefersMotion) {
+    drawStatic();
+  } else {
+    requestAnimationFrame(frame);
+  }
+}());
+</script>
+</body>
+</html>
