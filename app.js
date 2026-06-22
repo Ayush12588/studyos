@@ -1454,9 +1454,9 @@ const App={
             <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
                 <span style="font-size:2.2rem;line-height:1;flex-shrink:0">${st>0?'🔥':'🕯️'}</span>
                 <div>
-                    <div style="font-family:var(--font-mono);font-size:2.75rem;font-weight:700;line-height:1;color:${st>0?'#F97316':'var(--color-text-primary)'};">${st}<span style="font-size:1.1rem;font-weight:500;opacity:.55;margin-left:4px">day${st!==1?'s':''}</span></div>
+                    <div style="font-family:var(--font-mono);font-size:2.75rem;font-weight:700;line-height:1;color:${st>0?'#F97316':'var(--color-text-primary)'};">${st}<span style="font-size:1.1rem;font-weight:500;color:var(--color-text-secondary);margin-left:4px">day${st!==1?'s':''}</span></div>
                     <div style="font-size:.78rem;color:${streakSubColor};margin-top:5px;font-weight:${st>0?'600':'400'}">${streakSubline}</div>
-                    ${st===0?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:3px;opacity:.7">Log a session below to begin</div>`:''}
+                    ${st===0?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:3px">Log a session below to begin</div>`:''}
                     <div style="margin-top:8px;display:flex;align-items:center;gap:4px">${freezeSlotsHTML}</div>
                     ${freezeLabelHTML}                </div>
             </div>
@@ -1472,7 +1472,7 @@ const App={
                 <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--accent-light)':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>
             </div>
             <div class="db-stat db-stat-green">
-                <div class="db-stat-val">${comp}<span style="font-size:.9rem;font-weight:400;opacity:.5">/${tot}</span></div>
+                <div class="db-stat-val">${comp}<span style="font-size:.9rem;font-weight:400;color:var(--color-text-secondary)">/${tot}</span></div>
                 <div class="db-stat-lbl">Chapters done</div>
                 <div class="db-stat-trend" style="color:${sp>=50?'var(--trend-green)':'var(--text-muted)'}">${sp>=50?'↑ Strong':'—'}</div>
             </div>
@@ -1489,10 +1489,10 @@ const App={
                 <span style="font-size:1.2rem">${od.length>0?'🚨':'🔔'}</span>
                 <div>
                     <div style="font-weight:600;font-size:.85rem">${od.length>0?(od.length+' overdue chapter'+(od.length>1?'s':'')+(rd.length>0?' + ':'')):''}${rd.length>0?(rd.length+' revision'+(rd.length>1?'s':'')+' due'):''}</div>
-                    <div style="font-size:.75rem;opacity:.8">${od.length>0?(od[0].name+(od.length>1?' and '+(od.length-1)+' more':'')):((rd[0]&&rd[0].name)||'')} · Tap to review</div>
+                    <div style="font-size:.75rem;color:var(--color-text-secondary)">${od.length>0?(od[0].name+(od.length>1?' and '+(od.length-1)+' more':'')):((rd[0]&&rd[0].name)||'')} · Tap to review</div>
                 </div>
             </div>
-            <span style="opacity:.6;font-size:.8rem">→</span>
+            <span style="color:var(--color-text-secondary);font-size:.8rem">→</span>
         </div>`:'';
 
         // ── WEEK STRIP ────────────────────────────────────────────
