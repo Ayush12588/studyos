@@ -488,7 +488,7 @@ const App={
         // needs subjects, because the dashboard itself doesn't require them for
         // its first paint (streak / goal / challenge render without subjects).
         if (tab === 'subjects' || tab === 'revisions' || tab === 'planning' ||
-            tab === 'weekly'   || tab === 'quiz'      || tab === 'exercises') {
+            tab === 'weekly'   || tab === 'quiz'      || tab === 'exercises' || tab === 'backlog') {
             if (!this._loadedTabs.has('subjects')) {
                 try {
                     const { data: subjects, error } = await DB.subjects.getAll(userId);
@@ -882,8 +882,9 @@ const App={
 
     // Pages in each nav group (for auto-expand on navigate)
     NAV_GROUPS:{
-        track:['tasks','revisions','backlog','exams','doubts','planning','quiz'],
-        more:['weekly','exercises','notes','resources','rewards','settings']
+        work:['revisions','quiz','coach','pomodoro','doubts'],
+        review:['planning','exams','weekly'],
+        library:['notes','exercises','resources']
     },
     toggleTheme(theme){
         if(theme){this.state.theme=theme}

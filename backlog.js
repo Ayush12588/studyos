@@ -225,11 +225,10 @@
 
     // ── Add Modal ─────────────────────────────────────────────────────────────
 
-    async openAddModal() {
-      // Ensure subjects are loaded — _loadTabData is a no-op if already loaded
-      if (window.App && App._loadTabData) {
-        await App._loadTabData('subjects');
-      }
+    openAddModal() {
+      // By the time user clicks "+ Add Item", App._loadTabData('backlog') has
+      // already run (triggered by navigate → _loadTabData), so state.subjects
+      // is guaranteed to be populated. No extra fetch needed here.
 
       const subjects = (window.App?.state?.subjects) || [];
       const subjectSel = document.getElementById('bl-subject');
@@ -238,7 +237,7 @@
         subjectSel.innerHTML = `<option value="">No subjects found — add subjects first</option>`;
       } else {
         subjectSel.innerHTML =
-          `<option value="">Select subject…</option>` +
+          '<option value="">Select subject…</option>' +
           subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
       }
 
