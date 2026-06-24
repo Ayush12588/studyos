@@ -12,15 +12,17 @@
   <meta property="og:title" content="StudyOS — The Free Study OS for CBSE Students" />
   <meta property="og:description" content="Track chapters, solve doubts with AI, and prepare for boards with consistent momentum. Free and cloud-synced." />
   <meta property="og:image" content="https://studyos-edu.vercel.app/icons/icon-192.webp" />
-  <meta name="twitter:card" content="summary_large_image" />
+  <meta name="twitter:image"content="https://studyos-edu.vercel.app/icons/icon-192.webp" />
   <meta name="twitter:title" content="StudyOS — The Free Study OS for CBSE Students" />
   <meta name="twitter:description" content="Track chapters, solve doubts with AI, and prepare for boards with consistent momentum." />
+  <meta name="robots"content="index, follow, max-image-preview:large" />
+  <meta property="og:url"content="https://studyos-edu.vercel.app/" />
 
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet" />
-
-  <style>
+  <link rel="canonical" href="https://studyos-edu.vercel.app/" />
+    <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
     :root {
@@ -1352,7 +1354,32 @@
     }
 
     .sr-only { position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border-width:0; }
+
+    /* Hidden until session check resolves — prevents landing-page flash for returning logged-in users */
+    html.sw-checking body { visibility: hidden; }
   </style>
+  <script>document.documentElement.classList.add('sw-checking');</script>
+  <script type="module">
+    import { createClient } from 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js/+esm';
+
+    const SUPABASE_URL = 'https://lutkwbxjnzhctgtomran.supabase.co';
+    const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Imx1dGt3YnhqbnpoY3RndG9tcmFuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzkwNjQxNDgsImV4cCI6MjA5NDY0MDE0OH0.-AAKheuquEqnKRqMkVWPcHlq89FFbaaim7dbS2fbgRY';
+
+    (async () => {
+      try {
+        const supabase = createClient(SUPABASE_URL, SUPABASE_KEY);
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session) {
+          window.location.replace('/app.html');
+          return; // stop here — body stays hidden until navigation completes
+        }
+      } catch (e) {
+        console.warn('Session check failed:', e);
+      }
+      // No session, or check failed: reveal the landing page
+      document.documentElement.classList.remove('sw-checking');
+    })();
+  </script>
 </head>
 <body>
 

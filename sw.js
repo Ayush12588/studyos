@@ -1,11 +1,11 @@
-const CACHE_NAME = 'studyos-v5'; // bumped: force network fetch (cache:'no-store') to bypass browser HTTP cache on app files
+const CACHE_NAME = 'studyos-v6'; // bumped: added /index.html to NETWORK_FIRST (was missing after landing/app rename)
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
 ];
 
 // App files — always fetched from network, never served stale from cache
-const NETWORK_FIRST = ['/', '/app.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
+const NETWORK_FIRST = ['/', '/index.html', '/app.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
 
 // ── Install: cache only external assets ──────────────────────────────
 self.addEventListener('install', event => {
