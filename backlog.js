@@ -1,10 +1,15 @@
 /**
  * backlog.js — StudyOS Study Debt Tracker
  *
- * Requires: db.js (window.DB), app.js (window.App)
+ * Requires: db.js (window.DB, window.supabase), app.js (window.App)
  * Exposes:  window.Backlog
  *
- * Prerequisite: Run migration.sql in Supabase SQL Editor once before deploying.
+ * Prerequisite: Run migration.sql in Supabase SQL Editor once.
+ *
+ * NOTE: App.navigate('backlog') → App.renderPage('backlog') → Backlog.renderPage()
+ * This file does NOT monkey-patch App.navigate — App's own renderPage dispatch
+ * table already has the backlog entry (added in app.js). This file is purely
+ * the data + render layer.
  */
 
 (function () {
@@ -27,10 +32,6 @@
   };
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
-
-  function today() {
-    return new Date().toISOString().split('T')[0];
-  }
 
   function daysSince(dateStr) {
     if (!dateStr) return 0;
@@ -62,14 +63,18 @@
     return `${d} days old`;
   }
 
-  function priorityColor(p) {
-    if (p === 'high')   return 'var(--danger)';
-    if (p === 'medium') return 'var(--warning)';
+  function pColor(p) {
+    if (p === 'high')   return 'var(--color-danger,#ef4444)';
+    if (p === 'medium') return 'var(--color-warning,#f59e0b)';
     return 'var(--text-muted)';
   }
 
   function toast(msg, type) {
     if (window.App && App.toast) App.toast(msg, type || 'info');
+  }
+
+  function getUserId() {
+    return window._supabaseUserId || null;
   }
 
   function updateNavBadge(count) {
@@ -88,6 +93,7 @@
     },
 
     // ── Bootstrap ─────────────────────────────────────────────────────────────
+    // Called by app.js after _loadBootstrap sets window._supabaseUserId
 
     async init(userId) {
       if (!userId) return;
@@ -104,12 +110,12 @@
       this.state.loading = false;
       if (error) { console.error('[Backlog] load error:', error); return; }
 
-      // Refresh priorities client-side, then sort
       const items = (data || []).map(item => {
         const fresh = computePriority(item.created_at, item.due_date);
+        // Fire-and-forget priority refresh if stale
         if (fresh !== item.priority) {
-          // Fire-and-forget DB update — priority drift is cosmetic, not critical
-          supabase.from('backlog_items').update({ priority: fresh }).eq('id', item.id).then(() => {});
+          window.supabase.from('backlog_items')
+            .update({ priority: fresh }).eq('id', item.id).then(() => {});
         }
         return { ...item, priority: fresh };
       });
@@ -171,15 +177,18 @@
       this._afterChange();
       if (window.App && App.addXP) App.addXP(10, 'Backlog item cleared');
       toast('Cleared ✓', 'success');
-      if (App.state.currentPage === 'backlog') this.renderPage();
+      // Re-render page if still on backlog
+      if (window.App && App.state.currentPage === 'backlog') this.renderPage();
     },
 
     openDismissModal(itemId) {
       const item = this.state.items.find(i => i.id === itemId);
       if (!item) return;
-      document.getElementById('bl-dismiss-name').textContent = `${item.subject} · ${item.chapter}`;
+      document.getElementById('bl-dismiss-name').textContent =
+        `${item.subject} · ${item.chapter}`;
       document.getElementById('modal-backlog-dismiss').dataset.itemId = itemId;
-      document.querySelectorAll('input[name="bl-dismiss-reason"]').forEach(r => r.checked = false);
+      document.querySelectorAll('input[name="bl-dismiss-reason"]')
+        .forEach(r => r.checked = false);
       App.openModal('modal-backlog-dismiss');
     },
 
@@ -207,7 +216,7 @@
       const dismissed = this.state.items.find(i => i.id === itemId);
       this.state.items = this.state.items.filter(i => i.id !== itemId);
       this._afterChange();
-      if (App.state.currentPage === 'backlog') this.renderPage();
+      if (window.App && App.state.currentPage === 'backlog') this.renderPage();
 
       this._showUndo(snooze ? 'Snoozed for 3 days' : 'Dismissed', async () => {
         const { error: e } = await DB.backlog.restore(itemId);
@@ -215,12 +224,12 @@
         this.state.items.unshift(dismissed);
         this._sort();
         this._afterChange();
-        if (App.state.currentPage === 'backlog') this.renderPage();
+        if (window.App && App.state.currentPage === 'backlog') this.renderPage();
         toast('Restored', 'info');
       });
     },
 
-    // Auto-add from missed revision — called by App when revision is skipped
+    // Called externally when a revision is skipped
     async autoAddFromRevision(userId, subject, chapter) {
       await this.addItem(userId, {
         subject, chapter,
@@ -235,8 +244,11 @@
       const subjects = (window.App?.state?.subjects) || [];
       const sel = document.getElementById('bl-subject');
       sel.innerHTML = `<option value="">Select subject…</option>` +
-        subjects.map(s => `<option value="${s.name}">${s.icon || ''} ${s.name}</option>`).join('');
-      document.getElementById('bl-chapter').innerHTML = `<option value="">Select subject first…</option>`;
+        subjects.map(s =>
+          `<option value="${s.name}">${s.icon || ''} ${s.name}</option>`
+        ).join('');
+      document.getElementById('bl-chapter').innerHTML =
+        `<option value="">Select subject first…</option>`;
       document.getElementById('bl-topic').value = '';
       document.getElementById('bl-due').value = '';
       document.querySelectorAll('input[name="bl-type"]').forEach(r => r.checked = false);
@@ -250,13 +262,18 @@
         chapterSel.innerHTML = `<option value="">Select subject first…</option>`;
         return;
       }
-      const subject = (window.App?.state?.subjects || []).find(s => s.name === subjectName);
+      const subject = (window.App?.state?.subjects || [])
+        .find(s => s.name === subjectName);
       chapterSel.innerHTML = `<option value="">Select chapter…</option>` +
-        (subject?.chapters || []).map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+        (subject?.chapters || [])
+          .map(c => `<option value="${c.name}">${c.name}</option>`)
+          .join('');
     },
 
     async submitAdd() {
-      const userId  = window._supabaseUserId;
+      const userId  = getUserId();
+      if (!userId) { toast('Not signed in', 'error'); return; }
+
       const subject = document.getElementById('bl-subject').value;
       const chapter = document.getElementById('bl-chapter').value;
       const topic   = document.getElementById('bl-topic').value.trim();
@@ -273,11 +290,13 @@
       btn.textContent = 'Adding…';
 
       const ok = await this.addItem(userId, {
-        subject, chapter, topic, type: typeEl.value, dueDate,
+        subject, chapter, topic,
+        type: typeEl.value, dueDate,
       });
 
       btn.disabled = false;
       btn.textContent = 'Add to Backlog';
+
       if (ok) {
         App.closeModal('modal-backlog-add');
         if (App.state.currentPage === 'backlog') this.renderPage();
@@ -293,16 +312,21 @@
       const top   = items[0];
       const count = items.length;
       const more  = count - 1;
-      const pColor = priorityColor(top.priority);
-      const age    = formatAge(top.created_at);
+      const pc    = pColor(top.priority);
 
-      return `<div class="card bl-widget" style="border-left:3px solid ${pColor};margin-bottom:12px">
+      return `<div class="card bl-widget" style="border-left:3px solid ${pc};margin-bottom:12px">
         <div class="card-header" style="margin-bottom:10px">
           <span class="card-title" style="display:flex;align-items:center;gap:6px">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="${pColor}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
+              fill="none" stroke="${pc}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+            </svg>
             Study Debt
           </span>
-          <button class="btn btn-ghost btn-sm" onclick="App.navigate('backlog')" style="font-size:.72rem">
+          <button class="btn btn-ghost btn-sm"
+            onclick="App.navigate('backlog')"
+            style="font-size:.72rem">
             View all (${count}) →
           </button>
         </div>
@@ -313,34 +337,44 @@
               ${top.subject} · ${top.chapter}
             </div>
             <div style="font-size:.72rem;color:var(--text-muted);margin-top:2px">
-              ${TYPE_LABELS[top.type]} &nbsp;·&nbsp; <span style="color:${pColor}">${age}</span>
+              ${TYPE_LABELS[top.type]} &nbsp;·&nbsp;
+              <span style="color:${pc}">${formatAge(top.created_at)}</span>
             </div>
           </div>
-          <button class="btn btn-primary btn-sm" style="flex-shrink:0;font-size:.72rem"
+          <button class="btn btn-primary btn-sm"
+            style="flex-shrink:0;font-size:.72rem"
             onclick="Backlog.markComplete('${top.id}')">
             Mark Done
           </button>
         </div>
-        ${more > 0 ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-muted)">
-          +${more} more item${more > 1 ? 's' : ''} pending
-        </div>` : ''}
+        ${more > 0
+          ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
+               font-size:.72rem;color:var(--text-muted)">
+               +${more} more item${more > 1 ? 's' : ''} pending
+             </div>`
+          : ''}
       </div>`;
     },
 
     // ── Render: Full Backlog Page ─────────────────────────────────────────────
+    // Called by App.renderPage('backlog') via the dispatch table in app.js
 
     async renderPage() {
       const el = document.getElementById('page-backlog');
       if (!el) return;
 
-      const userId = window._supabaseUserId;
+      const userId = getUserId();
       if (!userId) {
-        el.innerHTML = `<div class="empty-state"><span class="empty-state-icon">🔒</span><div class="empty-state-title">Sign in to view your backlog</div></div>`;
+        el.innerHTML = `<div class="empty-state">
+          <span class="empty-state-icon">🔒</span>
+          <div class="empty-state-title">Sign in to view your backlog</div>
+        </div>`;
         return;
       }
 
-      // Always re-fetch — same pattern as tasks (date-sensitive data)
+      // Show loading state while fetching
       el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);font-size:.85rem">Loading…</div>`;
+
       await this._loadItems(userId);
       updateNavBadge(this.state.items.length);
 
@@ -365,7 +399,8 @@
 
       const renderGroup = (label, color, group) => {
         if (!group.length) return '';
-        return `<div class="bl-group-label" style="color:${color}">${label} · ${group.length}</div>
+        return `
+          <div class="bl-group-label" style="color:${color}">${label} · ${group.length}</div>
           ${group.map(i => this._itemCard(i)).join('')}`;
       };
 
@@ -373,38 +408,53 @@
         <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
           <button class="btn btn-primary" onclick="Backlog.openAddModal()">+ Add Item</button>
         </div>
-        ${renderGroup('HIGH PRIORITY', 'var(--danger)', high)}
-        ${renderGroup('MEDIUM PRIORITY', 'var(--warning)', medium)}
-        ${renderGroup('LOW PRIORITY', 'var(--text-muted)', low)}
+        ${renderGroup('HIGH PRIORITY',   'var(--color-danger,#ef4444)',  high)}
+        ${renderGroup('MEDIUM PRIORITY', 'var(--color-warning,#f59e0b)', medium)}
+        ${renderGroup('LOW PRIORITY',    'var(--text-muted)',            low)}
         <div style="text-align:center;font-size:.72rem;color:var(--text-muted);padding:20px 0">
           ${items.length} pending item${items.length !== 1 ? 's' : ''}
         </div>`;
     },
 
     _itemCard(item) {
-      const pColor  = priorityColor(item.priority);
-      const age     = formatAge(item.created_at);
+      const pc      = pColor(item.priority);
       const until   = daysUntil(item.due_date);
       const dueBadge = item.due_date
-        ? `<span style="font-size:.64rem;padding:2px 7px;border-radius:5px;font-weight:600;background:${until !== null && until <= 2 ? 'var(--color-danger-bg,rgba(239,68,68,0.1))' : 'rgba(99,102,241,0.08)'};color:${until !== null && until <= 2 ? 'var(--danger)' : 'var(--accent-light)'}">
-            Due ${until !== null ? (until > 0 ? `in ${until}d` : until === 0 ? 'today' : 'overdue') : ''}
-           </span>`
-        : '';
+        ? `<span style="font-size:.64rem;padding:2px 7px;border-radius:5px;font-weight:600;
+             background:${until !== null && until <= 2
+               ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.08)'};
+             color:${until !== null && until <= 2
+               ? 'var(--color-danger,#ef4444)' : 'var(--accent-light,#818cf8)'}">
+             Due ${until !== null
+               ? (until > 0 ? `in ${until}d` : until === 0 ? 'today' : 'overdue')
+               : ''}
+           </span>` : '';
 
-      return `<div class="card bl-item-card" style="border-left:3px solid ${pColor};margin-bottom:10px">
+      return `<div class="card bl-item-card" style="border-left:3px solid ${pc};margin-bottom:10px">
         <div style="display:flex;align-items:flex-start;gap:10px">
-          <span style="font-size:1.25rem;flex-shrink:0;margin-top:1px">${TYPE_ICONS[item.type] || '📋'}</span>
+          <span style="font-size:1.25rem;flex-shrink:0;margin-top:1px">
+            ${TYPE_ICONS[item.type] || '📋'}
+          </span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
+            <div style="font-size:.85rem;font-weight:600;overflow:hidden;
+              text-overflow:ellipsis;white-space:nowrap">
               ${item.subject} · ${item.chapter}
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px">
-              <span style="font-size:.72rem;color:var(--text-muted)">${TYPE_LABELS[item.type]}</span>
+              <span style="font-size:.72rem;color:var(--text-muted)">
+                ${TYPE_LABELS[item.type]}
+              </span>
               <span style="font-size:.65rem;color:var(--text-muted)">·</span>
-              <span style="font-size:.72rem;color:${pColor}">${age}</span>
+              <span style="font-size:.72rem;color:${pc}">
+                ${formatAge(item.created_at)}
+              </span>
               ${dueBadge}
             </div>
-            ${item.topic ? `<div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">Topic: ${item.topic}</div>` : ''}
+            ${item.topic
+              ? `<div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">
+                   Topic: ${item.topic}
+                 </div>`
+              : ''}
           </div>
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
@@ -438,6 +488,7 @@
     // 5-second undo toast
     _undoFn: null,
     _undoTimer: null,
+
     _showUndo(label, fn) {
       document.getElementById('bl-undo-bar')?.remove();
       clearTimeout(this._undoTimer);
@@ -445,14 +496,21 @@
 
       const bar = document.createElement('div');
       bar.id = 'bl-undo-bar';
-      bar.innerHTML = `<span>${label}</span>
-        <button onclick="Backlog._undo()" style="background:none;border:none;cursor:pointer;
-          color:var(--accent-light);font-weight:700;font-size:.82rem;padding:0;margin-left:12px">Undo</button>`;
+      bar.innerHTML = `
+        <span>${label}</span>
+        <button onclick="Backlog._undo()" style="
+          background:none;border:none;cursor:pointer;
+          color:var(--accent-light,#818cf8);font-weight:700;
+          font-size:.82rem;padding:0;margin-left:12px">Undo</button>`;
       Object.assign(bar.style, {
-        position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)',
-        background:'var(--color-surface)', border:'1px solid var(--border)',
-        borderRadius:'8px', padding:'10px 16px', display:'flex', alignItems:'center',
-        fontSize:'.82rem', zIndex:'9999', boxShadow:'0 4px 20px rgba(0,0,0,0.25)',
+        position:'fixed', bottom:'80px', left:'50%',
+        transform:'translateX(-50%)',
+        background:'var(--color-surface,#1e1e2e)',
+        border:'1px solid var(--border)',
+        borderRadius:'8px', padding:'10px 16px',
+        display:'flex', alignItems:'center',
+        fontSize:'.82rem', zIndex:'9999',
+        boxShadow:'0 4px 20px rgba(0,0,0,0.25)',
         whiteSpace:'nowrap', animation:'blFadeUp .2s ease',
       });
       document.body.appendChild(bar);
@@ -470,51 +528,24 @@
     },
   };
 
-  // ── Hook into App.navigate ─────────────────────────────────────────────────
+  // ── Init after App bootstrap ───────────────────────────────────────────────
   //
-  // Deferred so app.js has time to define App before this runs.
+  // App.init() calls _loadBootstrap() which sets window._supabaseUserId,
+  // then hides the loading screen and calls renderPage('dashboard').
+  // By that point, backlog.js is already loaded (script tag after app.js).
+  //
+  // We poll until _supabaseUserId is available — cheap, stops as soon as set.
 
-  function _hookNavigate() {
-    if (!window.App || !App.navigate) {
-      setTimeout(_hookNavigate, 100);
+  function _tryInit() {
+    const userId = window._supabaseUserId;
+    if (userId) {
+      Backlog.init(userId);
       return;
     }
-    const _orig = App.navigate.bind(App);
-    App.navigate = function (page) {
-      _orig(page);
-      if (page === 'backlog') Backlog.renderPage();
-    };
+    // Not ready yet — check again in 200ms
+    setTimeout(_tryInit, 200);
   }
-  _hookNavigate();
-
-  // ── Hook into auth state ───────────────────────────────────────────────────
-
-  function _hookAuth() {
-    if (!window.DB || !DB.auth) { setTimeout(_hookAuth, 100); return; }
-    DB.auth.onChange(async (event, session) => {
-      if (event === 'SIGNED_IN' && session?.user?.id) {
-        await Backlog.init(session.user.id);
-      }
-      if (event === 'SIGNED_OUT') {
-        Backlog.state.items = [];
-        updateNavBadge(0);
-        Backlog._refreshDashboardWidget();
-      }
-    });
-  }
-  _hookAuth();
-
-  // ── Init if already signed in ─────────────────────────────────────────────
-
-  async function _initIfAuthed() {
-    if (!window.DB) { setTimeout(_initIfAuthed, 100); return; }
-    try {
-      const { data } = await DB.auth.getSession();
-      const userId = data?.data?.session?.user?.id;
-      if (userId) await Backlog.init(userId);
-    } catch (_) {}
-  }
-  _initIfAuthed();
+  _tryInit();
 
   window.Backlog = Backlog;
 
