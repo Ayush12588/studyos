@@ -2886,3 +2886,109 @@ body { overscroll-behavior-y: contain; }
 /* ── Warm-dark theme: keep danger tint, don't override with amber ── */
 [data-theme="warm-dark"] .quiz-review-cta { border-color: rgba(239,68,68,0.25) !important; }
 .quiz-generating p { color: var(--text-secondary); font-size: .875rem; }
+
+/* ══════════════════════════════════════════════════════════════════
+   BACKLOG — Study Debt Tracker
+   Follows the same design system: 8px grid, no shadows, no gradients
+   ══════════════════════════════════════════════════════════════════ */
+
+/* ── Nav badge (same pattern as rev-badge, doubt-badge) ── */
+#backlog-nav-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 5px;
+    border-radius: 9px;
+    background: var(--danger);
+    color: #fff;
+    font-size: .6rem;
+    font-weight: 700;
+    margin-left: auto;
+    font-family: var(--font-mono);
+    letter-spacing: 0;
+}
+
+/* ── Dashboard widget ── */
+.bl-widget {
+    margin-bottom: 12px;
+    transition: border-color .2s ease;
+}
+.bl-widget:hover {
+    background: var(--color-surface-hover);
+}
+
+/* ── Backlog page: group label ── */
+.bl-group-label {
+    font-size: .67rem;
+    font-weight: 700;
+    letter-spacing: .09em;
+    text-transform: uppercase;
+    margin: 20px 0 8px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid var(--border);
+}
+.bl-group-label:first-child {
+    margin-top: 0;
+}
+
+/* ── Individual item card ── */
+.bl-item-card {
+    transition: background .15s ease, border-color .15s ease;
+}
+.bl-item-card:hover {
+    background: var(--color-surface-hover);
+}
+
+/* ── Radio labels in modals (Add + Dismiss) ── */
+.bl-radio-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: .84rem;
+    color: var(--text-primary);
+    cursor: pointer;
+    padding: 8px 10px;
+    border-radius: var(--radius-xs);
+    border: 1px solid transparent;
+    transition: background .12s ease, border-color .12s ease;
+    user-select: none;
+}
+.bl-radio-label:hover {
+    background: var(--color-surface-hover);
+    border-color: var(--border);
+}
+.bl-radio-label input[type="radio"] {
+    accent-color: var(--accent);
+    width: 15px;
+    height: 15px;
+    flex-shrink: 0;
+    cursor: pointer;
+}
+.bl-radio-label:has(input:checked) {
+    background: rgba(79, 70, 229, 0.08);
+    border-color: rgba(79, 70, 229, 0.3);
+}
+.bl-radio-icon {
+    font-size: 1rem;
+    flex-shrink: 0;
+}
+
+/* ── Undo bar animation ── */
+@keyframes blFadeUp {
+    from { opacity: 0; transform: translate(-50%, 8px); }
+    to   { opacity: 1; transform: translate(-50%, 0);   }
+}
+
+/* ── Warm-dark theme overrides ── */
+[data-theme="warm-dark"] .bl-radio-label:has(input:checked) {
+    background: rgba(212, 137, 26, 0.08);
+    border-color: rgba(212, 137, 26, 0.3);
+}
+
+/* ── Light theme overrides ── */
+[data-theme="light"] .bl-radio-label:has(input:checked) {
+    background: rgba(79, 70, 229, 0.06);
+    border-color: rgba(79, 70, 229, 0.25);
+}

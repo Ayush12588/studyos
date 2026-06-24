@@ -237,6 +237,11 @@
                     <span class="nav-label">Revisions</span>
                     <span class="nav-badge" id="rev-badge" style="display:none">0</span>
                 </div>
+                <div class="nav-item" data-page="backlog" onclick="App.navigate('backlog')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5"/><path d="M2 12l10 5 10-5"/></svg></span>
+                    <span class="nav-label">Backlog</span>
+                    <span class="nav-badge" id="backlog-nav-badge" style="display:none">0</span>
+                </div>
                 <div class="nav-item" data-page="exams" onclick="App.navigate('exams')">
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
                     <span class="nav-label">Exam Scores</span>
@@ -385,6 +390,7 @@
             <div class="page" id="page-rewards"></div>
             <div class="page" id="page-settings"></div>
             <div class="page" id="page-quiz"></div>
+            <div class="page" id="page-backlog"></div>
         </div>
     </main>
 </div>
@@ -491,9 +497,79 @@
     </div>
 </div>
 
+<!-- Backlog: Add Item Modal -->
+<div class="modal-overlay" id="modal-backlog-add">
+    <div class="modal">
+        <div class="modal-header">
+            <h2>Add to Backlog</h2>
+            <button class="modal-close" onclick="App.closeModal('modal-backlog-add')" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body" style="display:flex;flex-direction:column;gap:16px">
+            <div class="form-group" style="margin:0">
+                <label class="form-label">Subject <span style="color:var(--danger)">*</span></label>
+                <select id="bl-subject" class="form-select" onchange="Backlog.onSubjectChange(this)">
+                    <option value="">Select subject…</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0">
+                <label class="form-label">Chapter <span style="color:var(--danger)">*</span></label>
+                <select id="bl-chapter" class="form-select">
+                    <option value="">Select subject first…</option>
+                </select>
+            </div>
+            <div class="form-group" style="margin:0">
+                <label class="form-label">Topic <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+                <input id="bl-topic" class="form-input" placeholder="e.g. Ohm's Law, Integration by parts…">
+            </div>
+            <div class="form-group" style="margin:0">
+                <label class="form-label">What needs to be done <span style="color:var(--danger)">*</span></label>
+                <div style="display:flex;flex-direction:column;gap:10px;margin-top:6px">
+                    <label class="bl-radio-label"><input type="radio" name="bl-type" value="lecture_pending"> <span class="bl-radio-icon">📖</span> Lecture Pending</label>
+                    <label class="bl-radio-label"><input type="radio" name="bl-type" value="revision_pending"> <span class="bl-radio-icon">🔄</span> Revision Pending</label>
+                    <label class="bl-radio-label"><input type="radio" name="bl-type" value="questions_pending"> <span class="bl-radio-icon">📝</span> Questions Pending</label>
+                    <label class="bl-radio-label"><input type="radio" name="bl-type" value="chapter_unstarted"> <span class="bl-radio-icon">📌</span> Chapter Not Started</label>
+                </div>
+            </div>
+            <div class="form-group" style="margin:0">
+                <label class="form-label">Due Date <span style="color:var(--text-muted);font-weight:400">(optional)</span></label>
+                <input id="bl-due" type="date" class="form-input">
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="App.closeModal('modal-backlog-add')">Cancel</button>
+            <button id="bl-add-btn" class="btn btn-primary" onclick="Backlog.submitAdd()">Add to Backlog</button>
+        </div>
+    </div>
+</div>
+
+<!-- Backlog: Dismiss Reason Modal -->
+<div class="modal-overlay" id="modal-backlog-dismiss">
+    <div class="modal" style="max-width:360px">
+        <div class="modal-header">
+            <h2>Dismiss item?</h2>
+            <button class="modal-close" onclick="App.closeModal('modal-backlog-dismiss')" aria-label="Close">×</button>
+        </div>
+        <div class="modal-body">
+            <p style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">
+                "<span id="bl-dismiss-name" style="color:var(--text-primary);font-weight:600"></span>"
+            </p>
+            <div style="display:flex;flex-direction:column;gap:10px">
+                <label class="bl-radio-label"><input type="radio" name="bl-dismiss-reason" value="already_done"> I already studied this</label>
+                <label class="bl-radio-label"><input type="radio" name="bl-dismiss-reason" value="not_relevant"> Not relevant anymore</label>
+                <label class="bl-radio-label"><input type="radio" name="bl-dismiss-reason" value="postponed"> Remind me in 3 days</label>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button class="btn btn-secondary" onclick="App.closeModal('modal-backlog-dismiss')">Cancel</button>
+            <button class="btn btn-danger" onclick="Backlog.confirmDismiss()">Dismiss</button>
+        </div>
+    </div>
+</div>
+
 <script src="db.js" defer></script>
 <script src="migrate.js" defer></script>
 <script src="app.js" defer></script>
+<script src="backlog.js" defer></script>
 <script src="analytics.js" defer></script>
 <script src="tour.js" defer></script>
 </body>

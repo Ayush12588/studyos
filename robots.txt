@@ -1,12 +1,15 @@
 User-agent: *
-Allow: /
 
-# Prevent indexing of authentication page
+# Allow all assets required for rendering
+Allow: /icons/
+Allow: /*.css$
+Allow: /*.js$
+Allow: /favicon.ico
+Allow: /manifest.json
 
+# Block non-search pages
 Disallow: /auth.html
-
-# Prevent indexing of application dashboard
-
 Disallow: /app.html
 
+# Sitemap location
 Sitemap: https://studyos-edu.vercel.app/sitemap.xml

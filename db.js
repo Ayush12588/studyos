@@ -634,6 +634,84 @@ export const DB = {
     },
   },
 
+
+  // ── Backlog ───────────────────────────────────────────────────────────────
+  //
+  // When to call:
+  //   • .getActive()     — backlog page opens, or on dashboard init
+  //   • .create()        — manual add, or auto-detection
+  //   • .complete(id)    — user marks done
+  //   • .dismiss()       — user dismisses with reason
+  //   • .restore(id)     — undo dismiss (5-sec window)
+  //
+  // NOT cached — state changes frequently.
+
+  backlog: {
+    async getActive(userId) {
+      await requireAuth();
+      const today = new Date().toISOString().split('T')[0];
+      return run(
+        supabase.from('backlog_items')
+          .select('*')
+          .eq('user_id', userId)
+          .eq('status', 'pending')
+          .or('dismissed_until.is.null,dismissed_until.lte.' + today)
+          .order('created_at', { ascending: false })
+      );
+    },
+
+    async create(item) {
+      await requireAuth();
+      return run(supabase.from('backlog_items').insert(item).select().single());
+    },
+
+    async complete(id) {
+      await requireAuth();
+      return run(
+        supabase.from('backlog_items')
+          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .eq('id', id).select().single()
+      );
+    },
+
+    async dismiss(id, reason, snoozeUntil) {
+      await requireAuth();
+      return run(
+        supabase.from('backlog_items')
+          .update({
+            status: 'dismissed',
+            dismissed_at: new Date().toISOString(),
+            dismissed_reason: reason || null,
+            dismissed_until: snoozeUntil || null,
+          })
+          .eq('id', id).select().single()
+      );
+    },
+
+    async restore(id) {
+      await requireAuth();
+      return run(
+        supabase.from('backlog_items')
+          .update({ status: 'pending', dismissed_at: null, dismissed_reason: null, dismissed_until: null })
+          .eq('id', id).select().single()
+      );
+    },
+
+    async hasDuplicate(userId, subject, chapter, type) {
+      await requireAuth();
+      const { data } = await supabase
+        .from('backlog_items')
+        .select('id')
+        .eq('user_id', userId)
+        .eq('subject', subject)
+        .eq('chapter', chapter)
+        .eq('type', type)
+        .eq('status', 'pending')
+        .maybeSingle();
+      return !!data;
+    },
+  },
+
   // ── Badges ────────────────────────────────────────────────────────────────
   //
   // When to call: user navigates to the Rewards tab.

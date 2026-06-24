@@ -882,7 +882,7 @@ const App={
 
     // Pages in each nav group (for auto-expand on navigate)
     NAV_GROUPS:{
-        track:['tasks','revisions','exams','doubts','planning','quiz'],
+        track:['tasks','revisions','backlog','exams','doubts','planning','quiz'],
         more:['weekly','exercises','notes','resources','rewards','settings']
     },
     toggleTheme(theme){
@@ -1276,7 +1276,7 @@ const App={
                 }
             }
         });
-        const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz'};
+        const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
 
         // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
@@ -1304,6 +1304,7 @@ const App={
             resources:'Study links',doubts:'Track your doubts',
             exams:'Score history',exercises:'Chapter exercises',
             rewards:'XP & badges',settings:'Preferences',
+            backlog:'Study debt tracker',
         };
         document.getElementById('page-subtitle').textContent=subtitles[page]||dateStr;
     },
@@ -1783,6 +1784,7 @@ const App={
         ${heroHTML}
         ${statsHTML}
         ${urgencyHTML}
+        <div id="backlog-dashboard-widget">${window.Backlog ? Backlog.renderDashboardWidget() : ''}</div>
         ${coachNudge}
         <div class="db-two-col">
             <div class="db-col-main">
