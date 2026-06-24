@@ -225,10 +225,13 @@
 
     // ── Add Modal ─────────────────────────────────────────────────────────────
 
-    openAddModal() {
-      // By the time user clicks "+ Add Item", App._loadTabData('backlog') has
-      // already run (triggered by navigate → _loadTabData), so state.subjects
-      // is guaranteed to be populated. No extra fetch needed here.
+    async openAddModal() {
+      // Defensively ensure subjects are loaded before opening the modal.
+      // Covers cases where the fetch hasn't resolved yet or modal is triggered
+      // from outside the backlog page (e.g. dashboard widget).
+      if (!window.App?.state?.subjects?.length) {
+        await window.App?._loadTabData('subjects');
+      }
 
       const subjects = (window.App?.state?.subjects) || [];
       const subjectSel = document.getElementById('bl-subject');
@@ -248,21 +251,6 @@
       document.querySelectorAll('input[name="bl-type"]').forEach(r => r.checked = false);
 
       App.openModal('modal-backlog-add');
-    },
-
-    onSubjectChange(sel) {
-      const subjectName = sel.value;
-      const chapterSel  = document.getElementById('bl-chapter');
-      if (!subjectName) {
-        chapterSel.innerHTML = `<option value="">Select subject first…</option>`;
-        return;
-      }
-      const subject = (window.App?.state?.subjects || [])
-        .find(s => s.name === subjectName);
-      const chapters = subject?.chapters || [];
-      chapterSel.innerHTML =
-        `<option value="">Select chapter…</option>` +
-        chapters.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
     },
 
     async submitAdd() {
