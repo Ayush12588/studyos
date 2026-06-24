@@ -1,0 +1,12 @@
+User-agent: *
+Allow: /
+
+# Prevent indexing of authentication page
+
+Disallow: /auth.html
+
+# Prevent indexing of application dashboard
+
+Disallow: /app.html
+
+Sitemap: https://studyos-edu.vercel.app/sitemap.xml
