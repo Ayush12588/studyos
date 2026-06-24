@@ -37,7 +37,7 @@ async function build() {
   console.log(`  ✓ dist/db.js (${(dbSize/1024).toFixed(1)} KB)\n`);
 
   // 2. Minify JS files with Terser
-  const jsFiles = ['app.js', 'migrate.js', 'tour.js', 'analytics.js'];
+  const jsFiles = ['app.js', 'migrate.js', 'tour.js', 'analytics.js', 'backlog.js'];
   for (const file of jsFiles) {
     console.log(`Minifying ${file}...`);
     const src = fs.readFileSync(file, 'utf8');
