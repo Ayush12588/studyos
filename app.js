@@ -3393,17 +3393,23 @@ ${subjects.map(s=>{
         // Start session
         this._quiz={
             active:true,
+            mode:'quiz', // 'quiz' | 'review'
             subjectId,
             subjectName:sub.name,
             subjectIcon:sub.icon,
             questions:shuffled,
             current:0,
-            answers:[],       // {selected, correct, chapterName}
+            answers:{},   // index-keyed: { [qIndex]: {selected, correct, isCorrect, chapterName, question} }
             answered:false,
             startTime:Date.now(),
             timerInterval:null,
             elapsed:0,
-            totalSeconds:10*60 // 10 min
+            totalSeconds:10*60, // 10 min
+            // review mode state (populated after quiz finishes)
+            reviewQuestions:[],
+            reviewCurrent:0,
+            // cached final results (so review mode can return to results)
+            _finalCorrect:0,_finalTotal:0,_finalPct:0,_finalChapterMap:{},_finalXp:0
         };
 
         // Start countdown timer
@@ -3489,16 +3495,30 @@ CRITICAL ACCURACY RULES:
         const q=this._quiz;
         if(!q||!q.active){this.renderQuiz();return;}
 
+        // ── REVIEW MODE (mistake round) ──────────────────────────────────────
+        if(q.mode==='review'){
+            this._renderReviewSession(el);
+            return;
+        }
+
+        // ── NORMAL QUIZ MODE ─────────────────────────────────────────────────
         const current=q.questions[q.current];
         const progress=Math.round((q.current/q.questions.length)*100);
         const remaining=q.totalSeconds-q.elapsed;
         const m=Math.floor(remaining/60), s=remaining%60;
         const timerClass=remaining<=60?'danger':remaining<=180?'warn':'';
 
+        // Determine if this question was already answered (for back-navigation)
+        const existingAnswer=q.answers[q.current]||null;
+        const isAnswered=existingAnswer!==null||q.answered;
+
+        // Back button: only show if not on first question
+        const canGoBack=q.current>0;
+
         el.innerHTML=`<div class="quiz-session-wrap">
             <!-- Header bar -->
             <div class="quiz-header-bar">
-                <button class="btn btn-ghost btn-sm" onclick="App._confirmQuitQuiz()">← Exit</button>
+                <button class="btn btn-ghost btn-sm" onclick="App._confirmQuitQuiz()">✕ Exit</button>
                 <div style="display:flex;align-items:center;gap:10px;flex:1;justify-content:center">
                     <span style="font-size:.8rem;color:var(--text-muted);font-weight:600">${q.subjectIcon} ${q.subjectName}</span>
                     <span style="font-size:.8rem;color:var(--text-muted)">Q ${q.current+1} / ${q.questions.length}</span>
@@ -3506,29 +3526,123 @@ CRITICAL ACCURACY RULES:
                 <div class="quiz-timer-pill ${timerClass}" id="quiz-timer-pill">${m}:${s.toString().padStart(2,'0')}</div>
             </div>
 
-            <!-- Progress bar -->
+            <!-- Progress bar with answered-dot indicators -->
             <div class="quiz-progress-track">
                 <div class="quiz-progress-fill" style="width:${progress}%"></div>
+            </div>
+            <div class="quiz-dot-row">
+                ${q.questions.map((_,i)=>{
+                    const a=q.answers[i];
+                    const cls=i===q.current?'active':a?a.isCorrect?'done-correct':'done-wrong':'upcoming';
+                    return`<span class="quiz-dot ${cls}" onclick="App._jumpToQuestion(${i})" title="Q${i+1}"></span>`;
+                }).join('')}
             </div>
 
             <!-- Question card -->
             <div class="quiz-q-card" id="quiz-q-card">
-                <div class="quiz-q-meta">${current.chapter||''} · ${current.difficulty||'medium'}</div>
+                <div class="quiz-q-meta">${current.chapter||''} · <span class="quiz-difficulty-badge ${current.difficulty||'medium'}">${current.difficulty||'medium'}</span></div>
                 <div class="quiz-q-text">${current.question}</div>
                 <div class="quiz-options" id="quiz-options">
-                    ${current.options.map((opt,i)=>`
-                    <button class="quiz-option" id="quiz-opt-${i}" onclick="App._selectQuizOption(${i})" ${q.answered?'disabled':''}>
-                        <span class="quiz-option-key">${['A','B','C','D'][i]}</span>
-                        <span>${opt}</span>
-                    </button>`).join('')}
+                    ${current.options.map((opt,i)=>{
+                        // If we have an existing answer for this question (back-nav scenario),
+                        // render options in their answered state
+                        let cls='';
+                        if(existingAnswer){
+                            if(i===existingAnswer.correct) cls=existingAnswer.selected===existingAnswer.correct&&i===existingAnswer.selected?'correct':'reveal-correct';
+                            else if(i===existingAnswer.selected&&!existingAnswer.isCorrect) cls='wrong';
+                        }
+                        return`<button class="quiz-option ${cls}" id="quiz-opt-${i}"
+                            onclick="App._selectQuizOption(${i})"
+                            ${isAnswered?'disabled':''}>
+                            <span class="quiz-option-key">${['A','B','C','D'][i]}</span>
+                            <span>${opt}</span>
+                        </button>`;
+                    }).join('')}
                 </div>
-                <div class="quiz-explanation" id="quiz-explanation"></div>
+                <!-- Explanation: show immediately if viewing a previously-answered question -->
+                <div class="quiz-explanation${existingAnswer?' show '+(existingAnswer.isCorrect?'correct-exp':'wrong-exp'):''}" id="quiz-explanation">
+                    ${existingAnswer?`${existingAnswer.isCorrect?'✅':'❌'} <strong>${existingAnswer.isCorrect?'Correct!':'Incorrect.'}</strong> ${current.explanation||''}`:``}
+                </div>
             </div>
 
-            <!-- Next / Submit button -->
-            <div style="display:flex;justify-content:flex-end;margin-top:4px">
-                <button class="btn btn-primary" id="quiz-next-btn" onclick="App._nextQuizQuestion()" style="display:none;min-width:140px;justify-content:center">
-                    ${q.current+1===q.questions.length?'See Results 🎯':'Next Question →'}
+            <!-- Navigation row -->
+            <div class="quiz-nav-row">
+                <!-- Back button -->
+                <button class="btn btn-ghost" id="quiz-back-btn"
+                    onclick="App._prevQuizQuestion()"
+                    style="${canGoBack?'':'visibility:hidden'}">
+                    ← Back
+                </button>
+                <!-- Next / Submit -->
+                <button class="btn btn-primary" id="quiz-next-btn"
+                    onclick="App._nextQuizQuestion()"
+                    style="${isAnswered?'':'display:none'};min-width:140px;justify-content:center">
+                    ${q.current+1===q.questions.length?'See Results 🎯':'Next →'}
+                </button>
+            </div>
+        </div>`;
+    },
+
+    // ── REVIEW MODE RENDERER ─────────────────────────────────────────────────
+    _renderReviewSession(el){
+        const q=this._quiz;
+        const mistakes=q.reviewQuestions;
+        const current=mistakes[q.reviewCurrent];
+        const progress=Math.round((q.reviewCurrent/mistakes.length)*100);
+        const isLast=q.reviewCurrent===mistakes.length-1;
+
+        el.innerHTML=`<div class="quiz-session-wrap">
+            <!-- Header bar (review-tinted) -->
+            <div class="quiz-header-bar review-header">
+                <button class="btn btn-ghost btn-sm" onclick="App._renderQuizResults(
+                    App._quiz._finalCorrect,App._quiz._finalTotal,App._quiz._finalPct,
+                    App._quiz._finalChapterMap,App._quiz._finalXp,false,
+                    App._quiz.subjectIcon,App._quiz.subjectName)">✕ Exit Review</button>
+                <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:center">
+                    <span style="font-size:.78rem;font-weight:700;color:var(--color-danger);letter-spacing:.4px">🔁 MISTAKE REVIEW</span>
+                    <span style="font-size:.78rem;color:var(--text-muted)">${q.reviewCurrent+1} / ${mistakes.length}</span>
+                </div>
+                <div style="width:60px"></div>
+            </div>
+
+            <!-- Progress bar (red) -->
+            <div class="quiz-progress-track" style="margin-top:14px">
+                <div class="quiz-progress-fill review" style="width:${progress}%"></div>
+            </div>
+            <!-- No dot row in review mode — simpler is better here -->
+
+            <!-- Question card with red accent -->
+            <div class="quiz-q-card review-card">
+                <div class="quiz-q-meta">
+                    ${current.chapter||''}
+                    <span class="quiz-difficulty-badge ${current.difficulty||'medium'}">${current.difficulty||'medium'}</span>
+                </div>
+                <div class="quiz-q-text">${current.question}</div>
+                <div class="quiz-options">
+                    ${current.options.map((opt,i)=>{
+                        const isCorrect=i===current.correctIndex;
+                        const isYours=i===current.yourAnswer&&!isCorrect;
+                        const cls=isCorrect?'reveal-correct':isYours?'wrong':'';
+                        return`<button class="quiz-option ${cls}" disabled>
+                            <span class="quiz-option-key">${['A','B','C','D'][i]}</span>
+                            <span>${opt}</span>
+                            ${isCorrect?`<span class="opt-tag">✓ Correct</span>`:''}
+                            ${isYours?`<span class="opt-tag">✗ Yours</span>`:''}
+                        </button>`;
+                    }).join('')}
+                </div>
+                <div class="quiz-explanation show wrong-exp">
+                    ${current.explanation||''}
+                </div>
+            </div>
+
+            <!-- Navigation -->
+            <div class="quiz-nav-row">
+                <button class="btn btn-ghost" onclick="App._prevReviewQuestion()"
+                    style="${q.reviewCurrent>0?'':'visibility:hidden'}">← Back</button>
+                <button class="btn btn-primary" onclick="App._nextReviewQuestion()"
+                    style="min-width:160px;justify-content:center">
+                    ${isLast?'✅ Done — See Results':'Next Mistake →'}
                 </button>
             </div>
         </div>`;
@@ -3536,19 +3650,20 @@ CRITICAL ACCURACY RULES:
 
     _selectQuizOption(optIndex){
         const q=this._quiz;
-        if(!q||q.answered) return;
+        // Ignore if already answered (this question index already has a stored answer)
+        if(!q||q.answered||q.answers[q.current]) return;
         q.answered=true;
         const current=q.questions[q.current];
         const isCorrect=optIndex===current.correctIndex;
 
-        // Record answer
-        q.answers.push({
+        // Store answer keyed by question index (not push — allows back-nav)
+        q.answers[q.current]={
             selected:optIndex,
             correct:current.correctIndex,
             isCorrect,
             chapterName:current.chapter||'Unknown',
             question:current.question
-        });
+        };
 
         // Style options
         const opts=document.querySelectorAll('.quiz-option');
@@ -3574,14 +3689,92 @@ CRITICAL ACCURACY RULES:
         const q=this._quiz;
         if(!q) return;
 
+        // If on last question and it's answered → finish
         if(q.current+1>=q.questions.length){
+            // Check all questions have been answered before finishing
+            const unanswered=q.questions.findIndex((_,i)=>!q.answers[i]);
+            if(unanswered!==-1){
+                // Jump to first unanswered instead of finishing
+                q.current=unanswered;
+                q.answered=false;
+                this._renderQuizSession(document.getElementById('page-quiz'));
+                return;
+            }
             this._finishQuiz(false);
             return;
         }
 
         q.current++;
-        q.answered=false;
+        // answered flag reflects whether the NEW current question already has an answer
+        q.answered=!!q.answers[q.current];
         this._renderQuizSession(document.getElementById('page-quiz'));
+    },
+
+    _prevQuizQuestion(){
+        const q=this._quiz;
+        if(!q||q.current===0) return;
+        q.current--;
+        // When going back, the question is already answered — set flag so UI renders read-only
+        q.answered=!!q.answers[q.current];
+        this._renderQuizSession(document.getElementById('page-quiz'));
+    },
+
+    // Jump to any question dot — only if already answered or going forward
+    _jumpToQuestion(index){
+        const q=this._quiz;
+        if(!q) return;
+        // Allow jumping to any answered question or to the current unanswered frontier
+        const frontier=q.questions.findIndex((_,i)=>!q.answers[i]);
+        const limit=frontier===-1?q.questions.length-1:frontier;
+        if(index>limit) return; // can't jump ahead of unanswered questions
+        q.current=index;
+        q.answered=!!q.answers[index];
+        this._renderQuizSession(document.getElementById('page-quiz'));
+    },
+
+    // ── REVIEW MODE NAVIGATION ────────────────────────────────────────────────
+    _nextReviewQuestion(){
+        const q=this._quiz;
+        if(!q) return;
+        if(q.reviewCurrent>=q.reviewQuestions.length-1){
+            // Done with review → back to results
+            this._renderQuizResults(
+                q._finalCorrect,q._finalTotal,q._finalPct,
+                q._finalChapterMap,q._finalXp,false,
+                q.subjectIcon,q.subjectName
+            );
+            return;
+        }
+        q.reviewCurrent++;
+        this._renderReviewSession(document.getElementById('page-quiz'));
+    },
+
+    _prevReviewQuestion(){
+        const q=this._quiz;
+        if(!q||q.reviewCurrent===0) return;
+        q.reviewCurrent--;
+        this._renderReviewSession(document.getElementById('page-quiz'));
+    },
+
+    _startReviewMode(){
+        const q=this._quiz;
+        if(!q) return;
+        // Build review list: wrong answers with full question context
+        const mistakes=q.questions
+            .map((question,i)=>{
+                const a=q.answers[i];
+                if(!a||a.isCorrect) return null;
+                return{...question, yourAnswer:a.selected};
+            })
+            .filter(Boolean);
+        if(mistakes.length===0){
+            this.toast('No mistakes to review! 🎉','success');
+            return;
+        }
+        q.mode='review';
+        q.reviewQuestions=mistakes;
+        q.reviewCurrent=0;
+        this._renderReviewSession(document.getElementById('page-quiz'));
     },
 
     _finishQuiz(timedOut){
@@ -3590,13 +3783,15 @@ CRITICAL ACCURACY RULES:
         clearInterval(q.timerInterval);
         q.active=false;
 
-        const total=q.answers.length;
-        const correct=q.answers.filter(a=>a.isCorrect).length;
+        // answers is now an index-keyed sparse array — filter to only answered entries
+        const answeredList=q.questions.map((_,i)=>q.answers[i]).filter(Boolean);
+        const total=answeredList.length;
+        const correct=answeredList.filter(a=>a.isCorrect).length;
         const pct=total>0?Math.round(correct/total*100):0;
 
         // Compute chapter breakdown
         const chapterMap={};
-        q.answers.forEach(a=>{
+        answeredList.forEach(a=>{
             if(!chapterMap[a.chapterName]) chapterMap[a.chapterName]={correct:0,total:0};
             chapterMap[a.chapterName].total++;
             if(a.isCorrect) chapterMap[a.chapterName].correct++;
@@ -3627,7 +3822,7 @@ CRITICAL ACCURACY RULES:
         });
 
         // Log revisions for all quizzed chapters
-        const quizzedChapterNames=[...new Set(q.answers.map(a=>a.chapterName))];
+        const quizzedChapterNames=[...new Set(answeredList.map(a=>a.chapterName))];
         this.state.subjects.forEach(s=>{
             s.chapters.forEach(c=>{
                 if(quizzedChapterNames.includes(c.name)&&(c.status==='completed'||c.status==='revised')){
@@ -3647,6 +3842,13 @@ CRITICAL ACCURACY RULES:
         if(weakChapters.length>0){
             this._quizAIDebrief(q.subjectName, pct, weakChapters);
         }
+
+        // Cache final results on _quiz so review mode can return to results screen
+        q._finalCorrect=correct;
+        q._finalTotal=total;
+        q._finalPct=pct;
+        q._finalChapterMap=chapterMap;
+        q._finalXp=xpEarned;
 
         this._renderQuizResults(correct, total, pct, chapterMap, xpEarned, timedOut, q.subjectIcon, q.subjectName);
     },
@@ -3679,6 +3881,11 @@ CRITICAL ACCURACY RULES:
         const circumference=2*Math.PI*56;
         const weakChapters=Object.entries(chapterMap).filter(([n,d])=>d.correct/d.total<0.5).map(([n])=>n);
 
+        // Count mistakes for the review button
+        const mistakeCount=this._quiz
+            ? this._quiz.questions.filter((_,i)=>this._quiz.answers[i]&&!this._quiz.answers[i].isCorrect).length
+            : 0;
+
         el.innerHTML=`<div class="quiz-session-wrap">
             <div class="card" style="text-align:center;padding:32px 24px;margin-bottom:20px">
                 ${timedOut?`<div style="font-size:.78rem;color:var(--color-warning);font-weight:600;margin-bottom:12px;letter-spacing:.5px">⏱ TIME UP</div>`:''}
@@ -3703,6 +3910,19 @@ CRITICAL ACCURACY RULES:
                 <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">${pct>=80?'Strong recall — keep it up!':pct>=60?'Almost there, review weak chapters':'Focus on weak chapters before next quiz'}</div>
                 <div style="display:inline-flex;align-items:center;gap:6px;background:rgba(251,191,36,0.1);border:1px solid rgba(251,191,36,0.2);border-radius:20px;padding:5px 14px;font-family:var(--font-mono);font-size:.82rem;color:var(--color-xp)">⚡ +${xpEarned} XP earned</div>
             </div>
+
+            <!-- Mistake Review CTA — only shown if there are mistakes -->
+            ${mistakeCount>0?`
+            <div class="card quiz-review-cta" style="margin-bottom:20px">
+                <div class="review-cta-inner">
+                    <div class="review-cta-icon">🔁</div>
+                    <div class="review-cta-copy">
+                        <div class="review-cta-title">Review ${mistakeCount} Mistake${mistakeCount>1?'s':''}</div>
+                        <div class="review-cta-sub">See correct answers &amp; explanations for every question you got wrong</div>
+                    </div>
+                    <button class="btn btn-danger" onclick="App._startReviewMode()">Start Review →</button>
+                </div>
+            </div>`:''}
 
             <!-- Chapter breakdown -->
             <div class="card" style="margin-bottom:20px">
@@ -3729,8 +3949,6 @@ CRITICAL ACCURACY RULES:
                 <button class="btn btn-secondary" onclick="App.startQuiz('${retrySubjectId}')" style="flex:1;justify-content:center;min-width:100px">Retry</button>
             </div>
         </div>`;
-
-        this._quiz=null;
     },
 
     _confirmQuitQuiz(){
