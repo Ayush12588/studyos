@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta name="google-site-verification" content="E2XzG5seIX3NfWYxNcHpemGFRYWV9caq3J84nVzP1lk" />
+    <!-- PRIMARY SEO -->
+    <title>StudyOS — Free CBSE Study App for Class 9, 10, 11, 12</title>
+    <meta name="description" content="Free AI-powered study app for CBSE students. Track your syllabus, revise smarter with spaced repetition, get AI coaching, and ace your board exams. Works offline." />
+    <meta name="keywords" content="CBSE study app, Class 10 board exam, CBSE Class 12, free study planner, AI study coach, CBSE syllabus tracker, board exam preparation" />
+    <!-- OPEN GRAPH -->
+    <meta property="og:title" content="StudyOS — Free AI Study App for CBSE Students" />
+    <meta property="og:description" content="Track your CBSE syllabus, revise with AI, generate quizzes instantly. 100% free." />
+    <meta property="og:url" content="https://studyos-edu.vercel.app" />
+    <meta property="og:type" content="website" />
+    <!-- TWITTER CARD -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="StudyOS — Free CBSE Study App" />
+    <meta name="twitter:description" content="AI-powered syllabus tracking and revision for Class 9-12 CBSE students. Free forever." />
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <link rel="manifest" href="/manifest.json">
+    <link rel="icon" type="image/png" href="/icons/icon-192.png">
+    <link rel="apple-touch-icon" href="/icons/icon-192.png">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <link rel="preconnect" href="https://lutkwbxjnzhctgtomran.supabase.co">
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="dns-prefetch" href="https://lutkwbxjnzhctgtomran.supabase.co" />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      media="print"
+      onload="this.media='all'"
+    />
+    <noscript>
+      <link
+        rel="stylesheet"
+        href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap"
+      />
+    </noscript>
+    <script>
+    window.SUPABASE_URL = 'https://lutkwbxjnzhctgtomran.supabase.co';
+    window.SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
+    </script>
+    <!-- Auto-reload when a new service worker takes control, so users
+         never have to manually clear site data to pick up new code.
+         Deferred: won't interrupt an open modal or active typing — it
+         waits until the user is idle, checking every 2s, then reloads. -->
+    <script>
+    if ('serviceWorker' in navigator) {
+        let swRefreshed = false;
+        let pendingCheckId = null;
+
+        function isUserMidTask() {
+            const modalOpen = document.querySelector('.modal-overlay.show') !== null;
+            const welcomeEl = document.getElementById('welcome-overlay');
+            const welcomeOpen = welcomeEl ? !welcomeEl.classList.contains('hidden') : false;
+            const eodEl = document.getElementById('eod-checkin');
+            const eodOpen = eodEl ? eodEl.classList.contains('show') : false;
+            const active = document.activeElement;
+            const typingActive = active &&
+                (active.tagName === 'INPUT' || active.tagName === 'TEXTAREA') &&
+                active.value && active.value.length > 0;
+            return modalOpen || welcomeOpen || eodOpen || typingActive;
+        }
+
+        function reloadNow() {
+            if (swRefreshed) return;
+            swRefreshed = true;
+            if (pendingCheckId) clearInterval(pendingCheckId);
+            window.location.reload();
+        }
+
+        navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!isUserMidTask()) {
+                reloadNow();
+                return;
+            }
+            pendingCheckId = setInterval(() => {
+                if (!isUserMidTask()) reloadNow();
+            }, 2000);
+        });
+    }
+    </script>
+    <script defer
+        src="https://cloud.umami.is/script.js"
+        data-website-id="d9484c5a-3cbd-467f-a251-bb4bd126af13"
+        data-auto-track="false">
+    </script>
+    <link rel="preload" href="styles.css" as="style">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<div id="welcome-overlay" class="hidden">
+    <div class="welcome-card">
+        <!-- Step 1: Exam date FIRST -->
+        <div class="welcome-step active" data-step="1">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+            </div>
+            <h1>Set Your Exam Date</h1>
+            <p>When are your CBSE Board exams? We'll count down every day.</p>
+            <div class="form-group" style="text-align:left;max-width:300px;margin:0 auto 8px">
+                <label class="form-label">Board Exam Date</label>
+                <input type="date" id="welcome-exam-date" class="form-input">
+            </div>
+            <div id="welcome-days-preview" style="text-align:center;min-height:28px;margin-bottom:16px;font-family:var(--font-mono);font-size:.875rem;color:var(--color-warning);font-weight:700"></div>
+            <button class="btn btn-primary" onclick="App.welcomeNext(2)" style="width:100%;justify-content:center">Continue</button>
+            <button class="btn btn-secondary" onclick="document.getElementById('welcome-import-file').click()" style="width:100%;justify-content:center;margin-top:8px">Import Backup</button>
+            <input type="file" id="welcome-import-file" accept=".json" style="display:none" onchange="App.welcomeImport(event)">
+            <p style="margin-top:12px;margin-bottom:0;font-size:.75rem;color:var(--color-text-secondary)">Already have a backup? Import it to restore all your data instantly.</p>
+        </div>
+        <!-- Step 2: Class selection -->
+        <div class="welcome-step" data-step="2">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            </div>
+            <h1>What class are you in?</h1>
+            <p>We'll load the right CBSE syllabus for you.</p>
+            <div class="goal-tiles" style="grid-template-columns:repeat(2,1fr)">
+                <div class="goal-tile" onclick="App.selectWelcomeClass(9)"><span class="gt-hrs">IX</span>Class 9</div>
+                <div class="goal-tile" onclick="App.selectWelcomeClass(10)"><span class="gt-hrs">X</span>Class 10</div>
+                <div class="goal-tile" onclick="App.selectWelcomeClass(11)"><span class="gt-hrs">XI</span>Class 11</div>
+                <div class="goal-tile" onclick="App.selectWelcomeClass(12)"><span class="gt-hrs">XII</span>Class 12</div>
+            </div>
+        </div>
+        <!-- Step 3: Stream selection (Class 11 / 12 only) -->
+        <div class="welcome-step" data-step="3">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            </div>
+            <h1>Choose your stream</h1>
+            <p>Select the stream you're enrolled in.</p>
+            <div class="goal-tiles" style="grid-template-columns:repeat(1,1fr);max-width:280px;margin:0 auto">
+                <div class="goal-tile" onclick="App.selectWelcomeStream('PCM')"><span class="gt-hrs">⚛️</span>PCM — Science (Maths)</div>
+                <div class="goal-tile" onclick="App.selectWelcomeStream('PCB')"><span class="gt-hrs">🌿</span>PCB — Science (Biology)</div>
+                <div class="goal-tile" onclick="App.selectWelcomeStream('Commerce')"><span class="gt-hrs">📈</span>Commerce</div>
+            </div>
+        </div>
+        <!-- Step 4: Name + syllabus -->
+        <div class="welcome-step" data-step="4">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            </div>
+            <h1>Welcome to StudyOS</h1>
+            <p id="welcome-class-label">Your personal study OS. Let's personalize your workspace.</p>
+            <div class="form-group" style="text-align:left;max-width:300px;margin:0 auto 16px">
+                <label class="form-label">Your Name</label>
+                <input type="text" id="welcome-name" class="form-input" placeholder="Enter your name" autocomplete="off">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:8px;max-width:300px;margin:0 auto 0">
+                <button class="btn btn-primary" id="welcome-load-btn" onclick="App.loadCBSEForClass()" style="justify-content:center">Load CBSE Class 10 Syllabus</button>
+                <button class="btn btn-secondary" onclick="App.welcomeNext(5)" style="justify-content:center">I'll add subjects manually</button>
+            </div>
+        </div>
+        <!-- Step 5: Daily goal as tiles -->
+        <div class="welcome-step" data-step="5">
+            <div class="welcome-step-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            </div>
+            <h1>Set Your Daily Goal</h1>
+            <p>How many hours do you plan to study each day?</p>
+            <div class="goal-tiles" id="goal-tiles">
+                <div class="goal-tile" data-mins="60" onclick="App.selectGoalTile(this)"><span class="gt-hrs">1h</span>Light</div>
+                <div class="goal-tile" data-mins="90" onclick="App.selectGoalTile(this)"><span class="gt-hrs">1.5h</span>Steady</div>
+                <div class="goal-tile selected" data-mins="120" onclick="App.selectGoalTile(this)"><span class="gt-hrs">2h</span>Standard</div>
+                <div class="goal-tile" data-mins="150" onclick="App.selectGoalTile(this)"><span class="gt-hrs">2.5h</span>Focused</div>
+                <div class="goal-tile" data-mins="180" onclick="App.selectGoalTile(this)"><span class="gt-hrs">3h</span>Intense</div>
+                <div class="goal-tile" data-mins="240" onclick="App.selectGoalTile(this)"><span class="gt-hrs">4h</span>Warrior</div>
+            </div>
+            <!-- Hidden select kept for JS compatibility -->
+            <select id="welcome-goal" style="display:none">
+                <option value="60">1 hour</option><option value="90">1.5 hours</option>
+                <option value="120" selected>2 hours</option><option value="150">2.5 hours</option>
+                <option value="180">3 hours</option><option value="240">4 hours</option>
+                <option value="300">5 hours</option>
+            </select>
+            <button class="btn btn-primary" onclick="App.completeWelcome()" style="width:100%;justify-content:center;margin-top:16px">Start Studying</button>
+        </div>
+    </div>
+</div>
+
+<!-- Glass orbs div kept empty (display:none via CSS) -->
+<div id="glass-orbs"></div>
+
+<div id="app">
+<div id="sidebar-backdrop" onclick="App.closeSidebar()"></div>
+    <aside id="sidebar">
+        <div class="logo">
+            <picture>
+                <source srcset="/icons/icon-43.webp 1x, /icons/icon-86.webp 2x" type="image/webp">
+                <img src="/icons/icon-192.png" width="43" height="43" style="flex-shrink:0;border-radius:8px" alt="StudyOS">
+            </picture>
+            <div>
+                <div class="logo-text"><span class="logo-study">Study</span><span class="logo-os">OS</span></div>
+                <div class="logo-sub" id="sidebar-class-label">CBSE · Class 10</div>
+            </div>
+        </div>
+        <nav class="nav">
+            <!-- CORE -->
+            <div class="nav-section">Core</div>
+            <div class="nav-item active" data-page="dashboard" onclick="App.navigate('dashboard')">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
+                <span class="nav-label">Dashboard</span>
+            </div>
+            <div class="nav-item" data-page="subjects" onclick="App.navigate('subjects')">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <span class="nav-label">Subjects</span>
+            </div>
+            <div class="nav-item" data-page="log" onclick="App.navigate('log')">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
+                <span class="nav-label">Study Log</span>
+            </div>
+            <div class="nav-item" data-page="coach" onclick="App.navigate('coach')">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
+                <span class="nav-label">AI Coach</span>
+            </div>
+            <div class="nav-item" data-page="pomodoro" onclick="App.navigate('pomodoro')">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
+                <span class="nav-label">Focus Timer</span>
+            </div>
+
+            <!-- TRACK (collapsible) -->
+            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('track')" id="nav-group-track-header">
+                <span>Track</span>
+                <span class="nav-chevron" id="nav-chevron-track">▾</span>
+            </div>
+            <div class="nav-group" id="nav-group-track">
+                <div class="nav-item" data-page="tasks" onclick="App.navigate('tasks')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                    <span class="nav-label">Daily Tasks</span>
+                </div>
+                <div class="nav-item" data-page="revisions" onclick="App.navigate('revisions')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></span>
+                    <span class="nav-label">Revisions</span>
+                    <span class="nav-badge" id="rev-badge" style="display:none">0</span>
+                </div>
+                <div class="nav-item" data-page="exams" onclick="App.navigate('exams')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+                    <span class="nav-label">Exam Scores</span>
+                </div>
+                <div class="nav-item" data-page="doubts" onclick="App.navigate('doubts')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
+                    <span class="nav-label">Doubts</span>
+                    <span class="nav-badge" id="doubt-badge" style="display:none">0</span>
+                </div>
+                <div class="nav-item" data-page="planning" onclick="App.navigate('planning')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span>
+                    <span class="nav-label">Planning</span>
+                    <span class="nav-badge" id="overdue-badge" style="display:none">0</span>
+                </div>
+                <div class="nav-item" data-page="quiz" onclick="App.navigate('quiz')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
+                    <span class="nav-label">Quiz</span>
+                    <span class="nav-badge" id="quiz-badge" style="display:none">0</span>
+                </div>
+            </div>
+
+            <!-- MORE (collapsed by default) -->
+            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('more')" id="nav-group-more-header">
+                <span>More</span>
+                <span class="nav-chevron collapsed" id="nav-chevron-more">▾</span>
+            </div>
+            <div class="nav-group collapsed" id="nav-group-more">
+                <div class="nav-item" data-page="weekly" onclick="App.navigate('weekly')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
+                    <span class="nav-label">Analytics</span>
+                </div>
+                <div class="nav-item" data-page="exercises" onclick="App.navigate('exercises')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="4" y1="9" x2="20" y2="9"/><line x1="4" y1="15" x2="20" y2="15"/><line x1="10" y1="3" x2="8" y2="21"/><line x1="16" y1="3" x2="14" y2="21"/></svg></span>
+                    <span class="nav-label">Exercises</span>
+                </div>
+                <div class="nav-item" data-page="notes" onclick="App.navigate('notes')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
+                    <span class="nav-label">Notes & Formulas</span>
+                </div>
+                <div class="nav-item" data-page="resources" onclick="App.navigate('resources')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+                    <span class="nav-label">Resources</span>
+                </div>
+                <div class="nav-item" data-page="rewards" onclick="App.navigate('rewards')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
+                    <span class="nav-label">Rewards</span>
+                </div>
+                <div class="nav-item" data-page="settings" onclick="App.navigate('settings')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                    <span class="nav-label">Settings</span>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Profile + Exam countdown -->
+        <div class="sidebar-profile">
+            <div class="profile-card">
+                <div class="profile-level">
+                    <span class="profile-name" id="sb-name">Student</span>
+                    <span class="profile-lvl" id="sb-level">LVL 1</span>
+                </div>
+                <div class="xp-bar"><div class="xp-fill" id="sb-xp-fill" style="width:0%"></div></div>
+                <div class="xp-text" id="sb-xp-text">0 / 50 XP</div>
+            </div>
+            <div class="exam-countdown-chip" id="sidebar-exam-chip" style="display:none">
+                <div>
+                    <div class="ecc-days" id="sidebar-exam-days">—</div>
+                    <div class="ecc-label">days to<br>boards</div>
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <main id="main">
+        <!-- Mobile search overlay (slides down from top) -->
+        <div id="mobile-search-overlay" aria-label="Search">
+            <div id="mobile-search-wrapper">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                <input id="mobile-search-input" type="text" placeholder="Search chapters, subjects…"
+                    oninput="App.handleSearch(this.value); App.syncMobileSearch(this.value)"
+                    onkeydown="if(event.key==='Escape')App.closeMobileSearch()">
+            </div>
+            <button class="search-close-btn" onclick="App.closeMobileSearch()" aria-label="Close search">✕</button>
+        </div>
+        <!-- Mobile search results (shown below overlay) -->
+        <div id="mobile-search-results"></div>
+
+        <div id="topbar">
+            <div class="topbar-left">
+                <div style="display:flex;align-items:center;gap:10px;min-width:0">
+                    <button id="menu-toggle" onclick="App.toggleSidebar()" style="flex-shrink:0">☰</button>
+                    <div style="min-width:0;overflow:hidden">
+                        <h1 id="page-title">Dashboard</h1>
+                        <p id="page-subtitle"></p>
+                    </div>
+                </div>
+            </div>
+            <div class="topbar-actions">
+                <div class="search-box" style="position:relative">
+                    <input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 12px 7px 30px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)">
+                    <div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);margin-top:4px;display:none;z-index:60;max-height:240px;overflow-y:auto"></div>
+                </div>
+                <!-- Streak pill: hidden if streak === 0 -->
+                <span class="topbar-pill topbar-streak-pill" id="topbar-streak-pill" style="display:none" aria-label="Study streak">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                    <span id="topbar-streak-val">0</span>
+                </span>
+                <!-- Exam countdown pill: hidden if no exam date set -->
+                <span class="topbar-pill topbar-exam-pill" id="topbar-exam-pill" style="display:none" aria-label="Days to exam">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    <span id="topbar-exam-val">0</span>d
+                </span>
+                <!-- Mobile-only search icon (hidden on desktop via CSS) -->
+                <button class="search-icon-btn" onclick="App.openMobileSearch()" aria-label="Search">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+                </button>
+                <!-- Quick Log: full button on desktop, icon-only on mobile -->
+                <button class="btn btn-primary topbar-quicklog" onclick="App.openQuickLog()" aria-label="Quick Log">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+                    <span class="hide-mobile">Quick Log</span>
+                </button>
+                <!-- Add Chapter: desktop only, hidden on mobile -->
+                <button class="btn btn-secondary topbar-addchapter" onclick="App.openAddChapterModal()" aria-label="Add Chapter">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+                    <span class="hide-mobile">Chapter</span>
+                </button>
+            </div>
+        </div>
+
+        <div id="content">
+            <h2 class="sr-only">Main Content</h2>
+            <div class="page active" id="page-dashboard"></div>
+            <div class="page" id="page-subjects"></div>
+            <div class="page" id="page-log"></div>
+            <div class="page" id="page-tasks"></div>
+            <div class="page" id="page-revisions"></div>
+            <div class="page" id="page-exams"></div>
+            <div class="page" id="page-doubts"></div>
+            <div class="page" id="page-exercises"></div>
+            <div class="page" id="page-planning"></div>
+            <div class="page" id="page-weekly"></div>
+            <div class="page" id="page-pomodoro"></div>
+            <div class="page" id="page-notes"></div>
+            <div class="page" id="page-resources"></div>
+            <div class="page" id="page-coach"></div>
+            <div class="page" id="page-rewards"></div>
+            <div class="page" id="page-settings"></div>
+            <div class="page" id="page-quiz"></div>
+        </div>
+    </main>
+</div>
+
+<!-- Mobile bottom nav — elevated center Log button -->
+<div class="mobile-nav">
+    <div class="mobile-nav-items">
+        <div class="mob-nav-item active" onclick="App.navigate('dashboard')">
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg>
+            <span class="mob-label">Home</span>
+        </div>
+        <div class="mob-nav-item" onclick="App.navigate('subjects')">
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            <span class="mob-label">Subjects</span>
+        </div>
+        <div class="mob-nav-item mob-nav-center" onclick="App.openQuickLog()">
+            <button class="mob-log-btn" aria-label="Log study session">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            </button>
+        </div>
+        <div class="mob-nav-item" onclick="App.navigate('tasks')">
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+            <span class="mob-label">Tasks</span>
+        </div>
+        <div class="mob-nav-item" onclick="App.navigate('rewards')">
+            <svg class="mob-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            <span class="mob-label">Rewards</span>
+        </div>
+    </div>
+</div>
+
+<!-- MODALS — header titles cleaned of emojis -->
+<div class="modal-overlay" id="modal-log"><div class="modal"><div class="modal-header"><h2>Log Study Session</h2><button class="modal-close" onclick="App.closeModal('modal-log')" aria-label="Close">×</button></div><div class="modal-body" id="log-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-log')">Cancel</button><button class="btn btn-primary" onclick="App.saveStudyLog()">Save Session</button></div></div></div>
+
+<div class="modal-overlay" id="modal-chapter"><div class="modal"><div class="modal-header"><h2>Add Chapter</h2><button class="modal-close" onclick="App.closeModal('modal-chapter')" aria-label="Close">×</button></div><div class="modal-body" id="chapter-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-chapter')">Cancel</button><button class="btn btn-primary" onclick="App.saveChapter()">Save Chapter</button></div></div></div>
+
+<div class="modal-overlay" id="modal-subject"><div class="modal"><div class="modal-header"><h2>Add Subject</h2><button class="modal-close" onclick="App.closeModal('modal-subject')" aria-label="Close">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Subject Name</label><input type="text" id="new-subject-name" class="form-input" placeholder="e.g., Mathematics"></div><div class="form-group"><label class="form-label">Icon (emoji)</label><input type="text" id="new-subject-icon" class="form-input" placeholder="📐" maxlength="4"></div><div class="form-group"><label class="form-label">Color</label><div class="quick-log" id="color-pick"><div class="quick-chip selected" data-color="#4F46E5" style="border-color:#4F46E5;color:#818CF8" onclick="App.pickColor(this)">Indigo</div><div class="quick-chip" data-color="#22C55E" style="border-color:#22C55E;color:#4ADE80" onclick="App.pickColor(this)">Green</div><div class="quick-chip" data-color="#F59E0B" style="border-color:#F59E0B;color:#FBBF24" onclick="App.pickColor(this)">Amber</div><div class="quick-chip" data-color="#EF4444" style="border-color:#EF4444;color:#F87171" onclick="App.pickColor(this)">Red</div><div class="quick-chip" data-color="#38BDF8" style="border-color:#38BDF8;color:#7DD3FC" onclick="App.pickColor(this)">Sky</div><div class="quick-chip" data-color="#EC4899" style="border-color:#EC4899;color:#F472B6" onclick="App.pickColor(this)">Pink</div><div class="quick-chip" data-color="#8B5CF6" style="border-color:#8B5CF6;color:#A78BFA" onclick="App.pickColor(this)">Purple</div><div class="quick-chip" data-color="#14B8A6" style="border-color:#14B8A6;color:#2DD4BF" onclick="App.pickColor(this)">Teal</div><div class="quick-chip" data-color="#F97316" style="border-color:#F97316;color:#FB923C" onclick="App.pickColor(this)">Orange</div><div class="quick-chip" data-color="#84CC16" style="border-color:#84CC16;color:#A3E635" onclick="App.pickColor(this)">Lime</div></div></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-subject')">Cancel</button><button class="btn btn-primary" onclick="App.saveSubject()">Add Subject</button></div></div></div>
+
+<div class="modal-overlay" id="modal-detail"><div class="modal"><div class="modal-header"><h2>Chapter Details</h2><button class="modal-close" onclick="App.closeModal('modal-detail')" aria-label="Close">×</button></div><div class="modal-body" id="detail-body"></div><div class="modal-footer" id="detail-footer"></div></div></div>
+
+<div class="modal-overlay" id="modal-exam"><div class="modal"><div class="modal-header"><h2>Log Exam Score</h2><button class="modal-close" onclick="App.closeModal('modal-exam')" aria-label="Close">×</button></div><div class="modal-body" id="exam-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-exam')">Cancel</button><button class="btn btn-primary" onclick="App.saveExamScore()">Save Score</button></div></div></div>
+
+<div class="modal-overlay" id="modal-doubt"><div class="modal"><div class="modal-header"><h2>Add Doubt</h2><button class="modal-close" onclick="App.closeModal('modal-doubt')" aria-label="Close">×</button></div><div class="modal-body" id="doubt-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-doubt')">Cancel</button><button class="btn btn-primary" onclick="App.saveDoubt()">Save Doubt</button></div></div></div>
+
+<div class="modal-overlay" id="modal-resource"><div class="modal"><div class="modal-header"><h2>Add Resource</h2><button class="modal-close" onclick="App.closeModal('modal-resource')" aria-label="Close">×</button></div><div class="modal-body" id="resource-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-resource')">Cancel</button><button class="btn btn-primary" onclick="App.saveResource()">Save Resource</button></div></div></div>
+
+<div class="modal-overlay" id="modal-note-edit"><div class="modal"><div class="modal-header"><h2>Add Note</h2><button class="modal-close" onclick="App.closeModal('modal-note-edit')" aria-label="Close">×</button></div><div class="modal-body" id="note-edit-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-note-edit')">Cancel</button><button class="btn btn-primary" onclick="App.saveNoteFromModal()">Save Note</button></div></div></div>
+
+<!-- Lightbox -->
+<div id="lb-overlay" onclick="if(event.target===this)App.closeLightbox()">
+  <button id="lb-close" onclick="App.closeLightbox()" aria-label="Close">×</button>
+  <img id="lb-img" src="" alt="" style="display:none">
+  <iframe id="lb-pdf" src="" style="display:none"></iframe>
+</div>
+
+<!-- Goal hit banner -->
+<div class="goal-hit-banner" id="goal-hit-banner">Daily goal reached. Keep it up.</div>
+
+<!-- End-of-day check-in banner -->
+<div class="eod-checkin" id="eod-checkin">
+    <div style="display:flex;align-items:flex-start;gap:12px;flex-wrap:wrap">
+        <div style="flex:1;min-width:220px">
+            <div style="font-size:.82rem;font-weight:700;margin-bottom:8px">End of Day Check-in</div>
+            <div style="display:flex;flex-direction:column;gap:8px">
+                <input type="text" id="eod-understood" class="form-input" placeholder="One thing you understood today..." style="font-size:.78rem;padding:7px 10px">
+                <input type="text" id="eod-unclear" class="form-input" placeholder="One thing still unclear..." style="font-size:.78rem;padding:7px 10px">
+            </div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:flex-end;flex-shrink:0;padding-top:24px">
+            <button class="btn btn-primary btn-sm" onclick="App.saveEodCheckin()">Save</button>
+            <button onclick="App.dismissEodCheckin()" style="background:none;border:none;cursor:pointer;color:var(--color-text-secondary);font-size:1rem;padding:6px">×</button>
+        </div>
+    </div>
+</div>
+
+<!-- Streak reminder -->
+<div class="streak-reminder" id="streak-reminder">
+    <div style="font-size:1.2rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg></div>
+    <div>
+        <div id="streak-reminder-msg" style="font-size:.82rem;font-weight:600">Your streak ends tonight!</div>
+        <div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:2px">Log a session to keep it alive</div>
+    </div>
+    <button onclick="App.openQuickLog();App.dismissStreakReminder(true)">Study Now</button>
+    <button onclick="App.dismissStreakReminder(true)" style="background:transparent;border:none;color:var(--color-text-secondary);font-size:1rem;cursor:pointer;padding:6px;min-height:32px;min-width:32px">×</button>
+</div>
+
+<!-- FAB -->
+<div class="fab-backdrop" id="fab-backdrop" onclick="App.closeFab()"></div>
+<div class="fab-menu" id="fab-menu">
+    <div class="fab-action" onclick="App.openQuickLog();App.closeFab()">Log Session</div>
+    <div class="fab-action" onclick="App.navigate('pomodoro');App.closeFab()">Focus Timer</div>
+    <div class="fab-action" onclick="App.navigate('coach');App.closeFab()">AI Coach</div>
+</div>
+<button class="fab" id="fab-btn" onclick="App.toggleFab()" aria-label="Quick actions">＋</button>
+
+<div id="toast-container"></div>
+<div class="celebration" id="celebration"></div>
+<div class="level-up-overlay" id="level-up">
+    <div class="level-up-card">
+        <div class="lu-icon">⚡</div>
+        <h2 id="lu-text">Level Up!</h2>
+        <p id="lu-sub">You reached a new level!</p>
+        <button class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center" onclick="document.getElementById('level-up').classList.remove('show')">Continue</button>
+    </div>
+</div>
+
+<script src="db.js" defer></script>
+<script src="migrate.js" defer></script>
+<script src="app.js" defer></script>
+<script src="analytics.js" defer></script>
+<script src="tour.js" defer></script>
+</body>
+</html>

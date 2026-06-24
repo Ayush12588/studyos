@@ -5,7 +5,7 @@ const EXTERNAL_ASSETS = [
 ];
 
 // App files — always fetched from network, never served stale from cache
-const NETWORK_FIRST = ['/', '/index.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
+const NETWORK_FIRST = ['/', '/app.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
 
 // ── Install: cache only external assets ──────────────────────────────
 self.addEventListener('install', event => {

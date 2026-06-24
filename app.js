@@ -200,7 +200,7 @@ const App={
 
         const { data: { session } } = await window.supabase.auth.getSession();
         if (!session) {
-            window.location.href = '/auth.html';
+            window.location.href = '/index.html';
             return;
         }
         // Store session + email globally for use in renderSettings and API calls

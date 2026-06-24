@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "build": "node build.cjs",
-    "dev": "echo 'Open index.html directly in browser for dev'"
+    "dev": "echo 'Open app.html directly in browser for dev'"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.108.1"

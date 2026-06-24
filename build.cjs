@@ -7,7 +7,7 @@
  *      (eliminates the 8-request CDN waterfall that cost 1.2-2.1s)
  *   2. Minifies app.js, migrate.js, tour.js, analytics.js with Terser
  *   3. Minifies styles.css with CleanCSS
- *   4. Copies index.html, sw.js, manifest.json, icons unchanged
+ *   4. Copies app.html, sw.js, manifest.json, icons unchanged
  *   All output goes to /dist — Vercel serves from there.
  */
 
@@ -62,7 +62,7 @@ async function build() {
   console.log(`  ✓ dist/styles.css (${origKB} KB → ${minKB} KB)\n`);
 
   // 4. Copy static files unchanged
-  const staticFiles = ['index.html', 'auth.html', 'sw.js', 'manifest.json', 'favicon.ico'];
+  const staticFiles = ['app.html', 'auth.html', 'sw.js', 'manifest.json', 'favicon.ico'];
   for (const file of staticFiles) {
     if (fs.existsSync(file)) {
       fs.copyFileSync(file, path.join(OUT, file));
