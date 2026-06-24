@@ -3599,7 +3599,10 @@ CRITICAL ACCURACY RULES:
                     App._quiz._finalChapterMap,App._quiz._finalXp,false,
                     App._quiz.subjectIcon,App._quiz.subjectName)">✕ Exit Review</button>
                 <div style="display:flex;align-items:center;gap:8px;flex:1;justify-content:center">
-                    <span style="font-size:.78rem;font-weight:700;color:var(--color-danger);letter-spacing:.4px">🔁 MISTAKE REVIEW</span>
+                    <span style="display:inline-flex;align-items:center;gap:6px;font-size:.78rem;font-weight:700;color:var(--color-danger);letter-spacing:.4px">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.13"/></svg>
+                        MISTAKE REVIEW
+                    </span>
                     <span style="font-size:.78rem;color:var(--text-muted)">${q.reviewCurrent+1} / ${mistakes.length}</span>
                 </div>
                 <div style="width:60px"></div>
@@ -3915,7 +3918,9 @@ CRITICAL ACCURACY RULES:
             ${mistakeCount>0?`
             <div class="card quiz-review-cta" style="margin-bottom:20px">
                 <div class="review-cta-inner">
-                    <div class="review-cta-icon">🔁</div>
+                    <div class="review-cta-icon">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-4.13"/></svg>
+                    </div>
                     <div class="review-cta-copy">
                         <div class="review-cta-title">Review ${mistakeCount} Mistake${mistakeCount>1?'s':''}</div>
                         <div class="review-cta-sub">See correct answers &amp; explanations for every question you got wrong</div>
