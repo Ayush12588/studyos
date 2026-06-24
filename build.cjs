@@ -62,7 +62,7 @@ async function build() {
   console.log(`  ✓ dist/styles.css (${origKB} KB → ${minKB} KB)\n`);
 
   // 4. Copy static files unchanged
-  const staticFiles = ['index.html','app.html', 'auth.html', 'sw.js', 'manifest.json', 'favicon.ico'];
+  const staticFiles = ['index.html','app.html', 'auth.html', 'sw.js', 'manifest.json', 'favicon.ico', 'sitemap.xml'];
   for (const file of staticFiles) {
     if (fs.existsSync(file)) {
       fs.copyFileSync(file, path.join(OUT, file));
