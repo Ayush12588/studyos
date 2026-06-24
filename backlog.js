@@ -1,15 +1,7 @@
 /**
  * backlog.js — StudyOS Study Debt Tracker
- *
  * Requires: db.js (window.DB, window.supabase), app.js (window.App)
  * Exposes:  window.Backlog
- *
- * Prerequisite: Run migration.sql in Supabase SQL Editor once.
- *
- * NOTE: App.navigate('backlog') → App.renderPage('backlog') → Backlog.renderPage()
- * This file does NOT monkey-patch App.navigate — App's own renderPage dispatch
- * table already has the backlog entry (added in app.js). This file is purely
- * the data + render layer.
  */
 
 (function () {
@@ -24,11 +16,12 @@
     chapter_unstarted: 'Chapter Not Started',
   };
 
-  const TYPE_ICONS = {
-    lecture_pending:   '📖',
-    revision_pending:  '🔄',
-    questions_pending: '📝',
-    chapter_unstarted: '📌',
+  // SVG icons — no emojis, consistent with rest of StudyOS
+  const TYPE_SVG = {
+    lecture_pending: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+    revision_pending: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>`,
+    questions_pending: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
+    chapter_unstarted: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
   };
 
   // ─── Helpers ───────────────────────────────────────────────────────────────
@@ -87,13 +80,9 @@
   // ─── Main Object ───────────────────────────────────────────────────────────
 
   const Backlog = {
-    state: {
-      items:   [],
-      loading: false,
-    },
+    state: { items: [], loading: false },
 
     // ── Bootstrap ─────────────────────────────────────────────────────────────
-    // Called by app.js after _loadBootstrap sets window._supabaseUserId
 
     async init(userId) {
       if (!userId) return;
@@ -112,7 +101,6 @@
 
       const items = (data || []).map(item => {
         const fresh = computePriority(item.created_at, item.due_date);
-        // Fire-and-forget priority refresh if stale
         if (fresh !== item.priority) {
           window.supabase.from('backlog_items')
             .update({ priority: fresh }).eq('id', item.id).then(() => {});
@@ -176,8 +164,7 @@
       this.state.items = this.state.items.filter(i => i.id !== itemId);
       this._afterChange();
       if (window.App && App.addXP) App.addXP(10, 'Backlog item cleared');
-      toast('Cleared ✓', 'success');
-      // Re-render page if still on backlog
+      toast('Cleared', 'success');
       if (window.App && App.state.currentPage === 'backlog') this.renderPage();
     },
 
@@ -196,11 +183,10 @@
       const modal  = document.getElementById('modal-backlog-dismiss');
       const itemId = modal.dataset.itemId;
       const sel    = modal.querySelector('input[name="bl-dismiss-reason"]:checked');
-
       if (!sel) { toast('Select a reason', 'warning'); return; }
 
-      const reason  = sel.value;
-      const snooze  = reason === 'postponed';
+      const reason = sel.value;
+      const snooze = reason === 'postponed';
       let snoozeUntil = null;
       if (snooze) {
         const d = new Date();
@@ -229,7 +215,6 @@
       });
     },
 
-    // Called externally when a revision is skipped
     async autoAddFromRevision(userId, subject, chapter) {
       await this.addItem(userId, {
         subject, chapter,
@@ -240,18 +225,29 @@
 
     // ── Add Modal ─────────────────────────────────────────────────────────────
 
-    openAddModal() {
+    async openAddModal() {
+      // Ensure subjects are loaded — _loadTabData is a no-op if already loaded
+      if (window.App && App._loadTabData) {
+        await App._loadTabData('subjects');
+      }
+
       const subjects = (window.App?.state?.subjects) || [];
-      const sel = document.getElementById('bl-subject');
-      sel.innerHTML = `<option value="">Select subject…</option>` +
-        subjects.map(s =>
-          `<option value="${s.name}">${s.icon || ''} ${s.name}</option>`
-        ).join('');
+      const subjectSel = document.getElementById('bl-subject');
+
+      if (subjects.length === 0) {
+        subjectSel.innerHTML = `<option value="">No subjects found — add subjects first</option>`;
+      } else {
+        subjectSel.innerHTML =
+          `<option value="">Select subject…</option>` +
+          subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
+      }
+
       document.getElementById('bl-chapter').innerHTML =
         `<option value="">Select subject first…</option>`;
       document.getElementById('bl-topic').value = '';
       document.getElementById('bl-due').value = '';
       document.querySelectorAll('input[name="bl-type"]').forEach(r => r.checked = false);
+
       App.openModal('modal-backlog-add');
     },
 
@@ -264,14 +260,14 @@
       }
       const subject = (window.App?.state?.subjects || [])
         .find(s => s.name === subjectName);
-      chapterSel.innerHTML = `<option value="">Select chapter…</option>` +
-        (subject?.chapters || [])
-          .map(c => `<option value="${c.name}">${c.name}</option>`)
-          .join('');
+      const chapters = subject?.chapters || [];
+      chapterSel.innerHTML =
+        `<option value="">Select chapter…</option>` +
+        chapters.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
     },
 
     async submitAdd() {
-      const userId  = getUserId();
+      const userId = getUserId();
       if (!userId) { toast('Not signed in', 'error'); return; }
 
       const subject = document.getElementById('bl-subject').value;
@@ -320,18 +316,19 @@
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24"
               fill="none" stroke="${pc}" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
               <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
-              <line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/>
+              <line x1="12" y1="9" x2="12" y2="13"/>
+              <line x1="12" y1="17" x2="12.01" y2="17"/>
             </svg>
             Study Debt
           </span>
-          <button class="btn btn-ghost btn-sm"
-            onclick="App.navigate('backlog')"
-            style="font-size:.72rem">
+          <button class="btn btn-ghost btn-sm" onclick="App.navigate('backlog')" style="font-size:.72rem">
             View all (${count}) →
           </button>
         </div>
         <div style="display:flex;align-items:center;gap:10px">
-          <span style="font-size:1.3rem;flex-shrink:0">${TYPE_ICONS[top.type] || '📋'}</span>
+          <span style="color:var(--text-muted);display:flex;align-items:center;flex-shrink:0">
+            ${TYPE_SVG[top.type] || ''}
+          </span>
           <div style="flex:1;min-width:0">
             <div style="font-size:.84rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${top.subject} · ${top.chapter}
@@ -341,23 +338,18 @@
               <span style="color:${pc}">${formatAge(top.created_at)}</span>
             </div>
           </div>
-          <button class="btn btn-primary btn-sm"
-            style="flex-shrink:0;font-size:.72rem"
+          <button class="btn btn-primary btn-sm" style="flex-shrink:0;font-size:.72rem"
             onclick="Backlog.markComplete('${top.id}')">
             Mark Done
           </button>
         </div>
-        ${more > 0
-          ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);
-               font-size:.72rem;color:var(--text-muted)">
-               +${more} more item${more > 1 ? 's' : ''} pending
-             </div>`
-          : ''}
+        ${more > 0 ? `<div style="margin-top:10px;padding-top:10px;border-top:1px solid var(--border);font-size:.72rem;color:var(--text-muted)">
+          +${more} more item${more > 1 ? 's' : ''} pending
+        </div>` : ''}
       </div>`;
     },
 
     // ── Render: Full Backlog Page ─────────────────────────────────────────────
-    // Called by App.renderPage('backlog') via the dispatch table in app.js
 
     async renderPage() {
       const el = document.getElementById('page-backlog');
@@ -366,13 +358,11 @@
       const userId = getUserId();
       if (!userId) {
         el.innerHTML = `<div class="empty-state">
-          <span class="empty-state-icon">🔒</span>
           <div class="empty-state-title">Sign in to view your backlog</div>
         </div>`;
         return;
       }
 
-      // Show loading state while fetching
       el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);font-size:.85rem">Loading…</div>`;
 
       await this._loadItems(userId);
@@ -386,7 +376,6 @@
             <button class="btn btn-primary" onclick="Backlog.openAddModal()">+ Add Item</button>
           </div>
           <div class="empty-state">
-            <span class="empty-state-icon">✅</span>
             <div class="empty-state-title">All caught up</div>
             <div class="empty-state-desc">No pending backlog items. Keep the momentum going.</div>
           </div>`;
@@ -420,40 +409,28 @@
       const pc      = pColor(item.priority);
       const until   = daysUntil(item.due_date);
       const dueBadge = item.due_date
-        ? `<span style="font-size:.64rem;padding:2px 7px;border-radius:5px;font-weight:600;
-             background:${until !== null && until <= 2
-               ? 'rgba(239,68,68,0.1)' : 'rgba(99,102,241,0.08)'};
-             color:${until !== null && until <= 2
-               ? 'var(--color-danger,#ef4444)' : 'var(--accent-light,#818cf8)'}">
-             Due ${until !== null
-               ? (until > 0 ? `in ${until}d` : until === 0 ? 'today' : 'overdue')
-               : ''}
-           </span>` : '';
+        ? `<span class="bl-due-badge" style="color:${until !== null && until <= 2 ? 'var(--color-danger,#ef4444)' : 'var(--text-muted)'}">
+             Due ${until !== null ? (until > 0 ? `in ${until}d` : until === 0 ? 'today' : 'overdue') : ''}
+           </span>`
+        : '';
 
       return `<div class="card bl-item-card" style="border-left:3px solid ${pc};margin-bottom:10px">
         <div style="display:flex;align-items:flex-start;gap:10px">
-          <span style="font-size:1.25rem;flex-shrink:0;margin-top:1px">
-            ${TYPE_ICONS[item.type] || '📋'}
+          <span class="bl-type-icon" style="color:var(--text-muted)">
+            ${TYPE_SVG[item.type] || ''}
           </span>
           <div style="flex:1;min-width:0">
-            <div style="font-size:.85rem;font-weight:600;overflow:hidden;
-              text-overflow:ellipsis;white-space:nowrap">
+            <div style="font-size:.85rem;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">
               ${item.subject} · ${item.chapter}
             </div>
             <div style="display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin-top:4px">
-              <span style="font-size:.72rem;color:var(--text-muted)">
-                ${TYPE_LABELS[item.type]}
-              </span>
+              <span style="font-size:.72rem;color:var(--text-muted)">${TYPE_LABELS[item.type]}</span>
               <span style="font-size:.65rem;color:var(--text-muted)">·</span>
-              <span style="font-size:.72rem;color:${pc}">
-                ${formatAge(item.created_at)}
-              </span>
+              <span style="font-size:.72rem;color:${pc}">${formatAge(item.created_at)}</span>
               ${dueBadge}
             </div>
             ${item.topic
-              ? `<div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">
-                   Topic: ${item.topic}
-                 </div>`
+              ? `<div style="font-size:.7rem;color:var(--text-muted);margin-top:3px">Topic: ${item.topic}</div>`
               : ''}
           </div>
         </div>
@@ -485,7 +462,6 @@
       if (el) el.innerHTML = this.renderDashboardWidget();
     },
 
-    // 5-second undo toast
     _undoFn: null,
     _undoTimer: null,
 
@@ -496,29 +472,20 @@
 
       const bar = document.createElement('div');
       bar.id = 'bl-undo-bar';
-      bar.innerHTML = `
-        <span>${label}</span>
-        <button onclick="Backlog._undo()" style="
-          background:none;border:none;cursor:pointer;
-          color:var(--accent-light,#818cf8);font-weight:700;
-          font-size:.82rem;padding:0;margin-left:12px">Undo</button>`;
+      bar.innerHTML = `<span>${label}</span>
+        <button onclick="Backlog._undo()" style="background:none;border:none;cursor:pointer;
+          color:var(--accent-light,#818cf8);font-weight:700;font-size:.82rem;padding:0;margin-left:12px">
+          Undo
+        </button>`;
       Object.assign(bar.style, {
-        position:'fixed', bottom:'80px', left:'50%',
-        transform:'translateX(-50%)',
-        background:'var(--color-surface,#1e1e2e)',
-        border:'1px solid var(--border)',
-        borderRadius:'8px', padding:'10px 16px',
-        display:'flex', alignItems:'center',
-        fontSize:'.82rem', zIndex:'9999',
-        boxShadow:'0 4px 20px rgba(0,0,0,0.25)',
+        position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)',
+        background:'var(--color-surface,#1e1e2e)', border:'1px solid var(--border)',
+        borderRadius:'8px', padding:'10px 16px', display:'flex', alignItems:'center',
+        fontSize:'.82rem', zIndex:'9999', boxShadow:'0 4px 20px rgba(0,0,0,0.25)',
         whiteSpace:'nowrap', animation:'blFadeUp .2s ease',
       });
       document.body.appendChild(bar);
-
-      this._undoTimer = setTimeout(() => {
-        bar.remove();
-        this._undoFn = null;
-      }, 5000);
+      this._undoTimer = setTimeout(() => { bar.remove(); this._undoFn = null; }, 5000);
     },
 
     async _undo() {
@@ -528,21 +495,11 @@
     },
   };
 
-  // ── Init after App bootstrap ───────────────────────────────────────────────
-  //
-  // App.init() calls _loadBootstrap() which sets window._supabaseUserId,
-  // then hides the loading screen and calls renderPage('dashboard').
-  // By that point, backlog.js is already loaded (script tag after app.js).
-  //
-  // We poll until _supabaseUserId is available — cheap, stops as soon as set.
+  // ── Init: poll until App sets window._supabaseUserId ──────────────────────
 
   function _tryInit() {
     const userId = window._supabaseUserId;
-    if (userId) {
-      Backlog.init(userId);
-      return;
-    }
-    // Not ready yet — check again in 200ms
+    if (userId) { Backlog.init(userId); return; }
     setTimeout(_tryInit, 200);
   }
   _tryInit();
