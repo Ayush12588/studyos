@@ -2022,6 +2022,8 @@ const App={
         const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){this.addXP(25,'Daily goal! 🎯');this.celebrate();this.showGoalHitBanner()}}
         this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
         this.dismissStreakReminder(false);
+        if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+        
     },
 
     renderLog(){
