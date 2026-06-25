@@ -1,6 +1,6 @@
 /**
  * backlog.js — StudyOS Study Debt Tracker
- * Requires: db.js (window.DB, window.supabase), app.js (window.App)
+ * Requires: db.js (window.DB, window.supabase), app.js (App)
  * Exposes:  window.Backlog
  */
 
@@ -63,7 +63,7 @@
   }
 
   function toast(msg, type) {
-    if (window.App && App.toast) App.toast(msg, type || 'info');
+    if (App && App.toast) App.toast(msg, type || 'info');
   }
 
   function getUserId() {
@@ -163,9 +163,9 @@
       if (error) { toast('Could not complete item', 'error'); return; }
       this.state.items = this.state.items.filter(i => i.id !== itemId);
       this._afterChange();
-      if (window.App && App.addXP) App.addXP(10, 'Backlog item cleared');
+      if (App && App.addXP) App.addXP(10, 'Backlog item cleared');
       toast('Cleared', 'success');
-      if (window.App && App.state.currentPage === 'backlog') this.renderPage();
+      if (App && App.state.currentPage === 'backlog') this.renderPage();
     },
 
     openDismissModal(itemId) {
@@ -202,7 +202,7 @@
       const dismissed = this.state.items.find(i => i.id === itemId);
       this.state.items = this.state.items.filter(i => i.id !== itemId);
       this._afterChange();
-      if (window.App && App.state.currentPage === 'backlog') this.renderPage();
+      if (App && App.state.currentPage === 'backlog') this.renderPage();
 
       this._showUndo(snooze ? 'Snoozed for 3 days' : 'Dismissed', async () => {
         const { error: e } = await DB.backlog.restore(itemId);
@@ -210,7 +210,7 @@
         this.state.items.unshift(dismissed);
         this._sort();
         this._afterChange();
-        if (window.App && App.state.currentPage === 'backlog') this.renderPage();
+        if (App && App.state.currentPage === 'backlog') this.renderPage();
         toast('Restored', 'info');
       });
     },
@@ -229,11 +229,11 @@
       // Defensively ensure subjects are loaded before opening the modal.
       // Covers cases where the fetch hasn't resolved yet or modal is triggered
       // from outside the backlog page (e.g. dashboard widget).
-      if (!window.App?.state?.subjects?.length) {
-        await window.App?._loadTabData('subjects');
+      if (!App?.state?.subjects?.length) {
+        await App?._loadTabData('subjects');
       }
 
-      const subjects = (window.App?.state?.subjects) || [];
+      const subjects = (App?.state?.subjects) || [];
       const subjectSel = document.getElementById('bl-subject');
 
       if (subjects.length === 0) {
