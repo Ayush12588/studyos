@@ -212,6 +212,9 @@
       this._sort();
       this._afterChange();
       toast(`Added: ${chapter}`, 'success');
+      if (window.Notifications) {
+        Notifications.send('backlog_alert', `New backlog item added`, `${subject} — ${chapter}`, 'backlog');
+      }
       return true;
     },
 
