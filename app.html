@@ -567,7 +567,19 @@
             <div style="display:flex;flex-direction:column;gap:10px">
                 <label class="bl-radio-label"><input type="radio" name="bl-dismiss-reason" value="already_done"> I already studied this</label>
                 <label class="bl-radio-label"><input type="radio" name="bl-dismiss-reason" value="not_relevant"> Not relevant anymore</label>
-                <label class="bl-radio-label"><input type="radio" name="bl-dismiss-reason" value="postponed"> Remind me in 3 days</label>
+                <label class="bl-radio-label">
+                    <input type="radio" name="bl-dismiss-reason" value="postponed"
+                        onchange="Backlog.toggleSnoozeOptions(this.checked)">
+                    Remind me later
+                </label>
+                <div id="bl-snooze-days-row" style="display:none;margin-left:24px;margin-top:6px">
+                    <select id="bl-snooze-days" class="form-select" style="width:auto;font-size:.82rem">
+                        <option value="1">Tomorrow</option>
+                        <option value="3" selected>In 3 days</option>
+                        <option value="7">In 7 days</option>
+                        <option value="-1">After my exam</option>
+                    </select>
+                </div>
             </div>
         </div>
         <div class="modal-footer">
@@ -581,6 +593,7 @@
 <script src="migrate.js" defer></script>
 <script src="app.js" defer></script>
 <script src="backlog.js" defer></script>
+<script src="notifications.js" defer></script> 
 <script src="analytics.js" defer></script>
 <script src="tour.js" defer></script>
 </body>

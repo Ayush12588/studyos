@@ -1,7 +1,29 @@
 /**
- * backlog.js — StudyOS Study Debt Tracker
+ * backlog.js — StudyOS Study Debt Tracker v2
+ *
+ * What changed from v1:
+ *   1. EXAM-AWARE PRIORITY   — replaces arbitrary "age >= 7 days = high" with
+ *                              urgency that scales against actual exam proximity
+ *   2. POST-SESSION HOOK     — onSessionLogged() cross-refs logged chapters
+ *                              against backlog and prompts to mark done; called
+ *                              by one new line in App.saveStudyLog()
+ *   3. "DO THIS TODAY" CARD  — single pinned recommendation at top of page;
+ *                              eliminates decision paralysis for overwhelmed students
+ *   4. STATS BAR             — total / high / medium / estimated hours to clear / days to exam
+ *   5. PUSH TO TODAY         — adds item as a Daily Task (integrates with App.state.tasks)
+ *   6. FLEXIBLE SNOOZE       — 1d / 3d / 7d / After Exam (was hardcoded 3d)
+ *   7. SUBJECT FILTER BAR    — filter by subject when multiple subjects in backlog
+ *   8. BETTER EMPTY STATE    — teaches users what the backlog is for; not just a dead end
+ *   9. MEANINGFUL COMPLETION — better toast copy when items are cleared
+ *
  * Requires: db.js (window.DB, window.supabase), app.js (App)
  * Exposes:  window.Backlog
+ *
+ * app.js change needed (one line in saveStudyLog, after closeModal call):
+ *   if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+ *
+ * app.html change needed: replace the "Remind me in 3 days" radio with the
+ *   updated snooze block defined at the bottom of this file.
  */
 
 (function () {
@@ -16,10 +38,9 @@
     chapter_unstarted: 'Chapter Not Started',
   };
 
-  // SVG icons — no emojis, consistent with rest of StudyOS
   const TYPE_SVG = {
-    lecture_pending: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
-    revision_pending: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>`,
+    lecture_pending:   `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>`,
+    revision_pending:  `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>`,
     questions_pending: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg>`,
     chapter_unstarted: `<svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>`,
   };
@@ -36,12 +57,42 @@
     return Math.ceil((new Date(dateStr).getTime() - Date.now()) / 86400000);
   }
 
+  /**
+   * Exam-aware priority — the old system was "age >= 7 days = high" which
+   * is meaningless without exam context. A chapter pending for 8 days when
+   * the exam is 90 days away is low priority. The same chapter pending for
+   * 3 days when the exam is in 2 weeks is a fire.
+   *
+   * Priority ladder (first match wins):
+   *   - Explicit due date within 2 days            → high
+   *   - Exam ≤ 14 days away                        → high (everything is urgent)
+   *   - Exam ≤ 30 days + item sitting 3+ days      → high
+   *   - Exam ≤ 60 days + item sitting 10+ days     → high
+   *   - Exam ≤ 30 days + item freshly added        → medium
+   *   - Exam ≤ 60 days + item sitting 3+ days      → medium
+   *   - No exam date — age ≥ 14 days               → high (safe fallback)
+   *   - No exam date — age ≥ 5 days                → medium
+   *   - Everything else                            → low
+   */
   function computePriority(createdAt, dueDate) {
-    const age   = daysSince(createdAt);
-    const until = daysUntil(dueDate);
+    const age        = daysSince(createdAt);
+    const until      = daysUntil(dueDate);
+    const daysToExam = App?.getDaysToExam?.() ?? null;
+
     if (until !== null && until <= 2) return 'high';
-    if (age >= 7)                     return 'high';
-    if (age >= 3)                     return 'medium';
+
+    if (daysToExam !== null && daysToExam >= 0) {
+      if (daysToExam <= 14)                  return 'high';
+      if (daysToExam <= 30 && age >= 3)      return 'high';
+      if (daysToExam <= 60 && age >= 10)     return 'high';
+      if (daysToExam <= 30)                  return 'medium';
+      if (daysToExam <= 60 && age >= 3)      return 'medium';
+      return 'low';
+    }
+
+    // No exam date set — fall back to age-based
+    if (age >= 14) return 'high';
+    if (age >= 5)  return 'medium';
     return 'low';
   }
 
@@ -80,9 +131,14 @@
   // ─── Main Object ───────────────────────────────────────────────────────────
 
   const Backlog = {
-    state: { items: [], loading: false },
+    state: {
+      items:   [],
+      loading: false,
+      filter:  'all', // 'all' | subject name string
+      search:  '',
+    },
 
-    // ── Bootstrap ─────────────────────────────────────────────────────────────
+    // ── Bootstrap ──────────────────────────────────────────────────────────────
 
     async init(userId) {
       if (!userId) return;
@@ -91,7 +147,7 @@
       updateNavBadge(this.state.items.length);
     },
 
-    // ── Data ─────────────────────────────────────────────────────────────────
+    // ── Data ───────────────────────────────────────────────────────────────────
 
     async _loadItems(userId) {
       this.state.loading = true;
@@ -101,6 +157,7 @@
 
       const items = (data || []).map(item => {
         const fresh = computePriority(item.created_at, item.due_date);
+        // Silently sync priority if it drifted (exam date may have changed)
         if (fresh !== item.priority) {
           window.supabase.from('backlog_items')
             .update({ priority: fresh }).eq('id', item.id).then(() => {});
@@ -116,7 +173,7 @@
       this.state.items = items;
     },
 
-    // ── Actions ──────────────────────────────────────────────────────────────
+    // ── Actions ────────────────────────────────────────────────────────────────
 
     async addItem(userId, { subject, chapter, topic, type, dueDate, source }) {
       if (!subject || !chapter || !type) {
@@ -126,7 +183,7 @@
 
       const isDupe = await DB.backlog.hasDuplicate(userId, subject, chapter, type);
       if (isDupe) {
-        toast(`${TYPE_LABELS[type]} for "${chapter}" is already in your backlog`, 'warning');
+        toast(`${TYPE_LABELS[type]} for "${chapter}" already in backlog`, 'warning');
         return false;
       }
 
@@ -161,10 +218,20 @@
     async markComplete(itemId) {
       const { error } = await DB.backlog.complete(itemId);
       if (error) { toast('Could not complete item', 'error'); return; }
+
       this.state.items = this.state.items.filter(i => i.id !== itemId);
       this._afterChange();
       if (App && App.addXP) App.addXP(10, 'Backlog item cleared');
-      toast('Cleared', 'success');
+
+      // Make the win feel real, not just a one-word toast
+      const remaining = this.state.items.length;
+      const msg = remaining === 0
+        ? '🎉 Backlog cleared! You\'re fully caught up!'
+        : remaining === 1
+          ? '✅ Done! One item left in your backlog'
+          : `✅ Done! ${remaining} items remaining`;
+      toast(msg, 'success');
+
       if (App && App.state.currentPage === 'backlog') this.renderPage();
     },
 
@@ -176,7 +243,16 @@
       document.getElementById('modal-backlog-dismiss').dataset.itemId = itemId;
       document.querySelectorAll('input[name="bl-dismiss-reason"]')
         .forEach(r => r.checked = false);
+      // Hide snooze options until user picks "postpone"
+      const snoozeRow = document.getElementById('bl-snooze-days-row');
+      if (snoozeRow) snoozeRow.style.display = 'none';
       App.openModal('modal-backlog-dismiss');
+    },
+
+    // Called by the "Remind me later" radio onchange
+    toggleSnoozeOptions(checked) {
+      const snoozeRow = document.getElementById('bl-snooze-days-row');
+      if (snoozeRow) snoozeRow.style.display = checked ? 'block' : 'none';
     },
 
     async confirmDismiss() {
@@ -188,9 +264,20 @@
       const reason = sel.value;
       const snooze = reason === 'postponed';
       let snoozeUntil = null;
+
       if (snooze) {
+        const snoozeDaysVal = parseInt(
+          document.getElementById('bl-snooze-days')?.value || '3'
+        );
+        const daysToExam = App?.getDaysToExam?.() ?? null;
+
+        // -1 = "After exam" sentinel; fall back to 7 if no exam date is set
+        const actualDays = snoozeDaysVal === -1
+          ? (daysToExam !== null && daysToExam > 0 ? daysToExam : 7)
+          : snoozeDaysVal;
+
         const d = new Date();
-        d.setDate(d.getDate() + 3);
+        d.setDate(d.getDate() + actualDays);
         snoozeUntil = d.toISOString().split('T')[0];
       }
 
@@ -204,7 +291,8 @@
       this._afterChange();
       if (App && App.state.currentPage === 'backlog') this.renderPage();
 
-      this._showUndo(snooze ? 'Snoozed for 3 days' : 'Dismissed', async () => {
+      const snoozeLabel = snooze ? `Snoozed until ${snoozeUntil}` : 'Dismissed';
+      this._showUndo(snoozeLabel, async () => {
         const { error: e } = await DB.backlog.restore(itemId);
         if (e) { toast('Could not restore', 'error'); return; }
         this.state.items.unshift(dismissed);
@@ -223,34 +311,144 @@
       });
     },
 
-    // ── Add Modal ─────────────────────────────────────────────────────────────
+    // ─────────────────────────────────────────────────────────────────────────
+    // POST-SESSION HOOK
+    // Called from App.saveStudyLog() after a session is saved:
+    //   if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+    //
+    // Cross-references the chapter just logged against backlog items and shows
+    // a floating prompt asking the student to close the debt. Zero extra steps.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    onSessionLogged(subjectName, chapterName) {
+      if (!chapterName || !subjectName) return;
+      const match = this.state.items.find(i =>
+        i.subject.toLowerCase() === subjectName.toLowerCase() &&
+        i.chapter.toLowerCase() === chapterName.toLowerCase()
+      );
+      if (!match) return;
+      this._showBacklogClearPrompt(match);
+    },
+
+    _showBacklogClearPrompt(item) {
+      // Remove any existing prompt so there's never more than one
+      document.getElementById('bl-session-prompt')?.remove();
+
+      const el  = document.createElement('div');
+      el.id     = 'bl-session-prompt';
+      const pc  = pColor(item.priority);
+
+      el.innerHTML = `
+        <button onclick="document.getElementById('bl-session-prompt')?.remove()"
+          style="position:absolute;top:8px;right:10px;background:none;border:none;
+                 cursor:pointer;font-size:1rem;color:var(--text-muted);line-height:1">×</button>
+        <div style="font-size:.8rem;font-weight:600;color:var(--text-primary);margin-bottom:4px;padding-right:16px">
+          📋 "${item.chapter}" is in your backlog
+        </div>
+        <div style="font-size:.72rem;color:var(--text-muted);margin-bottom:10px">
+          You just studied this. Ready to close the debt?
+        </div>
+        <div style="display:flex;gap:8px">
+          <button onclick="Backlog._clearFromSessionPrompt('${item.id}')"
+            style="flex:1;padding:7px 0;background:var(--accent,#6366f1);color:#fff;
+                   border:none;border-radius:8px;cursor:pointer;font-size:.78rem;font-weight:600">
+            ✓ Mark Done
+          </button>
+          <button onclick="document.getElementById('bl-session-prompt')?.remove()"
+            style="flex:1;padding:7px 0;background:transparent;color:var(--text-muted);
+                   border:1px solid var(--border);border-radius:8px;cursor:pointer;font-size:.78rem">
+            Not yet
+          </button>
+        </div>`;
+
+      Object.assign(el.style, {
+        position:     'fixed',
+        bottom:       '90px',
+        right:        '20px',
+        background:   'var(--color-surface,#1e1e2e)',
+        border:       `1px solid ${pc}`,
+        borderRadius: '12px',
+        padding:      '14px 16px',
+        zIndex:       '9999',
+        boxShadow:    '0 8px 32px rgba(0,0,0,0.35)',
+        width:        '260px',
+        animation:    'blFadeUp .25s ease',
+      });
+      document.body.appendChild(el);
+      // Auto-dismiss after 12s so it doesn't hang around forever
+      setTimeout(() => document.getElementById('bl-session-prompt')?.remove(), 12000);
+    },
+
+    async _clearFromSessionPrompt(itemId) {
+      document.getElementById('bl-session-prompt')?.remove();
+      await this.markComplete(itemId);
+    },
+
+    // ─────────────────────────────────────────────────────────────────────────
+    // PUSH TO TODAY
+    // Adds a backlog item as a Daily Task so it shows up in the student's
+    // task list without them having to manually copy it over.
+    // ─────────────────────────────────────────────────────────────────────────
+
+    async pushToToday(itemId) {
+      const item = this.state.items.find(i => i.id === itemId);
+      if (!item || !App) return;
+
+      const today    = App.today?.() || new Date().toISOString().split('T')[0];
+      const taskText = `📋 [Backlog] ${TYPE_LABELS[item.type] || item.type}: ${item.subject} · ${item.chapter}`;
+
+      // Prevent duplicates in today's task list
+      const alreadyExists = (App.state.tasks || []).some(
+        t => t.text === taskText && t.date === today
+      );
+      if (alreadyExists) { toast('Already in today\'s tasks', 'info'); return; }
+
+      const newTask = {
+        id:        App.uid?.() || Date.now().toString(36),
+        text:      taskText,
+        done:      false,
+        date:      today,
+        createdAt: Date.now(),
+      };
+      App.state.tasks.push(newTask);
+
+      const userId = getUserId();
+      if (userId) {
+        DB.tasks.create({ user_id: userId, text: taskText, done: false, date: today })
+          .then(({ data, error }) => {
+            if (error) { console.error('[Backlog] pushToToday:', error); return; }
+            if (data && data.id) newTask.id = data.id;
+          });
+      }
+
+      App.save?.();
+      toast('Added to today\'s tasks!', 'success');
+    },
+
+    // ── Add Modal ──────────────────────────────────────────────────────────────
 
     async openAddModal() {
       if (!App?.state?.subjects?.length) {
         await App?._loadTabData('subjects');
       }
 
-      const subjects = (App?.state?.subjects) || [];
+      const subjects   = App?.state?.subjects || [];
       const subjectSel = document.getElementById('bl-subject');
 
-      if (subjects.length === 0) {
-        subjectSel.innerHTML = `<option value="">No subjects found — add subjects first</option>`;
-      } else {
-        subjectSel.innerHTML =
-          '<option value="">Select subject…</option>' +
+      subjectSel.innerHTML = subjects.length === 0
+        ? `<option value="">No subjects found — add subjects first</option>`
+        : '<option value="">Select subject…</option>' +
           subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
-      }
 
-      // Attach onchange directly in JS — avoids Terser mangling the method name
       subjectSel.onchange = () => {
-        const subjectName = subjectSel.value;
+        const name       = subjectSel.value;
         const chapterSel = document.getElementById('bl-chapter');
-        if (!subjectName) {
+        if (!name) {
           chapterSel.innerHTML = `<option value="">Select subject first…</option>`;
           return;
         }
-        const subject = (App?.state?.subjects || []).find(s => s.name === subjectName);
-        const chapters = subject?.chapters || [];
+        const subj     = (App?.state?.subjects || []).find(s => s.name === name);
+        const chapters = subj?.chapters || [];
         chapterSel.innerHTML =
           `<option value="">Select chapter…</option>` +
           chapters.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
@@ -258,7 +456,7 @@
 
       document.getElementById('bl-chapter').innerHTML = `<option value="">Select subject first…</option>`;
       document.getElementById('bl-topic').value = '';
-      document.getElementById('bl-due').value = '';
+      document.getElementById('bl-due').value   = '';
       document.querySelectorAll('input[name="bl-type"]').forEach(r => r.checked = false);
 
       App.openModal('modal-backlog-add');
@@ -280,7 +478,7 @@
       }
 
       const btn = document.getElementById('bl-add-btn');
-      btn.disabled = true;
+      btn.disabled    = true;
       btn.textContent = 'Adding…';
 
       const ok = await this.addItem(userId, {
@@ -288,7 +486,7 @@
         type: typeEl.value, dueDate,
       });
 
-      btn.disabled = false;
+      btn.disabled    = false;
       btn.textContent = 'Add to Backlog';
 
       if (ok) {
@@ -297,7 +495,7 @@
       }
     },
 
-    // ── Render: Dashboard Widget ─────────────────────────────────────────────
+    // ── Render: Dashboard Widget ───────────────────────────────────────────────
 
     renderDashboardWidget() {
       const items = this.state.items;
@@ -347,7 +545,7 @@
       </div>`;
     },
 
-    // ── Render: Full Backlog Page ─────────────────────────────────────────────
+    // ── Render: Full Backlog Page ──────────────────────────────────────────────
 
     async renderPage() {
       const el = document.getElementById('page-backlog');
@@ -368,47 +566,192 @@
 
       const items = this.state.items;
 
+      // ── Empty State ────────────────────────────────────────────────────────
       if (items.length === 0) {
         el.innerHTML = `
           <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
             <button class="btn btn-primary" onclick="Backlog.openAddModal()">+ Add Item</button>
           </div>
           <div class="empty-state">
-            <div class="empty-state-title">All caught up</div>
-            <div class="empty-state-desc">No pending backlog items. Keep the momentum going.</div>
+            <div style="font-size:2.5rem;margin-bottom:14px">✅</div>
+            <div class="empty-state-title">All caught up!</div>
+            <div class="empty-state-desc" style="max-width:340px;margin:0 auto 20px;line-height:1.7">
+              No pending study debt. This page tracks chapters piling up —
+              lectures you skipped, revisions you postponed, questions you
+              never attempted.
+            </div>
+            <button class="btn btn-primary" onclick="Backlog.openAddModal()">+ Add Something</button>
+            <div class="empty-state-hint" style="margin-top:14px;font-size:.72rem">
+              💡 After studying a chapter that's in your backlog, you'll get a prompt to mark it done.
+            </div>
           </div>`;
         return;
       }
 
-      const high   = items.filter(i => i.priority === 'high');
-      const medium = items.filter(i => i.priority === 'medium');
-      const low    = items.filter(i => i.priority === 'low');
+      // ── Stats Bar ──────────────────────────────────────────────────────────
+      const high        = items.filter(i => i.priority === 'high');
+      const medium      = items.filter(i => i.priority === 'medium');
+      const low         = items.filter(i => i.priority === 'low');
+      const daysToExam  = App?.getDaysToExam?.() ?? null;
+      // Rough estimate: each backlog item ≈ 1.5h to properly clear
+      const estHours    = Math.round(items.length * 1.5);
+      const examContext = daysToExam !== null && daysToExam > 0
+        ? `&nbsp;·&nbsp;${daysToExam}d to exam`
+        : '';
+
+      const statsBar = `
+        <div style="display:flex;gap:0;margin-bottom:14px;
+          background:var(--color-surface-hover,rgba(255,255,255,0.04));
+          border-radius:10px;border:1px solid var(--border);overflow:hidden">
+          ${this._statCell(items.length, 'Total',  'var(--text-primary)')}
+          ${this._statCell(high.length,   'High',   'var(--color-danger,#ef4444)')}
+          ${this._statCell(medium.length, 'Medium', 'var(--color-warning,#f59e0b)')}
+          <div style="flex:1;display:flex;align-items:center;justify-content:flex-end;
+            padding:10px 14px;font-size:.68rem;color:var(--text-muted)">
+            ~${estHours}h to clear${examContext}
+          </div>
+        </div>`;
+
+      // ── "Do This Today" Pinned Card ────────────────────────────────────────
+      // Single, unambiguous recommendation. Eliminates the "where do I start?" paralysis.
+      const top    = items[0]; // already sorted high → medium → low, then oldest first
+      const topPc  = pColor(top.priority);
+      const topDue = daysUntil(top.due_date);
+
+      const doThisToday = `
+        <div class="card" style="border-left:3px solid ${topPc};margin-bottom:16px">
+          <div style="font-size:.62rem;font-weight:700;letter-spacing:.09em;
+            color:${topPc};margin-bottom:8px;text-transform:uppercase">
+            ▶ Do This Today
+          </div>
+          <div style="display:flex;align-items:flex-start;gap:10px">
+            <span style="color:var(--text-muted);display:flex;align-items:center;
+              flex-shrink:0;margin-top:1px">
+              ${TYPE_SVG[top.type] || ''}
+            </span>
+            <div style="flex:1;min-width:0">
+              <div style="font-size:.92rem;font-weight:700;overflow:hidden;
+                text-overflow:ellipsis;white-space:nowrap">
+                ${top.chapter}
+              </div>
+              <div style="font-size:.72rem;color:var(--text-muted);margin-top:3px;
+                display:flex;flex-wrap:wrap;gap:4px;align-items:center">
+                <span>${top.subject}</span>
+                <span>·</span>
+                <span>${TYPE_LABELS[top.type]}</span>
+                <span>·</span>
+                <span style="color:${topPc}">${formatAge(top.created_at)}</span>
+                ${topDue !== null ? `<span>·</span><span style="color:${topDue <= 2 ? 'var(--color-danger,#ef4444)' : 'var(--text-muted)'}">due ${topDue > 0 ? `in ${topDue}d` : topDue === 0 ? 'today' : 'overdue'}</span>` : ''}
+              </div>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:12px">
+            <button class="btn btn-primary" style="flex:1"
+              onclick="Backlog.markComplete('${top.id}')">✓ Mark Done</button>
+            <button class="btn btn-secondary btn-sm"
+              onclick="Backlog.pushToToday('${top.id}')" title="Add to Daily Tasks">
+              📋 Tasks
+            </button>
+            <button class="btn btn-ghost btn-sm"
+              onclick="Backlog.openDismissModal('${top.id}')">Dismiss</button>
+          </div>
+        </div>`;
+
+      // ── Subject Filter Bar ─────────────────────────────────────────────────
+      // Only show if there are items from more than one subject
+      const subjects      = [...new Set(items.map(i => i.subject))];
+      const currentFilter = this.state.filter || 'all';
+      const filterBar     = subjects.length > 1 ? `
+        <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px">
+          <button class="btn btn-sm ${currentFilter === 'all' ? 'btn-primary' : 'btn-ghost'}"
+            onclick="Backlog._setFilter('all')">All ${items.length}</button>
+          ${subjects.map(s => {
+            const cnt = items.filter(i => i.subject === s).length;
+            const safe = s.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            return `<button class="btn btn-sm ${currentFilter === s ? 'btn-primary' : 'btn-ghost'}"
+              onclick="Backlog._setFilter('${safe}')">${s} ${cnt}</button>`;
+          }).join('')}
+        </div>` : '';
+
+      // ── Filter + Search Application ────────────────────────────────────────
+      const filtered = currentFilter === 'all'
+        ? items
+        : items.filter(i => i.subject === currentFilter);
+
+      const searchQuery = (this.state.search || '').toLowerCase().trim();
+      const displayed   = searchQuery
+        ? filtered.filter(i =>
+            i.subject.toLowerCase().includes(searchQuery) ||
+            i.chapter.toLowerCase().includes(searchQuery) ||
+            (i.topic || '').toLowerCase().includes(searchQuery))
+        : filtered;
+
+      const noResults = displayed.length === 0
+        ? `<div style="text-align:center;padding:32px;color:var(--text-muted);font-size:.85rem">
+            No items match your filter.
+            <br>
+            <button class="btn btn-ghost btn-sm" onclick="Backlog._setFilter('all')"
+              style="margin-top:10px">Clear filter</button>
+           </div>`
+        : '';
+
+      // Re-split by priority for display (respecting filter)
+      const dHigh   = displayed.filter(i => i.priority === 'high');
+      const dMedium = displayed.filter(i => i.priority === 'medium');
+      const dLow    = displayed.filter(i => i.priority === 'low');
 
       const renderGroup = (label, color, group) => {
         if (!group.length) return '';
+        // Skip the top item from the first group — it's already shown in "Do This Today"
+        const isFirstGroup  = label.startsWith('HIGH') && currentFilter === 'all' && !searchQuery;
+        const renderItems   = isFirstGroup ? group.slice(1) : group;
+        if (!renderItems.length) return '';
         return `
-          <div class="bl-group-label" style="color:${color}">${label} · ${group.length}</div>
-          ${group.map(i => this._itemCard(i)).join('')}`;
+          <div class="bl-group-label" style="color:${color}">${label} · ${renderItems.length}</div>
+          ${renderItems.map(i => this._itemCard(i)).join('')}`;
       };
 
       el.innerHTML = `
-        <div style="display:flex;justify-content:flex-end;margin-bottom:16px">
+        <div style="display:flex;justify-content:flex-end;margin-bottom:14px">
           <button class="btn btn-primary" onclick="Backlog.openAddModal()">+ Add Item</button>
         </div>
-        ${renderGroup('HIGH PRIORITY',   'var(--color-danger,#ef4444)',  high)}
-        ${renderGroup('MEDIUM PRIORITY', 'var(--color-warning,#f59e0b)', medium)}
-        ${renderGroup('LOW PRIORITY',    'var(--text-muted)',            low)}
+        ${statsBar}
+        ${doThisToday}
+        ${filterBar}
+        ${noResults}
+        ${renderGroup('HIGH PRIORITY',   'var(--color-danger,#ef4444)',  dHigh)}
+        ${renderGroup('MEDIUM PRIORITY', 'var(--color-warning,#f59e0b)', dMedium)}
+        ${renderGroup('LOW PRIORITY',    'var(--text-muted)',            dLow)}
         <div style="text-align:center;font-size:.72rem;color:var(--text-muted);padding:20px 0">
           ${items.length} pending item${items.length !== 1 ? 's' : ''}
+          ${displayed.length !== items.length ? ` · showing ${displayed.length}` : ''}
         </div>`;
     },
 
+    // ── Private: stat cell helper ──────────────────────────────────────────────
+    _statCell(value, label, color) {
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;
+          padding:10px 14px;min-width:56px;border-right:1px solid var(--border)">
+          <span style="font-size:1.05rem;font-weight:700;color:${color}">${value}</span>
+          <span style="font-size:.62rem;color:var(--text-muted);margin-top:1px">${label}</span>
+        </div>`;
+    },
+
+    _setFilter(subject) {
+      this.state.filter = subject;
+      if (App && App.state.currentPage === 'backlog') this.renderPage();
+    },
+
     _itemCard(item) {
-      const pc      = pColor(item.priority);
-      const until   = daysUntil(item.due_date);
+      const pc       = pColor(item.priority);
+      const until    = daysUntil(item.due_date);
       const dueBadge = item.due_date
-        ? `<span class="bl-due-badge" style="color:${until !== null && until <= 2 ? 'var(--color-danger,#ef4444)' : 'var(--text-muted)'}">
-             Due ${until !== null ? (until > 0 ? `in ${until}d` : until === 0 ? 'today' : 'overdue') : ''}
+        ? `<span class="bl-due-badge"
+             style="color:${until !== null && until <= 2 ? 'var(--color-danger,#ef4444)' : 'var(--text-muted)'}">
+             Due ${until !== null
+               ? (until > 0 ? `in ${until}d` : until === 0 ? 'today' : 'overdue')
+               : ''}
            </span>`
         : '';
 
@@ -434,14 +777,17 @@
         </div>
         <div style="display:flex;gap:8px;margin-top:12px">
           <button class="btn btn-primary btn-sm" style="flex:1"
-            onclick="Backlog.markComplete('${item.id}')">Mark Done</button>
+            onclick="Backlog.markComplete('${item.id}')">✓ Done</button>
+          <button class="btn btn-secondary btn-sm"
+            onclick="Backlog.pushToToday('${item.id}')"
+            title="Add to today's tasks" style="padding:0 10px">📋</button>
           <button class="btn btn-ghost btn-sm"
             onclick="Backlog.openDismissModal('${item.id}')">Dismiss</button>
         </div>
       </div>`;
     },
 
-    // ── Internals ─────────────────────────────────────────────────────────────
+    // ── Internals ──────────────────────────────────────────────────────────────
 
     _sort() {
       this.state.items.sort((a, b) => {
@@ -460,7 +806,7 @@
       if (el) el.innerHTML = this.renderDashboardWidget();
     },
 
-    _undoFn: null,
+    _undoFn:    null,
     _undoTimer: null,
 
     _showUndo(label, fn) {
@@ -471,16 +817,28 @@
       const bar = document.createElement('div');
       bar.id = 'bl-undo-bar';
       bar.innerHTML = `<span>${label}</span>
-        <button onclick="Backlog._undo()" style="background:none;border:none;cursor:pointer;
-          color:var(--accent-light,#818cf8);font-weight:700;font-size:.82rem;padding:0;margin-left:12px">
+        <button onclick="Backlog._undo()"
+          style="background:none;border:none;cursor:pointer;
+                 color:var(--accent-light,#818cf8);font-weight:700;
+                 font-size:.82rem;padding:0;margin-left:12px">
           Undo
         </button>`;
       Object.assign(bar.style, {
-        position:'fixed', bottom:'80px', left:'50%', transform:'translateX(-50%)',
-        background:'var(--color-surface,#1e1e2e)', border:'1px solid var(--border)',
-        borderRadius:'8px', padding:'10px 16px', display:'flex', alignItems:'center',
-        fontSize:'.82rem', zIndex:'9999', boxShadow:'0 4px 20px rgba(0,0,0,0.25)',
-        whiteSpace:'nowrap', animation:'blFadeUp .2s ease',
+        position:     'fixed',
+        bottom:       '80px',
+        left:         '50%',
+        transform:    'translateX(-50%)',
+        background:   'var(--color-surface,#1e1e2e)',
+        border:       '1px solid var(--border)',
+        borderRadius: '8px',
+        padding:      '10px 16px',
+        display:      'flex',
+        alignItems:   'center',
+        fontSize:     '.82rem',
+        zIndex:       '9999',
+        boxShadow:    '0 4px 20px rgba(0,0,0,0.25)',
+        whiteSpace:   'nowrap',
+        animation:    'blFadeUp .2s ease',
       });
       document.body.appendChild(bar);
       this._undoTimer = setTimeout(() => { bar.remove(); this._undoFn = null; }, 5000);
@@ -493,7 +851,7 @@
     },
   };
 
-  // ── Init: poll until App sets window._supabaseUserId ──────────────────────
+  // ── Init: poll until App sets window._supabaseUserId ────────────────────────
 
   function _tryInit() {
     const userId = window._supabaseUserId;
@@ -505,3 +863,39 @@
   window.Backlog = Backlog;
 
 })();
+
+/*
+ * ─────────────────────────────────────────────────────────────────────────────
+ * REQUIRED CHANGES IN OTHER FILES
+ * ─────────────────────────────────────────────────────────────────────────────
+ *
+ * 1. app.js — ONE LINE in saveStudyLog(), after this.closeModal('modal-log'):
+ *
+ *    // After: this.save(); this.closeModal('modal-log'); this.render(); this.toast(...)
+ *    if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+ *
+ *    The full line context in saveStudyLog (around line 2023) should look like:
+ *    this.save(); this.closeModal('modal-log'); this.render();
+ *    this.toast(`📖 ${this.formatMin(time)} logged!`, 'success');
+ *    this.dismissStreakReminder(false);
+ *    if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+ *
+ * 2. app.html — REPLACE the "Remind me in 3 days" radio block in modal-backlog-dismiss
+ *    with this updated snooze block:
+ *
+ *    <label class="bl-radio-label">
+ *      <input type="radio" name="bl-dismiss-reason" value="postponed"
+ *        onchange="Backlog.toggleSnoozeOptions(this.checked)">
+ *      Remind me later
+ *    </label>
+ *    <div id="bl-snooze-days-row" style="display:none;margin-left:24px;margin-top:6px">
+ *      <select id="bl-snooze-days" class="form-select" style="width:auto;font-size:.82rem">
+ *        <option value="1">Tomorrow</option>
+ *        <option value="3" selected>In 3 days</option>
+ *        <option value="7">In 7 days</option>
+ *        <option value="-1">After my exam</option>
+ *      </select>
+ *    </div>
+ *
+ * ─────────────────────────────────────────────────────────────────────────────
+ */
