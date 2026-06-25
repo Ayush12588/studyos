@@ -492,5 +492,6 @@
   _tryInit();
 
   window.Backlog = Backlog;
+  window.Backlog.onSubjectChange = Backlog.onSubjectChange.bind(Backlog);
 
 })();

@@ -43,7 +43,15 @@ async function build() {
     const src = fs.readFileSync(file, 'utf8');
     const result = await minify(src, {
       compress: { passes: 2, ecma: 2020 },
-      mangle: true,
+      mangle: {
+        reserved: [
+          // Backlog methods called from HTML onchange/onclick attributes
+          'onSubjectChange', 'openAddModal', 'submitAdd', 'markComplete',
+          'openDismissModal', 'confirmDismiss', 'renderPage',
+          // App methods called from HTML
+          'App', 'Backlog', 'DB',
+        ],
+      },
     });
     fs.writeFileSync(path.join(OUT, file), result.code);
     const origKB = (src.length / 1024).toFixed(1);
