@@ -226,9 +226,6 @@
     // ── Add Modal ─────────────────────────────────────────────────────────────
 
     async openAddModal() {
-      // Defensively ensure subjects are loaded before opening the modal.
-      // Covers cases where the fetch hasn't resolved yet or modal is triggered
-      // from outside the backlog page (e.g. dashboard widget).
       if (!App?.state?.subjects?.length) {
         await App?._loadTabData('subjects');
       }
@@ -244,8 +241,22 @@
           subjects.map(s => `<option value="${s.name}">${s.name}</option>`).join('');
       }
 
-      document.getElementById('bl-chapter').innerHTML =
-        `<option value="">Select subject first…</option>`;
+      // Attach onchange directly in JS — avoids Terser mangling the method name
+      subjectSel.onchange = () => {
+        const subjectName = subjectSel.value;
+        const chapterSel = document.getElementById('bl-chapter');
+        if (!subjectName) {
+          chapterSel.innerHTML = `<option value="">Select subject first…</option>`;
+          return;
+        }
+        const subject = (App?.state?.subjects || []).find(s => s.name === subjectName);
+        const chapters = subject?.chapters || [];
+        chapterSel.innerHTML =
+          `<option value="">Select chapter…</option>` +
+          chapters.map(c => `<option value="${c.name}">${c.name}</option>`).join('');
+      };
+
+      document.getElementById('bl-chapter').innerHTML = `<option value="">Select subject first…</option>`;
       document.getElementById('bl-topic').value = '';
       document.getElementById('bl-due').value = '';
       document.querySelectorAll('input[name="bl-type"]').forEach(r => r.checked = false);
