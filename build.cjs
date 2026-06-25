@@ -49,7 +49,9 @@ async function build() {
           'onSubjectChange', 'openAddModal', 'submitAdd', 'markComplete',
           'openDismissModal', 'confirmDismiss', 'renderPage',
           // App methods called from HTML
-          'App', 'Backlog', 'DB',
+          'App', 'Backlog', 'DB', 'Notifications',
+          // Notifications methods called globally
+          '_Notifications_click', '_Notifications_markAllRead',
         ],
       },
     });
