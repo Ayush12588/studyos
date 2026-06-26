@@ -650,12 +650,24 @@ export const DB = {
     async getActive(userId) {
       await requireAuth();
       const today = new Date().toISOString().split('T')[0];
+
+      // Lazily resurface any snoozed items whose snooze window has passed.
+      // Runs every time the backlog page opens — same "fetch on demand"
+      // philosophy as the rest of this file, no cron/scheduled job needed.
+      // Errors here are intentionally swallowed: a failed resurface just
+      // means today's stale snoozes stay hidden one more page load, which
+      // is a far smaller problem than blocking the read below on it.
+      await supabase.from('backlog_items')
+        .update({ status: 'pending', dismissed_at: null, dismissed_reason: null, dismissed_until: null })
+        .eq('user_id', userId)
+        .eq('status', 'snoozed')
+        .lte('dismissed_until', today);
+
       return run(
         supabase.from('backlog_items')
           .select('*')
           .eq('user_id', userId)
           .eq('status', 'pending')
-          .or('dismissed_until.is.null,dismissed_until.lte.' + today)
           .order('created_at', { ascending: false })
       );
     },
@@ -676,10 +688,14 @@ export const DB = {
 
     async dismiss(id, reason, snoozeUntil) {
       await requireAuth();
+      // A snooze and a real dismiss are different outcomes and need different
+      // statuses — overloading 'dismissed' for both meant snoozed items could
+      // never resurface (see getActive() below).
+      const isSnooze = !!snoozeUntil;
       return run(
         supabase.from('backlog_items')
           .update({
-            status: 'dismissed',
+            status: isSnooze ? 'snoozed' : 'dismissed',
             dismissed_at: new Date().toISOString(),
             dismissed_reason: reason || null,
             dismissed_until: snoozeUntil || null,
@@ -699,6 +715,9 @@ export const DB = {
 
     async hasDuplicate(userId, subject, chapter, type) {
       await requireAuth();
+      // Includes 'snoozed', not just 'pending' — a snoozed item is still an
+      // active backlog entry, just deferred. Without this, auto-detection
+      // could recreate something the student already snoozed.
       const { data } = await supabase
         .from('backlog_items')
         .select('id')
@@ -706,9 +725,25 @@ export const DB = {
         .eq('subject', subject)
         .eq('chapter', chapter)
         .eq('type', type)
-        .eq('status', 'pending')
+        .in('status', ['pending', 'snoozed'])
         .maybeSingle();
       return !!data;
+    },
+  },
+
+  // ── Engagement ───────────────────────────────────────────────────────────
+  //
+  // .getSignals() → dashboard load, AFTER first paint (not blocking-critical
+  // render data — same reasoning as why backlog isn't in the critical path).
+  // Returns 4 raw signals in one round trip via the get_engagement_signals
+  // Postgres function (see /supabase/get_engagement_signals.sql) — replaces
+  // 4 separate client-side queries against sessions/backlog_items/subjects.
+  // NOT cached — meant to reflect "right now," same reasoning as backlog.
+
+  engagement: {
+    async getSignals(userId) {
+      await requireAuth();
+      return run(supabase.rpc('get_engagement_signals', { p_user_id: userId }));
     },
   },
 
@@ -784,6 +819,36 @@ export const DB = {
 
 };
 
+// ─── Engagement status helper ────────────────────────────────────────────────
+//
+// Pure function — no DB call. Turns the 4 raw signals from
+// DB.engagement.getSignals() into one word: 'on_track' | 'slipping' | 'inactive'.
+// Thresholds are deliberately conservative — tune after seeing real data.
+//
+// Rules, in order (first match wins):
+//   inactive  -> no session in 4+ days, OR never logged one at all
+//   slipping  -> this week's pace is under 60% of their own 4-week average
+//                (only judged once there IS a 4-week average to compare to —
+//                week_ratio is null for new users with no history yet)
+//   slipping  -> 2+ pending missed revisions
+//   on_track  -> otherwise
+
+function getEngagementStatus(signals) {
+  const { last_active_days, week_ratio, missed_revisions } = signals;
+
+  if (last_active_days === null || last_active_days >= 4) {
+    return 'inactive';
+  }
+  if (week_ratio !== null && week_ratio < 0.6) {
+    return 'slipping';
+  }
+  if (missed_revisions >= 2) {
+    return 'slipping';
+  }
+  return 'on_track';
+}
+
 // ─── Expose to non-module scripts ────────────────────────────────────────────
-window.DB       = DB;
-window.supabase = supabase;
+window.DB                    = DB;
+window.supabase              = supabase;
+window.getEngagementStatus   = getEngagementStatus;
