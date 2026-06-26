@@ -589,11 +589,62 @@
     </div>
 </div>
 
+<!-- Backlog: Confidence Rating Modal (v3) -->
+<div class="modal-overlay" id="modal-backlog-confidence">
+  <div class="modal" style="max-width:360px">
+    <div class="modal-header">
+      <h2>How confident do you feel?</h2>
+      <button class="modal-close" onclick="App.closeModal('modal-backlog-confidence')" aria-label="Close">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:.82rem;color:var(--text-muted);margin-bottom:16px">
+        <strong id="bl-conf-chapter" style="color:var(--text-primary)"></strong>
+      </div>
+      <div style="display:flex;gap:8px;justify-content:center;margin-bottom:10px">
+        <button class="bl-star" data-val="1"
+          style="background:none;border:none;cursor:pointer;font-size:1.9rem;color:var(--text-muted);transition:color .15s;padding:4px;line-height:1"
+          onmouseenter="Backlog._onStarHover(this,true)"
+          onmouseleave="Backlog._onStarHover(this,false)"
+          onclick="Backlog._onStarClick(this)">★</button>
+        <button class="bl-star" data-val="2"
+          style="background:none;border:none;cursor:pointer;font-size:1.9rem;color:var(--text-muted);transition:color .15s;padding:4px;line-height:1"
+          onmouseenter="Backlog._onStarHover(this,true)"
+          onmouseleave="Backlog._onStarHover(this,false)"
+          onclick="Backlog._onStarClick(this)">★</button>
+        <button class="bl-star" data-val="3"
+          style="background:none;border:none;cursor:pointer;font-size:1.9rem;color:var(--text-muted);transition:color .15s;padding:4px;line-height:1"
+          onmouseenter="Backlog._onStarHover(this,true)"
+          onmouseleave="Backlog._onStarHover(this,false)"
+          onclick="Backlog._onStarClick(this)">★</button>
+        <button class="bl-star" data-val="4"
+          style="background:none;border:none;cursor:pointer;font-size:1.9rem;color:var(--text-muted);transition:color .15s;padding:4px;line-height:1"
+          onmouseenter="Backlog._onStarHover(this,true)"
+          onmouseleave="Backlog._onStarHover(this,false)"
+          onclick="Backlog._onStarClick(this)">★</button>
+        <button class="bl-star" data-val="5"
+          style="background:none;border:none;cursor:pointer;font-size:1.9rem;color:var(--text-muted);transition:color .15s;padding:4px;line-height:1"
+          onmouseenter="Backlog._onStarHover(this,true)"
+          onmouseleave="Backlog._onStarHover(this,false)"
+          onclick="Backlog._onStarClick(this)">★</button>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--text-muted);margin-bottom:14px;padding:0 4px">
+        <span>Not confident</span>
+        <span>Mastered it</span>
+      </div>
+      <div id="bl-conf-hint" style="font-size:.78rem;color:var(--text-muted);text-align:center;min-height:20px;transition:opacity .2s"></div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="App.closeModal('modal-backlog-confidence')">Skip</button>
+      <button class="btn btn-primary" onclick="Backlog.submitConfidence()">Save</button>
+    </div>
+  </div>
+</div>
+
 <script src="db.js" defer></script>
 <script src="migrate.js" defer></script>
 <script src="app.js" defer></script>
 <script src="backlog.js" defer></script>
-<script src="notifications.js" defer></script> 
+<script src="notifications.js" defer></script>
 <script src="analytics.js" defer></script>
 <script src="tour.js" defer></script>
 </body>

@@ -647,77 +647,81 @@ export const DB = {
   // NOT cached — state changes frequently.
 
   backlog: {
+    // Active = anything a student still needs to work on.
+    // Excludes: mastered, dismissed, and currently-snoozed items.
+    // Progress states (not_started / in_progress / done_shaky) all surface here.
+    //
+    // Snooze resurface: expired snoozed items are reset to not_started on every
+    // page open — no cron needed. Errors swallowed intentionally (see original).
     async getActive(userId) {
       await requireAuth();
       const today = new Date().toISOString().split('T')[0];
 
-      // Lazily resurface any snoozed items whose snooze window has passed.
-      // Runs every time the backlog page opens — same "fetch on demand"
-      // philosophy as the rest of this file, no cron/scheduled job needed.
-      // Errors here are intentionally swallowed: a failed resurface just
-      // means today's stale snoozes stay hidden one more page load, which
-      // is a far smaller problem than blocking the read below on it.
+      // Resurface expired snoozes back to not_started
       await supabase.from('backlog_items')
-        .update({ status: 'pending', dismissed_at: null, dismissed_reason: null, dismissed_until: null })
+        .update({ status: 'not_started', dismissed_at: null, dismissed_reason: null, dismissed_until: null })
         .eq('user_id', userId)
         .eq('status', 'snoozed')
         .lte('dismissed_until', today);
 
+      // Return all active progress states — excludes mastered, dismissed, snoozed
       return run(
         supabase.from('backlog_items')
           .select('*')
           .eq('user_id', userId)
-          .eq('status', 'pending')
+          .in('status', ['not_started', 'in_progress', 'done_shaky'])
           .order('created_at', { ascending: false })
       );
     },
 
+    // Accepts v3 fields: status, board_marks, time_estimate_mins, confidence, cleared_at
     async create(item) {
       await requireAuth();
       return run(supabase.from('backlog_items').insert(item).select().single());
     },
 
+    // Legacy helper — backlog.js v3 drives status transitions directly via
+    // window.supabase, but keeping this for any external callers.
     async complete(id) {
       await requireAuth();
       return run(
         supabase.from('backlog_items')
-          .update({ status: 'completed', completed_at: new Date().toISOString() })
+          .update({ status: 'done_shaky' })
           .eq('id', id).select().single()
       );
     },
 
     async dismiss(id, reason, snoozeUntil) {
       await requireAuth();
-      // A snooze and a real dismiss are different outcomes and need different
-      // statuses — overloading 'dismissed' for both meant snoozed items could
-      // never resurface (see getActive() below).
+      // Preserve snoozed vs dismissed distinction — snoozed items resurface
+      // automatically in getActive(); dismissed ones do not.
       const isSnooze = !!snoozeUntil;
       return run(
         supabase.from('backlog_items')
           .update({
-            status: isSnooze ? 'snoozed' : 'dismissed',
-            dismissed_at: new Date().toISOString(),
-            dismissed_reason: reason || null,
-            dismissed_until: snoozeUntil || null,
+            status:           isSnooze ? 'snoozed' : 'dismissed',
+            dismissed_at:     new Date().toISOString(),
+            dismissed_reason: reason      || null,
+            dismissed_until:  snoozeUntil || null,
           })
           .eq('id', id).select().single()
       );
     },
 
+    // Undo dismiss/snooze — resets to not_started (v2 used 'pending')
     async restore(id) {
       await requireAuth();
       return run(
         supabase.from('backlog_items')
-          .update({ status: 'pending', dismissed_at: null, dismissed_reason: null, dismissed_until: null })
+          .update({ status: 'not_started', dismissed_at: null, dismissed_reason: null, dismissed_until: null })
           .eq('id', id).select().single()
       );
     },
 
+    // Checks all non-terminal statuses — prevents re-adding a snoozed or
+    // in-progress item. Mastered items CAN be re-added (chapter reset is valid).
     async hasDuplicate(userId, subject, chapter, type) {
       await requireAuth();
-      // Includes 'snoozed', not just 'pending' — a snoozed item is still an
-      // active backlog entry, just deferred. Without this, auto-detection
-      // could recreate something the student already snoozed.
       const { data } = await supabase
         .from('backlog_items')
         .select('id')
@@ -725,7 +729,7 @@ export const DB = {
         .eq('subject', subject)
         .eq('chapter', chapter)
         .eq('type', type)
-        .in('status', ['pending', 'snoozed'])
+        .in('status', ['not_started', 'in_progress', 'done_shaky', 'snoozed'])
         .maybeSingle();
       return !!data;
     },
