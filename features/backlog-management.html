@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Backlog Manager for CBSE Students | Clear Your Syllabus with StudyOS</title>
+  <meta name="description" content="Manage your CBSE study backlog intelligently. Track missed chapters, pending topics, and overdue tasks — and clear your syllabus backlog before exam day with StudyOS." />
+  <link rel="canonical" href="https://studyos.app/features/backlog-management" />
+
+  <meta property="og:title" content="CBSE Study Backlog Manager | StudyOS" />
+  <meta property="og:description" content="Stop ignoring your CBSE study backlog. StudyOS helps you track, prioritise, and systematically clear every missed chapter before your board exams." />
+  <meta property="og:url" content="https://studyos.app/features/backlog-management" />
+  <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a study backlog and why does it matter for CBSE students?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A study backlog is the accumulation of chapters, topics, and tasks that were planned but not completed. For CBSE students, an unchecked backlog leads to syllabus gaps that directly hurt board exam scores. StudyOS tracks and helps you systematically clear your backlog before exam day."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does StudyOS automatically detect backlog items?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Any task or chapter that passes its scheduled date without being marked complete is automatically moved to your backlog. StudyOS flags it, shows you how many days overdue it is, and suggests when to reschedule it."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I manually add items to my backlog?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can manually add chapters or topics you know you've missed — even from before you started using StudyOS — so your backlog reflects your true preparation gap."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does StudyOS help me prioritise my backlog?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "StudyOS sorts your backlog by days overdue, CBSE exam weightage, and subject urgency. High-weightage chapters that are most overdue appear at the top so you always tackle the most impactful items first."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will clearing my backlog affect my study streak?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes — positively! Every backlog item you clear contributes to your daily completion score and earns XP. Maintaining a clean backlog is one of the fastest ways to build a strong study streak in StudyOS."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a2e; background: #fff; line-height: 1.7; }
+    a { color: #d97706; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav { background: #1a1a2e; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { color: #fff; font-size: 1.4rem; font-weight: 700; }
+    nav .logo span { color: #fbbf24; }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; }
+    nav ul li a { color: #cbd5e1; font-size: 0.9rem; }
+    nav ul li a:hover { color: #fff; text-decoration: none; }
+    .hero { background: linear-gradient(135deg, #451a03 0%, #78350f 50%, #92400e 100%); color: #fff; padding: 5rem 2rem 4rem; text-align: center; }
+    .hero .badge { display: inline-block; background: rgba(251,191,36,0.2); border: 1px solid #fbbf24; color: #fbbf24; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1.2rem; max-width: 820px; margin-left: auto; margin-right: auto; }
+    .hero h1 span { color: #fbbf24; }
+    .hero p { font-size: 1.15rem; color: rgba(255,255,255,0.75); max-width: 600px; margin: 0 auto 2rem; }
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: #d97706; color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 700; }
+    .btn-primary:hover { background: #b45309; text-decoration: none; }
+    .btn-secondary { border: 2px solid rgba(255,255,255,0.3); color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; }
+    .btn-secondary:hover { border-color: #fbbf24; text-decoration: none; }
+    .hero-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin-top: 3rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.1); }
+    .stat .number { font-size: 2rem; font-weight: 800; color: #fbbf24; }
+    .stat .label { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #d97706; margin-bottom: 0.75rem; }
+    h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.25; margin-bottom: 1rem; }
+    h2 span { color: #d97706; }
+    .subtitle { font-size: 1.05rem; color: #475569; max-width: 650px; }
+    .screenshot-placeholder { background: linear-gradient(135deg, #fef3c7, #fffbeb); border: 2px dashed #fcd34d; border-radius: 16px; height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #d97706; font-size: 0.95rem; gap: 0.75rem; margin: 2.5rem 0; }
+    .screenshot-placeholder .icon { font-size: 3rem; }
+    .screenshot-placeholder p { font-weight: 600; }
+    .screenshot-placeholder span { font-size: 0.8rem; color: #f59e0b; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem; }
+    .feature-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; transition: border-color 0.2s, transform 0.2s; }
+    .feature-card:hover { border-color: #fcd34d; transform: translateY(-3px); }
+    .feature-card .icon { font-size: 2rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.92rem; color: #64748b; }
+    .backlog-demo { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 1.5rem; max-width: 600px; margin: 2.5rem auto; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .backlog-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .backlog-header h3 { font-size: 0.9rem; font-weight: 700; color: #1a1a2e; }
+    .backlog-count { background: #fef3c7; color: #d97706; font-size: 0.8rem; font-weight: 700; padding: 0.2rem 0.6rem; border-radius: 50px; }
+    .backlog-item { display: flex; gap: 1rem; align-items: center; padding: 0.85rem 0; border-bottom: 1px solid #f1f5f9; }
+    .backlog-item:last-child { border-bottom: none; }
+    .urgency-badge { font-size: 0.7rem; font-weight: 700; padding: 0.25rem 0.6rem; border-radius: 50px; white-space: nowrap; flex-shrink: 0; }
+    .urgency-high { background: #fee2e2; color: #dc2626; }
+    .urgency-med { background: #fef3c7; color: #d97706; }
+    .urgency-low { background: #f0fdf4; color: #16a34a; }
+    .backlog-detail { flex: 1; }
+    .backlog-title { font-size: 0.9rem; font-weight: 600; color: #1a1a2e; }
+    .backlog-meta { font-size: 0.78rem; color: #94a3b8; margin-top: 0.1rem; }
+    .backlog-days { font-size: 0.8rem; font-weight: 700; color: #dc2626; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-top: 3rem; }
+    .step { text-align: center; padding: 1.5rem; }
+    .step-number { width: 48px; height: 48px; background: #d97706; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; margin: 0 auto 1rem; }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.88rem; color: #64748b; }
+    .faq-list { max-width: 750px; margin: 2.5rem auto 0; }
+    .faq-item { border-bottom: 1px solid #e2e8f0; padding: 1.5rem 0; }
+    .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .faq-item p { font-size: 0.92rem; color: #64748b; }
+    .cta-banner { background: linear-gradient(135deg, #d97706, #b45309); color: #fff; padding: 4rem 2rem; text-align: center; border-radius: 20px; margin: 2rem auto; max-width: 900px; }
+    .cta-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .cta-banner p { color: rgba(255,255,255,0.8); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .btn-white { background: #fff; color: #d97706; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 700; margin-right: 1rem; }
+    .btn-outline-white { border: 2px solid rgba(255,255,255,0.5); color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; }
+    .related-features { background: #fffbeb; padding: 3rem 2rem; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .related-card { background: #fff; border: 1px solid #fde68a; border-radius: 10px; padding: 1.2rem; text-align: center; }
+    .related-card a { font-weight: 600; font-size: 0.9rem; color: #d97706; }
+    .related-card p { font-size: 0.8rem; color: #64748b; margin-top: 0.3rem; }
+    footer { background: #1a1a2e; color: #64748b; padding: 2rem; text-align: center; font-size: 0.85rem; }
+    footer a { color: #fbbf24; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Study<span>OS</span></div>
+  <ul>
+    <li><a href="/features/study-planner.html">Planner</a></li>
+    <li><a href="/features/daily-tasks.html">Tasks</a></li>
+    <li><a href="/features/backlog-management.html">Backlog</a></li>
+    <li><a href="/features/doubt-tracker.html">Doubts</a></li>
+    <li><a href="/auth.html">Sign Up Free</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="badge">📦 Backlog Management</div>
+    <h1>That Chapter You Skipped in September?<br/><span>It's Still Waiting For You.</span></h1>
+    <p>Every CBSE student has a backlog. Most ignore it until March. StudyOS makes sure you see it clearly, prioritise it intelligently, and clear it systematically — long before exam day arrives.</p>
+    <div class="hero-ctas">
+      <a href="/auth.html" class="btn-primary">Clear My Backlog Free →</a>
+      <a href="/app.html" class="btn-secondary">See the Backlog Manager</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="number">Auto</div><div class="label">Backlog Detection</div></div>
+      <div class="stat"><div class="number">Priority</div><div class="label">Sorting by Urgency</div></div>
+      <div class="stat"><div class="number">0</div><div class="label">Chapters Left Behind</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- DEMO BACKLOG -->
+<section>
+  <div class="container">
+    <div style="text-align: center;">
+      <div class="section-label">Your Backlog at a Glance</div>
+      <h2>See Everything You've <span>Missed — All in One Place</span></h2>
+      <p class="subtitle" style="margin: 1rem auto;">No more wondering "have I covered this?" StudyOS surfaces every missed chapter so you can take action.</p>
+    </div>
+
+    <div class="backlog-demo">
+      <div class="backlog-header">
+        <h3>📦 Current Backlog — Class 12 Science</h3>
+        <span class="backlog-count">7 items pending</span>
+      </div>
+      <div class="backlog-item">
+        <span class="urgency-badge urgency-high">🔴 Critical</span>
+        <div class="backlog-detail">
+          <div class="backlog-title">Electrochemistry — EMF & Nernst Equation</div>
+          <div class="backlog-meta">Chemistry · Missed Oct 14</div>
+        </div>
+        <span class="backlog-days">18d late</span>
+      </div>
+      <div class="backlog-item">
+        <span class="urgency-badge urgency-high">🔴 Critical</span>
+        <div class="backlog-detail">
+          <div class="backlog-title">Differential Equations — NCERT Ex. 9.4</div>
+          <div class="backlog-meta">Mathematics · Missed Oct 16</div>
+        </div>
+        <span class="backlog-days">16d late</span>
+      </div>
+      <div class="backlog-item">
+        <span class="urgency-badge urgency-med">🟡 Moderate</span>
+        <div class="backlog-detail">
+          <div class="backlog-title">Genetics — Mendelian Inheritance Laws</div>
+          <div class="backlog-meta">Biology · Missed Oct 21</div>
+        </div>
+        <span class="backlog-days">11d late</span>
+      </div>
+      <div class="backlog-item">
+        <span class="urgency-badge urgency-med">🟡 Moderate</span>
+        <div class="backlog-detail">
+          <div class="backlog-title">Wave Optics — Diffraction Problems</div>
+          <div class="backlog-meta">Physics · Missed Oct 23</div>
+        </div>
+        <span class="backlog-days">9d late</span>
+      </div>
+      <div class="backlog-item">
+        <span class="urgency-badge urgency-low">🟢 Low</span>
+        <div class="backlog-detail">
+          <div class="backlog-title">Letter Writing Practice Set 2</div>
+          <div class="backlog-meta">English · Missed Oct 28</div>
+        </div>
+        <span class="backlog-days">4d late</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section style="background: #fffbeb;">
+  <div class="container">
+    <div class="section-label">Feature Breakdown</div>
+    <h2>Your Backlog — <span>Tracked, Prioritised, Cleared</span></h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>Automatic Backlog Detection</h3>
+        <p>Any planned chapter or task you don't complete by its scheduled date is automatically added to your backlog. Nothing falls through the cracks silently.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🎯</div>
+        <h3>Priority Sorting</h3>
+        <p>Backlog items are ranked by days overdue, CBSE exam weightage, and subject urgency. Tackle the most impactful missed content first, every time.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📅</div>
+        <h3>Smart Rescheduling</h3>
+        <p>One click reschedules a backlog item to your next available study slot. StudyOS adjusts your weekly plan automatically — no manual rebuilding needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">✏️</div>
+        <h3>Manual Backlog Addition</h3>
+        <p>Add any chapter you know you've skipped — even before joining StudyOS. Build a complete picture of your CBSE preparation gaps from day one.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📊</div>
+        <h3>Backlog Reduction Analytics</h3>
+        <p>Watch your backlog shrink over time. A weekly backlog count graph shows you that you're making real, measurable progress towards a clean slate.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔔</div>
+        <h3>Overdue Alerts</h3>
+        <p>Get flagged when a backlog item has been sitting unaddressed for more than 7 days. Critical items are highlighted in red so urgency is never invisible.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOTS -->
+<section>
+  <div class="container">
+    <div class="section-label">Screenshots</div>
+    <h2>See Your Backlog. <span>Own It.</span></h2>
+    <div class="screenshot-placeholder">
+      <div class="icon">📦</div>
+      <p>Backlog Management Board</p>
+      <span>[ Screenshot: Backlog items sorted by urgency with priority tags, days overdue counters, and reschedule buttons ]</span>
+    </div>
+    <div class="screenshot-placeholder">
+      <div class="icon">📉</div>
+      <p>Backlog Reduction Over Time</p>
+      <span>[ Screenshot: Line chart showing backlog item count declining from 15 to 2 over 3 weeks ]</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section style="background: #f8fafc;">
+  <div class="container">
+    <div class="section-label">How It Works</div>
+    <h2>From Backlog to <span>Board-Ready in 4 Steps</span></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Backlog is Auto-Built</h3>
+        <p>Miss a planned task? It moves automatically to your backlog with the date it was missed logged.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Review Priorities</h3>
+        <p>Open your backlog dashboard. See which chapters are most urgent based on exam weight and time overdue.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>Reschedule or Do Now</h3>
+        <p>Reschedule items to future sessions or tackle them immediately. StudyOS tracks the action taken.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">4</div>
+        <h3>Watch the Count Drop</h3>
+        <p>Check your weekly backlog reduction chart. A falling number means you're catching up. Celebrate every item cleared.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section style="padding: 2rem;">
+  <div class="cta-banner">
+    <h2>Face Your Backlog. Clear It. Ace Your Boards.</h2>
+    <p>Stop discovering missed chapters the night before your CBSE exams. Build an organised backlog tracker and clear it systematically with StudyOS.</p>
+    <a href="/auth.html" class="btn-white">Start Free Today →</a>
+    <a href="/app.html" class="btn-outline-white">See the App</a>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="container">
+    <div class="section-label">FAQs</div>
+    <h2>Backlog Manager <span>Questions</span></h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>What is a study backlog and why does it matter?</h3>
+        <p>A study backlog is the accumulation of chapters and tasks that were planned but not completed. For CBSE students, an unchecked backlog leads to syllabus gaps that directly hurt board exam scores.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How does StudyOS automatically detect backlog items?</h3>
+        <p>Any task or chapter that passes its scheduled date without being marked complete is automatically moved to your backlog with the date it was missed.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I manually add items to my backlog?</h3>
+        <p>Yes. You can manually add chapters or topics you know you've missed — even from before you started using StudyOS.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How does StudyOS help me prioritise my backlog?</h3>
+        <p>StudyOS sorts your backlog by days overdue, CBSE exam weightage, and subject urgency. High-weightage chapters that are most overdue appear at the top.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Will clearing my backlog affect my study streak?</h3>
+        <p>Yes — positively! Every backlog item you clear contributes to your daily completion score and earns XP. Maintaining a clean backlog is one of the fastest ways to build a strong study streak.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RELATED -->
+<section class="related-features">
+  <div class="container">
+    <div class="section-label">Connected Features</div>
+    <h2>Backlog Links to Your Full System</h2>
+    <div class="related-grid">
+      <div class="related-card">
+        <a href="/features/study-planner.html">🗓️ Study Planner</a>
+        <p>Backlog feeds from your plan</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/daily-tasks.html">✅ Daily Tasks</a>
+        <p>Backlog items become daily tasks</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/study-session-logger.html">⏱️ Session Logger</a>
+        <p>Clear backlog during timed sessions</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/doubt-tracker.html">❓ Doubt Tracker</a>
+        <p>Doubts from missed chapters tracked</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/study-streaks.html">🔥 Streaks</a>
+        <p>Clearing backlog builds your streak</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/rewards-xp.html">🏅 XP & Rewards</a>
+        <p>Earn XP for clearing backlog items</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 StudyOS — Study Backlog Manager for CBSE Students.</p>
+  <p style="margin-top: 0.5rem;"><a href="/auth.html">Sign Up Free</a> · <a href="/app.html">Open App</a> · <a href="/features/study-planner.html">Study Planner</a> · <a href="/features/daily-tasks.html">Daily Tasks</a></p>
+</footer>
+
+</body>
+</html>

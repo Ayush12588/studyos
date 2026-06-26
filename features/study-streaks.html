@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Streaks for CBSE Students — Build Daily Study Habits That Actually Stick | StudyOS</title>
+  <meta name="description" content="Track your daily study streak and build consistent CBSE preparation habits with StudyOS. Visual streak counters, milestone rewards, and habit science designed for Class 9–12 students." />
+  <link rel="canonical" href="https://studyos.app/features/study-streaks" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Study Streaks — Build Daily CBSE Study Habits | StudyOS" />
+  <meta property="og:description" content="Stay consistent every day. StudyOS Study Streaks make daily studying addictive — in a good way. Built for CBSE Class 9–12 students." />
+  <meta property="og:url" content="https://studyos.app/features/study-streaks" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://studyos.app/assets/og-study-streaks.png" />
+
+  <!-- FAQ Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a study streak in StudyOS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A study streak is the number of consecutive days you've completed a study session in StudyOS. Each day you study, your streak grows. Missing a day resets the counter — which motivates you to show up every day."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What counts as a study session to maintain a streak?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Any meaningful study activity in StudyOS counts — reviewing formulas, completing notes, or logging a timed study block. You set the minimum daily goal, and we track whether you've hit it."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I get rewards for long study streaks?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! StudyOS awards bonus XP and special badges at streak milestones — 7 days, 30 days, 60 days, and beyond. Your streak also contributes to your overall level in the Rewards & XP system."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What happens if I miss a day?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your streak resets to zero, but your total XP and progress are never lost. StudyOS shows your longest streak as a badge of honour, and you can start a new streak immediately."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does a daily study streak help with CBSE board exam preparation?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Research shows that consistent daily practice is far more effective than cramming before exams. A 60-day streak before CBSE boards means 60 days of spaced repetition, steady revision, and compounding progress — the foundation of board exam success."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #1a1a2e;
+      background: #ffffff;
+      line-height: 1.7;
+    }
+    a { color: inherit; text-decoration: none; }
+    img { max-width: 100%; display: block; }
+
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .text-center { text-align: center; }
+
+    .badge {
+      display: inline-block;
+      background: #fff3e0;
+      color: #e65100;
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      padding: 4px 14px;
+      border-radius: 20px;
+      margin-bottom: 16px;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 14px 28px;
+      border-radius: 10px;
+      font-size: 1rem;
+      font-weight: 700;
+      cursor: pointer;
+      border: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .btn-primary { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; }
+    .btn-secondary { background: #fff; color: #f97316; border: 2px solid #f97316; }
+    .btn-white { background: #fff; color: #f97316; }
+
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95);
+      backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e8e8f0;
+      padding: 14px 0;
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo {
+      font-size: 1.4rem; font-weight: 800;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { font-size: 0.95rem; font-weight: 500; color: #4a4a6a; transition: color 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color: #f97316; }
+    .nav-cta { display: flex; gap: 12px; align-items: center; }
+
+    /* ─── Hero ─── */
+    .hero {
+      background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 50%, #fef3c7 100%);
+      padding: 96px 0 80px;
+      position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: '';
+      position: absolute;
+      width: 500px; height: 500px;
+      background: radial-gradient(circle, rgba(249,115,22,0.1) 0%, transparent 70%);
+      top: -80px; right: -80px; border-radius: 50%;
+    }
+    .hero-content { max-width: 720px; }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900;
+      line-height: 1.15; margin-bottom: 20px; color: #1a1a2e;
+    }
+    .hero h1 span { color: #f97316; }
+    .hero p { font-size: 1.15rem; color: #4a4a6a; margin-bottom: 36px; max-width: 580px; }
+    .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    /* ─── Streak Visualiser ─── */
+    .streak-display {
+      display: flex; align-items: center; gap: 8px;
+      margin-top: 48px; flex-wrap: wrap;
+    }
+    .streak-day {
+      width: 36px; height: 36px;
+      border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1rem; font-weight: 700;
+      transition: transform 0.1s;
+    }
+    .streak-day.done { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; }
+    .streak-day.today { background: linear-gradient(135deg, #fbbf24, #f97316); color: #fff; box-shadow: 0 0 16px rgba(249,115,22,0.5); }
+    .streak-day.empty { background: #f3f4f6; color: #9ca3af; }
+    .streak-label { font-size: 0.85rem; color: #6b6b8a; margin-top: 8px; width: 100%; }
+
+    /* ─── Streak Counter ─── */
+    .streak-counter {
+      display: inline-flex; align-items: center; gap: 16px;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      color: #fff; border-radius: 20px; padding: 24px 36px;
+      margin: 48px 0; box-shadow: 0 16px 48px rgba(249,115,22,0.3);
+    }
+    .streak-counter .flame { font-size: 3rem; }
+    .streak-counter .count { font-size: 3.5rem; font-weight: 900; line-height: 1; }
+    .streak-counter .text { font-size: 1rem; font-weight: 600; opacity: 0.9; }
+
+    .section-eyebrow {
+      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.1em;
+      text-transform: uppercase; color: #f97316; margin-bottom: 12px;
+    }
+    h2 {
+      font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800;
+      line-height: 1.2; color: #1a1a2e; margin-bottom: 16px;
+    }
+    .section-subtitle { font-size: 1.05rem; color: #4a4a6a; max-width: 560px; margin-bottom: 48px; }
+
+    section { padding: 80px 0; }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; }
+    .feature-card {
+      background: #fafafa; border: 1px solid #e8e8f0;
+      border-radius: 16px; padding: 32px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { border-color: #fed7aa; box-shadow: 0 8px 32px rgba(249,115,22,0.08); }
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, #fff7ed, #ffedd5);
+      border-radius: 14px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+    .feature-card p { font-size: 0.95rem; color: #4a4a6a; line-height: 1.6; }
+
+    /* ─── Screenshot ─── */
+    .screenshot-wrap {
+      background: linear-gradient(135deg, #431407, #7c2d12);
+      border-radius: 16px; padding: 32px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 320px; position: relative; overflow: hidden;
+      box-shadow: 0 24px 64px rgba(249,115,22,0.25);
+    }
+    .screenshot-wrap::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px);
+    }
+    .screenshot-label { position: relative; text-align: center; color: rgba(255,255,255,0.6); }
+    .screenshot-label .icon { font-size: 3rem; margin-bottom: 12px; }
+    .screenshot-label p { font-size: 0.9rem; font-weight: 500; }
+    .screenshot-caption { text-align: center; font-size: 0.85rem; color: #6b6b8a; margin-top: 12px; font-style: italic; }
+
+    /* ─── Two Col ─── */
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+    .two-col.reverse { direction: rtl; }
+    .two-col.reverse > * { direction: ltr; }
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; gap: 40px; }
+      .two-col.reverse { direction: ltr; }
+    }
+
+    .check-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .check-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 0.98rem; color: #2d2d4e; }
+    .check-list li::before {
+      content: '✓'; width: 22px; height: 22px;
+      background: #f97316; color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 800; flex-shrink: 0; margin-top: 2px;
+    }
+
+    /* ─── Milestone Timeline ─── */
+    .milestone-track { position: relative; padding-left: 40px; }
+    .milestone-track::before {
+      content: ''; position: absolute; left: 14px; top: 0; bottom: 0;
+      width: 3px; background: linear-gradient(to bottom, #f97316, #ef4444, #a855f7);
+    }
+    .milestone {
+      position: relative; margin-bottom: 36px;
+      padding: 20px 24px; background: #fff;
+      border: 1px solid #e8e8f0; border-radius: 14px;
+    }
+    .milestone::before {
+      content: attr(data-day);
+      position: absolute; left: -40px; top: 50%; transform: translateY(-50%);
+      width: 28px; height: 28px;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.6rem; font-weight: 800; text-align: center; line-height: 1.2;
+    }
+    .milestone h4 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .milestone p { font-size: 0.88rem; color: #4a4a6a; }
+    .milestone .reward { display: inline-block; background: #fff7ed; color: #c2410c; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 8px; margin-top: 8px; }
+
+    /* ─── Science Box ─── */
+    .science-box {
+      background: linear-gradient(135deg, #1a1a2e, #2d1b69);
+      border-radius: 20px; padding: 48px;
+      color: #fff;
+    }
+    .science-box h2 { color: #fff; }
+    .science-box p { color: rgba(255,255,255,0.8); }
+    .science-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 36px; }
+    .science-stat { text-align: center; }
+    .science-stat .num { font-size: 2.2rem; font-weight: 900; color: #fb923c; }
+    .science-stat .label { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
+    @media (max-width: 640px) {
+      .science-stat-grid { grid-template-columns: 1fr 1fr; }
+      .nav-links { display: none; }
+    }
+
+    /* ─── FAQ ─── */
+    .faq-section { background: #fff7ed; }
+    .faq-list { display: flex; flex-direction: column; gap: 0; max-width: 760px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid #fed7aa; padding: 24px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+    .faq-q::before {
+      content: 'Q'; width: 28px; height: 28px;
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      color: #fff; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+    }
+    .faq-a { font-size: 0.95rem; color: #4a4a6a; padding-left: 40px; }
+
+    /* ─── CTA ─── */
+    .cta-band {
+      background: linear-gradient(135deg, #f97316, #ef4444);
+      padding: 80px 0; text-align: center;
+    }
+    .cta-band h2 { color: #fff; margin-bottom: 16px; }
+    .cta-band p { color: rgba(255,255,255,0.85); font-size: 1.05rem; margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
+    .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    .related-section { background: #fafafa; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .related-card {
+      background: #fff; border: 1px solid #e8e8f0; border-radius: 14px;
+      padding: 28px; transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .related-card:hover { border-color: #fed7aa; box-shadow: 0 8px 24px rgba(249,115,22,0.08); }
+    .related-card .rc-icon { font-size: 2rem; }
+    .related-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+    .related-card p { font-size: 0.88rem; color: #6b6b8a; }
+    .related-card .rc-link { font-size: 0.88rem; font-weight: 700; color: #f97316; margin-top: auto; }
+
+    footer { background: #1a1a2e; color: rgba(255,255,255,0.6); padding: 40px 0; text-align: center; font-size: 0.88rem; }
+    footer a { color: rgba(255,255,255,0.6); }
+    footer a:hover { color: #fff; }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ NAV ═══ -->
+  <nav aria-label="Main navigation">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">StudyOS</a>
+      <ul class="nav-links">
+        <li><a href="/features/notes-formula-library">Notes Library</a></li>
+        <li><a href="/features/study-streaks" class="active">Study Streaks</a></li>
+        <li><a href="/features/rewards-xp-system">Rewards & XP</a></li>
+        <li><a href="/pricing.html">Pricing</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="/auth.html" class="btn btn-secondary" style="padding:10px 20px; font-size:0.9rem;">Log In</a>
+        <a href="/auth.html?action=signup" class="btn btn-primary" style="padding:10px 20px; font-size:0.9rem;">Start Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <header class="hero" aria-label="Hero section">
+    <div class="container">
+      <div class="hero-content">
+        <span class="badge">🔥 Study Streaks</span>
+        <h1>
+          One Day Builds a Habit.<br />
+          <span>60 Days Builds a Board Topper.</span>
+        </h1>
+        <p>
+          StudyOS Study Streaks turn daily studying from a chore into something you look forward to.
+          Watch your streak grow, hit milestones, and arrive at your CBSE board exams with
+          months of consistent preparation behind you — not panic.
+        </p>
+        <div class="hero-btns">
+          <a href="/auth.html?action=signup" class="btn btn-primary">
+            🔥 Start My Streak Today
+          </a>
+          <a href="/app.html" class="btn btn-secondary">
+            See How It Works →
+          </a>
+        </div>
+
+        <!-- Visual Streak Demo -->
+        <div class="streak-display" role="img" aria-label="Example 21-day study streak visual">
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day done">✓</div>
+          <div class="streak-day today">🔥</div>
+          <div class="streak-day empty">?</div>
+          <div class="streak-day empty">?</div>
+          <div class="streak-day empty">?</div>
+          <div class="streak-day empty">?</div>
+          <div class="streak-day empty">?</div>
+          <div class="streak-day empty">?</div>
+          <p class="streak-label">Day 21 of your streak — keep going! 9 more days to your 30-day milestone. 🎯</p>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ STREAK COUNTER HERO VISUAL ═══ -->
+  <section style="padding: 64px 0; background: #fff;" aria-label="Streak counter visual section">
+    <div class="container">
+      <div class="two-col">
+        <div class="text-center">
+          <div class="streak-counter" style="display:inline-flex;">
+            <span class="flame">🔥</span>
+            <div>
+              <div class="count">47</div>
+              <div class="text">Day Streak</div>
+            </div>
+          </div>
+          <p style="color:#6b6b8a; font-size:0.9rem; margin-top:8px;">Example student streak counter — updated every day you study</p>
+        </div>
+        <div>
+          <p class="section-eyebrow">Why Streaks Work</p>
+          <h2>The Science Behind Showing Up Every Day</h2>
+          <p style="color:#4a4a6a; margin-bottom:24px;">
+            Habit research shows that students who study for <strong>45 minutes daily</strong>
+            for 60 days outperform students who cram for 8 hours before exams — consistently.
+            StudyOS Study Streaks are built on this science.
+          </p>
+          <ul class="check-list">
+            <li>Consistency compounds — 60 days of 45 minutes beats 3 days of 6 hours</li>
+            <li>Visual progress makes you feel invested — you won't want to break the chain</li>
+            <li>Milestone rewards give you short-term goals during long-term preparation</li>
+            <li>Streak data helps you identify your weakest study days and fix them</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREENSHOT 1 ═══ -->
+  <section style="padding: 0 0 64px; background: #fff;">
+    <div class="container">
+      <div class="screenshot-wrap" role="img" aria-label="StudyOS Study Streak dashboard screenshot placeholder">
+        <div class="screenshot-label">
+          <div class="icon">🔥</div>
+          <p><strong>Screenshot:</strong> StudyOS Study Streak Dashboard</p>
+          <p style="margin-top:8px; font-size:0.8rem;">Current streak · Calendar heatmap · Milestone progress · Daily goal tracker</p>
+        </div>
+      </div>
+      <p class="screenshot-caption">Your streak dashboard — a live view of your study consistency, milestones, and daily goal progress.</p>
+    </div>
+  </section>
+
+  <!-- ═══ FEATURES ═══ -->
+  <section style="background: #fafafa;" aria-labelledby="features-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: 56px;">
+        <p class="section-eyebrow">Feature Breakdown</p>
+        <h2 id="features-heading">Everything That Makes Your Study Streak Powerful</h2>
+        <p class="section-subtitle" style="margin: 0 auto 0;">
+          StudyOS Streaks aren't just a counter. They're a complete daily motivation system
+          designed around how CBSE students actually study.
+        </p>
+      </div>
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">📅</div>
+          <h3>Daily Streak Counter</h3>
+          <p>
+            Your streak number is front and centre every time you open StudyOS.
+            It's not hidden in settings — it's the first thing you see, keeping you accountable.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🗓️</div>
+          <h3>Calendar Heatmap</h3>
+          <p>
+            See a full visual calendar of every day you've studied — like a GitHub contribution graph, but for your CBSE prep.
+            Green squares feel great. Empty ones tell the truth.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Custom Daily Goals</h3>
+          <p>
+            Set a minimum daily study target that matches your schedule.
+            A 30-minute goal during school weeks, 90-minute during holidays.
+            StudyOS adapts to your life.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🏅</div>
+          <h3>Streak Milestones</h3>
+          <p>
+            Hit 7, 14, 30, 60, and 100 days to unlock special badges and bonus XP.
+            Each milestone is a genuine achievement worth celebrating — and sharing.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">⏰</div>
+          <h3>Smart Reminders</h3>
+          <p>
+            StudyOS can nudge you before your streak is about to break.
+            Set a reminder for your preferred study time and never miss a day by accident.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h3>Streak Analytics</h3>
+          <p>
+            See your average streak length, your longest streak ever, and which days of the week
+            you're most likely to skip. Data you can actually use to improve.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛡️</div>
+          <h3>Streak Freeze (Coming Soon)</h3>
+          <p>
+            Earned a Streak Freeze from the Rewards shop? Use it on a day you can't study —
+            your streak stays intact. Because life happens, even during boards season.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">👥</div>
+          <h3>Friend Streak Leaderboard</h3>
+          <p>
+            Compare your streak with friends in StudyOS. A little friendly competition
+            is one of the strongest motivators in education research. Use it.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🔗</div>
+          <h3>Integrated with XP & Rewards</h3>
+          <p>
+            Every day your streak grows, you earn bonus XP in the <a href="/features/rewards-xp-system" style="color:#f97316;font-weight:600;">StudyOS Rewards system</a>.
+            Longer streaks = more XP per session. Your consistency is always rewarded.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ MILESTONE TIMELINE ═══ -->
+  <section aria-labelledby="milestones-heading">
+    <div class="container">
+      <div class="two-col">
+        <div>
+          <p class="section-eyebrow">Streak Milestones</p>
+          <h2 id="milestones-heading">Every Week Is Worth Fighting For</h2>
+          <p class="section-subtitle">
+            StudyOS gives you a reason to keep going at every stage of your streak journey.
+            Each milestone unlocks real rewards — not just a pat on the back.
+          </p>
+          <div class="milestone-track">
+            <div class="milestone" data-day="7">
+              <h4>🔥 7-Day Streak — "Consistent Starter"</h4>
+              <p>One full week of daily studying. You've proved you can do this.</p>
+              <span class="reward">+150 Bonus XP · Starter Badge</span>
+            </div>
+            <div class="milestone" data-day="14">
+              <h4>⚡ 14-Day Streak — "Two-Week Warrior"</h4>
+              <p>Two weeks. Your study habit is starting to feel natural.</p>
+              <span class="reward">+300 Bonus XP · Warrior Badge</span>
+            </div>
+            <div class="milestone" data-day="30">
+              <h4>🌟 30-Day Streak — "Month Master"</h4>
+              <p>A full month of daily study. This is when real revision progress compounds.</p>
+              <span class="reward">+750 Bonus XP · Gold Badge · Streak Freeze</span>
+            </div>
+            <div class="milestone" data-day="60">
+              <h4>🏆 60-Day Streak — "Board Prep Hero"</h4>
+              <p>60 consecutive days means you've built a genuine academic habit. Boards? You're ready.</p>
+              <span class="reward">+2000 Bonus XP · Legendary Badge · 3 Streak Freezes</span>
+            </div>
+            <div class="milestone" data-day="100">
+              <h4>👑 100-Day Streak — "StudyOS Legend"</h4>
+              <p>100 days of unbroken study. You are statistically in the top 1% of prepared students.</p>
+              <span class="reward">+5000 Bonus XP · Legend Badge · Lifetime Feature</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="screenshot-wrap" style="min-height: 480px;" role="img" aria-label="StudyOS streak milestone badges screenshot placeholder">
+            <div class="screenshot-label">
+              <div class="icon">🏅</div>
+              <p><strong>Screenshot:</strong> Milestone Badge Collection</p>
+              <p style="margin-top:8px; font-size:0.8rem;">7-day · 14-day · 30-day · 60-day · 100-day badges</p>
+            </div>
+          </div>
+          <p class="screenshot-caption">Each milestone badge is permanently displayed on your StudyOS profile.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SCIENCE SECTION ═══ -->
+  <section style="background:#fafafa; padding:80px 0;" aria-labelledby="science-heading">
+    <div class="container">
+      <div class="science-box">
+        <p class="section-eyebrow" style="color:#fb923c;">Backed by Research</p>
+        <h2 id="science-heading" style="color:#fff;">Why Consistency Wins Every CBSE Board Exam</h2>
+        <p style="margin-bottom:0; max-width:640px;">
+          Spaced repetition and daily practice aren't productivity trends — they're
+          proven learning science. Students who study consistently over months retain
+          information 3–5× better than students who cram. StudyOS Streaks
+          put this research to work for you automatically.
+        </p>
+        <div class="science-stat-grid">
+          <div class="science-stat">
+            <div class="num">3×</div>
+            <div class="label">Better retention vs. cramming (spaced repetition research)</div>
+          </div>
+          <div class="science-stat">
+            <div class="num">66</div>
+            <div class="label">Average days to form a study habit (UCL research)</div>
+          </div>
+          <div class="science-stat">
+            <div class="num">40%</div>
+            <div class="label">Higher exam scores for students with consistent daily study</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREENSHOT 2 ═══ -->
+  <section style="padding: 80px 0;" aria-label="Calendar heatmap feature screenshot">
+    <div class="container">
+      <div class="two-col reverse">
+        <div>
+          <div class="screenshot-wrap" style="min-height:300px;" role="img" aria-label="StudyOS calendar heatmap view screenshot placeholder">
+            <div class="screenshot-label">
+              <div class="icon">🗓️</div>
+              <p><strong>Screenshot:</strong> StudyOS Calendar Heatmap</p>
+              <p style="margin-top:8px; font-size:0.8rem;">365-day view · Colour intensity = study depth · Gap detection</p>
+            </div>
+          </div>
+          <p class="screenshot-caption">Your study heatmap — every green square is a day you invested in your future.</p>
+        </div>
+        <div>
+          <p class="section-eyebrow">Calendar Heatmap</p>
+          <h2>See Your Entire Year of Study at a Glance</h2>
+          <p style="color:#4a4a6a; margin-bottom:24px;">
+            The StudyOS calendar heatmap shows every day of the school year — colour-coded
+            by how much you studied. It's impossible to hide from your own data. And when
+            you see a solid wall of green squares leading up to your board exams, you'll feel
+            something no textbook can give you: confidence.
+          </p>
+          <ul class="check-list">
+            <li>Deep green = heavy study day, light green = light study day</li>
+            <li>Empty squares show exactly where your preparation has gaps</li>
+            <li>Filter by subject to see subject-specific consistency</li>
+            <li>Share your heatmap as a proof of preparation</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section class="faq-section" aria-labelledby="faq-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:48px;">
+        <p class="section-eyebrow">FAQ</p>
+        <h2 id="faq-heading">Questions About Study Streaks</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">What is a study streak in StudyOS?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">A study streak is the number of consecutive days you've completed a study session in StudyOS. Each day you study, your streak grows. Missing a day resets the counter — which motivates you to show up every day.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">What counts as a study session to maintain a streak?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">Any meaningful study activity in StudyOS counts — reviewing formulas, completing notes, or logging a timed study block. You set the minimum daily goal, and we track whether you've hit it.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">Do I get rewards for long study streaks?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">Yes! StudyOS awards bonus XP and special badges at streak milestones — 7 days, 30 days, 60 days, and beyond. Your streak also contributes to your overall level in the Rewards & XP system.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">What happens if I miss a day?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">Your streak resets to zero, but your total XP and progress are never lost. StudyOS shows your longest streak as a badge of honour, and you can start a new streak immediately.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">How does a daily study streak help with CBSE board exam preparation?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">Research shows that consistent daily practice is far more effective than cramming before exams. A 60-day streak before CBSE boards means 60 days of spaced repetition, steady revision, and compounding progress — the foundation of board exam success.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RELATED FEATURES ═══ -->
+  <section class="related-section" aria-labelledby="related-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:40px;">
+        <p class="section-eyebrow">Explore StudyOS</p>
+        <h2 id="related-heading">Streaks Work Better With These</h2>
+      </div>
+      <div class="related-grid">
+        <a href="/features/notes-formula-library" class="related-card">
+          <span class="rc-icon">📚</span>
+          <h3>Notes & Formula Library</h3>
+          <p>Every study session counts more when you're revising from a smart, searchable formula library. Study streaks + formulas = unbeatable CBSE prep.</p>
+          <span class="rc-link">Explore Formula Library →</span>
+        </a>
+        <a href="/features/rewards-xp-system" class="related-card">
+          <span class="rc-icon">🏆</span>
+          <h3>Rewards & XP System</h3>
+          <p>Your study streak earns you bonus XP every single day. Longer streaks unlock higher XP multipliers and exclusive rewards.</p>
+          <span class="rc-link">Explore Rewards & XP →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA ═══ -->
+  <section class="cta-band" aria-labelledby="cta-heading">
+    <div class="container">
+      <h2 id="cta-heading">Day 1 Is Today. When Will Day 100 Be?</h2>
+      <p>
+        Every student who hit a 60-day streak started exactly where you are now — at zero.
+        Your streak clock starts when you sign up. Not tomorrow. Now.
+      </p>
+      <div class="cta-btns">
+        <a href="/auth.html?action=signup" class="btn btn-white">
+          🔥 Start My Streak — Free
+        </a>
+        <a href="/app.html" class="btn" style="background:rgba(255,255,255,0.15); color:#fff; border: 2px solid rgba(255,255,255,0.4);">
+          Preview the App →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <div class="container">
+      <p style="margin-bottom:12px;">
+        <a href="/features/notes-formula-library">Notes Library</a> ·
+        <a href="/features/study-streaks">Study Streaks</a> ·
+        <a href="/features/rewards-xp-system">Rewards & XP</a> ·
+        <a href="/auth.html">Sign Up</a> ·
+        <a href="/app.html">App</a>
+      </p>
+      <p>© 2026 StudyOS. Built for CBSE students who study smart, not just hard.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

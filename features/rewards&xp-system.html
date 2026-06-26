@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Gamified Study Rewards & XP System for CBSE Students | StudyOS</title>
+  <meta name="description" content="Earn XP, level up, and unlock rewards just by studying for your CBSE exams. StudyOS turns CBSE preparation into a game you actually want to play — for Class 9, 10, 11 & 12 students." />
+  <link rel="canonical" href="https://studyos.app/features/rewards-xp-system" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="Study Rewards & XP System — Make CBSE Prep Feel Like a Game | StudyOS" />
+  <meta property="og:description" content="Earn XP for every formula reviewed, note added, and streak maintained. Level up, unlock badges, and make your CBSE journey genuinely rewarding. StudyOS." />
+  <meta property="og:url" content="https://studyos.app/features/rewards-xp-system" />
+  <meta property="og:type" content="website" />
+  <meta property="og:image" content="https://studyos.app/assets/og-rewards-xp.png" />
+
+  <!-- FAQ Schema -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I earn XP in StudyOS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You earn XP for completing study sessions, reviewing formulas in the library, maintaining your daily streak, hitting streak milestones, adding personal notes, and completing weekly challenges. The more consistently you study, the more XP you earn."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What can I do with XP and rewards in StudyOS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "XP unlocks new levels on your student profile and fills your rewards bar. When your rewards bar fills, you earn rewards like Streak Freezes, profile themes, exclusive badges, and early access to new features. Higher levels also unlock XP multipliers."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the reward system just for fun, or does it actually help with studying?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Both. The reward system makes studying feel genuinely enjoyable, which is proven to increase study frequency and session length. But more importantly — to earn XP, you actually have to study. Every XP point is a real action taken toward your CBSE preparation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the XP system work across all subjects?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You earn XP for study activity in any subject — Physics, Chemistry, Maths, Biology, or any other CBSE subject. Weekly challenges sometimes focus on specific subjects to encourage balanced preparation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I see how my XP compares to other CBSE students?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "StudyOS includes an optional leaderboard where you can compare your XP and level with friends or your class. You can set your profile to private if you prefer to track progress personally."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html { scroll-behavior: smooth; }
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      color: #1a1a2e; background: #ffffff; line-height: 1.7;
+    }
+    a { color: inherit; text-decoration: none; }
+
+    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+    .text-center { text-align: center; }
+
+    .badge {
+      display: inline-block;
+      background: #fdf4ff; color: #7e22ce;
+      font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 4px 14px; border-radius: 20px; margin-bottom: 16px;
+    }
+
+    .btn {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 14px 28px; border-radius: 10px; font-size: 1rem;
+      font-weight: 700; cursor: pointer; border: none;
+      transition: transform 0.15s, box-shadow 0.15s;
+      text-decoration: none;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
+    .btn-primary { background: linear-gradient(135deg, #a855f7, #6366f1); color: #fff; }
+    .btn-secondary { background: #fff; color: #a855f7; border: 2px solid #a855f7; }
+    .btn-white { background: #fff; color: #7c3aed; }
+
+    /* ─── Nav ─── */
+    nav {
+      position: sticky; top: 0; z-index: 100;
+      background: rgba(255,255,255,0.95); backdrop-filter: blur(8px);
+      border-bottom: 1px solid #e8e8f0; padding: 14px 0;
+    }
+    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
+    .nav-logo {
+      font-size: 1.4rem; font-weight: 800;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    }
+    .nav-links { display: flex; gap: 28px; list-style: none; }
+    .nav-links a { font-size: 0.95rem; font-weight: 500; color: #4a4a6a; transition: color 0.15s; }
+    .nav-links a:hover, .nav-links a.active { color: #a855f7; }
+    .nav-cta { display: flex; gap: 12px; align-items: center; }
+
+    /* ─── Hero ─── */
+    .hero {
+      background: linear-gradient(160deg, #fdf4ff 0%, #ede9fe 40%, #e0e7ff 100%);
+      padding: 96px 0 80px; position: relative; overflow: hidden;
+    }
+    .hero::before {
+      content: ''; position: absolute;
+      width: 700px; height: 700px;
+      background: radial-gradient(circle, rgba(168,85,247,0.12) 0%, transparent 70%);
+      top: -150px; right: -150px; border-radius: 50%;
+    }
+    .hero-content { max-width: 720px; }
+    .hero h1 {
+      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900;
+      line-height: 1.15; margin-bottom: 20px; color: #1a1a2e;
+    }
+    .hero h1 span { color: #a855f7; }
+    .hero p { font-size: 1.15rem; color: #4a4a6a; margin-bottom: 36px; max-width: 580px; }
+    .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; }
+
+    /* ─── XP Bar Demo ─── */
+    .xp-demo {
+      margin-top: 48px;
+      background: #fff;
+      border-radius: 16px;
+      padding: 28px 32px;
+      border: 1px solid #e8e8f0;
+      box-shadow: 0 8px 32px rgba(168,85,247,0.1);
+      max-width: 560px;
+    }
+    .xp-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+    .xp-level { font-size: 0.85rem; font-weight: 700; color: #a855f7; }
+    .xp-count { font-size: 0.85rem; color: #6b6b8a; }
+    .xp-bar-wrap { background: #f3f4f6; border-radius: 100px; height: 16px; overflow: hidden; }
+    .xp-bar-fill {
+      height: 100%; border-radius: 100px;
+      background: linear-gradient(90deg, #a855f7, #6366f1, #3b82f6);
+      width: 68%;
+      position: relative; overflow: hidden;
+    }
+    .xp-bar-fill::after {
+      content: '';
+      position: absolute; inset: 0;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      animation: shimmer 2s infinite;
+    }
+    @keyframes shimmer { 0% { transform: translateX(-100%); } 100% { transform: translateX(100%); } }
+    .xp-footer { display: flex; justify-content: space-between; margin-top: 10px; font-size: 0.8rem; color: #9ca3af; }
+    .level-badge {
+      display: inline-flex; align-items: center; gap: 10px;
+      background: linear-gradient(135deg, #7c3aed, #a855f7);
+      color: #fff; border-radius: 100px;
+      padding: 10px 20px; margin-bottom: 16px;
+      font-weight: 700; font-size: 1rem;
+    }
+
+    .section-eyebrow { font-size: 0.82rem; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: #a855f7; margin-bottom: 12px; }
+    h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.2; color: #1a1a2e; margin-bottom: 16px; }
+    .section-subtitle { font-size: 1.05rem; color: #4a4a6a; max-width: 560px; margin-bottom: 48px; }
+    section { padding: 80px 0; }
+
+    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; }
+    .feature-card {
+      background: #fafafa; border: 1px solid #e8e8f0;
+      border-radius: 16px; padding: 32px;
+      transition: border-color 0.2s, box-shadow 0.2s;
+    }
+    .feature-card:hover { border-color: #d8b4fe; box-shadow: 0 8px 32px rgba(168,85,247,0.08); }
+    .feature-icon {
+      width: 52px; height: 52px;
+      background: linear-gradient(135deg, #fdf4ff, #ede9fe);
+      border-radius: 14px; display: flex; align-items: center;
+      justify-content: center; font-size: 1.5rem; margin-bottom: 20px;
+    }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
+    .feature-card p { font-size: 0.95rem; color: #4a4a6a; line-height: 1.6; }
+
+    .screenshot-wrap {
+      background: linear-gradient(135deg, #1e1b4b, #4c1d95);
+      border-radius: 16px; padding: 32px;
+      display: flex; align-items: center; justify-content: center;
+      min-height: 320px; position: relative; overflow: hidden;
+      box-shadow: 0 24px 64px rgba(168,85,247,0.25);
+    }
+    .screenshot-wrap::before {
+      content: ''; position: absolute; inset: 0;
+      background:
+        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px),
+        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px);
+    }
+    .screenshot-label { position: relative; text-align: center; color: rgba(255,255,255,0.6); }
+    .screenshot-label .icon { font-size: 3rem; margin-bottom: 12px; }
+    .screenshot-label p { font-size: 0.9rem; font-weight: 500; }
+    .screenshot-caption { text-align: center; font-size: 0.85rem; color: #6b6b8a; margin-top: 12px; font-style: italic; }
+
+    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
+    .two-col.reverse { direction: rtl; }
+    .two-col.reverse > * { direction: ltr; }
+    @media (max-width: 768px) {
+      .two-col { grid-template-columns: 1fr; gap: 40px; }
+      .two-col.reverse { direction: ltr; }
+    }
+
+    .check-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
+    .check-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 0.98rem; color: #2d2d4e; }
+    .check-list li::before {
+      content: '✓'; width: 22px; height: 22px;
+      background: #a855f7; color: #fff; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.7rem; font-weight: 800; flex-shrink: 0; margin-top: 2px;
+    }
+
+    /* ─── XP Earn Table ─── */
+    .xp-table { width: 100%; border-collapse: collapse; }
+    .xp-table th { text-align: left; padding: 14px 16px; font-size: 0.82rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; color: #6b6b8a; border-bottom: 2px solid #e8e8f0; background: #fafafa; }
+    .xp-table td { padding: 16px; font-size: 0.95rem; border-bottom: 1px solid #f0f0f5; }
+    .xp-table tr:last-child td { border-bottom: none; }
+    .xp-table tr:hover td { background: #fdf4ff; }
+    .xp-pill {
+      display: inline-block;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      color: #fff; font-size: 0.82rem; font-weight: 700;
+      padding: 4px 12px; border-radius: 100px;
+    }
+    .xp-table-wrap { border: 1px solid #e8e8f0; border-radius: 16px; overflow: hidden; }
+
+    /* ─── Level Grid ─── */
+    .level-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 16px; }
+    .level-card {
+      border-radius: 16px; padding: 24px; text-align: center;
+      position: relative; overflow: hidden;
+    }
+    .level-card::before { content: ''; position: absolute; inset: 0; opacity: 0.12; }
+    .level-1 { background: linear-gradient(135deg, #f3f4f6, #e5e7eb); border: 2px solid #d1d5db; }
+    .level-2 { background: linear-gradient(135deg, #ecfdf5, #d1fae5); border: 2px solid #6ee7b7; }
+    .level-3 { background: linear-gradient(135deg, #eff6ff, #dbeafe); border: 2px solid #93c5fd; }
+    .level-4 { background: linear-gradient(135deg, #fdf4ff, #f3e8ff); border: 2px solid #d8b4fe; }
+    .level-5 { background: linear-gradient(135deg, #fffbeb, #fef3c7); border: 2px solid #fcd34d; }
+    .level-6 { background: linear-gradient(135deg, #fff1f2, #ffe4e6); border: 2px solid #fca5a5; }
+    .level-num { font-size: 0.75rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: #6b6b8a; margin-bottom: 4px; }
+    .level-icon { font-size: 2.2rem; margin-bottom: 8px; }
+    .level-title { font-size: 0.95rem; font-weight: 800; color: #1a1a2e; margin-bottom: 6px; }
+    .level-range { font-size: 0.78rem; color: #6b6b8a; font-weight: 600; }
+
+    /* ─── FAQ ─── */
+    .faq-section { background: #fdf4ff; }
+    .faq-list { display: flex; flex-direction: column; gap: 0; max-width: 760px; margin: 0 auto; }
+    .faq-item { border-bottom: 1px solid #e9d5ff; padding: 24px 0; }
+    .faq-item:last-child { border-bottom: none; }
+    .faq-q { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
+    .faq-q::before {
+      content: 'Q'; width: 28px; height: 28px;
+      background: linear-gradient(135deg, #a855f7, #6366f1);
+      color: #fff; border-radius: 8px;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+    }
+    .faq-a { font-size: 0.95rem; color: #4a4a6a; padding-left: 40px; }
+
+    /* ─── CTA ─── */
+    .cta-band {
+      background: linear-gradient(135deg, #7c3aed, #a855f7, #6366f1);
+      padding: 80px 0; text-align: center;
+    }
+    .cta-band h2 { color: #fff; margin-bottom: 16px; }
+    .cta-band p { color: rgba(255,255,255,0.85); font-size: 1.05rem; margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
+    .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+
+    .related-section { background: #fafafa; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    .related-card {
+      background: #fff; border: 1px solid #e8e8f0; border-radius: 14px;
+      padding: 28px; transition: border-color 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column; gap: 12px;
+    }
+    .related-card:hover { border-color: #d8b4fe; box-shadow: 0 8px 24px rgba(168,85,247,0.08); }
+    .related-card .rc-icon { font-size: 2rem; }
+    .related-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
+    .related-card p { font-size: 0.88rem; color: #6b6b8a; }
+    .related-card .rc-link { font-size: 0.88rem; font-weight: 700; color: #a855f7; margin-top: auto; }
+
+    footer { background: #1a1a2e; color: rgba(255,255,255,0.6); padding: 40px 0; text-align: center; font-size: 0.88rem; }
+    footer a { color: rgba(255,255,255,0.6); }
+    footer a:hover { color: #fff; }
+
+    @media (max-width: 640px) {
+      .nav-links { display: none; }
+      .level-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- ═══ NAV ═══ -->
+  <nav aria-label="Main navigation">
+    <div class="container nav-inner">
+      <a href="/" class="nav-logo">StudyOS</a>
+      <ul class="nav-links">
+        <li><a href="/features/notes-formula-library">Notes Library</a></li>
+        <li><a href="/features/study-streaks">Study Streaks</a></li>
+        <li><a href="/features/rewards-xp-system" class="active">Rewards & XP</a></li>
+        <li><a href="/pricing.html">Pricing</a></li>
+      </ul>
+      <div class="nav-cta">
+        <a href="/auth.html" class="btn btn-secondary" style="padding:10px 20px; font-size:0.9rem;">Log In</a>
+        <a href="/auth.html?action=signup" class="btn btn-primary" style="padding:10px 20px; font-size:0.9rem;">Start Free</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ═══ HERO ═══ -->
+  <header class="hero" aria-label="Hero section">
+    <div class="container">
+      <div class="hero-content">
+        <span class="badge">🏆 Rewards & XP System</span>
+        <h1>
+          What If Studying for<br />
+          <span>CBSE Felt Like Levelling Up?</span>
+        </h1>
+        <p>
+          StudyOS turns your CBSE preparation into a rewarding journey with XP points,
+          level-ups, badges, and milestone rewards. Every formula you review, every note you add,
+          every streak day you complete — all of it earns you real progress. On paper and in the app.
+        </p>
+        <div class="hero-btns">
+          <a href="/auth.html?action=signup" class="btn btn-primary">
+            🏆 Claim Your First XP — Free
+          </a>
+          <a href="/app.html" class="btn btn-secondary">
+            See the Rewards System →
+          </a>
+        </div>
+
+        <!-- Live XP Bar Demo -->
+        <div class="xp-demo" role="img" aria-label="StudyOS XP level progress bar example">
+          <div class="level-badge">
+            <span>⚡</span>
+            <span>Level 12 — Physics Apprentice</span>
+          </div>
+          <div class="xp-header">
+            <span class="xp-level">Level 12 → Level 13</span>
+            <span class="xp-count">1,360 / 2,000 XP</span>
+          </div>
+          <div class="xp-bar-wrap" role="progressbar" aria-valuenow="68" aria-valuemin="0" aria-valuemax="100" aria-label="XP progress 68%">
+            <div class="xp-bar-fill"></div>
+          </div>
+          <div class="xp-footer">
+            <span>640 XP to Level 13</span>
+            <span>🔥 ×1.5 Streak Multiplier Active</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </header>
+
+  <!-- ═══ SCREENSHOT 1 ═══ -->
+  <section style="padding: 64px 0; background:#f5f3ff;">
+    <div class="container">
+      <div class="screenshot-wrap" role="img" aria-label="StudyOS Rewards and XP dashboard screenshot placeholder">
+        <div class="screenshot-label">
+          <div class="icon">🏆</div>
+          <p><strong>Screenshot:</strong> StudyOS Rewards & XP Dashboard</p>
+          <p style="margin-top:8px; font-size:0.8rem;">Level badge · XP bar · Badge collection · Weekly challenges · Leaderboard preview</p>
+        </div>
+      </div>
+      <p class="screenshot-caption">The StudyOS Rewards dashboard — your complete XP history, badge collection, and upcoming milestones in one view.</p>
+    </div>
+  </section>
+
+  <!-- ═══ WHY GAMIFICATION ═══ -->
+  <section aria-labelledby="why-heading">
+    <div class="container">
+      <div class="two-col">
+        <div>
+          <p class="section-eyebrow">The "Why"</p>
+          <h2 id="why-heading">Why CBSE Students Who Enjoy Studying Score Higher</h2>
+          <p style="color:#4a4a6a; margin-bottom:24px;">
+            Motivation is the biggest factor separating CBSE students who study consistently
+            from those who don't. StudyOS uses the same psychological principles behind
+            games and apps you're already addicted to — and points them at your CBSE syllabus.
+          </p>
+          <ul class="check-list">
+            <li>Immediate feedback loops — XP rewards every good action instantly</li>
+            <li>Progress visibility — you can always see how far you've come and how far to go</li>
+            <li>Achievement anchoring — badges give you milestones worth fighting for</li>
+            <li>Social accountability — leaderboards add healthy competition</li>
+            <li>Variable rewards — weekly challenges keep the system fresh and engaging</li>
+          </ul>
+        </div>
+        <div>
+          <div class="screenshot-wrap" style="min-height:320px;" role="img" aria-label="StudyOS gamification motivation visual placeholder">
+            <div class="screenshot-label">
+              <div class="icon">🧠</div>
+              <p><strong>Screenshot:</strong> XP Earning Moment Animation</p>
+              <p style="margin-top:8px; font-size:0.8rem;">"+50 XP earned" pop-up · Level up animation · Badge unlock screen</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FEATURE BREAKDOWN ═══ -->
+  <section style="background: #fafafa;" aria-labelledby="features-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom: 56px;">
+        <p class="section-eyebrow">Feature Breakdown</p>
+        <h2 id="features-heading">Every Part of the StudyOS Rewards System</h2>
+        <p class="section-subtitle" style="margin: 0 auto;">
+          The XP system isn't a bolt-on feature. It's woven into every corner of StudyOS
+          so every study action you take is automatically recognised and rewarded.
+        </p>
+      </div>
+      <div class="feature-grid">
+
+        <div class="feature-card">
+          <div class="feature-icon">⭐</div>
+          <h3>XP for Every Action</h3>
+          <p>
+            Review a formula? +20 XP. Add a personal note? +15 XP. Complete a study session?
+            +50 XP. Maintain your streak? Bonus XP every single day. Everything you do in StudyOS earns.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📊</div>
+          <h3>Level System</h3>
+          <p>
+            Start as a "Study Beginner" and work your way to "CBSE Legend" through 30+ levels.
+            Each level requires more XP than the last — reflecting your deepening expertise.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🏅</div>
+          <h3>Achievement Badges</h3>
+          <p>
+            Unlock badges for specific accomplishments: "First Formula Added," "7-Day Streak,"
+            "Physics Master," "Early Bird" and 50+ others. Each badge tells your study story.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎯</div>
+          <h3>Weekly Challenges</h3>
+          <p>
+            Fresh challenges every Monday — "Review 15 Chemistry formulas," "Study for 5 days straight,"
+            "Complete your Maths notes." Complete challenges for massive XP bonuses.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">✖️</div>
+          <h3>Streak XP Multiplier</h3>
+          <p>
+            Your active <a href="/features/study-streaks" style="color:#a855f7;font-weight:600;">study streak</a>
+            multiplies your XP earnings. A 30-day streak gives you ×1.5 XP per action.
+            60 days? ×2.0. Consistency pays — literally.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🛒</div>
+          <h3>Rewards Shop</h3>
+          <p>
+            Spend earned XP in the StudyOS Rewards Shop. Get Streak Freezes, custom profile themes,
+            bonus challenge slots, and exclusive early-access features.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">📈</div>
+          <h3>XP History & Analytics</h3>
+          <p>
+            See exactly where your XP came from — which subjects earned the most, which days you were
+            most active. A complete record of your academic effort over time.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🥇</div>
+          <h3>Class Leaderboard</h3>
+          <p>
+            See how your XP and level compares to friends using StudyOS. A leaderboard with people
+            you actually know is 3× more motivating than a global ranking. Optional, always private if preferred.
+          </p>
+        </div>
+
+        <div class="feature-card">
+          <div class="feature-icon">🎖️</div>
+          <h3>Subject-Specific Ranks</h3>
+          <p>
+            Earn subject-specific titles like "Physics Apprentice," "Chemistry Scholar," and "Maths Prodigy"
+            based on your study depth in each subject. Your mastery, made visible.
+          </p>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ HOW YOU EARN XP ═══ -->
+  <section aria-labelledby="xp-table-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:48px;">
+        <p class="section-eyebrow">XP Earning Guide</p>
+        <h2 id="xp-table-heading">Exactly How Much XP You Earn for Every Action</h2>
+        <p class="section-subtitle" style="margin:0 auto 0;">
+          No mystery, no guessing. Here's the complete XP breakdown so you know precisely
+          how your study effort translates into progress.
+        </p>
+      </div>
+      <div class="xp-table-wrap">
+        <table class="xp-table" aria-label="StudyOS XP earning breakdown table">
+          <thead>
+            <tr>
+              <th>Study Action</th>
+              <th>Base XP Earned</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>🗂️ Complete a study session (30+ min)</td>
+              <td><span class="xp-pill">+50 XP</span></td>
+              <td>Multiplied by active streak bonus</td>
+            </tr>
+            <tr>
+              <td>📚 Review a formula (mark as reviewed)</td>
+              <td><span class="xp-pill">+20 XP</span></td>
+              <td>Up to 10 per day for balance</td>
+            </tr>
+            <tr>
+              <td>✏️ Add a personal note to any formula</td>
+              <td><span class="xp-pill">+15 XP</span></td>
+              <td>Your own annotations count</td>
+            </tr>
+            <tr>
+              <td>🔥 Maintain your daily streak</td>
+              <td><span class="xp-pill">+30 XP</span></td>
+              <td>Per consecutive day</td>
+            </tr>
+            <tr>
+              <td>🏅 Hit a streak milestone (7/14/30/60 days)</td>
+              <td><span class="xp-pill">+150–5000 XP</span></td>
+              <td>One-time milestone bonus</td>
+            </tr>
+            <tr>
+              <td>🎯 Complete a Weekly Challenge</td>
+              <td><span class="xp-pill">+200 XP</span></td>
+              <td>Refreshes every Monday</td>
+            </tr>
+            <tr>
+              <td>📖 Complete a full chapter's formula review</td>
+              <td><span class="xp-pill">+100 XP</span></td>
+              <td>All formulas in a chapter marked reviewed</td>
+            </tr>
+            <tr>
+              <td>🌟 First login of the day</td>
+              <td><span class="xp-pill">+10 XP</span></td>
+              <td>Just for showing up</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+      <p style="text-align:center; margin-top:20px; font-size:0.88rem; color:#6b6b8a;">
+        XP values are base rates. Active streak multipliers (up to ×2.0) apply on top of these figures.
+      </p>
+    </div>
+  </section>
+
+  <!-- ═══ LEVEL SYSTEM ═══ -->
+  <section style="background: #fafafa;" aria-labelledby="levels-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:48px;">
+        <p class="section-eyebrow">Level System</p>
+        <h2 id="levels-heading">30+ Levels to Climb — From Beginner to CBSE Legend</h2>
+        <p class="section-subtitle" style="margin:0 auto 0;">
+          Your level reflects your total study effort in StudyOS. Higher levels unlock
+          bigger XP multipliers, exclusive features, and bragging rights.
+        </p>
+      </div>
+      <div class="level-grid">
+        <div class="level-card level-1">
+          <div class="level-num">Levels 1–5</div>
+          <div class="level-icon">🌱</div>
+          <div class="level-title">Study Seedling</div>
+          <div class="level-range">0 – 1,000 XP</div>
+        </div>
+        <div class="level-card level-2">
+          <div class="level-num">Levels 6–10</div>
+          <div class="level-icon">📘</div>
+          <div class="level-title">Note Keeper</div>
+          <div class="level-range">1,001 – 5,000 XP</div>
+        </div>
+        <div class="level-card level-3">
+          <div class="level-num">Levels 11–15</div>
+          <div class="level-icon">⚡</div>
+          <div class="level-title">Formula Scholar</div>
+          <div class="level-range">5,001 – 15,000 XP</div>
+        </div>
+        <div class="level-card level-4">
+          <div class="level-num">Levels 16–20</div>
+          <div class="level-icon">🔬</div>
+          <div class="level-title">Subject Expert</div>
+          <div class="level-range">15,001 – 35,000 XP</div>
+        </div>
+        <div class="level-card level-5">
+          <div class="level-num">Levels 21–25</div>
+          <div class="level-icon">🏆</div>
+          <div class="level-title">Board Topper</div>
+          <div class="level-range">35,001 – 75,000 XP</div>
+        </div>
+        <div class="level-card level-6">
+          <div class="level-num">Levels 26–30+</div>
+          <div class="level-icon">👑</div>
+          <div class="level-title">CBSE Legend</div>
+          <div class="level-range">75,001+ XP</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SCREENSHOT 2 ═══ -->
+  <section style="padding: 80px 0;" aria-label="Badge collection and XP analytics screenshot">
+    <div class="container">
+      <div class="two-col reverse">
+        <div>
+          <div class="screenshot-wrap" style="min-height:340px;" role="img" aria-label="StudyOS badge collection view screenshot placeholder">
+            <div class="screenshot-label">
+              <div class="icon">🎖️</div>
+              <p><strong>Screenshot:</strong> StudyOS Badge Collection & XP Analytics</p>
+              <p style="margin-top:8px; font-size:0.8rem;">Earned badges · Locked badges · XP chart · Weekly challenge progress</p>
+            </div>
+          </div>
+          <p class="screenshot-caption">Your badge collection and XP history — a permanent record of your CBSE preparation effort.</p>
+        </div>
+        <div>
+          <p class="section-eyebrow">Badge System</p>
+          <h2>50+ Badges. Each One Earned, Never Bought.</h2>
+          <p style="color:#4a4a6a; margin-bottom:24px;">
+            StudyOS badges aren't cosmetic. Every badge represents a real study accomplishment.
+            They're displayed on your profile, visible to friends on the leaderboard, and serve
+            as a reminder that you've put in genuine work.
+          </p>
+          <ul class="check-list">
+            <li><strong>Streak badges</strong> — 7, 14, 30, 60, 100-day milestones</li>
+            <li><strong>Subject badges</strong> — Physics, Chemistry, Maths mastery levels</li>
+            <li><strong>Activity badges</strong> — First note, 100 formulas reviewed, full chapter complete</li>
+            <li><strong>Challenge badges</strong> — For completing weekly and seasonal challenges</li>
+            <li><strong>Level badges</strong> — Automatically awarded at milestone levels</li>
+            <li><strong>Secret badges</strong> — Discover them by exploring the full app</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ SOCIAL PROOF ═══ -->
+  <section style="background:#fafafa;" aria-labelledby="proof-heading">
+    <div class="container text-center">
+      <p class="section-eyebrow">What Students Say</p>
+      <h2 id="proof-heading">Students Who Use StudyOS Rewards Study More — Here's What They Say</h2>
+      <div class="feature-grid" style="margin-top:40px; text-align:left;">
+        <div class="feature-card" style="border-left:4px solid #a855f7;">
+          <p style="font-size:1.05rem; color:#1a1a2e; margin-bottom:16px; line-height:1.6;">
+            "I never thought I'd say this, but I actually <em>look forward</em> to opening my study app
+            now. The XP bar and level system make me want to study for just one more session to level up."
+          </p>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#a855f7,#6366f1);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;">K</div>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Kavya R.</div>
+              <div style="font-size:0.8rem; color:#6b6b8a;">Class 12, CBSE — Chennai · Level 18</div>
+            </div>
+          </div>
+        </div>
+        <div class="feature-card" style="border-left:4px solid #6366f1;">
+          <p style="font-size:1.05rem; color:#1a1a2e; margin-bottom:16px; line-height:1.6;">
+            "My streak multiplier is at ×1.8 right now — so every formula I review earns almost
+            double XP. It makes you want to protect the streak at all costs. Best study motivation I've found."
+          </p>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#6366f1,#3b82f6);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;">S</div>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Siddharth M.</div>
+              <div style="font-size:0.8rem; color:#6b6b8a;">Class 11, CBSE — Mumbai · 43-day streak</div>
+            </div>
+          </div>
+        </div>
+        <div class="feature-card" style="border-left:4px solid #3b82f6;">
+          <p style="font-size:1.05rem; color:#1a1a2e; margin-bottom:16px; line-height:1.6;">
+            "My friends and I have a private leaderboard. None of us want to be at the bottom.
+            We've all studied way more this term than last year. Competition works."
+          </p>
+          <div style="display:flex; align-items:center; gap:12px;">
+            <div style="width:42px;height:42px;background:linear-gradient(135deg,#3b82f6,#0ea5e9);border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-weight:800;">N</div>
+            <div>
+              <div style="font-weight:700; font-size:0.9rem;">Nisha T.</div>
+              <div style="font-size:0.8rem; color:#6b6b8a;">Class 10, CBSE — Hyderabad</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FAQ ═══ -->
+  <section class="faq-section" aria-labelledby="faq-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:48px;">
+        <p class="section-eyebrow">FAQ</p>
+        <h2 id="faq-heading">Questions About Rewards & XP</h2>
+      </div>
+      <div class="faq-list">
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">How do I earn XP in StudyOS?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">You earn XP for completing study sessions, reviewing formulas in the library, maintaining your daily streak, hitting streak milestones, adding personal notes, and completing weekly challenges. The more consistently you study, the more XP you earn.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">What can I do with XP and rewards in StudyOS?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">XP unlocks new levels on your student profile and fills your rewards bar. When your rewards bar fills, you earn rewards like Streak Freezes, profile themes, exclusive badges, and early access to new features. Higher levels also unlock XP multipliers.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">Is the reward system just for fun, or does it actually help with studying?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">Both. The reward system makes studying feel genuinely enjoyable, which is proven to increase study frequency and session length. But more importantly — to earn XP, you actually have to study. Every XP point is a real action taken toward your CBSE preparation.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">Does the XP system work across all subjects?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">Yes. You earn XP for study activity in any subject — Physics, Chemistry, Maths, Biology, or any other CBSE subject. Weekly challenges sometimes focus on specific subjects to encourage balanced preparation.</span>
+          </div>
+        </div>
+        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
+          <div class="faq-q" itemprop="name">Can I see how my XP compares to other CBSE students?</div>
+          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
+            <span itemprop="text">StudyOS includes an optional leaderboard where you can compare your XP and level with friends or your class. You can set your profile to private if you prefer to track progress personally.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ RELATED FEATURES ═══ -->
+  <section class="related-section" aria-labelledby="related-heading">
+    <div class="container">
+      <div class="text-center" style="margin-bottom:40px;">
+        <p class="section-eyebrow">Complete Your StudyOS Setup</p>
+        <h2 id="related-heading">Rewards Work Best When Combined With These</h2>
+      </div>
+      <div class="related-grid">
+        <a href="/features/study-streaks" class="related-card">
+          <span class="rc-icon">🔥</span>
+          <h3>Study Streaks</h3>
+          <p>Every streak day multiplies your XP earnings. A 60-day streak at ×2.0 XP multiplier is the fastest way to level up — and the surest sign of board exam readiness.</p>
+          <span class="rc-link">Explore Study Streaks →</span>
+        </a>
+        <a href="/features/notes-formula-library" class="related-card">
+          <span class="rc-icon">📚</span>
+          <h3>Notes & Formula Library</h3>
+          <p>Every formula you review in the library earns XP. The more complete your formula library, the more daily XP you can earn from revision sessions.</p>
+          <span class="rc-link">Explore Formula Library →</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ CTA BAND ═══ -->
+  <section class="cta-band" aria-labelledby="cta-heading">
+    <div class="container">
+      <h2 id="cta-heading">You've Already Read This Far. That's +10 XP Potential Waiting.</h2>
+      <p>
+        Sign up free, start earning XP on your very first study session,
+        and find out what level you can reach before your next CBSE exam.
+        Your competitors are already playing.
+      </p>
+      <div class="cta-btns">
+        <a href="/auth.html?action=signup" class="btn btn-white">
+          🏆 Start Earning XP — Free
+        </a>
+        <a href="/app.html" class="btn" style="background:rgba(255,255,255,0.15); color:#fff; border: 2px solid rgba(255,255,255,0.4);">
+          Preview the App →
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ═══ FOOTER ═══ -->
+  <footer>
+    <div class="container">
+      <p style="margin-bottom:12px;">
+        <a href="/features/notes-formula-library">Notes Library</a> ·
+        <a href="/features/study-streaks">Study Streaks</a> ·
+        <a href="/features/rewards-xp-system">Rewards & XP</a> ·
+        <a href="/auth.html">Sign Up</a> ·
+        <a href="/app.html">App</a>
+      </p>
+      <p>© 2026 StudyOS. Every hour you study, you level up — in the app and in life.</p>
+    </div>
+  </footer>
+
+</body>
+</html>

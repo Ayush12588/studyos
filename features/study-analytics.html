@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Study Analytics Dashboard for CBSE Students | StudyOS</title>
+  <meta name="description"
+    content="See exactly how you're studying with StudyOS Analytics Dashboard. Track hours by subject, quiz scores, revision consistency, and board exam readiness — all in one clear view." />
+  <link rel="canonical" href="https://studyos.app/features/analytics-dashboard" />
+
+  <meta property="og:title" content="Study Analytics Dashboard for CBSE Students | StudyOS" />
+  <meta property="og:description" content="Your personal study data centre. Hours logged, quiz performance, revision trends, and CBSE readiness scores — visualised beautifully." />
+  <meta property="og:url" content="https://studyos.app/features/analytics-dashboard" />
+  <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What data does the StudyOS Analytics Dashboard show?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The dashboard shows total study hours by subject, daily and weekly study patterns, quiz accuracy trends, revision completion rates, syllabus progress percentages, streak history, and an overall board exam readiness score."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can the analytics help me identify which subjects I'm neglecting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. StudyOS compares time spent across all subjects and flags imbalances — for example, if you've logged 10 hours of Maths but only 2 hours of Chemistry over the same week."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is study time tracked in StudyOS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Study time is tracked automatically via the Focus Timer. Every time you start a focus session and link it to a subject/chapter, the time is logged. Manual entries are also possible."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I share my analytics report with my parents or teacher?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can export a weekly or monthly analytics report as a PDF or shareable link. It shows study hours, quiz scores, and progress — great for parent-teacher meetings."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the dashboard show me my best study times?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. StudyOS analyses when during the day you complete the most sessions and perform best on quizzes, then suggests these as your peak study hours for scheduling future sessions."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a2e; background: #fff; line-height: 1.7; }
+
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 5%; background: #fff; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 1.4rem; font-weight: 800; color: #0284c7; text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: #444; font-size: 0.95rem; }
+    .nav-cta { background: #0284c7; color: #fff; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+
+    .hero { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; padding: 6rem 5% 5rem; text-align: center; }
+    .hero-badge { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.2rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1.2rem; }
+    .hero p { font-size: 1.15rem; max-width: 640px; margin: 0 auto 2rem; opacity: 0.92; }
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: #fff; color: #0284c7; padding: 0.85rem 2rem; border-radius: 10px; font-weight: 700; font-size: 1rem; text-decoration: none; }
+    .btn-secondary { background: transparent; color: #fff; padding: 0.85rem 2rem; border: 2px solid rgba(255,255,255,0.6); border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none; }
+    .hero-stats { display: flex; gap: 3rem; justify-content: center; margin-top: 3.5rem; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 800; }
+    .stat-label { font-size: 0.85rem; opacity: 0.8; }
+
+    .screenshot-wrap { background: #f0f9ff; padding: 4rem 5%; text-align: center; }
+    .screenshot-placeholder { max-width: 900px; margin: 0 auto; background: #e0f2fe; border-radius: 16px; padding: 6rem 2rem; border: 2px dashed #7dd3fc; color: #0284c7; font-size: 1rem; }
+
+    section { padding: 5rem 5%; }
+    .section-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; color: #0284c7; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin-bottom: 1rem; color: #1a1a2e; }
+    .section-sub { font-size: 1.05rem; color: #555; max-width: 560px; margin-bottom: 3rem; }
+
+    /* METRIC CARDS */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1.5rem; margin-bottom: 3rem; }
+    .metric-card { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 14px; padding: 1.5rem; text-align: center; }
+    .metric-card .num { font-size: 2.2rem; font-weight: 800; color: #0284c7; }
+    .metric-card .label { font-size: 0.85rem; color: #555; margin-top: 0.3rem; }
+    .metric-card .change { font-size: 0.8rem; color: #059669; font-weight: 600; margin-top: 0.3rem; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+    .feature-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 14px; padding: 2rem; transition: box-shadow 0.2s; }
+    .feature-card:hover { box-shadow: 0 8px 30px rgba(2,132,199,0.1); }
+    .feature-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.95rem; color: #555; }
+
+    /* SUBJECT TIME BARS */
+    .time-bars { max-width: 600px; display: flex; flex-direction: column; gap: 1rem; }
+    .tbar-row label { display: flex; justify-content: space-between; font-size: 0.9rem; font-weight: 600; margin-bottom: 0.3rem; }
+    .tbar-bg { background: #e0f2fe; border-radius: 50px; height: 12px; overflow: hidden; }
+    .tbar-fill { height: 100%; border-radius: 50px; background: #0284c7; }
+
+    .faq-section { background: #fff; }
+    .faq-list { max-width: 760px; display: flex; flex-direction: column; gap: 1rem; }
+    .faq-item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .faq-item p { font-size: 0.95rem; color: #555; }
+
+    .cta-banner { background: linear-gradient(135deg, #0284c7, #0369a1); color: #fff; padding: 5rem 5%; text-align: center; }
+    .cta-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .cta-banner p { font-size: 1.05rem; opacity: 0.9; margin-bottom: 2rem; }
+    .cta-pair { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .related-section { padding: 4rem 5%; background: #f9fafb; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .related-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.2rem 1.5rem; text-decoration: none; color: #1a1a2e; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.6rem; transition: border-color 0.2s; }
+    .related-card:hover { border-color: #0284c7; color: #0284c7; }
+
+    footer { background: #1a1a2e; color: #aaa; padding: 3rem 5%; text-align: center; font-size: 0.9rem; }
+    footer a { color: #7dd3fc; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">StudyOS</a>
+  <ul class="nav-links">
+    <li><a href="/features">Features</a></li>
+    <li><a href="/app.html">Dashboard</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <a href="/auth.html" class="nav-cta">Start Free</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">📊 Study Analytics</div>
+  <h1>See Exactly How You Study.<br />Then Study Better.</h1>
+  <p>
+    Most students study hard without knowing where their time actually goes.
+    StudyOS Analytics Dashboard turns your study habits into clear, actionable data —
+    so you can optimise your effort and maximise your CBSE scores.
+  </p>
+  <div class="hero-ctas">
+    <a href="/auth.html" class="btn-primary">View My Analytics →</a>
+    <a href="/app.html" class="btn-secondary">See Dashboard Demo</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">12+</div><div class="stat-label">Analytics metrics tracked</div></div>
+    <div class="stat"><div class="stat-num">Daily</div><div class="stat-label">Progress updates</div></div>
+    <div class="stat"><div class="stat-num">PDF</div><div class="stat-label">Shareable reports</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">Automatically generated</div></div>
+  </div>
+</section>
+
+<div class="screenshot-wrap">
+  <div class="screenshot-placeholder">
+    📸 Screenshot Placeholder — Full Analytics Dashboard: Study Hours, Quiz Scores, Syllabus Progress<br />
+    <small>Recommended size: 1280×720px | File: analytics-dashboard-main.png</small>
+  </div>
+</div>
+
+<!-- METRICS DEMO -->
+<section>
+  <p class="section-label">Sample Data View</p>
+  <h2>Your Week at a Glance — Real Numbers, Real Insights</h2>
+  <p class="section-sub">Here's what a sample StudyOS Analytics snapshot looks like for a Class 12 Science student:</p>
+  <div class="metrics-grid">
+    <div class="metric-card">
+      <div class="num">38.5h</div>
+      <div class="label">Total Study Hours This Week</div>
+      <div class="change">↑ +4.5h vs last week</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">78%</div>
+      <div class="label">Average Quiz Accuracy</div>
+      <div class="change">↑ +6% vs last week</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">62%</div>
+      <div class="label">Overall Syllabus Completion</div>
+      <div class="change">↑ On track for boards</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">14</div>
+      <div class="label">Day Study Streak</div>
+      <div class="change">🔥 Personal best!</div>
+    </div>
+    <div class="metric-card">
+      <div class="num">23</div>
+      <div class="label">Revision Sessions Done</div>
+      <div class="change">5 due today</div>
+    </div>
+  </div>
+
+  <p class="section-label">Time by Subject (This Week)</p>
+  <div class="time-bars">
+    <div class="tbar-row">
+      <label><span>Physics</span><span>8.5h</span></label>
+      <div class="tbar-bg"><div class="tbar-fill" style="width:85%"></div></div>
+    </div>
+    <div class="tbar-row">
+      <label><span>Chemistry</span><span>5.2h</span></label>
+      <div class="tbar-bg"><div class="tbar-fill" style="width:52%"></div></div>
+    </div>
+    <div class="tbar-row">
+      <label><span>Mathematics</span><span>10h</span></label>
+      <div class="tbar-bg"><div class="tbar-fill" style="width:100%"></div></div>
+    </div>
+    <div class="tbar-row">
+      <label><span>Biology</span><span>2.5h</span></label>
+      <div class="tbar-bg"><div class="tbar-fill" style="width:25%; background:#ef4444;"></div></div>
+    </div>
+    <div class="tbar-row">
+      <label><span>English</span><span>3h</span></label>
+      <div class="tbar-bg"><div class="tbar-fill" style="width:30%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section style="background:#f0f9ff;">
+  <p class="section-label">Dashboard Features</p>
+  <h2>Every Study Metric You Actually Need</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">⏱️</div>
+      <h3>Subject-Wise Study Hours</h3>
+      <p>See time distribution across all CBSE subjects. Spot the subjects you're avoiding and reallocate effort before it's too late.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📈</div>
+      <h3>Quiz Performance Trends</h3>
+      <p>Track accuracy improvement per chapter and subject over days, weeks, and months. Know exactly which chapters are getting stronger.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗓️</div>
+      <h3>Study Calendar Heatmap</h3>
+      <p>A GitHub-style heatmap of your daily study activity. Visually see your consistency and spot gaps before they become habits.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>Board Exam Readiness Score</h3>
+      <p>A composite score combining syllabus completion, quiz accuracy, and revision coverage — updated daily as you study.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>Peak Productivity Hours</h3>
+      <p>Discover when you study most effectively. Schedule future sessions at your proven peak hours for maximum output.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📤</div>
+      <h3>Shareable Weekly Report</h3>
+      <p>Export or share a clean weekly summary with parents or teachers. Builds accountability and keeps everyone aligned.</p>
+    </div>
+  </div>
+</section>
+
+<div class="screenshot-wrap" style="background:#e0f2fe;">
+  <div class="screenshot-placeholder" style="background:#bae6fd; border-color:#7dd3fc; color:#0284c7;">
+    📸 Screenshot Placeholder — Weekly Report PDF + Subject Heatmap Calendar<br />
+    <small>Recommended size: 1280×720px | File: analytics-weekly-report.png</small>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <p class="section-label">FAQ</p>
+  <h2>Analytics Dashboard — Your Questions Answered</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <h3>What data does the StudyOS Analytics Dashboard show?</h3>
+      <p>The dashboard shows total study hours by subject, daily and weekly study patterns, quiz accuracy trends, revision completion rates, syllabus progress percentages, streak history, and an overall board exam readiness score.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can the analytics help me identify which subjects I'm neglecting?</h3>
+      <p>Yes. StudyOS compares time spent across all subjects and flags imbalances — for example, if you've logged 10 hours of Maths but only 2 hours of Chemistry over the same week.</p>
+    </div>
+    <div class="faq-item">
+      <h3>How is study time tracked in StudyOS?</h3>
+      <p>Study time is tracked automatically via the Focus Timer. Every time you start a focus session and link it to a subject/chapter, the time is logged. Manual entries are also possible.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can I share my analytics report with my parents or teacher?</h3>
+      <p>Yes. You can export a weekly or monthly analytics report as a PDF or shareable link. It shows study hours, quiz scores, and progress — great for parent-teacher meetings.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Does the dashboard show me my best study times?</h3>
+      <p>Yes. StudyOS analyses when during the day you complete the most sessions and perform best on quizzes, then suggests these as your peak study hours for scheduling future sessions.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <h2>You Can't Improve What You Don't Measure.</h2>
+  <p>Start tracking your study data today and turn effort into actual exam results.</p>
+  <div class="cta-pair">
+    <a href="/auth.html" class="btn-primary">See My Analytics →</a>
+    <a href="/app.html" class="btn-secondary">Open Dashboard</a>
+  </div>
+</section>
+
+<section class="related-section">
+  <p class="section-label">More StudyOS Features</p>
+  <h2>Analytics Is Powered By These Tools</h2>
+  <div class="related-grid">
+    <a href="/features/ai-coach" class="related-card">🤖 AI Study Coach</a>
+    <a href="/features/cbse-syllabus-tracker" class="related-card">📋 Syllabus Tracker</a>
+    <a href="/features/focus-timer" class="related-card">⏱️ Focus Timer</a>
+    <a href="/features/quiz-generator" class="related-card">🧩 Quiz Generator</a>
+    <a href="/features/revision-system" class="related-card">🔁 Revision System</a>
+    <a href="/features/exam-countdown" class="related-card">⏳ Exam Countdown</a>
+    <a href="/features/study-streaks" class="related-card">🔥 Study Streaks</a>
+    <a href="/features/backlog-management" class="related-card">📌 Backlog Manager</a>
+    <a href="/features/notes-formula-library" class="related-card">📚 Notes & Formulas</a>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 StudyOS. Data-Driven CBSE Preparation.</p>
+  <p style="margin-top:0.5rem;"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/contact">Contact</a></p>
+</footer>
+
+</body>
+</html>

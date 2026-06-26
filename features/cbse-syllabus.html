@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBSE Syllabus Tracker for Class 9–12 | StudyOS</title>
+  <meta name="description"
+    content="Track your CBSE syllabus completion topic by topic for Classes 9–12. StudyOS gives you a real-time progress map so you never miss a chapter before board exams." />
+  <link rel="canonical" href="https://studyos.app/features/cbse-syllabus-tracker" />
+
+  <meta property="og:title" content="CBSE Syllabus Tracker for Class 9–12 | StudyOS" />
+  <meta property="og:description" content="Never lose track of your CBSE syllabus again. Visual progress maps, topic checklists, and board exam readiness scores — all in one place." />
+  <meta property="og:url" content="https://studyos.app/features/cbse-syllabus-tracker" />
+  <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Does StudyOS have the full CBSE syllabus pre-loaded?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. StudyOS includes the complete CBSE syllabus for Classes 9, 10, 11, and 12 across all major streams — Science, Commerce, and Arts. Every chapter, unit, and topic is pre-mapped so you can start tracking progress immediately."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I track syllabus completion subject-wise?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Absolutely. The CBSE Syllabus Tracker shows completion percentages for each subject separately, and you can drill down to individual chapters and sub-topics."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does the syllabus tracker help with board exam preparation?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The tracker calculates how much syllabus remains versus how many days are left before your board exam, then flags high-risk topics that need urgent attention."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the CBSE syllabus updated every year in StudyOS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The StudyOS team reviews and updates the CBSE syllabus at the start of each academic year to reflect the latest NCERT curriculum changes and board updates."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I mark topics as 'needs revision' separately from 'done'?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Each topic can be marked as Not Started, In Progress, Done, or Needs Revision — giving you a granular view of where you actually stand."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a2e; background: #fff; line-height: 1.7; }
+
+    nav {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1rem 5%; background: #fff; border-bottom: 1px solid #e8e8e8;
+      position: sticky; top: 0; z-index: 100;
+    }
+    .nav-logo { font-size: 1.4rem; font-weight: 800; color: #059669; text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: #444; font-size: 0.95rem; }
+    .nav-cta {
+      background: #059669; color: #fff; padding: 0.5rem 1.2rem;
+      border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem;
+    }
+
+    .hero {
+      background: linear-gradient(135deg, #059669 0%, #0d9488 100%);
+      color: #fff; padding: 6rem 5% 5rem; text-align: center;
+    }
+    .hero-badge {
+      display: inline-block; background: rgba(255,255,255,0.2);
+      color: #fff; padding: 0.3rem 1rem; border-radius: 50px;
+      font-size: 0.85rem; font-weight: 600; margin-bottom: 1.2rem;
+    }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1.2rem; }
+    .hero p { font-size: 1.15rem; max-width: 640px; margin: 0 auto 2rem; opacity: 0.92; }
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary {
+      background: #fff; color: #059669; padding: 0.85rem 2rem;
+      border-radius: 10px; font-weight: 700; font-size: 1rem; text-decoration: none;
+    }
+    .btn-secondary {
+      background: transparent; color: #fff; padding: 0.85rem 2rem;
+      border: 2px solid rgba(255,255,255,0.6); border-radius: 10px;
+      font-weight: 600; font-size: 1rem; text-decoration: none;
+    }
+    .hero-stats { display: flex; gap: 3rem; justify-content: center; margin-top: 3.5rem; flex-wrap: wrap; }
+    .stat { text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 800; }
+    .stat-label { font-size: 0.85rem; opacity: 0.8; }
+
+    .screenshot-wrap { background: #ecfdf5; padding: 4rem 5%; text-align: center; }
+    .screenshot-placeholder {
+      max-width: 900px; margin: 0 auto;
+      background: #d1fae5; border-radius: 16px; padding: 6rem 2rem;
+      border: 2px dashed #6ee7b7; color: #059669; font-size: 1rem;
+    }
+
+    section { padding: 5rem 5%; }
+    .section-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; color: #059669; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin-bottom: 1rem; color: #1a1a2e; }
+    .section-sub { font-size: 1.05rem; color: #555; max-width: 560px; margin-bottom: 3rem; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+    .feature-card {
+      background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 14px; padding: 2rem;
+      transition: box-shadow 0.2s;
+    }
+    .feature-card:hover { box-shadow: 0 8px 30px rgba(5,150,105,0.1); }
+    .feature-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.95rem; color: #555; }
+
+    /* PROGRESS BAR DEMO */
+    .demo-section { background: #f0fdf4; }
+    .subject-bars { display: flex; flex-direction: column; gap: 1.2rem; max-width: 680px; }
+    .subject-row label { font-weight: 600; font-size: 0.95rem; display: flex; justify-content: space-between; margin-bottom: 0.3rem; }
+    .bar-bg { background: #d1fae5; border-radius: 50px; height: 14px; overflow: hidden; }
+    .bar-fill { height: 100%; border-radius: 50px; background: #059669; }
+
+    .how-section { background: #f0fdf4; }
+    .steps { display: flex; flex-direction: column; gap: 2rem; max-width: 780px; }
+    .step { display: flex; gap: 1.5rem; align-items: flex-start; }
+    .step-num {
+      min-width: 48px; height: 48px; background: #059669; color: #fff;
+      border-radius: 50%; display: flex; align-items: center; justify-content: center;
+      font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+    }
+    .step h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.3rem; }
+    .step p { font-size: 0.95rem; color: #555; }
+
+    .compare-section { background: #fff; }
+    .compare-table { width: 100%; max-width: 700px; border-collapse: collapse; }
+    .compare-table th, .compare-table td { padding: 1rem; border: 1px solid #e5e7eb; text-align: left; }
+    .compare-table th { background: #059669; color: #fff; font-weight: 700; }
+    .compare-table tr:nth-child(even) { background: #f0fdf4; }
+    .check { color: #059669; font-weight: 700; }
+    .cross { color: #ef4444; font-weight: 700; }
+
+    .faq-section { background: #fff; }
+    .faq-list { max-width: 760px; display: flex; flex-direction: column; gap: 1rem; }
+    .faq-item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .faq-item p { font-size: 0.95rem; color: #555; }
+
+    .cta-banner { background: linear-gradient(135deg, #059669, #0d9488); color: #fff; padding: 5rem 5%; text-align: center; }
+    .cta-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .cta-banner p { font-size: 1.05rem; opacity: 0.9; margin-bottom: 2rem; }
+    .cta-pair { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .related-section { padding: 4rem 5%; background: #f9fafb; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .related-card {
+      background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.2rem 1.5rem;
+      text-decoration: none; color: #1a1a2e; font-weight: 600; font-size: 0.95rem;
+      display: flex; align-items: center; gap: 0.6rem; transition: border-color 0.2s;
+    }
+    .related-card:hover { border-color: #059669; color: #059669; }
+
+    footer { background: #1a1a2e; color: #aaa; padding: 3rem 5%; text-align: center; font-size: 0.9rem; }
+    footer a { color: #6ee7b7; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">StudyOS</a>
+  <ul class="nav-links">
+    <li><a href="/features">Features</a></li>
+    <li><a href="/app.html">Dashboard</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <a href="/auth.html" class="nav-cta">Start Free</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">📋 Integrated CBSE Syllabus</div>
+  <h1>Track Every CBSE Topic.<br />Never Reach Exam Day Underprepared.</h1>
+  <p>
+    StudyOS has the full CBSE syllabus pre-loaded for Classes 9–12. Mark topics as you study,
+    see your board exam readiness score in real time, and never miss a chapter again.
+  </p>
+  <div class="hero-ctas">
+    <a href="/auth.html" class="btn-primary">Track My Syllabus Free →</a>
+    <a href="/app.html" class="btn-secondary">View Demo</a>
+  </div>
+  <div class="hero-stats">
+    <div class="stat"><div class="stat-num">2,400+</div><div class="stat-label">CBSE topics mapped</div></div>
+    <div class="stat"><div class="stat-num">4</div><div class="stat-label">Classes (9, 10, 11, 12)</div></div>
+    <div class="stat"><div class="stat-num">3</div><div class="stat-label">Streams (Sci, Com, Arts)</div></div>
+    <div class="stat"><div class="stat-num">100%</div><div class="stat-label">NCERT aligned</div></div>
+  </div>
+</section>
+
+<!-- SCREENSHOT -->
+<div class="screenshot-wrap">
+  <div class="screenshot-placeholder">
+    📸 Screenshot Placeholder — CBSE Syllabus Progress Map with Subject Completion Rings<br />
+    <small>Recommended size: 1280×720px | File: cbse-syllabus-tracker.png</small>
+  </div>
+</div>
+
+<!-- PROGRESS DEMO -->
+<section class="demo-section">
+  <p class="section-label">Live Progress View</p>
+  <h2>See Exactly Where You Stand — Subject by Subject</h2>
+  <p class="section-sub">Here's a sample of what your CBSE syllabus tracker looks like inside StudyOS:</p>
+  <div class="subject-bars">
+    <div class="subject-row">
+      <label><span>Physics — Class 12</span><span>72%</span></label>
+      <div class="bar-bg"><div class="bar-fill" style="width:72%"></div></div>
+    </div>
+    <div class="subject-row">
+      <label><span>Chemistry — Class 12</span><span>58%</span></label>
+      <div class="bar-bg"><div class="bar-fill" style="width:58%"></div></div>
+    </div>
+    <div class="subject-row">
+      <label><span>Mathematics — Class 12</span><span>85%</span></label>
+      <div class="bar-bg"><div class="bar-fill" style="width:85%"></div></div>
+    </div>
+    <div class="subject-row">
+      <label><span>Biology — Class 12</span><span>40%</span></label>
+      <div class="bar-bg"><div class="bar-fill" style="width:40%;background:#ef4444;"></div></div>
+    </div>
+    <div class="subject-row">
+      <label><span>English Core — Class 12</span><span>91%</span></label>
+      <div class="bar-bg"><div class="bar-fill" style="width:91%"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section>
+  <p class="section-label">Key Features</p>
+  <h2>More Than a Checklist — A Complete CBSE Progress System</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📚</div>
+      <h3>Full NCERT Syllabus Pre-Loaded</h3>
+      <p>Every chapter, unit, and topic for CBSE Classes 9–12 is already in the system. No manual data entry — just select your class and start ticking.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🎯</div>
+      <h3>4-Status Topic Marking</h3>
+      <p>Mark each topic as Not Started, In Progress, Completed, or Needs Revision. This gives you a far more honest picture than simple done/not-done.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔥</div>
+      <h3>Board Exam Readiness Score</h3>
+      <p>A smart score that combines completion %, topic weights (based on CBSE marking scheme), and days remaining to tell you if you're on track.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">⚠️</div>
+      <h3>High-Risk Chapter Alerts</h3>
+      <p>If you have a high-weightage chapter untouched 30 days before your exam, StudyOS flags it as urgent so you never get blindsided.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <h3>Synced with Revision System</h3>
+      <p>Topics you mark as Done automatically enter the <a href="/features/revision-system" style="color:#059669;">Revision System</a>, ensuring spaced repetition keeps them fresh.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📤</div>
+      <h3>Shareable Progress Reports</h3>
+      <p>Generate a clean progress report to share with parents or teachers. Transparency builds accountability and support.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <p class="section-label">Getting Started</p>
+  <h2>Set Up Your CBSE Syllabus Tracker in 3 Minutes</h2>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h3>Choose Your Class & Stream</h3>
+        <p>Select Class 9, 10, 11, or 12, and your stream (Science / Commerce / Arts). StudyOS instantly loads your complete NCERT-aligned syllabus.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h3>Mark Where You Currently Stand</h3>
+        <p>Go through each subject and mark topics you've already covered. This sets your baseline and gives you your first readiness score immediately.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h3>Update After Every Study Session</h3>
+        <p>After each session, tick off completed topics. Watch your readiness score climb and let the AI Coach adjust your plan based on your actual progress.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARE TABLE -->
+<section class="compare-section">
+  <p class="section-label">Why StudyOS</p>
+  <h2>StudyOS vs Tracking on Paper / Spreadsheets</h2>
+  <table class="compare-table">
+    <thead>
+      <tr>
+        <th>Feature</th>
+        <th>StudyOS</th>
+        <th>Paper / Spreadsheet</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr><td>Full CBSE syllabus pre-loaded</td><td class="check">✓ Yes</td><td class="cross">✗ Manual setup</td></tr>
+      <tr><td>Board exam readiness score</td><td class="check">✓ Automatic</td><td class="cross">✗ No</td></tr>
+      <tr><td>High-risk chapter alerts</td><td class="check">✓ Yes</td><td class="cross">✗ No</td></tr>
+      <tr><td>Synced with revision schedule</td><td class="check">✓ Yes</td><td class="cross">✗ No</td></tr>
+      <tr><td>AI-powered study plan based on gaps</td><td class="check">✓ Yes</td><td class="cross">✗ No</td></tr>
+      <tr><td>Access on phone & computer</td><td class="check">✓ Yes</td><td class="cross">✗ Limited</td></tr>
+    </tbody>
+  </table>
+</section>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <p class="section-label">FAQ</p>
+  <h2>Common Questions About the CBSE Syllabus Tracker</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <h3>Does StudyOS have the full CBSE syllabus pre-loaded?</h3>
+      <p>Yes. StudyOS includes the complete CBSE syllabus for Classes 9, 10, 11, and 12 across all major streams — Science, Commerce, and Arts. Every chapter, unit, and topic is pre-mapped so you can start tracking progress immediately.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can I track syllabus completion subject-wise?</h3>
+      <p>Absolutely. The CBSE Syllabus Tracker shows completion percentages for each subject separately, and you can drill down to individual chapters and sub-topics.</p>
+    </div>
+    <div class="faq-item">
+      <h3>How does the syllabus tracker help with board exam preparation?</h3>
+      <p>The tracker calculates how much syllabus remains versus how many days are left before your board exam, then flags high-risk topics that need urgent attention.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Is the CBSE syllabus updated every year in StudyOS?</h3>
+      <p>Yes. The StudyOS team reviews and updates the CBSE syllabus at the start of each academic year to reflect the latest NCERT curriculum changes and board updates.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can I mark topics as 'needs revision' separately from 'done'?</h3>
+      <p>Yes. Each topic can be marked as Not Started, In Progress, Done, or Needs Revision — giving you a granular view of where you actually stand.</p>
+    </div>
+  </div>
+</section>
+
+<!-- CTA -->
+<section class="cta-banner">
+  <h2>Know Exactly How Ready You Are for CBSE Boards.</h2>
+  <p>Get the full CBSE syllabus in your pocket and track every topic to completion. Free forever for the basics.</p>
+  <div class="cta-pair">
+    <a href="/auth.html" class="btn-primary">Start Tracking Free →</a>
+    <a href="/app.html" class="btn-secondary">See the Dashboard</a>
+  </div>
+</section>
+
+<section class="related-section">
+  <p class="section-label">Explore More Features</p>
+  <h2>The Complete CBSE Study System</h2>
+  <div class="related-grid">
+    <a href="/features/ai-coach" class="related-card">🤖 AI Study Coach</a>
+    <a href="/features/focus-timer" class="related-card">⏱️ Focus Timer</a>
+    <a href="/features/quiz-generator" class="related-card">🧩 Quiz Generator</a>
+    <a href="/features/revision-system" class="related-card">🔁 Revision System</a>
+    <a href="/features/analytics-dashboard" class="related-card">📊 Analytics Dashboard</a>
+    <a href="/features/exam-countdown" class="related-card">⏳ Exam Countdown</a>
+    <a href="/features/study-streaks" class="related-card">🔥 Study Streaks</a>
+    <a href="/features/backlog-management" class="related-card">📌 Backlog Manager</a>
+    <a href="/features/notes-formula-library" class="related-card">📚 Notes & Formulas</a>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 StudyOS. The Smart Way to Track Your CBSE Syllabus.</p>
+  <p style="margin-top:0.5rem;">
+    <a href="/privacy">Privacy Policy</a> · <a href="/terms">Terms</a> · <a href="/contact">Contact</a>
+  </p>
+</footer>
+
+</body>
+</html>

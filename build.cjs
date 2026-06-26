@@ -98,6 +98,15 @@ async function build() {
     console.log('  ✓ dist/api/ (copied)');
   }
 
+  // Copy features folder if present (SEO feature pages)
+  if (fs.existsSync('features')) {
+    fs.mkdirSync(path.join(OUT, 'features'), { recursive: true });
+    for (const f of fs.readdirSync('features')) {
+      fs.copyFileSync(path.join('features', f), path.join(OUT, 'features', f));
+    }
+    console.log('  ✓ dist/features/ (copied)');
+  }
+
   console.log('\nBuild complete ✓');
 }
 

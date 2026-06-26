@@ -1,0 +1,338 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CBSE Board Exam Countdown Timer | Days Left Calculator | StudyOS</title>
+  <meta name="description"
+    content="How many days until your CBSE board exam? StudyOS Exam Countdown shows days remaining, daily study targets, and urgency alerts — so you're never caught off guard." />
+  <link rel="canonical" href="https://studyos.app/features/exam-countdown" />
+
+  <meta property="og:title" content="CBSE Exam Countdown Timer | StudyOS" />
+  <meta property="og:description" content="Countdown to your CBSE board exams with daily study targets and urgency alerts. Never feel unprepared again." />
+  <meta property="og:url" content="https://studyos.app/features/exam-countdown" />
+  <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the StudyOS Exam Countdown work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You enter your CBSE exam dates for each subject. StudyOS displays a live countdown in days, hours, and minutes, and calculates how many topics you need to cover per day to complete your syllabus before the exam."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I add multiple CBSE exam dates for different subjects?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can add separate exam dates for each CBSE subject — Physics, Chemistry, Maths, Biology, English, etc. StudyOS shows a countdown and readiness status for each one individually."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the countdown adjust my study plan automatically?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. As your exam date approaches and your remaining syllabus is tracked, StudyOS dynamically adjusts your daily study targets and revision priorities to ensure you cover everything in time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will I get alerts if I'm falling behind schedule?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. StudyOS sends urgency notifications when your study pace falls behind what's needed to complete the syllabus before your exam date. These alerts are based on real progress data, not guesswork."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the CBSE exam date calendar pre-loaded?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "StudyOS publishes CBSE board exam date sheets when officially released by CBSE, and you can also enter custom dates. Pre-loaded dates are updated every academic year."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a2e; background: #fff; line-height: 1.7; }
+
+    nav { display: flex; align-items: center; justify-content: space-between; padding: 1rem 5%; background: #fff; border-bottom: 1px solid #e8e8e8; position: sticky; top: 0; z-index: 100; }
+    .nav-logo { font-size: 1.4rem; font-weight: 800; color: #ea580c; text-decoration: none; }
+    .nav-links { display: flex; gap: 1.5rem; list-style: none; }
+    .nav-links a { text-decoration: none; color: #444; font-size: 0.95rem; }
+    .nav-cta { background: #ea580c; color: #fff; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
+
+    .hero { background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%); color: #fff; padding: 6rem 5% 5rem; text-align: center; }
+    .hero-badge { display: inline-block; background: rgba(255,255,255,0.2); color: #fff; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.85rem; font-weight: 600; margin-bottom: 1.2rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1.2rem; }
+    .hero p { font-size: 1.15rem; max-width: 640px; margin: 0 auto 2rem; opacity: 0.92; }
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: #fff; color: #ea580c; padding: 0.85rem 2rem; border-radius: 10px; font-weight: 700; font-size: 1rem; text-decoration: none; }
+    .btn-secondary { background: transparent; color: #fff; padding: 0.85rem 2rem; border: 2px solid rgba(255,255,255,0.6); border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none; }
+
+    /* COUNTDOWN VISUAL */
+    .countdown-hero-visual {
+      display: flex; gap: 1rem; justify-content: center; margin-top: 3rem; flex-wrap: wrap;
+    }
+    .cd-block {
+      background: rgba(255,255,255,0.15); border: 1px solid rgba(255,255,255,0.3);
+      border-radius: 16px; padding: 1.5rem 2rem; text-align: center; min-width: 100px;
+    }
+    .cd-num { font-size: 3rem; font-weight: 900; line-height: 1; }
+    .cd-label { font-size: 0.8rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 0.4rem; }
+
+    .screenshot-wrap { background: #fff7ed; padding: 4rem 5%; text-align: center; }
+    .screenshot-placeholder { max-width: 900px; margin: 0 auto; background: #fed7aa; border-radius: 16px; padding: 6rem 2rem; border: 2px dashed #fb923c; color: #ea580c; font-size: 1rem; }
+
+    section { padding: 5rem 5%; }
+    .section-label { font-size: 0.8rem; font-weight: 700; letter-spacing: 0.1em; color: #ea580c; text-transform: uppercase; margin-bottom: 0.5rem; }
+    h2 { font-size: clamp(1.6rem, 3.5vw, 2.4rem); font-weight: 800; margin-bottom: 1rem; color: #1a1a2e; }
+    .section-sub { font-size: 1.05rem; color: #555; max-width: 560px; margin-bottom: 3rem; }
+
+    /* EXAM CARDS */
+    .exam-cards { display: flex; flex-direction: column; gap: 1rem; max-width: 600px; }
+    .exam-card { background: #fff; border: 1px solid #fed7aa; border-radius: 14px; padding: 1.2rem 1.5rem; display: flex; align-items: center; justify-content: space-between; gap: 1rem; }
+    .exam-card-left h3 { font-size: 1rem; font-weight: 700; }
+    .exam-card-left p { font-size: 0.85rem; color: #555; }
+    .exam-card-right { text-align: center; }
+    .exam-days { font-size: 2rem; font-weight: 900; color: #ea580c; line-height: 1; }
+    .exam-days-label { font-size: 0.75rem; color: #888; }
+    .status-badge { font-size: 0.75rem; padding: 0.2rem 0.7rem; border-radius: 20px; font-weight: 700; display: inline-block; margin-top: 0.4rem; }
+    .status-ok { background: #d1fae5; color: #065f46; }
+    .status-warn { background: #fef3c7; color: #92400e; }
+    .status-urgent { background: #fee2e2; color: #991b1b; }
+
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+    .feature-card { background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 14px; padding: 2rem; transition: box-shadow 0.2s; }
+    .feature-card:hover { box-shadow: 0 8px 30px rgba(234,88,12,0.1); }
+    .feature-icon { font-size: 2rem; margin-bottom: 0.8rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.95rem; color: #555; }
+
+    .faq-section { background: #fff; }
+    .faq-list { max-width: 760px; display: flex; flex-direction: column; gap: 1rem; }
+    .faq-item { border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .faq-item p { font-size: 0.95rem; color: #555; }
+
+    .cta-banner { background: linear-gradient(135deg, #ea580c, #c2410c); color: #fff; padding: 5rem 5%; text-align: center; }
+    .cta-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .cta-banner p { font-size: 1.05rem; opacity: 0.9; margin-bottom: 2rem; }
+    .cta-pair { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+
+    .related-section { padding: 4rem 5%; background: #f9fafb; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .related-card { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 1.2rem 1.5rem; text-decoration: none; color: #1a1a2e; font-weight: 600; font-size: 0.95rem; display: flex; align-items: center; gap: 0.6rem; transition: border-color 0.2s; }
+    .related-card:hover { border-color: #ea580c; color: #ea580c; }
+
+    footer { background: #1a1a2e; color: #aaa; padding: 3rem 5%; text-align: center; font-size: 0.9rem; }
+    footer a { color: #fb923c; text-decoration: none; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <a href="/" class="nav-logo">StudyOS</a>
+  <ul class="nav-links">
+    <li><a href="/features">Features</a></li>
+    <li><a href="/app.html">Dashboard</a></li>
+    <li><a href="/blog">Blog</a></li>
+  </ul>
+  <a href="/auth.html" class="nav-cta">Start Free</a>
+</nav>
+
+<section class="hero">
+  <div class="hero-badge">⏳ Exam Countdown</div>
+  <h1>Your CBSE Board Exam Is<br />Closer Than You Think.</h1>
+  <p>
+    StudyOS Exam Countdown shows exactly how many days remain per subject,
+    calculates your required daily study pace, and alerts you when you're falling behind —
+    before it's too late to catch up.
+  </p>
+  <div class="hero-ctas">
+    <a href="/auth.html" class="btn-primary">Set My Exam Countdown →</a>
+    <a href="/app.html" class="btn-secondary">See Demo</a>
+  </div>
+  <div class="countdown-hero-visual">
+    <div class="cd-block"><div class="cd-num">47</div><div class="cd-label">Days</div></div>
+    <div class="cd-block"><div class="cd-num">08</div><div class="cd-label">Hours</div></div>
+    <div class="cd-block"><div class="cd-num">23</div><div class="cd-label">Minutes</div></div>
+    <div class="cd-block"><div class="cd-num">11</div><div class="cd-label">Seconds</div></div>
+  </div>
+</section>
+
+<div class="screenshot-wrap">
+  <div class="screenshot-placeholder">
+    📸 Screenshot Placeholder — Exam Countdown Interface with Per-Subject Timers + Readiness Alerts<br />
+    <small>Recommended size: 1280×720px | File: exam-countdown-interface.png</small>
+  </div>
+</div>
+
+<!-- EXAM CARDS DEMO -->
+<section style="background:#fff7ed;">
+  <p class="section-label">Per-Subject Countdown</p>
+  <h2>Every Subject Has Its Own Clock. And Its Own Risk Level.</h2>
+  <p class="section-sub">Here's how your board exam countdown looks inside StudyOS for a Class 12 Science student:</p>
+  <div class="exam-cards">
+    <div class="exam-card">
+      <div class="exam-card-left">
+        <h3>Physics — Board Exam</h3>
+        <p>Syllabus: 58% complete · Needs: 42%</p>
+      </div>
+      <div class="exam-card-right">
+        <div class="exam-days">47</div>
+        <div class="exam-days-label">days left</div>
+        <span class="status-badge status-ok">On Track ✓</span>
+      </div>
+    </div>
+    <div class="exam-card">
+      <div class="exam-card-left">
+        <h3>Chemistry — Board Exam</h3>
+        <p>Syllabus: 38% complete · Needs: 62%</p>
+      </div>
+      <div class="exam-card-right">
+        <div class="exam-days">51</div>
+        <div class="exam-days-label">days left</div>
+        <span class="status-badge status-warn">At Risk ⚠️</span>
+      </div>
+    </div>
+    <div class="exam-card">
+      <div class="exam-card-left">
+        <h3>Biology — Board Exam</h3>
+        <p>Syllabus: 22% complete · Needs: 78%</p>
+      </div>
+      <div class="exam-card-right">
+        <div class="exam-days">53</div>
+        <div class="exam-days-label">days left</div>
+        <span class="status-badge status-urgent">Urgent 🔴</span>
+      </div>
+    </div>
+    <div class="exam-card">
+      <div class="exam-card-left">
+        <h3>Mathematics — Board Exam</h3>
+        <p>Syllabus: 74% complete · Needs: 26%</p>
+      </div>
+      <div class="exam-card-right">
+        <div class="exam-days">44</div>
+        <div class="exam-days-label">days left</div>
+        <span class="status-badge status-ok">On Track ✓</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section>
+  <p class="section-label">Features</p>
+  <h2>More Than a Timer — A Full Pre-Exam Control Centre</h2>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Multi-Subject Countdowns</h3>
+      <p>Set individual exam dates for every CBSE subject. Get a separate countdown, readiness score, and daily target for each one.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Required Daily Study Pace</h3>
+      <p>Based on remaining syllabus and days left, StudyOS calculates exactly how many topics you need to cover per day per subject.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔔</div>
+      <h3>Urgency Alerts</h3>
+      <p>When your actual pace falls behind what's needed, StudyOS sends an alert with a concrete action plan to get back on track.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔗</div>
+      <h3>Linked to Syllabus Tracker</h3>
+      <p>The countdown dynamically updates as you complete topics in your <a href="/features/cbse-syllabus-tracker" style="color:#ea580c;">Syllabus Tracker</a>. Real progress, real deadlines.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🗓️</div>
+      <h3>Pre-Exam Phase Planning</h3>
+      <p>In the final 30 days, StudyOS activates "Exam Mode" — a concentrated schedule covering revision, past papers, and weak topics in order of urgency.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📱</div>
+      <h3>Home Screen Widget</h3>
+      <p>Add the countdown widget to your phone home screen. Your board exam days remaining are always visible — motivation and accountability in one glance.</p>
+    </div>
+  </div>
+</section>
+
+<div class="screenshot-wrap">
+  <div class="screenshot-placeholder" style="background:#fed7aa; border-color:#fb923c; color:#ea580c;">
+    📸 Screenshot Placeholder — Exam Mode Intensive 30-Day Schedule View<br />
+    <small>Recommended size: 1280×720px | File: exam-mode-schedule.png</small>
+  </div>
+</div>
+
+<!-- FAQ -->
+<section class="faq-section">
+  <p class="section-label">FAQ</p>
+  <h2>Exam Countdown — Your Questions Answered</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <h3>How does the StudyOS Exam Countdown work?</h3>
+      <p>You enter your CBSE exam dates for each subject. StudyOS displays a live countdown in days, hours, and minutes, and calculates how many topics you need to cover per day to complete your syllabus before the exam.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Can I add multiple CBSE exam dates for different subjects?</h3>
+      <p>Yes. You can add separate exam dates for each CBSE subject — Physics, Chemistry, Maths, Biology, English, etc. StudyOS shows a countdown and readiness status for each one individually.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Does the countdown adjust my study plan automatically?</h3>
+      <p>Yes. As your exam date approaches and your remaining syllabus is tracked, StudyOS dynamically adjusts your daily study targets and revision priorities to ensure you cover everything in time.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Will I get alerts if I'm falling behind schedule?</h3>
+      <p>Yes. StudyOS sends urgency notifications when your study pace falls behind what's needed to complete the syllabus before your exam date. These alerts are based on real progress data, not guesswork.</p>
+    </div>
+    <div class="faq-item">
+      <h3>Is the CBSE exam date calendar pre-loaded?</h3>
+      <p>StudyOS publishes CBSE board exam date sheets when officially released by CBSE, and you can also enter custom dates. Pre-loaded dates are updated every academic year.</p>
+    </div>
+  </div>
+</section>
+
+<section class="cta-banner">
+  <h2>The Clock Is Already Ticking on Your Board Exams.</h2>
+  <p>Set your CBSE exam dates and get a personalised countdown with a daily action plan — in under 2 minutes.</p>
+  <div class="cta-pair">
+    <a href="/auth.html" class="btn-primary">Start My Countdown →</a>
+    <a href="/app.html" class="btn-secondary">See the Dashboard</a>
+  </div>
+</section>
+
+<section class="related-section">
+  <p class="section-label">More StudyOS Tools</p>
+  <h2>Use the Countdown Alongside These Features</h2>
+  <div class="related-grid">
+    <a href="/features/ai-coach" class="related-card">🤖 AI Study Coach</a>
+    <a href="/features/cbse-syllabus-tracker" class="related-card">📋 Syllabus Tracker</a>
+    <a href="/features/focus-timer" class="related-card">⏱️ Focus Timer</a>
+    <a href="/features/quiz-generator" class="related-card">🧩 Quiz Generator</a>
+    <a href="/features/revision-system" class="related-card">🔁 Revision System</a>
+    <a href="/features/analytics-dashboard" class="related-card">📊 Analytics Dashboard</a>
+    <a href="/features/study-streaks" class="related-card">🔥 Study Streaks</a>
+    <a href="/features/backlog-management" class="related-card">📌 Backlog Manager</a>
+    <a href="/features/notes-formula-library" class="related-card">📚 Notes & Formulas</a>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 StudyOS. Count Down. Show Up. Score High.</p>
+  <p style="margin-top:0.5rem;"><a href="/privacy">Privacy</a> · <a href="/terms">Terms</a> · <a href="/contact">Contact</a></p>
+</footer>
+
+</body>
+</html>

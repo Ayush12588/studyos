@@ -1,0 +1,374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Daily Study Task Manager for CBSE Students | StudyOS</title>
+  <meta name="description" content="Organise your daily study tasks with StudyOS. Set subject-wise to-dos, tick off completed chapters, and build a powerful daily study routine for CBSE exams." />
+  <link rel="canonical" href="https://studyos.app/features/daily-tasks" />
+
+  <meta property="og:title" content="Daily Study Task Manager for Students | StudyOS" />
+  <meta property="og:description" content="Replace messy sticky notes with a smart daily study task manager. Built for CBSE students who want structured, productive study days." />
+  <meta property="og:url" content="https://studyos.app/features/daily-tasks" />
+  <meta property="og:type" content="website" />
+
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is StudyOS different from a regular to-do app for studying?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Unlike generic to-do apps, StudyOS links your tasks directly to your study plan, subjects, and chapters. Completing a task updates your overall CBSE preparation progress automatically."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I set recurring daily study tasks in StudyOS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can set daily recurring tasks like 'Revise 20 formulae' or 'Solve 1 past paper question set' that appear automatically every day without manual re-entry."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What happens to tasks I don't complete today?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Incomplete tasks roll over to your backlog and are flagged for next-day attention. StudyOS ensures nothing slips through the cracks."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I prioritise tasks by subject or urgency?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. You can tag tasks by subject, add priority labels (High/Medium/Low), and sort your daily list by urgency, estimated time, or subject weight."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does StudyOS suggest what tasks to do each day?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Based on your study plan, exam countdown, and backlog, StudyOS generates a recommended daily task list every morning — you just open the app and get started."
+        }
+      }
+    ]
+  }
+  </script>
+
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; color: #1a1a2e; background: #ffffff; line-height: 1.7; }
+    a { color: #059669; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    nav { background: #1a1a2e; padding: 1rem 2rem; display: flex; justify-content: space-between; align-items: center; }
+    nav .logo { color: #fff; font-size: 1.4rem; font-weight: 700; }
+    nav .logo span { color: #34d399; }
+    nav ul { list-style: none; display: flex; gap: 1.5rem; }
+    nav ul li a { color: #cbd5e1; font-size: 0.9rem; }
+    nav ul li a:hover { color: #fff; text-decoration: none; }
+    .hero { background: linear-gradient(135deg, #064e3b 0%, #065f46 50%, #047857 100%); color: #fff; padding: 5rem 2rem 4rem; text-align: center; }
+    .hero .badge { display: inline-block; background: rgba(52,211,153,0.2); border: 1px solid #34d399; color: #34d399; padding: 0.3rem 1rem; border-radius: 50px; font-size: 0.8rem; font-weight: 600; letter-spacing: 1px; text-transform: uppercase; margin-bottom: 1.5rem; }
+    .hero h1 { font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 800; line-height: 1.2; margin-bottom: 1.2rem; max-width: 800px; margin-left: auto; margin-right: auto; }
+    .hero h1 span { color: #34d399; }
+    .hero p { font-size: 1.15rem; color: rgba(255,255,255,0.75); max-width: 600px; margin: 0 auto 2rem; }
+    .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-primary { background: #059669; color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 700; font-size: 1rem; }
+    .btn-primary:hover { background: #047857; text-decoration: none; }
+    .btn-secondary { background: transparent; color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; border: 2px solid rgba(255,255,255,0.3); }
+    .btn-secondary:hover { border-color: #34d399; text-decoration: none; }
+    .hero-stats { display: flex; gap: 2rem; justify-content: center; flex-wrap: wrap; margin-top: 3rem; padding-top: 3rem; border-top: 1px solid rgba(255,255,255,0.1); }
+    .stat .number { font-size: 2rem; font-weight: 800; color: #34d399; }
+    .stat .label { font-size: 0.85rem; color: rgba(255,255,255,0.5); }
+    section { padding: 5rem 2rem; }
+    .container { max-width: 1100px; margin: 0 auto; }
+    .section-label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 2px; color: #059669; margin-bottom: 0.75rem; }
+    h2 { font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800; line-height: 1.25; margin-bottom: 1rem; }
+    h2 span { color: #059669; }
+    .subtitle { font-size: 1.05rem; color: #475569; max-width: 650px; }
+    .screenshot-placeholder { background: linear-gradient(135deg, #d1fae5, #f0fdf4); border: 2px dashed #6ee7b7; border-radius: 16px; height: 380px; display: flex; flex-direction: column; align-items: center; justify-content: center; color: #059669; font-size: 0.95rem; gap: 0.75rem; margin: 2.5rem 0; }
+    .screenshot-placeholder .icon { font-size: 3rem; }
+    .screenshot-placeholder p { font-weight: 600; }
+    .screenshot-placeholder span { font-size: 0.8rem; color: #34d399; }
+    .features-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; margin-top: 3rem; }
+    .feature-card { background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 2rem; transition: border-color 0.2s, transform 0.2s; }
+    .feature-card:hover { border-color: #6ee7b7; transform: translateY(-3px); }
+    .feature-card .icon { font-size: 2rem; margin-bottom: 1rem; }
+    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .feature-card p { font-size: 0.92rem; color: #64748b; }
+    .how-it-works { background: #f0fdf4; }
+    .steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-top: 3rem; }
+    .step { text-align: center; padding: 1.5rem; }
+    .step-number { width: 48px; height: 48px; background: #059669; color: #fff; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; margin: 0 auto 1rem; }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .step p { font-size: 0.88rem; color: #64748b; }
+    .task-demo { background: #fff; border: 1px solid #e2e8f0; border-radius: 16px; padding: 2rem; max-width: 550px; margin: 2.5rem auto; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .task-demo h3 { font-size: 0.9rem; font-weight: 700; color: #64748b; margin-bottom: 1rem; text-transform: uppercase; letter-spacing: 1px; }
+    .task-item { display: flex; align-items: center; gap: 1rem; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; }
+    .task-item:last-child { border-bottom: none; }
+    .task-check { width: 20px; height: 20px; border-radius: 4px; border: 2px solid #e2e8f0; flex-shrink: 0; }
+    .task-check.done { background: #059669; border-color: #059669; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 0.75rem; }
+    .task-label { font-size: 0.92rem; flex: 1; }
+    .task-label.done { text-decoration: line-through; color: #94a3b8; }
+    .task-tag { font-size: 0.75rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 50px; }
+    .tag-physics { background: #ede9fe; color: #6d28d9; }
+    .tag-chemistry { background: #fef3c7; color: #d97706; }
+    .tag-math { background: #dbeafe; color: #2563eb; }
+    .tag-bio { background: #dcfce7; color: #16a34a; }
+    .faq-list { max-width: 750px; margin: 2.5rem auto 0; }
+    .faq-item { border-bottom: 1px solid #e2e8f0; padding: 1.5rem 0; }
+    .faq-item h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .faq-item p { font-size: 0.92rem; color: #64748b; }
+    .cta-banner { background: linear-gradient(135deg, #059669, #047857); color: #fff; padding: 4rem 2rem; text-align: center; border-radius: 20px; margin: 2rem auto; max-width: 900px; }
+    .cta-banner h2 { color: #fff; margin-bottom: 1rem; }
+    .cta-banner p { color: rgba(255,255,255,0.8); margin-bottom: 2rem; max-width: 500px; margin-left: auto; margin-right: auto; }
+    .btn-white { background: #fff; color: #059669; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 700; margin-right: 1rem; }
+    .btn-outline-white { border: 2px solid rgba(255,255,255,0.5); color: #fff; padding: 0.85rem 2rem; border-radius: 8px; font-weight: 600; }
+    .related-features { background: #f0fdf4; padding: 3rem 2rem; }
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+    .related-card { background: #fff; border: 1px solid #bbf7d0; border-radius: 10px; padding: 1.2rem; text-align: center; }
+    .related-card a { font-weight: 600; font-size: 0.9rem; color: #059669; }
+    .related-card p { font-size: 0.8rem; color: #64748b; margin-top: 0.3rem; }
+    footer { background: #1a1a2e; color: #64748b; padding: 2rem; text-align: center; font-size: 0.85rem; }
+    footer a { color: #34d399; }
+  </style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">Study<span>OS</span></div>
+  <ul>
+    <li><a href="/features/study-planner.html">Planner</a></li>
+    <li><a href="/features/daily-tasks.html">Tasks</a></li>
+    <li><a href="/features/backlog-management.html">Backlog</a></li>
+    <li><a href="/features/doubt-tracker.html">Doubts</a></li>
+    <li><a href="/auth.html">Sign Up Free</a></li>
+  </ul>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="container">
+    <div class="badge">✅ Daily Tasks</div>
+    <h1>Stop Writing To-Do Lists That<br/><span>You Never Actually Follow</span></h1>
+    <p>StudyOS turns your CBSE study plan into a clear, actionable daily task list — with subject tags, time estimates, and automatic rollover for anything you miss.</p>
+    <div class="hero-ctas">
+      <a href="/auth.html" class="btn-primary">Get My Free Task Manager →</a>
+      <a href="/app.html" class="btn-secondary">See Live Demo</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat"><div class="number">3min</div><div class="label">Daily Setup Time</div></div>
+      <div class="stat"><div class="number">Auto</div><div class="label">Daily Task Generation</div></div>
+      <div class="stat"><div class="number">100%</div><div class="label">Linked to Your Plan</div></div>
+    </div>
+  </div>
+</section>
+
+<!-- PROBLEM -->
+<section>
+  <div class="container">
+    <div class="section-label">The Real Problem</div>
+    <h2>Generic To-Do Apps <span>Aren't Built for Students</span></h2>
+    <p class="subtitle">Todoist, Notion, paper diaries — they make you do all the thinking. You still have to decide what to study, how long to spend, and which subject needs attention. StudyOS does that thinking for you.</p>
+
+    <div class="task-demo">
+      <h3>📅 Today's Study Tasks — Class 12 Science</h3>
+      <div class="task-item">
+        <div class="task-check done">✓</div>
+        <span class="task-label done">Revise Electrochemistry — NCERT Ex. 3.1–3.4</span>
+        <span class="task-tag tag-chemistry">Chemistry</span>
+      </div>
+      <div class="task-item">
+        <div class="task-check done">✓</div>
+        <span class="task-label done">Solve 10 Integration problems (Board pattern)</span>
+        <span class="task-tag tag-math">Maths</span>
+      </div>
+      <div class="task-item">
+        <div class="task-check"></div>
+        <span class="task-label">Read Chapter 8: Human Reproduction (1st read)</span>
+        <span class="task-tag tag-bio">Biology</span>
+      </div>
+      <div class="task-item">
+        <div class="task-check"></div>
+        <span class="task-label">Solve Optics numericals — 45 min focus session</span>
+        <span class="task-tag tag-physics">Physics</span>
+      </div>
+      <div class="task-item">
+        <div class="task-check"></div>
+        <span class="task-label">Resolve 2 pending doubts from Doubt Tracker</span>
+        <span class="task-tag tag-chemistry">Pending</span>
+      </div>
+    </div>
+    <p style="text-align:center; color: #64748b; font-size: 0.9rem;">↑ This is your StudyOS daily task view — clear, subject-tagged, and connected to your plan.</p>
+  </div>
+</section>
+
+<!-- FEATURES -->
+<section style="background: #f0fdf4;">
+  <div class="container">
+    <div class="section-label">Feature Breakdown</div>
+    <h2>What Makes This Task Manager <span>Different</span></h2>
+    <div class="features-grid">
+      <div class="feature-card">
+        <div class="icon">🤖</div>
+        <h3>Smart Daily Task Generation</h3>
+        <p>Every morning, StudyOS analyses your study plan, exam date, and backlog to auto-generate a prioritised daily task list — no manual planning needed.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🏷️</div>
+        <h3>Subject & Chapter Tagging</h3>
+        <p>Every task is tagged to a specific subject and chapter, so your progress updates are automatically reflected in your overall CBSE preparation dashboard.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">⏰</div>
+        <h3>Time Estimates per Task</h3>
+        <p>Assign expected duration to each task. StudyOS shows you if today's plan fits in your available hours — before you even start studying.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">🔁</div>
+        <h3>Automatic Rollover</h3>
+        <p>Incomplete tasks don't vanish — they automatically move to your backlog and get rescheduled for tomorrow or your next available session.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">📊</div>
+        <h3>Daily Completion Score</h3>
+        <p>Earn a daily completion percentage. Hit 100% and you extend your study streak. Earn XP for every task checked off.</p>
+      </div>
+      <div class="feature-card">
+        <div class="icon">➕</div>
+        <h3>Quick Add from Anywhere</h3>
+        <p>Thought of something mid-session? Quickly add ad-hoc tasks in seconds without breaking your flow. Link them to subjects later.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SCREENSHOT -->
+<section>
+  <div class="container">
+    <div class="section-label">Product Screenshots</div>
+    <h2>See Your Tasks <span>Crystal Clear</span></h2>
+    <div class="screenshot-placeholder">
+      <div class="icon">✅</div>
+      <p>Daily Task Dashboard</p>
+      <span>[ Screenshot: Task list with subject colour codes, time estimates, completion checkboxes, and XP counter ]</span>
+    </div>
+    <div class="screenshot-placeholder">
+      <div class="icon">📊</div>
+      <p>Weekly Task Completion Analytics</p>
+      <span>[ Screenshot: Bar chart showing daily completion rates across the past 7 days by subject ]</span>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-it-works">
+  <div class="container">
+    <div class="section-label">Daily Routine</div>
+    <h2>The 3-Step <span>Daily Study Routine</span></h2>
+    <div class="steps">
+      <div class="step">
+        <div class="step-number">1</div>
+        <h3>Open StudyOS Morning</h3>
+        <p>Your personalised task list for the day is already generated and waiting for you.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">2</div>
+        <h3>Study and Tick Off</h3>
+        <p>Work through your tasks. Tick each off as you complete it. Your progress updates in real time.</p>
+      </div>
+      <div class="step">
+        <div class="step-number">3</div>
+        <h3>End-of-Day Review</h3>
+        <p>Check your completion score, see what's rolling to tomorrow, and plan tomorrow's priorities in 2 minutes.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- CTA BANNER -->
+<section style="padding: 2rem;">
+  <div class="cta-banner">
+    <h2>Build a Study Routine That Actually Sticks</h2>
+    <p>Your daily tasks are already waiting for you inside StudyOS. Set up your CBSE plan in 5 minutes and get started today.</p>
+    <a href="/auth.html" class="btn-white">Start Free →</a>
+    <a href="/app.html" class="btn-outline-white">See the App</a>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section>
+  <div class="container">
+    <div class="section-label">FAQs</div>
+    <h2>Daily Tasks <span>Questions Answered</span></h2>
+    <div class="faq-list">
+      <div class="faq-item">
+        <h3>How is StudyOS different from a regular to-do app for studying?</h3>
+        <p>Unlike generic to-do apps, StudyOS links your tasks directly to your study plan, subjects, and chapters. Completing a task updates your overall CBSE preparation progress automatically.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I set recurring daily study tasks in StudyOS?</h3>
+        <p>Yes. You can set daily recurring tasks like 'Revise 20 formulae' or 'Solve 1 past paper question set' that appear automatically every day without manual re-entry.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What happens to tasks I don't complete today?</h3>
+        <p>Incomplete tasks roll over to your backlog and are flagged for next-day attention. StudyOS ensures nothing slips through the cracks.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Can I prioritise tasks by subject or urgency?</h3>
+        <p>Yes. You can tag tasks by subject, add priority labels, and sort your daily list by urgency, estimated time, or subject weight.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Does StudyOS suggest what tasks to do each day?</h3>
+        <p>Yes. Based on your study plan, exam countdown, and backlog, StudyOS generates a recommended daily task list every morning.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- RELATED FEATURES -->
+<section class="related-features">
+  <div class="container">
+    <div class="section-label">More StudyOS Features</div>
+    <h2>Connected to Your Whole Study System</h2>
+    <div class="related-grid">
+      <div class="related-card">
+        <a href="/features/study-planner.html">🗓️ Study Planner</a>
+        <p>Build the plan your tasks flow from</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/backlog-management.html">📦 Backlog Manager</a>
+        <p>Manage everything your tasks roll into</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/study-session-logger.html">⏱️ Session Logger</a>
+        <p>Time every study session you complete</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/study-streaks.html">🔥 Study Streaks</a>
+        <p>Stay consistent with daily task completion</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/rewards-xp.html">🏅 XP & Rewards</a>
+        <p>Earn points for every task you tick off</p>
+      </div>
+      <div class="related-card">
+        <a href="/features/doubt-tracker.html">❓ Doubt Tracker</a>
+        <p>Log doubts as tasks for resolution</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <p>© 2026 StudyOS — Daily Study Task Manager for CBSE Students.</p>
+  <p style="margin-top: 0.5rem;"><a href="/auth.html">Sign Up Free</a> · <a href="/app.html">Open App</a> · <a href="/features/study-planner.html">Study Planner</a> · <a href="/features/backlog-management.html">Backlog</a></p>
+</footer>
+
+</body>
+</html>
