@@ -49,7 +49,7 @@ self.addEventListener('fetch', event => {
 
   // Network-first: own app files — always get fresh code
   const isAppFile = NETWORK_FIRST.some(p => url.pathname === p || url.pathname.endsWith(p));
-  if (url.hostname === self.location.hostname || isAppFile) {
+  if (isAppFile) {
     event.respondWith(
       fetch(event.request, { cache: 'no-store' })
         .then(response => {

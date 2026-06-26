@@ -2755,7 +2755,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     <div class="coach-input-row">
         <textarea id="coach-input" class="coach-textarea" placeholder="Ask anything…" rows="1"
             onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();App.sendCoachMessage()}"
-            oninput="this.style.height='auto';this.style.height=this.scrollHeight+'px'"></textarea>
+            oninput="this.style.height='auto';requestAnimationFrame(()=>{this.style.height=this.scrollHeight+'px'})"></textarea>
         <button class="coach-send-btn" onclick="App.sendCoachMessage()">➤</button>
     </div>
 </div>

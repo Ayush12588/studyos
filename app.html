@@ -49,6 +49,9 @@
          waits until the user is idle, checking every 2s, then reloads. -->
     <script>
     if ('serviceWorker' in navigator) {
+        // Was a service worker already controlling this page before load?
+        // If not, this is a fresh install on a new visitor — don't reload.
+        const hadExistingController = !!navigator.serviceWorker.controller;
         let swRefreshed = false;
         let pendingCheckId = null;
 
@@ -73,6 +76,7 @@
         }
 
         navigator.serviceWorker.addEventListener('controllerchange', () => {
+            if (!hadExistingController) return; // first install, not an update
             if (!isUserMidTask()) {
                 reloadNow();
                 return;
