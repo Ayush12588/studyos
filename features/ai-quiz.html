@@ -6,11 +6,11 @@
   <title>AI Quiz Generator for CBSE | Practice Tests by Chapter | StudyOS</title>
   <meta name="description"
     content="Generate unlimited CBSE practice quizzes chapter-by-chapter with StudyOS. MCQs, short answers, and assertion-reason questions aligned to CBSE board patterns. Test yourself now." />
-  <link rel="canonical" href="https://studyos.app/features/quiz-generator" />
+  <link rel="canonical" href="https://studyos-edu.vercel.app/features/ai-quiz.html" />
 
   <meta property="og:title" content="AI Quiz Generator for CBSE | StudyOS" />
   <meta property="og:description" content="Instant CBSE-aligned quizzes by chapter. MCQs, short answers, and assertion-reason questions generated in seconds." />
-  <meta property="og:url" content="https://studyos.app/features/quiz-generator" />
+  <meta property="og:url" content="https://studyos-edu.vercel.app/features/ai-quiz.html" />
   <meta property="og:type" content="website" />
 
   <script type="application/ld+json">
@@ -70,6 +70,7 @@
     .nav-logo { font-size: 1.4rem; font-weight: 800; color: #d97706; text-decoration: none; }
     .nav-links { display: flex; gap: 1.5rem; list-style: none; }
     .nav-links a { text-decoration: none; color: #444; font-size: 0.95rem; }
+    .nav-links a:hover { color: #d97706; }
     .nav-cta { background: #d97706; color: #fff; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
 
     .hero { background: linear-gradient(135deg, #d97706 0%, #b45309 100%); color: #fff; padding: 6rem 5% 5rem; text-align: center; }
@@ -145,9 +146,10 @@
 <nav>
   <a href="/" class="nav-logo">StudyOS</a>
   <ul class="nav-links">
-    <li><a href="/features">Features</a></li>
+    <li><a href="/features/cbse-syllabus.html">Syllabus</a></li>
+    <li><a href="/features/ai-coach.html">AI Coach</a></li>
+    <li><a href="/features/ai-quiz.html">AI Quiz</a></li>
     <li><a href="/app.html">Dashboard</a></li>
-    <li><a href="/blog">Blog</a></li>
   </ul>
   <a href="/auth.html" class="nav-cta">Start Free</a>
 </nav>
@@ -189,17 +191,17 @@
       <div class="quiz-opt">C) Mho</div>
       <div class="quiz-opt">D) Farad</div>
     </div>
-    <div class="quiz-tag">MCQ · 1 Mark · CBSE 2024 Pattern</div>
+    <div class="quiz-tag">MCQ · 1 Mark · CBSE Pattern</div>
   </div>
   <div style="max-width:480px;">
     <p class="section-label">Sample Quiz</p>
     <h2>Board-Ready Questions. Not Generic Trivia.</h2>
     <p style="color:#555; margin-bottom:1rem;">
       Every question StudyOS generates follows the exact CBSE marking scheme and question format.
-      The AI pulls from chapter-specific concepts and creates distractors that reflect real student mistakes.
+      The AI pulls from chapter-specific concepts and creates distractors that reflect student mistakes.
     </p>
     <p style="color:#555; margin-bottom:1.5rem;">
-      After each quiz, you get detailed explanations for wrong answers — so you actually learn, not just practice.
+      After each quiz, you get explanations for wrong answers — so you actually learn, not just practice.
     </p>
     <a href="/auth.html" style="display:inline-block; background:#d97706; color:#fff; padding:0.85rem 2rem; border-radius:10px; font-weight:700; text-decoration:none;">Try It Now →</a>
   </div>
@@ -219,7 +221,7 @@
     <div class="qtype-card">
       <div class="icon">🔬</div>
       <h3>Assertion-Reason</h3>
-      <p>CBSE's post-2020 favourite — trains logical reasoning in context</p>
+      <p>Trains logical reasoning in context</p>
       <div class="marks">1 Mark Each</div>
     </div>
     <div class="qtype-card">
@@ -256,7 +258,7 @@
     <div class="feature-card">
       <div class="feature-icon">📊</div>
       <h3>Performance Tracking</h3>
-      <p>Every quiz score is saved. See accuracy trends per chapter, your improvement curve, and which topics need more practice. Linked to the <a href="/features/analytics-dashboard" style="color:#d97706;">Analytics Dashboard</a>.</p>
+      <p>Every quiz score is saved. See accuracy trends per chapter, your improvement curve, and which topics need more practice. Linked to the <a href="/features/study-analytics.html" style="color:#d97706;">Analytics Dashboard</a>.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">💡</div>
@@ -266,12 +268,12 @@
     <div class="feature-card">
       <div class="feature-icon">🗓️</div>
       <h3>Revision Quiz Mode</h3>
-      <p>StudyOS can automatically generate quizzes on chapters you studied 7, 14, or 28 days ago — enforcing spaced repetition passively.</p>
+      <p>StudyOS can automatically generate quizzes on chapters you studied previously — enforcing spaced repetition passively.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🤖</div>
       <h3>AI Weak-Spot Detection</h3>
-      <p>Quiz results feed your <a href="/features/ai-coach" style="color:#d97706;">AI Coach</a>, which adjusts your study plan to spend more time on chapters with low scores.</p>
+      <p>Quiz results feed your <a href="/features/ai-coach.html" style="color:#d97706;">AI Coach</a>, which adjusts your study plan to spend more time on chapters with low scores.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">📱</div>
@@ -329,15 +331,14 @@
   <p class="section-label">More StudyOS Features</p>
   <h2>Quiz Better With the Full StudyOS System</h2>
   <div class="related-grid">
-    <a href="/features/ai-coach" class="related-card">🤖 AI Study Coach</a>
-    <a href="/features/cbse-syllabus-tracker" class="related-card">📋 Syllabus Tracker</a>
-    <a href="/features/focus-timer" class="related-card">⏱️ Focus Timer</a>
-    <a href="/features/revision-system" class="related-card">🔁 Revision System</a>
-    <a href="/features/analytics-dashboard" class="related-card">📊 Analytics Dashboard</a>
-    <a href="/features/exam-countdown" class="related-card">⏳ Exam Countdown</a>
-    <a href="/features/study-streaks" class="related-card">🔥 Study Streaks</a>
-    <a href="/features/backlog-management" class="related-card">📌 Backlog Manager</a>
-    <a href="/features/notes-formula-library" class="related-card">📚 Notes & Formulas</a>
+    <a href="/features/ai-coach.html" class="related-card">🤖 AI Study Coach</a>
+    <a href="/features/cbse-syllabus.html" class="related-card">📋 Syllabus Tracker</a>
+    <a href="/features/session-logger.html" class="related-card">⏱️ Focus Timer</a>
+    <a href="/features/study-analytics.html" class="related-card">📊 Analytics Dashboard</a>
+    <a href="/features/exam-countdown.html" class="related-card">⏳ Exam Countdown</a>
+    <a href="/features/study-streaks.html" class="related-card">🔥 Study Streaks</a>
+    <a href="/features/backlog-management.html" class="related-card">📌 Backlog Manager</a>
+    <a href="/features/notes-formula-library.html" class="related-card">📚 Notes & Formulas</a>
   </div>
 </section>
 

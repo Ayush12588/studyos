@@ -6,11 +6,11 @@
   <title>Study Analytics Dashboard for CBSE Students | StudyOS</title>
   <meta name="description"
     content="See exactly how you're studying with StudyOS Analytics Dashboard. Track hours by subject, quiz scores, revision consistency, and board exam readiness — all in one clear view." />
-  <link rel="canonical" href="https://studyos.app/features/analytics-dashboard" />
+  <link rel="canonical" href="https://studyos-edu.vercel.app/features/study-analytics.html" />
 
   <meta property="og:title" content="Study Analytics Dashboard for CBSE Students | StudyOS" />
   <meta property="og:description" content="Your personal study data centre. Hours logged, quiz performance, revision trends, and CBSE readiness scores — visualised beautifully." />
-  <meta property="og:url" content="https://studyos.app/features/analytics-dashboard" />
+  <meta property="og:url" content="https://studyos-edu.vercel.app/features/study-analytics.html" />
   <meta property="og:type" content="website" />
 
   <script type="application/ld+json">
@@ -70,6 +70,7 @@
     .nav-logo { font-size: 1.4rem; font-weight: 800; color: #0284c7; text-decoration: none; }
     .nav-links { display: flex; gap: 1.5rem; list-style: none; }
     .nav-links a { text-decoration: none; color: #444; font-size: 0.95rem; }
+    .nav-links a:hover { color: #0284c7; }
     .nav-cta { background: #0284c7; color: #fff; padding: 0.5rem 1.2rem; border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; }
 
     .hero { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); color: #fff; padding: 6rem 5% 5rem; text-align: center; }
@@ -78,6 +79,7 @@
     .hero p { font-size: 1.15rem; max-width: 640px; margin: 0 auto 2rem; opacity: 0.92; }
     .hero-ctas { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
     .btn-primary { background: #fff; color: #0284c7; padding: 0.85rem 2rem; border-radius: 10px; font-weight: 700; font-size: 1rem; text-decoration: none; }
+    .btn-primary:hover { transform: translateY(-2px); }
     .btn-secondary { background: transparent; color: #fff; padding: 0.85rem 2rem; border: 2px solid rgba(255,255,255,0.6); border-radius: 10px; font-weight: 600; font-size: 1rem; text-decoration: none; }
     .hero-stats { display: flex; gap: 3rem; justify-content: center; margin-top: 3.5rem; flex-wrap: wrap; }
     .stat { text-align: center; }
@@ -137,9 +139,10 @@
 <nav>
   <a href="/" class="nav-logo">StudyOS</a>
   <ul class="nav-links">
-    <li><a href="/features">Features</a></li>
+    <li><a href="/features/cbse-syllabus.html">Syllabus</a></li>
+    <li><a href="/features/ai-coach.html">AI Coach</a></li>
+    <li><a href="/features/ai-quiz.html">AI Quiz</a></li>
     <li><a href="/app.html">Dashboard</a></li>
-    <li><a href="/blog">Blog</a></li>
   </ul>
   <a href="/auth.html" class="nav-cta">Start Free</a>
 </nav>
@@ -149,8 +152,8 @@
   <h1>See Exactly How You Study.<br />Then Study Better.</h1>
   <p>
     Most students study hard without knowing where their time actually goes.
-    StudyOS Analytics Dashboard turns your study habits into clear, actionable data —
-    so you can optimise your effort and maximise your CBSE scores.
+    StudyOS Analytics Dashboard turns study habits into clear data —
+    so you can optimise your effort and work towards high CBSE scores.
   </p>
   <div class="hero-ctas">
     <a href="/auth.html" class="btn-primary">View My Analytics →</a>
@@ -247,7 +250,7 @@
     <div class="feature-card">
       <div class="feature-icon">🗓️</div>
       <h3>Study Calendar Heatmap</h3>
-      <p>A GitHub-style heatmap of your daily study activity. Visually see your consistency and spot gaps before they become habits.</p>
+      <p>A calendar heatmap of your daily study activity. Visually see your consistency and spot gaps before they become habits.</p>
     </div>
     <div class="feature-card">
       <div class="feature-icon">🎯</div>
@@ -262,7 +265,7 @@
     <div class="feature-card">
       <div class="feature-icon">📤</div>
       <h3>Shareable Weekly Report</h3>
-      <p>Export or share a clean weekly summary with parents or teachers. Builds accountability and keeps everyone aligned.</p>
+      <p>Export or share a weekly summary with parents or teachers. Builds accountability and keeps everyone aligned.</p>
     </div>
   </div>
 </section>
@@ -315,15 +318,14 @@
   <p class="section-label">More StudyOS Features</p>
   <h2>Analytics Is Powered By These Tools</h2>
   <div class="related-grid">
-    <a href="/features/ai-coach" class="related-card">🤖 AI Study Coach</a>
-    <a href="/features/cbse-syllabus-tracker" class="related-card">📋 Syllabus Tracker</a>
-    <a href="/features/focus-timer" class="related-card">⏱️ Focus Timer</a>
-    <a href="/features/quiz-generator" class="related-card">🧩 Quiz Generator</a>
-    <a href="/features/revision-system" class="related-card">🔁 Revision System</a>
-    <a href="/features/exam-countdown" class="related-card">⏳ Exam Countdown</a>
-    <a href="/features/study-streaks" class="related-card">🔥 Study Streaks</a>
-    <a href="/features/backlog-management" class="related-card">📌 Backlog Manager</a>
-    <a href="/features/notes-formula-library" class="related-card">📚 Notes & Formulas</a>
+    <a href="/features/ai-coach.html" class="related-card">🤖 AI Study Coach</a>
+    <a href="/features/cbse-syllabus.html" class="related-card">📋 Syllabus Tracker</a>
+    <a href="/features/session-logger.html" class="related-card">⏱️ Focus Timer</a>
+    <a href="/features/ai-quiz.html" class="related-card">🧩 Quiz Generator</a>
+    <a href="/features/exam-countdown.html" class="related-card">⏳ Exam Countdown</a>
+    <a href="/features/study-streaks.html" class="related-card">🔥 Study Streaks</a>
+    <a href="/features/backlog-management.html" class="related-card">📌 Backlog Manager</a>
+    <a href="/features/notes-formula-library.html" class="related-card">📚 Notes & Formulas</a>
   </div>
 </section>
 
