@@ -1,15 +1,14 @@
 User-agent: *
-
-# Allow all assets required for rendering
-Allow: /icons/
-Allow: /*.css$
-Allow: /*.js$
-Allow: /favicon.ico
-Allow: /manifest.json
-
-# Block non-search pages
-Disallow: /auth.html
-Disallow: /app.html
-
-# Sitemap location
+Allow: /
+Disallow: /api/
+Disallow: /dist/
+Disallow: /node_modules/
+Disallow: /.vercel/
+Disallow: /env.local
+Disallow: /build/
+Crawl-delay: 10
 Sitemap: https://studyos-edu.vercel.app/sitemap.xml
+
+# (Optional) Staging environment: block all
+#User-agent: *
+#Disallow: /
