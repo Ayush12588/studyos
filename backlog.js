@@ -381,8 +381,9 @@
     async submitConfidence() {
       const modal      = document.getElementById('modal-backlog-confidence');
       const itemId     = modal.dataset.itemId;
-      const selected   = document.querySelector('.bl-star.selected');
-      if (!selected) { toast('Rate your confidence first', 'warning'); return; }
+      const stars      = document.querySelectorAll('.bl-star.selected');
+      if (!stars.length) { toast('Rate your confidence first', 'warning'); return; }
+      const selected   = stars[stars.length - 1]; // last selected = highest rated star
       const confidence = parseInt(selected.dataset.val);
       const isMastered = confidence >= 4;
       const newStatus  = isMastered ? STATUS.MASTERED : STATUS.DONE_SHAKY;
