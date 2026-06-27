@@ -1845,10 +1845,10 @@ const App={
             }
         }
         const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-        if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status}).then(({error})=>{if(error)console.error('[DB] chapters.update status:',error);});}
+        if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] chapters.update status:',error);});}
         this.save();this.render();
     },
-    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
+    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
     deleteChapter(sId,cId){if(!confirm('Delete chapter?'))return;const s=this.getSubjectById(sId);const _dc=s.chapters.find(c=>c.id===cId);s.chapters=s.chapters.filter(c=>c.id!==cId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_dc&&_isUUID(_dc.id)){DB.chapters.delete(_dc.id).then(({error})=>{if(error)console.error('[DB] chapters.delete:',error);});}this.save();this.render()},
     deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;const _ds=this.state.subjects.find(s=>s.id===sId);this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_ds&&_isUUID(_ds.id)){DB.subjects.delete(_ds.id).then(({error})=>{if(error)console.error('[DB] subjects.delete:',error);});}this.save();this.render()},
 
@@ -2018,7 +2018,7 @@ const App={
             if(weakSessions.length>=2)ch.weakFlag=true;
             if(ch.status==='not-started')ch.status='in-progress';
         }
-        if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision')}
+        if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision');const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] saveStudyLog revision chapters.update:',error);});}}
         // LOG VALIDATION — STEP 4: pass streakEligible so short sessions are neutral, not misses
         this.recordStudyDay(streakEligible);
         this.addXP(10,'Session logged');
