@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studyos-v6'; // bumped: added /index.html to NETWORK_FIRST (was missing after landing/app rename)
+const CACHE_NAME = 'studyos-v7'; // bumped: exclude clarity.ms/umami.is from SW fetch interception
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
@@ -36,6 +36,14 @@ self.addEventListener('activate', event => {
 // ── Fetch ─────────────────────────────────────────────────────────────
 self.addEventListener('fetch', event => {
   const url = new URL(event.request.url);
+
+  // Ignore third-party tracking/analytics entirely — let the browser handle
+  // these directly against the page's CSP. The SW has no business caching
+  // or re-fetching tracking scripts.
+  const THIRD_PARTY_IGNORE = ['clarity.ms', 'umami.is'];
+  if (THIRD_PARTY_IGNORE.some(host => url.hostname.includes(host))) {
+    return; // not calling event.respondWith() lets the browser handle it natively
+  }
 
   // Network-only: API routes, Supabase, non-GET requests
   if (
