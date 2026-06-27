@@ -6,7 +6,6 @@ Disallow: /node_modules/
 Disallow: /.vercel/
 Disallow: /env.local
 Disallow: /build/
-Crawl-delay: 10
 Sitemap: https://studyos-edu.vercel.app/sitemap.xml
 
 # (Optional) Staging environment: block all
