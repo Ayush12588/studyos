@@ -68,30 +68,30 @@ const App={
     swInterval:null,
 
     BADGES:[
-        {id:'first-step',name:'First Step',desc:'Log your first study session',icon:'🌟'},
-        {id:'bookworm',name:'Bookworm',desc:'Study for 10 hours total',icon:'📚'},
-        {id:'marathon',name:'Marathon Runner',desc:'Study 4+ hours in one day',icon:'🏃'},
-        {id:'streak-3',name:'On Fire',desc:'3 day study streak',icon:'🔥'},
-        {id:'streak-7',name:'Unstoppable',desc:'7 day study streak',icon:'⚡'},
-        {id:'streak-14',name:'Two Weeks Strong',desc:'14 day study streak',icon:'💪'},
-        {id:'streak-30',name:'Monthly Legend',desc:'30 day study streak',icon:'👑'},
-        {id:'ch-1',name:'Chapter Down',desc:'Complete first chapter',icon:'✅'},
-        {id:'ch-10',name:'Knowledge Seeker',desc:'Complete 10 chapters',icon:'🎯'},
-        {id:'ch-25',name:'Halfway Hero',desc:'Complete 25 chapters',icon:'🦸'},
-        {id:'ch-50',name:'Chapter Champion',desc:'Complete 50 chapters',icon:'🏅'},
-        {id:'rev-1',name:'Reviser',desc:'Do your first revision',icon:'🔄'},
-        {id:'rev-10',name:'Memory Master',desc:'Do 10 revisions',icon:'🧠'},
-        {id:'sub-complete',name:'Subject Expert',desc:'Complete all chapters in a subject',icon:'🏆'},
-        {id:'level-5',name:'Rising Star',desc:'Reach Level 5',icon:'⭐'},
-        {id:'level-10',name:'Scholar',desc:'Reach Level 10',icon:'🎓'},
-        {id:'allround',name:'All-Rounder',desc:'Study all subjects in one day',icon:'🌈'},
-        {id:'perfect-week',name:'Perfect Week',desc:'7 day streak',icon:'💎'},
-        {id:'pomodoro-10',name:'Focus Master',desc:'Complete 10 Pomodoros',icon:'🍅'},
-        {id:'scorer-90',name:'Top Scorer',desc:'Score 90%+ in any exam',icon:'💯'},
-        {id:'task-master',name:'Task Master',desc:'Complete 50 tasks',icon:'📋'},
-        {id:'doubt-clear',name:'Doubt Slayer',desc:'Resolve 10 doubts',icon:'🗡️'},
-        {id:'note-taker',name:'Note Taker',desc:'Create 20 notes',icon:'📝'},
-        {id:'resource-king',name:'Resource King',desc:'Save 15 resources',icon:'📎'}
+        {id:'first-step',name:'First Step',desc:'Log your first study session',icon:''},
+        {id:'bookworm',name:'Bookworm',desc:'Study for 10 hours total',icon:''},
+        {id:'marathon',name:'Marathon Runner',desc:'Study 4+ hours in one day',icon:''},
+        {id:'streak-3',name:'On Fire',desc:'3 day study streak',icon:''},
+        {id:'streak-7',name:'Unstoppable',desc:'7 day study streak',icon:''},
+        {id:'streak-14',name:'Two Weeks Strong',desc:'14 day study streak',icon:''},
+        {id:'streak-30',name:'Monthly Legend',desc:'30 day study streak',icon:''},
+        {id:'ch-1',name:'Chapter Down',desc:'Complete first chapter',icon:''},
+        {id:'ch-10',name:'Knowledge Seeker',desc:'Complete 10 chapters',icon:''},
+        {id:'ch-25',name:'Halfway Hero',desc:'Complete 25 chapters',icon:''},
+        {id:'ch-50',name:'Chapter Champion',desc:'Complete 50 chapters',icon:''},
+        {id:'rev-1',name:'Reviser',desc:'Do your first revision',icon:''},
+        {id:'rev-10',name:'Memory Master',desc:'Do 10 revisions',icon:''},
+        {id:'sub-complete',name:'Subject Expert',desc:'Complete all chapters in a subject',icon:''},
+        {id:'level-5',name:'Rising Star',desc:'Reach Level 5',icon:''},
+        {id:'level-10',name:'Scholar',desc:'Reach Level 10',icon:''},
+        {id:'allround',name:'All-Rounder',desc:'Study all subjects in one day',icon:''},
+        {id:'perfect-week',name:'Perfect Week',desc:'7 day streak',icon:''},
+        {id:'pomodoro-10',name:'Focus Master',desc:'Complete 10 Pomodoros',icon:''},
+        {id:'scorer-90',name:'Top Scorer',desc:'Score 90%+ in any exam',icon:''},
+        {id:'task-master',name:'Task Master',desc:'Complete 50 tasks',icon:''},
+        {id:'doubt-clear',name:'Doubt Slayer',desc:'Resolve 10 doubts',icon:''},
+        {id:'note-taker',name:'Note Taker',desc:'Create 20 notes',icon:''},
+        {id:'resource-king',name:'Resource King',desc:'Save 15 resources',icon:''}
     ],
 
     // ── CLASS 9 ──────────────────────────────────────────────────────────
@@ -1809,7 +1809,7 @@ const App={
     updateSidebar(){const p=this.state.profile;document.getElementById('sb-name').textContent=p.name;document.getElementById('sb-level').textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);document.getElementById('sb-xp-fill').style.transform=`scaleX(${Math.min(1,pct/100)})`;document.getElementById('sb-xp-text').textContent=`${p.xp-c} / ${n-c} XP`},
     updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');rb.style.display=r>0?'inline':'none';rb.textContent=r;ob.style.display=o>0?'inline':'none';ob.textContent=o;db.style.display=ud>0?'inline':'none';db.textContent=ud;const qDue=this.getQuizDueSubjects().length;const qb=document.getElementById('quiz-badge');if(qb){qb.style.display=qDue>0?'inline':'none';qb.textContent=qDue;}},
 
-    checkBadges(){const _priorBadges=new Set(this.state.earnedBadges);const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){const _bUid=window._supabaseUserId;if(_bUid&&this._badgesLoaded){const _newBadges=nb.filter(b=>!_priorBadges.has(b.id));_newBadges.forEach(b=>{DB.badges.add(_bUid,b.id).then(({error})=>{if(error&&!error.message?.includes('duplicate'))console.error('[DB] badge add:',error);});if(window.Notifications)Notifications.send('badge',`Badge unlocked: ${b.name}`,b.desc,'rewards');});}nb.forEach(b=>setTimeout(()=>this.toast(`🏅 Badge: ${b.icon} ${b.name}!`,'success'),800))}},
+    checkBadges(){const _priorBadges=new Set(this.state.earnedBadges);const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){const _bUid=window._supabaseUserId;if(_bUid&&this._badgesLoaded){const _newBadges=nb.filter(b=>!_priorBadges.has(b.id));_newBadges.forEach(b=>{DB.badges.add(_bUid,b.id).then(({error})=>{if(error&&!error.message?.includes('duplicate'))console.error('[DB] badge add:',error);});if(window.Notifications)Notifications.send('badge',`Badge unlocked: ${b.name}`,b.desc,'rewards');});}nb.forEach(b=>setTimeout(()=>this.toast(`Badge: ${b.name}!`,'success'),800))}},
 
     getStats(){
         const p=this.state.profile,ac=this.getAllChapters(),ts=this.getTodaySessions(),st=new Set(ts.map(s=>s.subjectId)),tr=ac.reduce((a,c)=>a+c.revisionCount,0),cs=this.state.subjects.filter(s=>s.chapters.length>0&&s.chapters.every(c=>c.status==='completed'||c.status==='revised')).length,sbd={};this.state.sessions.forEach(s=>{sbd[s.date]=(sbd[s.date]||0)+s.timeSpent});const md=Math.max(0,...Object.values(sbd));
@@ -2088,7 +2088,7 @@ const App={
                 }
             }
         });
-        const titles={dashboard:'Dashboard',subjects:'Subjects & Chapters',log:'Study Log',tasks:'Daily Tasks',revisions:'Revision Tracker',exams:'Exam Scores',doubts:'Doubt Tracker',exercises:'Exercise Tracker',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes & Formulas',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
+        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',exercises:'Exercises',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
 
         // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
@@ -2185,14 +2185,14 @@ const App={
         if(dte!==null&&dte>0&&tot>0){
             const needed=remaining/dte;
             const actual=pred?pred.rate:0;
-            if(remaining===0){paceMsg='🎉 All chapters done! Ready for boards.';paceColor='#4ADE80'}
+            if(remaining===0){paceMsg='All chapters done! Ready for boards.';paceColor='#4ADE80'}
             else if(needed<=0.1){paceMsg=`${remaining} ch left · Well ahead of pace ✅`;paceColor='#4ADE80'}
             else if(actual>0&&actual>=needed*0.9){paceMsg=`Need ${needed.toFixed(1)} ch/day · You're on pace ✅`;paceColor='#4ADE80'}
             else if(actual>0&&actual>=needed*0.6){paceMsg=`Need ${needed.toFixed(1)} ch/day · Slightly behind ⚠️`;paceColor='#FBBF24'}
             else{paceMsg=`Need ${needed.toFixed(1)} ch/day · Behind pace — speed up! 🚨`;paceColor='#F87171'}
         }else if(dte===null){paceMsg='Set exam date for pace tracking'}
         else if(dte===0){paceMsg='Exam is today — best of luck! 🌟';paceColor='#FBBF24'}
-        else if(remaining===0){paceMsg='All chapters done! 🎉';paceColor='#4ADE80'}
+        else if(remaining===0){paceMsg='All chapters done!';paceColor='#4ADE80'}
         // Determine ring color: green if daily goal already hit, cyan for WIP
         const ringColor=gp>=100?'#22C55E':'#22d3ee';
         // Find subject color for hero chapter subject tag
@@ -2233,11 +2233,11 @@ const App={
                 <div class="db-hero-left">
                     <div class="db-hero-label">✨ ALL CAUGHT UP</div>
                     <div class="db-hero-title">Great work, ${this.state.profile.name}!</div>
-                    <div class="db-hero-sub" style="color:rgba(134,239,172,0.85)">All chapters are up to date 🎉</div>
+                    <div class="db-hero-sub" style="color:rgba(134,239,172,0.85)">All chapters are up to date</div>
                     ${paceMsg?`<div style="font-size:.75rem;margin-top:8px;font-style:italic;color:var(--text-secondary)">${paceMsg}</div>`:''}
                     <button class="btn btn-primary" onclick="App.navigate('subjects')" style="margin-top:16px;font-size:.8rem;padding:8px 16px;border-radius:12px">Browse Subjects</button>
                 </div>
-                <div style="font-size:4rem;position:relative;z-index:1">🎉</div>
+                <div style="font-size:4rem;position:relative;z-index:1"></div>
             </div>`;
 
         // ── STREAK HERO + 3 SUPPORTING STATS ─────────────────────
@@ -2481,7 +2481,7 @@ const App={
                 <button class="btn btn-ghost btn-sm" onclick="App.navigate('coach')" style="font-size:.72rem">Full plan →</button>
             </div>
             ${plan.length===0
-                ?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px 0">All caught up! 🎉</p>'
+                ?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px 0">All caught up!</p>'
                 :plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')">
                     <div class="plan-emoji">${p.subjectIcon}</div>
                     <div class="plan-info"><h3>${p.name}</h3><p>${p.subjectName}</p></div>
@@ -2950,7 +2950,7 @@ const App={
     renderRevisions(){
         const el=document.getElementById('page-revisions'),rd=this.getRevisionsDue(),ac=this.getAllChapters(),rc=ac.filter(c=>c.revisionCount>0);
         const totalRevisions=ac.reduce((a,c)=>a+c.revisionCount,0);
-        el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></div><div class="stat-info"><h3>${rd.length}</h3><p>Due now</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3>${rc.length}</h3><p>Revised</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="stat-info"><h3>${totalRevisions}</h3><p>Total revisions</p></div></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Due Now</span></div>${rd.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All clear! 🎉</p>':rd.map(c=>`<div class="rev-item"><div class="rev-info"><h4>${c.subjectIcon} ${c.name}</h4><p>${c.subjectName} • ${c.daysSince}d ago • Rev #${c.revisionCount}</p></div><button class="btn btn-sm btn-primary" onclick="App.quickRevision('${c.subjectId}','${c.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> Revise</button></div>`).join('')}</div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Revision History</span></div>${rc.length===0?'<p style="color:var(--text-muted);font-size:.85rem">No revisions yet</p>':rc.sort((a,b)=>b.revisionCount-a.revisionCount).slice(0,15).map(c=>`<div class="rev-item"><div class="rev-info"><h4>${c.subjectIcon} ${c.name}</h4><p>${c.subjectName} • ${c.revisionCount} revision${c.revisionCount>1?'s':''} • Last: ${c.revisionDates[c.revisionDates.length-1]||'N/A'}</p></div><span class="tag tag-revised">×${c.revisionCount}</span></div>`).join('')}</div><div class="card" style="border-left:3px solid var(--info)"><div class="card-header"><span class="card-title">Spaced Repetition Schedule</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:1.7"><p>Rev 1: <strong>1 day</strong> after completion</p><p>Rev 2: <strong>3 days</strong> after Rev 1</p><p>Rev 3: <strong>7 days</strong> after Rev 2</p><p>Rev 4: <strong>14 days</strong> after Rev 3</p><p>Rev 5: <strong>30 days</strong> after Rev 4</p></div></div>`;
+        el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></div><div class="stat-info"><h3>${rd.length}</h3><p>Due now</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg></div><div class="stat-info"><h3>${rc.length}</h3><p>Revised</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="stat-info"><h3>${totalRevisions}</h3><p>Total revisions</p></div></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Due Now</span></div>${rd.length===0?'<p style="color:var(--text-muted);font-size:.85rem">All clear — nothing due today</p>':rd.map(c=>`<div class="rev-item"><div class="rev-info"><h4>${c.subjectIcon} ${c.name}</h4><p>${c.subjectName} • ${c.daysSince}d ago • Rev #${c.revisionCount}</p></div><button class="btn btn-sm btn-primary" onclick="App.quickRevision('${c.subjectId}','${c.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> Revise</button></div>`).join('')}</div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Revision History</span></div>${rc.length===0?'<p style="color:var(--text-muted);font-size:.85rem">No revisions yet</p>':rc.sort((a,b)=>b.revisionCount-a.revisionCount).slice(0,15).map(c=>`<div class="rev-item"><div class="rev-info"><h4>${c.subjectIcon} ${c.name}</h4><p>${c.subjectName} • ${c.revisionCount} revision${c.revisionCount>1?'s':''} • Last: ${c.revisionDates[c.revisionDates.length-1]||'N/A'}</p></div><span class="tag tag-revised">×${c.revisionCount}</span></div>`).join('')}</div><div class="card" style="border-left:3px solid var(--info)"><div class="card-header"><span class="card-title">Spaced Repetition Schedule</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:1.7"><p>Rev 1: <strong>1 day</strong> after completion</p><p>Rev 2: <strong>3 days</strong> after Rev 1</p><p>Rev 3: <strong>7 days</strong> after Rev 2</p><p>Rev 4: <strong>14 days</strong> after Rev 3</p><p>Rev 5: <strong>30 days</strong> after Rev 4</p></div></div>`;
     },
 
     // DOUBTS
@@ -3815,7 +3815,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     <div class="coach-drawer-body">
         <div class="coach-drawer-section">
             <div class="coach-drawer-section-title">📖 Study Now</div>
-            ${plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} · ${p.reason}</p></div></div>`).join('')||'<p style="color:var(--text-muted);font-size:.82rem;padding:4px 0">All caught up! 🎉</p>'}
+            ${plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')"><div class="plan-emoji">${p.subjectIcon}</div><div class="plan-info"><h4>${p.name}</h4><p>${p.subjectName} · ${p.reason}</p></div></div>`).join('')||'<p style="color:var(--text-muted);font-size:.82rem;padding:4px 0">All caught up!</p>'}
         </div>
         <div class="coach-drawer-section" style="border-top:1px solid var(--color-border);margin-top:12px">
             <div class="coach-drawer-section-title" style="padding-top:14px">Quick Insights</div>
@@ -3838,7 +3838,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         this.renderChatMessages();
         this.scrollChat();
         if(this.coachHistory.length===0){
-            const greeting='Hey '+this.state.profile.name+'! 👋 I\'m your AI study coach. I can see your real progress — '+this.getCompletedCount()+'/'+this.getTotalChapters()+' chapters done'+(od.length>0?', '+od.length+' overdue':'')+(rd.length>0?', '+rd.length+' revisions due':'')+'. What do you need help with today?';
+            const greeting='Hey '+this.state.profile.name+'! I\'m your AI study coach. I can see your real progress — '+this.getCompletedCount()+'/'+this.getTotalChapters()+' chapters done'+(od.length>0?', '+od.length+' overdue':'')+(rd.length>0?', '+rd.length+' revisions due':'')+'. What do you need help with today?';
             this.coachHistory.push({role:'model',parts:[{text:greeting}]});
             this.renderChatMessages();
         }
@@ -3920,13 +3920,13 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         const hasPrompt   = !!window._pwaInstallPrompt;
         let card = '';
         if (isInstalled || window._pwaInstalled) {
-            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(16,185,129,0.3)"><div class="card-header"><span class="card-title">📲 Install App</span></div><div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--success,#10b981)"><span style="font-size:1.4rem">✅</span><span>BoardOS is installed on your device. You&apos;re all set!</span></div></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(16,185,129,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--success,#10b981)"><span style="font-size:1.4rem">✅</span><span>BoardOS is installed on your device. You&apos;re all set!</span></div></div>`;
         } else if (isIOS) {
-            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">📲 Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Add BoardOS to your home screen for instant access — no browser needed.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">📋 How to Install on iPhone / iPad</button><div id="pwa-ios-tip" style="display:none;margin-top:12px;background:var(--color-surface-hover,rgba(255,255,255,0.05));border-radius:10px;padding:14px;font-size:.8rem;color:var(--text-secondary);line-height:2.1"><p style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Follow these steps:</p><p>1. Tap the <strong style="color:var(--text-primary)">Share button ⎋</strong> at the bottom of Safari</p><p>2. Scroll down and tap <strong style="color:var(--text-primary)">"Add to Home Screen"</strong></p><p>3. Tap <strong style="color:var(--text-primary)">"Add"</strong> in the top right corner</p><p style="margin-top:8px;font-size:.74rem;color:var(--text-muted)">⚠️ Must be opened in Safari. Chrome on iPhone won&apos;t show this option.</p></div></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Add BoardOS to your home screen for instant access — no browser needed.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">📋 How to Install on iPhone / iPad</button><div id="pwa-ios-tip" style="display:none;margin-top:12px;background:var(--color-surface-hover,rgba(255,255,255,0.05));border-radius:10px;padding:14px;font-size:.8rem;color:var(--text-secondary);line-height:2.1"><p style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Follow these steps:</p><p>1. Tap the <strong style="color:var(--text-primary)">Share button ⎋</strong> at the bottom of Safari</p><p>2. Scroll down and tap <strong style="color:var(--text-primary)">"Add to Home Screen"</strong></p><p>3. Tap <strong style="color:var(--text-primary)">"Add"</strong> in the top right corner</p><p style="margin-top:8px;font-size:.74rem;color:var(--text-muted)">⚠️ Must be opened in Safari. Chrome on iPhone won&apos;t show this option.</p></div></div>`;
         } else if (hasPrompt) {
-            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">📲 Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Install BoardOS as an app for faster access, offline support, and a distraction-free study experience.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">⬇️ Install BoardOS</button><p style="font-size:.72rem;color:var(--text-muted);margin-top:8px;text-align:center">Works offline · No app store needed · Instant launch</p></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Install BoardOS as an app for faster access, offline support, and a distraction-free study experience.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">⬇️ Install BoardOS</button><p style="font-size:.72rem;color:var(--text-muted);margin-top:8px;text-align:center">Works offline · No app store needed · Instant launch</p></div>`;
         } else {
-            card = `<div class="card" style="margin-bottom:20px;border:1px solid var(--border)"><div class="card-header"><span class="card-title">📲 Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8"><strong style="color:var(--text-primary)">Chrome / Edge:</strong> Click the <strong>⊕ install icon</strong> in the address bar.<br><strong style="color:var(--text-primary)">Android:</strong> Tap <strong>⋮ Menu → Add to Home Screen</strong>.<br><strong style="color:var(--text-primary)">iPhone (Safari):</strong> Tap <strong>Share ⎋ → Add to Home Screen</strong>.</p></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid var(--border)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8"><strong style="color:var(--text-primary)">Chrome / Edge:</strong> Click the <strong>⊕ install icon</strong> in the address bar.<br><strong style="color:var(--text-primary)">Android:</strong> Tap <strong>⋮ Menu → Add to Home Screen</strong>.<br><strong style="color:var(--text-primary)">iPhone (Safari):</strong> Tap <strong>Share ⎋ → Add to Home Screen</strong>.</p></div>`;
         }
         el.insertAdjacentHTML('afterbegin', card);
     },
@@ -4869,7 +4869,7 @@ CRITICAL ACCURACY RULES:
             })
             .filter(Boolean);
         if(mistakes.length===0){
-            this.toast('No mistakes to review! 🎉','success');
+            this.toast('No mistakes to review!','success');
             return;
         }
         q.mode='review';
