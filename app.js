@@ -2679,7 +2679,7 @@ const App={
         document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">Log Study</button>`;
         this.openModal('modal-detail');
     },
-    updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){const _dbField={status:'status',difficulty:'difficulty',deadline:'deadline',notes:'notes'}[f];if(_dbField){DB.chapters.update(ch.id,{[_dbField]:v}).then(({error})=>{if(error)console.error('[DB] updateChapterField:',error);});}}this.save();this.render()},
+    updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){const _dbField={status:'status',difficulty:'difficulty',deadline:'deadline',notes:'notes'}[f];if(_dbField){const _payload={[_dbField]:v};if(f==='status'&&v==='completed')_payload.completion_date=ch.completionDate;DB.chapters.update(ch.id,_payload).then(({error})=>{if(error)console.error('[DB] updateChapterField:',error);});}}this.save();this.render()},
 
     // EXERCISES
     addExercise(sId,cId){
@@ -2821,7 +2821,7 @@ const App={
         // Supabase fire-and-forget
         const _userId=window._supabaseUserId;
         if(_userId){
-            DB.sessions.create({user_id:_userId,subject_id:sId,chapter_id:cId||null,time_spent:time,date:this.today(),type,rating,notes}).then(({data,error})=>{
+            DB.sessions.create({user_id:_userId,subject_id:sId,chapter_id:cId||null,time_spent:time,date:this.today(),type,rating,notes,confidence,intention,covered_note:coveredNote,streak_eligible:streakEligible}).then(({data,error})=>{
                 if(error){console.error('[DB] sessions.create:',error);return;}
                 if(data&&data.id) _newSession.id=data.id;
             });
@@ -2834,6 +2834,15 @@ const App={
             const weakSessions=chSessions.filter(s=>s.confidence<=2);
             if(weakSessions.length>=2)ch.weakFlag=true;
             if(ch.status==='not-started')ch.status='in-progress';
+            // Write status, confidence, weak_flag back to DB — all confirmed columns
+            const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+            if(_isUUID(ch.id)){
+                DB.chapters.update(ch.id,{
+                    status:ch.status,
+                    confidence:ch.confidence??null,
+                    weak_flag:ch.weakFlag??false,
+                }).then(({error})=>{if(error)console.error('[DB] saveStudyLog chapters.update:',error);});
+            }
         }
         if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision');const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] saveStudyLog revision chapters.update:',error);});}}
         // LOG VALIDATION — STEP 4: pass streakEligible so short sessions are neutral, not misses
@@ -3115,8 +3124,29 @@ const App={
         }
         let predHtml='';
         if(pred&&dte!==null){
-            const onTrack=this.daysBetween(this.today(),pred.date)<=dte;
-            predHtml=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${onTrack?'var(--success)':'var(--danger)'}"><div class="card-header"><span class="card-title">Predicted Completion</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${onTrack?'var(--text-success)':'var(--text-danger)'}">${onTrack?'On track for boards!':'Won\'t finish before exams — speed up!'}</p>${!onTrack&&dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: ${Math.ceil((this.getTotalChapters()-this.getCompletedCount())/dte*10)/10} chapters/day to finish on time</p>`:''}</div>`;
+            // Compare daysNeeded directly against dte — avoids date-string roundtrip precision loss.
+            // remaining is already baked into pred.daysNeeded by getPredictedCompletion().
+            const remaining=this.getTotalChapters()-this.getCompletedCount();
+            const neededPace=dte>0?Math.round((remaining/dte)*10)/10:Infinity;
+            const daysAhead=dte-pred.daysNeeded; // positive = finishing before exam
+            // Severity: green = on track, amber = gap ≤14 days, red = gap >14 days
+            let borderColor,statusColor,statusMsg;
+            if(pred.daysNeeded<=dte){
+                borderColor='var(--success)';statusColor='var(--text-success)';
+                const buffer=dte-pred.daysNeeded;
+                statusMsg=`Finishing ${buffer} day${buffer!==1?'s':''} before your exam — keep this pace.`;
+            } else {
+                const daysBehind=pred.daysNeeded-dte;
+                const paceGap=Math.round((neededPace-pred.rate)*10)/10;
+                if(daysBehind<=14){
+                    borderColor='var(--warning)';statusColor='var(--text-warning)';
+                    statusMsg=`${paceGap} more ch/day closes the gap. Minor adjustment needed.`;
+                } else {
+                    borderColor='var(--danger)';statusColor='var(--text-danger)';
+                    statusMsg=`${paceGap} more ch/day needed — ${daysBehind} days behind. Consider daily study bursts.`;
+                }
+            }
+            predHtml=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${borderColor}"><div class="card-header"><span class="card-title">Predicted Completion</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${statusColor}">${statusMsg}</p>${dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: <strong>${neededPace} ch/day</strong> to finish by exam.</p>`:''}</div>`;
         }
 
         el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3>${od.length}</h3><p>Overdue</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${up.length}</h3><p>Upcoming</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3>${nd.length}</h3><p>No deadline</p></div></div></div>${sprintHTML}${predHtml}${od.length>0?`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--danger)"><div class="card-header"><span class="card-title">Overdue</span></div>${od.map(c=>`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}</div>`:''}<div class="card"><div class="card-header"><span class="card-title">Upcoming Deadlines</span></div>${up.length===0?'<p style="color:var(--text-muted)">None</p>':up.map(c=>{const dl=this.daysBetween(this.today(),c.deadline);return`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${c.deadline}</p></div><span class="tag" style="color:var(--${dl<=3?'danger':dl<=7?'warning':'success'})">${dl}d</span></div>`}).join('')}</div>`;
@@ -3374,12 +3404,12 @@ const App={
                     ?focusSub.chapters.find(c=>c.id===this.pomodoro.focusChapterId)||null
                     :null;
 
-                // ── Update last_studied_date on the chapter in memory + DB ──
+                // ── Write status + last_studied_date back to DB when Pomodoro completes ──
                 if(focusCh){
-                    focusCh.lastStudiedDate=this.today();
+                    if(focusCh.status==='not-started')focusCh.status='in-progress';
                     if(_isUUID(focusCh.id)){
-                        DB.chapters.update(focusCh.id,{last_studied_date:this.today()})
-                            .then(({error})=>{if(error)console.error('[DB] pomodoro last_studied_date:',error);});
+                        DB.chapters.update(focusCh.id,{status:focusCh.status,last_studied_date:this.today()})
+                            .then(({error})=>{if(error)console.error('[DB] pomodoro chapters.update:',error);});
                     }
                 }
 
