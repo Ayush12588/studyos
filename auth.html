@@ -507,6 +507,9 @@
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                             </span>
                         </button>
+                        <p id="resendConfirmRow" class="hidden" style="text-align:center; margin-top:0.75rem; font-size:0.8125rem; color:var(--text-secondary);">
+                            Didn't get the email? <a href="#" id="resendConfirmLink" onclick="resendConfirmation(); return false;" style="color:var(--accent); font-weight:600; text-decoration:none;">Resend confirmation email</a>
+                        </p>
                     </form>
                 </div>
 
@@ -636,27 +639,67 @@
         };
 
         // Login
+        let lastUnconfirmedEmail = null;
+
         document.getElementById('loginForm').addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            if (submitBtn.disabled) return; // guard against double-click / double-submit firing two requests
             const email    = document.getElementById('loginEmail').value;
             const password = document.getElementById('loginPassword').value;
             const btnText  = document.getElementById('loginBtnText');
             const orig     = btnText.textContent;
+            submitBtn.disabled = true;
             btnText.textContent = 'Authenticating...';
+            document.getElementById('resendConfirmRow').classList.add('hidden');
+
             if (supabase) {
                 const { error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) {
-                    const isCredErr = error.message.toLowerCase().includes('invalid');
-                    showToast(isCredErr ? 'Wrong password, or this account uses Google sign-in — try "Continue with Google" below.' : error.message, 'error');
+                    const code = error.code || '';
+                    const msg  = error.message.toLowerCase();
+                    const isUnconfirmed = code === 'email_not_confirmed' || msg.includes('email not confirmed');
+                    const isCredErr     = msg.includes('invalid');
+
+                    if (isUnconfirmed) {
+                        lastUnconfirmedEmail = email;
+                        showToast('Please confirm your email first — check your inbox for the confirmation link.', 'error');
+                        document.getElementById('resendConfirmRow').classList.remove('hidden');
+                    } else if (isCredErr) {
+                        showToast('Wrong password, or this account uses Google sign-in — try "Continue with Google" below.', 'error');
+                    } else {
+                        showToast(error.message, 'error');
+                    }
                     btnText.textContent = orig;
+                    submitBtn.disabled = false;
                 } else {
                     showToast('Logged in successfully!', 'success');
                     setTimeout(() => window.location.href = '/app.html', 1000);
+                    // button intentionally left disabled — redirect is imminent
                 }
             } else {
-                setTimeout(() => { showToast('Logged in! (Mock)', 'success'); btnText.textContent = orig; }, 1500);
+                setTimeout(() => {
+                    showToast('Logged in! (Mock)', 'success');
+                    btnText.textContent = orig;
+                    submitBtn.disabled = false;
+                }, 1500);
             }
         });
+
+        // Resend confirmation email
+        window.resendConfirmation = async function() {
+            if (!lastUnconfirmedEmail) return;
+            const link = document.getElementById('resendConfirmLink');
+            const orig = link.textContent;
+            link.textContent = 'Sending...';
+            if (supabase) {
+                const { error } = await supabase.auth.resend({ type: 'signup', email: lastUnconfirmedEmail });
+                showToast(error ? error.message : 'Confirmation email sent — check your inbox.', error ? 'error' : 'success');
+            } else {
+                showToast('Confirmation email sent! (Mock)', 'success');
+            }
+            link.textContent = orig;
+        };
 
         // Signup
         document.getElementById('signupForm').addEventListener('submit', async (e) => {
