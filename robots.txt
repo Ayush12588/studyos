@@ -6,7 +6,7 @@ Disallow: /node_modules/
 Disallow: /.vercel/
 Disallow: /env.local
 Disallow: /build/
-Sitemap: https://studyos-edu.vercel.app/sitemap.xml
+Sitemap: https://boardos.in/sitemap.xml
 
 # (Optional) Staging environment: block all
 #User-agent: *

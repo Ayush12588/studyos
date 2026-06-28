@@ -1,7 +1,7 @@
 {
-  "name": "StudyOS \u2014 Your personal study OS",
-  "short_name": "StudyOS",
-  "description": "CBSE Class 10 study tracker with AI coach",
+  "name": "BoardOS — Your Board Exam Workspace",
+  "short_name": "BoardOS",
+  "description": "CBSE Class 9-12 study tracker with AI coach and backlog management",
   "start_url": "/",
   "display": "standalone",
   "orientation": "portrait",

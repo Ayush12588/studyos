@@ -1,4 +1,4 @@
-const CACHE_NAME = 'studyos-v7'; // bumped: exclude clarity.ms/umami.is from SW fetch interception
+const CACHE_NAME = 'boardos-v8'; // bumped: exclude clarity.ms/umami.is from SW fetch interception
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',

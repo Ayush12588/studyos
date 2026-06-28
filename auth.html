@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>StudyOS — Hybrid Auth Experience</title>
+    <title>BoardOS — Your Board Exam Workspace</title>
     
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -380,11 +380,11 @@
             <div class="brand-inner">
                 <div class="logo-row">
                     <div class="logo-wrap">
-                        <img src="./icons/icon-192.webp" alt="StudyOS logo" />
+                        <img src="./icons/icon-192.webp" alt="BoardOS logo" />
                     </div>
                     <div>
                         <div style="display:flex;align-items:center;gap:0.5rem;">
-                            <span class="logo-name">StudyOS</span>
+                            <span class="logo-name">BoardOS</span>
                             <span class="logo-badge">Board Edition</span>
                         </div>
                         <p class="logo-sub">Your warm, dark-powered study companion.</p>
@@ -471,8 +471,8 @@
 
                 <div class="card-header">
                     <div class="card-logo-pill">
-                        <img src="./icons/icon-192.webp" alt="StudyOS logo" />
-                        <span>StudyOS</span>
+                        <img src="./icons/icon-192.webp" alt="BoardOS logo" />
+                        <span>BoardOS</span>
                     </div>
                     <p class="card-eyebrow">Your Board Exam Workspace</p>
                     <h2 class="card-title" id="authTitle">Welcome back</h2>
@@ -503,7 +503,7 @@
                         <button type="submit" class="submit-btn">
                             <div class="submit-btn-shine"></div>
                             <span class="submit-btn-inner">
-                                <span id="loginBtnText">Log In to StudyOS</span>
+                                <span id="loginBtnText">Log In to BoardOS</span>
                                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
                             </span>
                         </button>
@@ -557,7 +557,7 @@
                 </button>
 
                 <p class="terms">
-                    By continuing, you agree to StudyOS's
+                    By continuing, you agree to BoardOS's
                     <a href="#">Terms of Service</a> and <a href="#">Privacy Policy</a>.
                 </p>
             </div>
@@ -671,9 +671,20 @@
             if (password.length < 6)   { showToast('Password must be at least 6 characters', 'error'); return; }
             btnText.textContent = 'Creating account...';
             if (supabase) {
-                const { error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
+                const { data, error } = await supabase.auth.signUp({ email, password, options: { data: { full_name: name } } });
                 if (error) { showToast(error.message, 'error'); btnText.textContent = orig; }
-                else { showToast('Account created! Please check your email.', 'success'); btnText.textContent = orig; document.getElementById('signupForm').reset(); switchTab('login'); }
+                else if (data?.session) {
+                    // Confirmation is off — user is active immediately, redirect to app
+                    showToast('Account created! Taking you in...', 'success');
+                    btnText.textContent = orig;
+                    setTimeout(() => window.location.href = '/app.html', 1000);
+                } else {
+                    // Confirmation is on — tell user to check email
+                    showToast('Account created! Please check your email to confirm.', 'success');
+                    btnText.textContent = orig;
+                    document.getElementById('signupForm').reset();
+                    switchTab('login');
+                }
             } else {
                 setTimeout(() => { showToast('Account created! (Mock)', 'success'); btnText.textContent = orig; switchTab('login'); }, 1500);
             }
@@ -684,7 +695,7 @@
             if (supabase) {
                 const { error } = await supabase.auth.signInWithOAuth({
                     provider: 'google',
-                    options: { redirectTo: 'https://studyos-edu.vercel.app/app.html' }
+                    options: { redirectTo: 'https://boardos.in/app.html' }
                 });
                 if (error) showToast(error.message, 'error');
             } else {
