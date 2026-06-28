@@ -64,7 +64,7 @@ const App={
         // QUIZ
         quizData:{} // { [subjectId]: { questions:[], generatedAt, lastScore, lastQuizDate, interval, history:[] } }
     },
-    pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null},
+    pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null,focusSubjectId:null,focusChapterId:null},
     swInterval:null,
 
     BADGES:[
@@ -2444,20 +2444,210 @@ const App={
         const tt=(p.mode==='work'?set.workMin:(p.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin))*60;
         const prog=((tt-p.timeLeft)/tt)*100;
         const sw=this.state.stopwatch;
-        el.innerHTML=`<div class="grid grid-2"><div class="card"><div class="pomodoro-display"><svg width="200" height="200" viewBox="0 0 200 200" style="max-width:100%;height:auto"><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="rgba(128,128,128,0.1)"/><circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="${p.mode==='work'?'url(#pg)':'var(--success)'}" stroke-dasharray="${2*Math.PI*90}" stroke-dashoffset="${2*Math.PI*90*(1-prog/100)}" stroke-linecap="round"/><defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#6366f1"/><stop offset="100%" stop-color="#8b5cf6"/></linearGradient></defs></svg><div class="pomodoro-time">${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}</div><div class="pomodoro-label">${p.mode==='work'?'Focus':'Break'} — Session ${p.session}</div><div class="pomodoro-controls">${p.running?`<button class="btn btn-secondary" onclick="App.pausePomodoro()">Pause</button>`:`<button class="btn btn-primary" onclick="App.startPomodoro()">▶ Start</button>`}<button class="btn btn-secondary" onclick="App.resetPomodoro()">↺</button><button class="btn btn-ghost" onclick="App.skipPomodoro()">⏭</button></div></div></div><div class="card"><div class="card-header"><span class="card-title">Stopwatch</span></div><div style="text-align:center;padding:20px"><div class="stopwatch-time">${this.formatSec(sw.elapsed||0)}</div><p style="font-size:.8rem;color:var(--text-secondary);margin:12px 0">${sw.running?'Recording...':'Ready'}</p><div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">${sw.running?`<button class="btn btn-danger" onclick="App.stopStopwatch()">Stop & Log</button>`:`<div style="width:100%"><select id="sw-subject" class="form-select" style="margin-bottom:8px">${this.state.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select><button class="btn btn-primary" onclick="App.startStopwatch()" style="width:100%">▶ Start Timer</button></div>`}</div></div><hr style="border-color:var(--border);margin:16px 0"><div class="card-header"><span class="card-title">Pomodoro Settings</span></div><div class="form-row"><div class="form-group"><label class="form-label">Focus (min)</label><input type="number" class="form-input" value="${set.workMin}" min="1" max="120" onchange="App.updatePomodoroSetting('workMin',this.value)"></div><div class="form-group"><label class="form-label">Break (min)</label><input type="number" class="form-input" value="${set.breakMin}" min="1" max="30" onchange="App.updatePomodoroSetting('breakMin',this.value)"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Long Break (min)</label><input type="number" class="form-input" value="${set.longBreakMin}" min="1" max="60" onchange="App.updatePomodoroSetting('longBreakMin',this.value)"></div><div class="form-group"><label class="form-label">Sessions before long</label><input type="number" class="form-input" value="${set.sessionsBeforeLong}" min="2" max="8" onchange="App.updatePomodoroSetting('sessionsBeforeLong',this.value)"></div></div></div></div>`;
+
+        // ── Build subject options for the focus-subject dropdown ──────────
+        const subjectOpts=this.state.subjects.length>0
+            ?this.state.subjects.map(s=>`<option value="${s.id}"${p.focusSubjectId===s.id?' selected':''}>${s.icon} ${s.name}</option>`).join('')
+            :'<option value="" disabled>No subjects added yet</option>';
+
+        // ── Build chapter options, ordered: in_progress → not-started → completed/revised ──
+        // Only rendered when a subject is selected.
+        let chapterSelectHTML='';
+        if(p.focusSubjectId){
+            const focusSub=this.state.subjects.find(s=>s.id===p.focusSubjectId);
+            if(focusSub&&focusSub.chapters.length>0){
+                const ORDER={in_progress:0,'in-progress':0,not_started:1,'not-started':1,completed:2,revised:2};
+                const sorted=[...focusSub.chapters].sort((a,b)=>(ORDER[a.status]??1)-(ORDER[b.status]??1));
+                const chOpts=sorted.map(c=>`<option value="${c.id}"${p.focusChapterId===c.id?' selected':''}>${c.name}</option>`).join('');
+                chapterSelectHTML=`<select id="focus-chapter" class="form-select" style="margin-bottom:8px" onchange="App.setFocusChapter(this.value)">${chOpts}</select>`;
+            } else {
+                chapterSelectHTML=`<select class="form-select" style="margin-bottom:8px" disabled><option>No chapters in this subject</option></select>`;
+            }
+        } else {
+            chapterSelectHTML=`<select class="form-select" style="margin-bottom:8px" disabled><option>Select subject first</option></select>`;
+        }
+
+        // ── Warning shown below Start button when no chapter is selected ──
+        const noChapterWarning=(!p.focusChapterId&&p.mode==='work')
+            ?`<p style="font-size:.75rem;color:#f97316;margin-top:8px;text-align:center">⚠️ Chapter not selected — time won't be tracked to a chapter</p>`
+            :'';
+
+        el.innerHTML=`<div class="grid grid-2">
+
+<div class="card">
+  <div class="pomodoro-display">
+    <svg width="200" height="200" viewBox="0 0 200 200" style="max-width:100%;height:auto">
+      <circle class="pomodoro-ring" cx="100" cy="100" r="90" stroke="rgba(128,128,128,0.1)"/>
+      <circle class="pomodoro-ring" cx="100" cy="100" r="90"
+        stroke="${p.mode==='work'?'url(#pg)':'var(--success)'}"
+        stroke-dasharray="${2*Math.PI*90}"
+        stroke-dashoffset="${2*Math.PI*90*(1-prog/100)}"
+        stroke-linecap="round"/>
+      <defs><linearGradient id="pg" x1="0%" y1="0%" x2="100%" y2="100%">
+        <stop offset="0%" stop-color="#6366f1"/>
+        <stop offset="100%" stop-color="#8b5cf6"/>
+      </linearGradient></defs>
+    </svg>
+    <div class="pomodoro-time">${String(mins).padStart(2,'0')}:${String(secs).padStart(2,'0')}</div>
+    <div class="pomodoro-label">${p.mode==='work'?'Focus':'Break'} — Session ${p.session}</div>
+
+    ${p.mode==='work'?`
+    <div style="margin:14px 0 4px;text-align:left;width:100%;max-width:280px">
+      <label class="form-label" style="font-size:.72rem;margin-bottom:4px">Subject</label>
+      <select id="focus-subject" class="form-select" style="margin-bottom:8px"
+        onchange="App.setFocusSubject(this.value)">
+        <option value="" ${!p.focusSubjectId?'selected':''} disabled>Select subject</option>
+        ${subjectOpts}
+      </select>
+      <label class="form-label" style="font-size:.72rem;margin-bottom:4px">Chapter</label>
+      ${chapterSelectHTML}
+    </div>
+    `:''}
+
+    <div class="pomodoro-controls">
+      ${p.running
+        ?`<button class="btn btn-secondary" onclick="App.pausePomodoro()">Pause</button>`
+        :`<button class="btn btn-primary" onclick="App.startPomodoro()">▶ Start</button>`}
+      <button class="btn btn-secondary" onclick="App.resetPomodoro()">↺</button>
+      <button class="btn btn-ghost" onclick="App.skipPomodoro()">⏭</button>
+    </div>
+    ${noChapterWarning}
+  </div>
+</div>
+
+<div class="card">
+  <div class="card-header"><span class="card-title">Stopwatch</span></div>
+  <div style="text-align:center;padding:20px">
+    <div class="stopwatch-time">${this.formatSec(sw.elapsed||0)}</div>
+    <p style="font-size:.8rem;color:var(--text-secondary);margin:12px 0">${sw.running?'Recording...':'Ready'}</p>
+    <div style="display:flex;gap:10px;justify-content:center;flex-wrap:wrap">
+      ${sw.running
+        ?`<button class="btn btn-danger" onclick="App.stopStopwatch()">Stop &amp; Log</button>`
+        :`<div style="width:100%">
+            <select id="sw-subject" class="form-select" style="margin-bottom:8px">
+              ${this.state.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
+            </select>
+            <button class="btn btn-primary" onclick="App.startStopwatch()" style="width:100%">▶ Start Timer</button>
+          </div>`}
+    </div>
+  </div>
+  <hr style="border-color:var(--border);margin:16px 0">
+  <div class="card-header"><span class="card-title">Pomodoro Settings</span></div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Focus (min)</label>
+      <input type="number" class="form-input" value="${set.workMin}" min="1" max="120"
+        onchange="App.updatePomodoroSetting('workMin',this.value)"></div>
+    <div class="form-group"><label class="form-label">Break (min)</label>
+      <input type="number" class="form-input" value="${set.breakMin}" min="1" max="30"
+        onchange="App.updatePomodoroSetting('breakMin',this.value)"></div>
+  </div>
+  <div class="form-row">
+    <div class="form-group"><label class="form-label">Long Break (min)</label>
+      <input type="number" class="form-input" value="${set.longBreakMin}" min="1" max="60"
+        onchange="App.updatePomodoroSetting('longBreakMin',this.value)"></div>
+    <div class="form-group"><label class="form-label">Sessions before long</label>
+      <input type="number" class="form-input" value="${set.sessionsBeforeLong}" min="2" max="8"
+        onchange="App.updatePomodoroSetting('sessionsBeforeLong',this.value)"></div>
+  </div>
+</div>
+
+</div>`;
+    },
+
+    // ── Focus Timer: subject/chapter selection handlers ─────────────────────
+    // Called by the subject dropdown onchange. Resets chapter selection and re-renders.
+    setFocusSubject(sId){
+        this.pomodoro.focusSubjectId=sId||null;
+        this.pomodoro.focusChapterId=null; // reset chapter whenever subject changes
+        this.renderPomodoro();
+        // Re-apply scroll position so the timer card stays in view
+        const el=document.getElementById('focus-chapter');
+        if(el)el.focus();
+    },
+
+    // Called by the chapter dropdown onchange. Just stores the ID.
+    setFocusChapter(cId){
+        this.pomodoro.focusChapterId=cId||null;
+        this.renderPomodoro(); // re-render to clear/show the warning
     },
     startPomodoro(){if(this.pomodoro.running)return;this.pomodoro.running=true;this.pomodoro.interval=setInterval(()=>{this.pomodoro.timeLeft--;if(this.pomodoro.timeLeft<=0)this.pomodoroComplete();if(this.state.currentPage==='pomodoro')this.renderPomodoro()},1000);this.renderPomodoro()},
     pausePomodoro(){this.pomodoro.running=false;clearInterval(this.pomodoro.interval);this.renderPomodoro()},
     resetPomodoro(){this.pausePomodoro();this.pomodoro.timeLeft=(this.pomodoro.mode==='work'?this.state.pomodoroSettings.workMin:this.state.pomodoroSettings.breakMin)*60;this.renderPomodoro()},
     skipPomodoro(){this.pausePomodoro();this.pomodoroComplete()},
     pomodoroComplete(){
-        this.pausePomodoro();const set=this.state.pomodoroSettings;
+        this.pausePomodoro();
+        const set=this.state.pomodoroSettings;
+
         if(this.pomodoro.mode==='work'){
-            if(this.state.subjects.length>0){const _pSub=this.state.subjects[0];const _pSess={id:this.uid(),subjectId:_pSub.id,chapterId:'',chapterName:'',subjectName:'Pomodoro',date:this.today(),timeSpent:set.workMin,type:'pomodoro',rating:5,notes:`Pomodoro #${this.pomodoro.session}`,createdAt:Date.now()};this.state.sessions.push(_pSess);const _pUid=window._supabaseUserId;if(_pUid){DB.sessions.create({user_id:_pUid,subject_id:_pSub.id,chapter_id:null,time_spent:set.workMin,date:this.today(),type:'pomodoro',rating:5,notes:`Pomodoro #${this.pomodoro.session}`}).then(({data,error})=>{if(error){console.error('[DB] pomodoro session:',error);return;}if(data&&data.id)_pSess.id=data.id;});}this.recordStudyDay();this.addXP(10,'Pomodoro done 🍅')}
+            // ── Resolve which subject/chapter to attribute this session to ──
+            // Prefer the explicitly-selected focus subject; fall back to subjects[0]
+            // only when the user has not made any selection at all.
+            const _pUid=window._supabaseUserId;
+            const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+            const focusSub=this.pomodoro.focusSubjectId
+                ?this.state.subjects.find(s=>s.id===this.pomodoro.focusSubjectId)
+                :(this.state.subjects.length>0?this.state.subjects[0]:null);
+
+            if(focusSub){
+                // Look up the chapter object (may be null if none selected)
+                const focusCh=this.pomodoro.focusChapterId
+                    ?focusSub.chapters.find(c=>c.id===this.pomodoro.focusChapterId)||null
+                    :null;
+
+                // ── Update last_studied_date on the chapter in memory + DB ──
+                if(focusCh){
+                    focusCh.lastStudiedDate=this.today();
+                    if(_isUUID(focusCh.id)){
+                        DB.chapters.update(focusCh.id,{last_studied_date:this.today()})
+                            .then(({error})=>{if(error)console.error('[DB] pomodoro last_studied_date:',error);});
+                    }
+                }
+
+                // ── Build in-memory session record ────────────────────────
+                const _pSess={
+                    id:this.uid(),
+                    subjectId:focusSub.id,
+                    chapterId:focusCh?focusCh.id:'',
+                    chapterName:focusCh?focusCh.name:'',
+                    subjectName:focusSub.name,
+                    date:this.today(),
+                    timeSpent:set.workMin,
+                    type:'focus_timer',
+                    rating:5,
+                    notes:`Pomodoro #${this.pomodoro.session}${focusCh?' — '+focusCh.name:''}`,
+                    createdAt:Date.now()
+                };
+                this.state.sessions.push(_pSess);
+
+                // ── Persist session to Supabase ───────────────────────────
+                if(_pUid){
+                    DB.sessions.create({
+                        user_id:_pUid,
+                        subject_id:focusSub.id,
+                        chapter_id:focusCh&&_isUUID(focusCh.id)?focusCh.id:null,
+                        time_spent:set.workMin,
+                        date:this.today(),
+                        type:'focus_timer',
+                        rating:5,
+                        notes:`Pomodoro #${this.pomodoro.session}${focusCh?' — '+focusCh.name:''}`
+                    }).then(({data,error})=>{
+                        if(error){console.error('[DB] pomodoro session:',error);return;}
+                        if(data&&data.id)_pSess.id=data.id;
+                    });
+                }
+
+                this.recordStudyDay();
+                this.addXP(10,'Pomodoro done 🍅');
+            }
+
             this.toast(`🍅 Pomodoro #${this.pomodoro.session} done!`,'success');
-            this.pomodoro.mode='break';this.pomodoro.timeLeft=(this.pomodoro.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin)*60;
+            this.pomodoro.mode='break';
+            this.pomodoro.timeLeft=(this.pomodoro.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin)*60;
         }else{
-            this.toast('Break over! Time to focus!','info');this.pomodoro.mode='work';this.pomodoro.session++;this.pomodoro.timeLeft=set.workMin*60;
+            this.toast('Break over! Time to focus!','info');
+            this.pomodoro.mode='work';
+            this.pomodoro.session++;
+            this.pomodoro.timeLeft=set.workMin*60;
         }
         this.save();this.renderPomodoro();this.checkDailyChallenges();
     },
