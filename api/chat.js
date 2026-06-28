@@ -5,7 +5,7 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ALLOWED_ORIGINS = ['https://studyos-edu.vercel.app', 'http://localhost:3000'];
+const ALLOWED_ORIGINS = ['https://studyos-edu.vercel.app', 'http://localhost:3000', 'https://boardos.in'];
 
 async function verifyToken(authHeader) {
     const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
