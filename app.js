@@ -312,56 +312,553 @@ const App={
 
     // ── CLASS 11 PCM ─────────────────────────────────────────────────────
     CLASS11_PCM_DATA:[
-        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Physical World','Units and Measurements','Motion in a Straight Line','Motion in a Plane','Laws of Motion','Work, Energy and Power','System of Particles and Rotational Motion','Gravitation','Mechanical Properties of Solids','Mechanical Properties of Fluids','Thermal Properties of Matter','Thermodynamics','Kinetic Theory','Oscillations','Waves']},
-        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['Some Basic Concepts of Chemistry','Structure of Atom','Classification of Elements and Periodicity in Properties','Chemical Bonding and Molecular Structure','Thermodynamics','Equilibrium','Redox Reactions','Organic Chemistry — Some Basic Principles and Techniques','Hydrocarbons','Environmental Chemistry','States of Matter','The s-Block Elements','The p-Block Elements (Groups 13 and 14)','Hydrogen']},
-        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Sets','Relations and Functions','Trigonometric Functions','Principle of Mathematical Induction','Complex Numbers and Quadratic Equations','Linear Inequalities','Permutations and Combinations','Binomial Theorem','Sequences and Series','Straight Lines','Conic Sections','Introduction to Three Dimensional Geometry','Limits and Derivatives','Statistics','Probability']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Portrait of a Lady','We\'re Not Afraid to Die','Discovering Tut: The Saga Continues','Landscape of the Soul','The Ailing Planet','The Browning Version','The Adventure','Silk Road','A Photograph (Poem)','The Laburnum Top (Poem)','The Voice of the Rain (Poem)','Childhood (Poem)','Father to Son (Poem)','The Summer of the Beautiful White Horse','The Address','Ranga\'s Marriage','Albert Einstein at School','Mother\'s Day','The Ghat of the Only World','Birth','The Tale of Melon City']},
-        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Changing Trends and Career in Physical Education','Olympic Movement','Physical Fitness, Wellness and Lifestyle','Physical Education and Sports for CWSN','Yoga','Physical Activity and Leadership Training','Test, Measurement and Evaluation','Fundamentals of Anatomy and Physiology','Fundamentals of Kinesiology and Biomechanics','Psychology and Sports','Training in Sports','Doping']}
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:[
+            {name:'Physical World',difficulty:'easy'},
+            {name:'Units and Measurements',difficulty:'easy'},
+            {name:'Motion in a Straight Line',difficulty:'medium'},
+            {name:'Motion in a Plane',difficulty:'hard'},
+            {name:'Laws of Motion',difficulty:'hard'},
+            {name:'Work, Energy and Power',difficulty:'hard'},
+            {name:'System of Particles and Rotational Motion',difficulty:'hard'},
+            {name:'Gravitation',difficulty:'medium'},
+            {name:'Mechanical Properties of Solids',difficulty:'medium'},
+            {name:'Mechanical Properties of Fluids',difficulty:'medium'},
+            {name:'Thermal Properties of Matter',difficulty:'medium'},
+            {name:'Thermodynamics',difficulty:'hard'},
+            {name:'Kinetic Theory',difficulty:'medium'},
+            {name:'Oscillations',difficulty:'hard'},
+            {name:'Waves',difficulty:'hard'}
+        ]},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:[
+            {name:'Some Basic Concepts of Chemistry',difficulty:'easy'},
+            {name:'Structure of Atom',difficulty:'hard'},
+            {name:'Classification of Elements and Periodicity in Properties',difficulty:'medium'},
+            {name:'Chemical Bonding and Molecular Structure',difficulty:'hard'},
+            {name:'Thermodynamics',difficulty:'hard'},
+            {name:'Equilibrium',difficulty:'hard'},
+            {name:'Redox Reactions',difficulty:'medium'},
+            {name:'Organic Chemistry — Some Basic Principles and Techniques',difficulty:'hard'},
+            {name:'Hydrocarbons',difficulty:'hard'},
+            {name:'Environmental Chemistry',difficulty:'easy'},
+            {name:'States of Matter',difficulty:'medium'},
+            {name:'The s-Block Elements',difficulty:'easy'},
+            {name:'The p-Block Elements (Groups 13 and 14)',difficulty:'medium'},
+            {name:'Hydrogen',difficulty:'easy'}
+        ]},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
+            {name:'Sets',difficulty:'easy'},
+            {name:'Relations and Functions',difficulty:'medium'},
+            {name:'Trigonometric Functions',difficulty:'hard'},
+            {name:'Principle of Mathematical Induction',difficulty:'medium'},
+            {name:'Complex Numbers and Quadratic Equations',difficulty:'hard'},
+            {name:'Linear Inequalities',difficulty:'easy'},
+            {name:'Permutations and Combinations',difficulty:'medium'},
+            {name:'Binomial Theorem',difficulty:'medium'},
+            {name:'Sequences and Series',difficulty:'medium'},
+            {name:'Straight Lines',difficulty:'medium'},
+            {name:'Conic Sections',difficulty:'hard'},
+            {name:'Introduction to Three Dimensional Geometry',difficulty:'medium'},
+            {name:'Limits and Derivatives',difficulty:'hard'},
+            {name:'Statistics',difficulty:'easy'},
+            {name:'Probability',difficulty:'medium'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Portrait of a Lady',difficulty:'medium'},
+            {name:'We\'re Not Afraid to Die',difficulty:'medium'},
+            {name:'Discovering Tut: The Saga Continues',difficulty:'medium'},
+            {name:'Landscape of the Soul',difficulty:'medium'},
+            {name:'The Ailing Planet',difficulty:'medium'},
+            {name:'The Browning Version',difficulty:'medium'},
+            {name:'The Adventure',difficulty:'medium'},
+            {name:'Silk Road',difficulty:'medium'},
+            {name:'A Photograph (Poem)',difficulty:'medium'},
+            {name:'The Laburnum Top (Poem)',difficulty:'medium'},
+            {name:'The Voice of the Rain (Poem)',difficulty:'medium'},
+            {name:'Childhood (Poem)',difficulty:'medium'},
+            {name:'Father to Son (Poem)',difficulty:'medium'},
+            {name:'The Summer of the Beautiful White Horse',difficulty:'medium'},
+            {name:'The Address',difficulty:'medium'},
+            {name:'Ranga\'s Marriage',difficulty:'medium'},
+            {name:'Albert Einstein at School',difficulty:'medium'},
+            {name:'Mother\'s Day',difficulty:'medium'},
+            {name:'The Ghat of the Only World',difficulty:'medium'},
+            {name:'Birth',difficulty:'medium'},
+            {name:'The Tale of Melon City',difficulty:'medium'}
+        ]},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:[
+            {name:'Changing Trends and Career in Physical Education',difficulty:'easy'},
+            {name:'Olympic Movement',difficulty:'easy'},
+            {name:'Physical Fitness, Wellness and Lifestyle',difficulty:'easy'},
+            {name:'Physical Education and Sports for CWSN',difficulty:'easy'},
+            {name:'Yoga',difficulty:'easy'},
+            {name:'Physical Activity and Leadership Training',difficulty:'easy'},
+            {name:'Test, Measurement and Evaluation',difficulty:'medium'},
+            {name:'Fundamentals of Anatomy and Physiology',difficulty:'medium'},
+            {name:'Fundamentals of Kinesiology and Biomechanics',difficulty:'medium'},
+            {name:'Psychology and Sports',difficulty:'medium'},
+            {name:'Training in Sports',difficulty:'medium'},
+            {name:'Doping',difficulty:'easy'}
+        ]}
     ],
 
     // ── CLASS 11 PCB ─────────────────────────────────────────────────────
     CLASS11_PCB_DATA:[
-        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Physical World','Units and Measurements','Motion in a Straight Line','Motion in a Plane','Laws of Motion','Work, Energy and Power','System of Particles and Rotational Motion','Gravitation','Mechanical Properties of Solids','Mechanical Properties of Fluids','Thermal Properties of Matter','Thermodynamics','Kinetic Theory','Oscillations','Waves']},
-        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['Some Basic Concepts of Chemistry','Structure of Atom','Classification of Elements and Periodicity in Properties','Chemical Bonding and Molecular Structure','Thermodynamics','Equilibrium','Redox Reactions','Organic Chemistry — Some Basic Principles and Techniques','Hydrocarbons','Environmental Chemistry','States of Matter','The s-Block Elements','The p-Block Elements (Groups 13 and 14)','Hydrogen']},
-        {name:'Biology',icon:'🌿',color:'#22c55e',chapters:['The Living World','Biological Classification','Plant Kingdom','Animal Kingdom','Morphology of Flowering Plants','Anatomy of Flowering Plants','Structural Organisation in Animals','Cell: The Unit of Life','Biomolecules','Cell Cycle and Cell Division','Transport in Plants','Mineral Nutrition','Photosynthesis in Higher Plants','Respiration in Plants','Plant Growth and Development','Digestion and Absorption','Breathing and Exchange of Gases','Body Fluids and Circulation','Excretory Products and their Elimination','Locomotion and Movement','Neural Control and Coordination','Chemical Coordination and Integration']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Portrait of a Lady','We\'re Not Afraid to Die','Discovering Tut: The Saga Continues','Landscape of the Soul','The Ailing Planet','The Browning Version','The Adventure','Silk Road','A Photograph (Poem)','The Laburnum Top (Poem)','The Voice of the Rain (Poem)','Childhood (Poem)','Father to Son (Poem)','The Summer of the Beautiful White Horse','The Address','Ranga\'s Marriage','Albert Einstein at School','Mother\'s Day','The Ghat of the Only World','Birth','The Tale of Melon City']},
-        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Changing Trends and Career in Physical Education','Olympic Movement','Physical Fitness, Wellness and Lifestyle','Physical Education and Sports for CWSN','Yoga','Physical Activity and Leadership Training','Test, Measurement and Evaluation','Fundamentals of Anatomy and Physiology','Fundamentals of Kinesiology and Biomechanics','Psychology and Sports','Training in Sports','Doping']}
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:[
+            {name:'Physical World',difficulty:'easy'},
+            {name:'Units and Measurements',difficulty:'easy'},
+            {name:'Motion in a Straight Line',difficulty:'medium'},
+            {name:'Motion in a Plane',difficulty:'hard'},
+            {name:'Laws of Motion',difficulty:'hard'},
+            {name:'Work, Energy and Power',difficulty:'hard'},
+            {name:'System of Particles and Rotational Motion',difficulty:'hard'},
+            {name:'Gravitation',difficulty:'medium'},
+            {name:'Mechanical Properties of Solids',difficulty:'medium'},
+            {name:'Mechanical Properties of Fluids',difficulty:'medium'},
+            {name:'Thermal Properties of Matter',difficulty:'medium'},
+            {name:'Thermodynamics',difficulty:'hard'},
+            {name:'Kinetic Theory',difficulty:'medium'},
+            {name:'Oscillations',difficulty:'hard'},
+            {name:'Waves',difficulty:'hard'}
+        ]},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:[
+            {name:'Some Basic Concepts of Chemistry',difficulty:'easy'},
+            {name:'Structure of Atom',difficulty:'hard'},
+            {name:'Classification of Elements and Periodicity in Properties',difficulty:'medium'},
+            {name:'Chemical Bonding and Molecular Structure',difficulty:'hard'},
+            {name:'Thermodynamics',difficulty:'hard'},
+            {name:'Equilibrium',difficulty:'hard'},
+            {name:'Redox Reactions',difficulty:'medium'},
+            {name:'Organic Chemistry — Some Basic Principles and Techniques',difficulty:'hard'},
+            {name:'Hydrocarbons',difficulty:'hard'},
+            {name:'Environmental Chemistry',difficulty:'easy'},
+            {name:'States of Matter',difficulty:'medium'},
+            {name:'The s-Block Elements',difficulty:'easy'},
+            {name:'The p-Block Elements (Groups 13 and 14)',difficulty:'medium'},
+            {name:'Hydrogen',difficulty:'easy'}
+        ]},
+        {name:'Biology',icon:'🌿',color:'#22c55e',chapters:[
+            {name:'The Living World',difficulty:'easy'},
+            {name:'Biological Classification',difficulty:'medium'},
+            {name:'Plant Kingdom',difficulty:'medium'},
+            {name:'Animal Kingdom',difficulty:'hard'},
+            {name:'Morphology of Flowering Plants',difficulty:'medium'},
+            {name:'Anatomy of Flowering Plants',difficulty:'medium'},
+            {name:'Structural Organisation in Animals',difficulty:'medium'},
+            {name:'Cell: The Unit of Life',difficulty:'medium'},
+            {name:'Biomolecules',difficulty:'hard'},
+            {name:'Cell Cycle and Cell Division',difficulty:'hard'},
+            {name:'Transport in Plants',difficulty:'medium'},
+            {name:'Mineral Nutrition',difficulty:'medium'},
+            {name:'Photosynthesis in Higher Plants',difficulty:'hard'},
+            {name:'Respiration in Plants',difficulty:'hard'},
+            {name:'Plant Growth and Development',difficulty:'medium'},
+            {name:'Digestion and Absorption',difficulty:'medium'},
+            {name:'Breathing and Exchange of Gases',difficulty:'medium'},
+            {name:'Body Fluids and Circulation',difficulty:'hard'},
+            {name:'Excretory Products and their Elimination',difficulty:'medium'},
+            {name:'Locomotion and Movement',difficulty:'medium'},
+            {name:'Neural Control and Coordination',difficulty:'hard'},
+            {name:'Chemical Coordination and Integration',difficulty:'hard'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Portrait of a Lady',difficulty:'medium'},
+            {name:'We\'re Not Afraid to Die',difficulty:'medium'},
+            {name:'Discovering Tut: The Saga Continues',difficulty:'medium'},
+            {name:'Landscape of the Soul',difficulty:'medium'},
+            {name:'The Ailing Planet',difficulty:'medium'},
+            {name:'The Browning Version',difficulty:'medium'},
+            {name:'The Adventure',difficulty:'medium'},
+            {name:'Silk Road',difficulty:'medium'},
+            {name:'A Photograph (Poem)',difficulty:'medium'},
+            {name:'The Laburnum Top (Poem)',difficulty:'medium'},
+            {name:'The Voice of the Rain (Poem)',difficulty:'medium'},
+            {name:'Childhood (Poem)',difficulty:'medium'},
+            {name:'Father to Son (Poem)',difficulty:'medium'},
+            {name:'The Summer of the Beautiful White Horse',difficulty:'medium'},
+            {name:'The Address',difficulty:'medium'},
+            {name:'Ranga\'s Marriage',difficulty:'medium'},
+            {name:'Albert Einstein at School',difficulty:'medium'},
+            {name:'Mother\'s Day',difficulty:'medium'},
+            {name:'The Ghat of the Only World',difficulty:'medium'},
+            {name:'Birth',difficulty:'medium'},
+            {name:'The Tale of Melon City',difficulty:'medium'}
+        ]},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:[
+            {name:'Changing Trends and Career in Physical Education',difficulty:'easy'},
+            {name:'Olympic Movement',difficulty:'easy'},
+            {name:'Physical Fitness, Wellness and Lifestyle',difficulty:'easy'},
+            {name:'Physical Education and Sports for CWSN',difficulty:'easy'},
+            {name:'Yoga',difficulty:'easy'},
+            {name:'Physical Activity and Leadership Training',difficulty:'easy'},
+            {name:'Test, Measurement and Evaluation',difficulty:'medium'},
+            {name:'Fundamentals of Anatomy and Physiology',difficulty:'medium'},
+            {name:'Fundamentals of Kinesiology and Biomechanics',difficulty:'medium'},
+            {name:'Psychology and Sports',difficulty:'medium'},
+            {name:'Training in Sports',difficulty:'medium'},
+            {name:'Doping',difficulty:'easy'}
+        ]}
     ],
 
     // ── CLASS 11 COMMERCE ────────────────────────────────────────────────
     CLASS11_COMMERCE_DATA:[
-        {name:'Accountancy',icon:'💰',color:'#a855f7',chapters:['Introduction to Accounting','Theory Base of Accounting','Recording of Transactions I','Recording of Transactions II','Bank Reconciliation Statement','Trial Balance and Rectification of Errors','Depreciation, Provisions and Reserves','Bill of Exchange','Financial Statements I','Financial Statements II','Accounts from Incomplete Records','Applications of Computers in Accounting','Computerised Accounting System']},
-        {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:['Business, Trade and Commerce','Forms of Business Organisation','Private, Public and Global Enterprises','Business Services','Emerging Modes of Business','Social Responsibilities of Business and Business Ethics','Formation of a Company','Sources of Business Finance','Small Business','Internal Trade','International Business']},
-        {name:'Economics',icon:'📈',color:'#f97316',chapters:['Introduction to Statistics','Collection of Data','Organisation of Data','Presentation of Data','Measures of Central Tendency','Measures of Dispersion','Correlation','Index Numbers','Use of Statistical Tools','Indian Economy on the Eve of Independence','Indian Economy 1950–1990','Liberalisation, Privatisation and Globalisation: An Appraisal','Poverty','Human Capital Formation in India','Rural Development','Employment: Growth, Informalisation and Other Issues','Infrastructure','Environment and Sustainable Development','Comparative Development Experiences of India and Its Neighbours']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Portrait of a Lady','We\'re Not Afraid to Die','Discovering Tut: The Saga Continues','Landscape of the Soul','The Ailing Planet','The Browning Version','The Adventure','Silk Road','A Photograph (Poem)','The Laburnum Top (Poem)','The Voice of the Rain (Poem)','Childhood (Poem)','Father to Son (Poem)','The Summer of the Beautiful White Horse','The Address','Ranga\'s Marriage','Albert Einstein at School','Mother\'s Day','The Ghat of the Only World','Birth','The Tale of Melon City']},
-        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Sets','Relations and Functions','Trigonometric Functions','Principle of Mathematical Induction','Complex Numbers and Quadratic Equations','Linear Inequalities','Permutations and Combinations','Binomial Theorem','Sequences and Series','Straight Lines','Conic Sections','Introduction to Three Dimensional Geometry','Limits and Derivatives','Statistics','Probability']}
+        {name:'Accountancy',icon:'💰',color:'#a855f7',chapters:[
+            {name:'Introduction to Accounting',difficulty:'easy'},
+            {name:'Theory Base of Accounting',difficulty:'medium'},
+            {name:'Recording of Transactions I',difficulty:'medium'},
+            {name:'Recording of Transactions II',difficulty:'hard'},
+            {name:'Bank Reconciliation Statement',difficulty:'hard'},
+            {name:'Trial Balance and Rectification of Errors',difficulty:'hard'},
+            {name:'Depreciation, Provisions and Reserves',difficulty:'hard'},
+            {name:'Bill of Exchange',difficulty:'hard'},
+            {name:'Financial Statements I',difficulty:'medium'},
+            {name:'Financial Statements II',difficulty:'hard'},
+            {name:'Accounts from Incomplete Records',difficulty:'hard'},
+            {name:'Applications of Computers in Accounting',difficulty:'easy'},
+            {name:'Computerised Accounting System',difficulty:'medium'}
+        ]},
+        {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:[
+            {name:'Business, Trade and Commerce',difficulty:'easy'},
+            {name:'Forms of Business Organisation',difficulty:'medium'},
+            {name:'Private, Public and Global Enterprises',difficulty:'medium'},
+            {name:'Business Services',difficulty:'easy'},
+            {name:'Emerging Modes of Business',difficulty:'easy'},
+            {name:'Social Responsibilities of Business and Business Ethics',difficulty:'easy'},
+            {name:'Formation of a Company',difficulty:'medium'},
+            {name:'Sources of Business Finance',difficulty:'medium'},
+            {name:'Small Business',difficulty:'easy'},
+            {name:'Internal Trade',difficulty:'medium'},
+            {name:'International Business',difficulty:'medium'}
+        ]},
+        {name:'Economics',icon:'📈',color:'#f97316',chapters:[
+            {name:'Introduction to Statistics',difficulty:'easy'},
+            {name:'Collection of Data',difficulty:'easy'},
+            {name:'Organisation of Data',difficulty:'easy'},
+            {name:'Presentation of Data',difficulty:'medium'},
+            {name:'Measures of Central Tendency',difficulty:'medium'},
+            {name:'Measures of Dispersion',difficulty:'hard'},
+            {name:'Correlation',difficulty:'hard'},
+            {name:'Index Numbers',difficulty:'hard'},
+            {name:'Use of Statistical Tools',difficulty:'medium'},
+            {name:'Indian Economy on the Eve of Independence',difficulty:'easy'},
+            {name:'Indian Economy 1950–1990',difficulty:'easy'},
+            {name:'Liberalisation, Privatisation and Globalisation: An Appraisal',difficulty:'medium'},
+            {name:'Poverty',difficulty:'easy'},
+            {name:'Human Capital Formation in India',difficulty:'easy'},
+            {name:'Rural Development',difficulty:'easy'},
+            {name:'Employment: Growth, Informalisation and Other Issues',difficulty:'medium'},
+            {name:'Infrastructure',difficulty:'easy'},
+            {name:'Environment and Sustainable Development',difficulty:'easy'},
+            {name:'Comparative Development Experiences of India and Its Neighbours',difficulty:'medium'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Portrait of a Lady',difficulty:'medium'},
+            {name:'We\'re Not Afraid to Die',difficulty:'medium'},
+            {name:'Discovering Tut: The Saga Continues',difficulty:'medium'},
+            {name:'Landscape of the Soul',difficulty:'medium'},
+            {name:'The Ailing Planet',difficulty:'medium'},
+            {name:'The Browning Version',difficulty:'medium'},
+            {name:'The Adventure',difficulty:'medium'},
+            {name:'Silk Road',difficulty:'medium'},
+            {name:'A Photograph (Poem)',difficulty:'medium'},
+            {name:'The Laburnum Top (Poem)',difficulty:'medium'},
+            {name:'The Voice of the Rain (Poem)',difficulty:'medium'},
+            {name:'Childhood (Poem)',difficulty:'medium'},
+            {name:'Father to Son (Poem)',difficulty:'medium'},
+            {name:'The Summer of the Beautiful White Horse',difficulty:'medium'},
+            {name:'The Address',difficulty:'medium'},
+            {name:'Ranga\'s Marriage',difficulty:'medium'},
+            {name:'Albert Einstein at School',difficulty:'medium'},
+            {name:'Mother\'s Day',difficulty:'medium'},
+            {name:'The Ghat of the Only World',difficulty:'medium'},
+            {name:'Birth',difficulty:'medium'},
+            {name:'The Tale of Melon City',difficulty:'medium'}
+        ]},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
+            {name:'Sets',difficulty:'easy'},
+            {name:'Relations and Functions',difficulty:'medium'},
+            {name:'Trigonometric Functions',difficulty:'hard'},
+            {name:'Principle of Mathematical Induction',difficulty:'medium'},
+            {name:'Complex Numbers and Quadratic Equations',difficulty:'hard'},
+            {name:'Linear Inequalities',difficulty:'easy'},
+            {name:'Permutations and Combinations',difficulty:'medium'},
+            {name:'Binomial Theorem',difficulty:'medium'},
+            {name:'Sequences and Series',difficulty:'medium'},
+            {name:'Straight Lines',difficulty:'medium'},
+            {name:'Conic Sections',difficulty:'hard'},
+            {name:'Introduction to Three Dimensional Geometry',difficulty:'medium'},
+            {name:'Limits and Derivatives',difficulty:'hard'},
+            {name:'Statistics',difficulty:'easy'},
+            {name:'Probability',difficulty:'medium'}
+        ]}
     ],
 
     // ── CLASS 12 PCM ─────────────────────────────────────────────────────
     CLASS12_PCM_DATA:[
-        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Electric Charges and Fields','Electrostatic Potential and Capacitance','Current Electricity','Moving Charges and Magnetism','Magnetism and Matter','Electromagnetic Induction','Alternating Current','Electromagnetic Waves','Ray Optics and Optical Instruments','Wave Optics','Dual Nature of Radiation and Matter','Atoms','Nuclei','Semiconductor Electronics','Communication Systems']},
-        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['The Solid State','Solutions','Electrochemistry','Chemical Kinetics','Surface Chemistry','General Principles and Processes of Isolation of Elements','The p-Block Elements','The d- and f-Block Elements','Coordination Compounds','Haloalkanes and Haloarenes','Alcohols, Phenols and Ethers','Aldehydes, Ketones and Carboxylic Acids','Amines','Biomolecules','Polymers','Chemistry in Everyday Life']},
-        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Relations and Functions','Inverse Trigonometric Functions','Matrices','Determinants','Continuity and Differentiability','Application of Derivatives','Integrals','Application of Integrals','Differential Equations','Vector Algebra','Three Dimensional Geometry','Linear Programming','Probability']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Last Lesson','Lost Spring','Deep Water','The Rattrap','Indigo','Poets and Pancakes','The Interview','Going Places','My Mother at Sixty-six (Poem)','Keeping Quiet (Poem)','A Thing of Beauty (Poem)','A Roadside Stand (Poem)','Aunt Jennifer\'s Tigers (Poem)','Third Level','The Tiger King','Journey to the End of the Earth','The Enemy','Should Wizard Hit Mommy','On the Face of It','Evans Tries an O-level','Memories of Childhood']},
-        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Planning in Sports','Sports and Nutrition','Yoga and Lifestyle','Physical Education and Sports for CWSN','Children and Women in Sports','Test, Measurement and Evaluation in Sports','Physiology and Injuries in Sports','Biomechanics and Sports','Psychology and Sports','Training in Sports']}
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:[
+            {name:'Electric Charges and Fields',difficulty:'hard'},
+            {name:'Electrostatic Potential and Capacitance',difficulty:'hard'},
+            {name:'Current Electricity',difficulty:'hard'},
+            {name:'Moving Charges and Magnetism',difficulty:'hard'},
+            {name:'Magnetism and Matter',difficulty:'medium'},
+            {name:'Electromagnetic Induction',difficulty:'hard'},
+            {name:'Alternating Current',difficulty:'hard'},
+            {name:'Electromagnetic Waves',difficulty:'medium'},
+            {name:'Ray Optics and Optical Instruments',difficulty:'medium'},
+            {name:'Wave Optics',difficulty:'hard'},
+            {name:'Dual Nature of Radiation and Matter',difficulty:'medium'},
+            {name:'Atoms',difficulty:'medium'},
+            {name:'Nuclei',difficulty:'medium'},
+            {name:'Semiconductor Electronics',difficulty:'hard'},
+            {name:'Communication Systems',difficulty:'easy'}
+        ]},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:[
+            {name:'The Solid State',difficulty:'hard'},
+            {name:'Solutions',difficulty:'hard'},
+            {name:'Electrochemistry',difficulty:'hard'},
+            {name:'Chemical Kinetics',difficulty:'hard'},
+            {name:'Surface Chemistry',difficulty:'medium'},
+            {name:'General Principles and Processes of Isolation of Elements',difficulty:'medium'},
+            {name:'The p-Block Elements',difficulty:'hard'},
+            {name:'The d- and f-Block Elements',difficulty:'medium'},
+            {name:'Coordination Compounds',difficulty:'hard'},
+            {name:'Haloalkanes and Haloarenes',difficulty:'hard'},
+            {name:'Alcohols, Phenols and Ethers',difficulty:'hard'},
+            {name:'Aldehydes, Ketones and Carboxylic Acids',difficulty:'hard'},
+            {name:'Amines',difficulty:'hard'},
+            {name:'Biomolecules',difficulty:'medium'},
+            {name:'Polymers',difficulty:'easy'},
+            {name:'Chemistry in Everyday Life',difficulty:'easy'}
+        ]},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
+            {name:'Relations and Functions',difficulty:'medium'},
+            {name:'Inverse Trigonometric Functions',difficulty:'hard'},
+            {name:'Matrices',difficulty:'medium'},
+            {name:'Determinants',difficulty:'hard'},
+            {name:'Continuity and Differentiability',difficulty:'hard'},
+            {name:'Application of Derivatives',difficulty:'hard'},
+            {name:'Integrals',difficulty:'hard'},
+            {name:'Application of Integrals',difficulty:'hard'},
+            {name:'Differential Equations',difficulty:'hard'},
+            {name:'Vector Algebra',difficulty:'medium'},
+            {name:'Three Dimensional Geometry',difficulty:'hard'},
+            {name:'Linear Programming',difficulty:'medium'},
+            {name:'Probability',difficulty:'hard'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Last Lesson',difficulty:'medium'},
+            {name:'Lost Spring',difficulty:'medium'},
+            {name:'Deep Water',difficulty:'medium'},
+            {name:'The Rattrap',difficulty:'medium'},
+            {name:'Indigo',difficulty:'medium'},
+            {name:'Poets and Pancakes',difficulty:'medium'},
+            {name:'The Interview',difficulty:'medium'},
+            {name:'Going Places',difficulty:'medium'},
+            {name:'My Mother at Sixty-six (Poem)',difficulty:'medium'},
+            {name:'Keeping Quiet (Poem)',difficulty:'medium'},
+            {name:'A Thing of Beauty (Poem)',difficulty:'medium'},
+            {name:'A Roadside Stand (Poem)',difficulty:'medium'},
+            {name:'Aunt Jennifer\'s Tigers (Poem)',difficulty:'medium'},
+            {name:'Third Level',difficulty:'medium'},
+            {name:'The Tiger King',difficulty:'medium'},
+            {name:'Journey to the End of the Earth',difficulty:'medium'},
+            {name:'The Enemy',difficulty:'medium'},
+            {name:'Should Wizard Hit Mommy',difficulty:'medium'},
+            {name:'On the Face of It',difficulty:'medium'},
+            {name:'Evans Tries an O-level',difficulty:'medium'},
+            {name:'Memories of Childhood',difficulty:'medium'}
+        ]},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:[
+            {name:'Planning in Sports',difficulty:'easy'},
+            {name:'Sports and Nutrition',difficulty:'easy'},
+            {name:'Yoga and Lifestyle',difficulty:'easy'},
+            {name:'Physical Education and Sports for CWSN',difficulty:'easy'},
+            {name:'Children and Women in Sports',difficulty:'easy'},
+            {name:'Test, Measurement and Evaluation in Sports',difficulty:'medium'},
+            {name:'Physiology and Injuries in Sports',difficulty:'medium'},
+            {name:'Biomechanics and Sports',difficulty:'medium'},
+            {name:'Psychology and Sports',difficulty:'medium'},
+            {name:'Training in Sports',difficulty:'medium'}
+        ]}
     ],
 
     // ── CLASS 12 PCB ─────────────────────────────────────────────────────
     CLASS12_PCB_DATA:[
-        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:['Electric Charges and Fields','Electrostatic Potential and Capacitance','Current Electricity','Moving Charges and Magnetism','Magnetism and Matter','Electromagnetic Induction','Alternating Current','Electromagnetic Waves','Ray Optics and Optical Instruments','Wave Optics','Dual Nature of Radiation and Matter','Atoms','Nuclei','Semiconductor Electronics','Communication Systems']},
-        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:['The Solid State','Solutions','Electrochemistry','Chemical Kinetics','Surface Chemistry','General Principles and Processes of Isolation of Elements','The p-Block Elements','The d- and f-Block Elements','Coordination Compounds','Haloalkanes and Haloarenes','Alcohols, Phenols and Ethers','Aldehydes, Ketones and Carboxylic Acids','Amines','Biomolecules','Polymers','Chemistry in Everyday Life']},
-        {name:'Biology',icon:'🌿',color:'#22c55e',chapters:['Reproduction in Organisms','Sexual Reproduction in Flowering Plants','Human Reproduction','Reproductive Health','Principles of Inheritance and Variation','Molecular Basis of Inheritance','Evolution','Human Health and Disease','Strategies for Enhancement in Food Production','Microbes in Human Welfare','Biotechnology: Principles and Processes','Biotechnology and its Applications','Organisms and Populations','Ecosystem','Biodiversity and Conservation','Environmental Issues']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Last Lesson','Lost Spring','Deep Water','The Rattrap','Indigo','Poets and Pancakes','The Interview','Going Places','My Mother at Sixty-six (Poem)','Keeping Quiet (Poem)','A Thing of Beauty (Poem)','A Roadside Stand (Poem)','Aunt Jennifer\'s Tigers (Poem)','Third Level','The Tiger King','Journey to the End of the Earth','The Enemy','Should Wizard Hit Mommy','On the Face of It','Evans Tries an O-level','Memories of Childhood']},
-        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:['Planning in Sports','Sports and Nutrition','Yoga and Lifestyle','Physical Education and Sports for CWSN','Children and Women in Sports','Test, Measurement and Evaluation in Sports','Physiology and Injuries in Sports','Biomechanics and Sports','Psychology and Sports','Training in Sports']}
+        {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:[
+            {name:'Electric Charges and Fields',difficulty:'hard'},
+            {name:'Electrostatic Potential and Capacitance',difficulty:'hard'},
+            {name:'Current Electricity',difficulty:'hard'},
+            {name:'Moving Charges and Magnetism',difficulty:'hard'},
+            {name:'Magnetism and Matter',difficulty:'medium'},
+            {name:'Electromagnetic Induction',difficulty:'hard'},
+            {name:'Alternating Current',difficulty:'hard'},
+            {name:'Electromagnetic Waves',difficulty:'medium'},
+            {name:'Ray Optics and Optical Instruments',difficulty:'medium'},
+            {name:'Wave Optics',difficulty:'hard'},
+            {name:'Dual Nature of Radiation and Matter',difficulty:'medium'},
+            {name:'Atoms',difficulty:'medium'},
+            {name:'Nuclei',difficulty:'medium'},
+            {name:'Semiconductor Electronics',difficulty:'hard'},
+            {name:'Communication Systems',difficulty:'easy'}
+        ]},
+        {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:[
+            {name:'The Solid State',difficulty:'hard'},
+            {name:'Solutions',difficulty:'hard'},
+            {name:'Electrochemistry',difficulty:'hard'},
+            {name:'Chemical Kinetics',difficulty:'hard'},
+            {name:'Surface Chemistry',difficulty:'medium'},
+            {name:'General Principles and Processes of Isolation of Elements',difficulty:'medium'},
+            {name:'The p-Block Elements',difficulty:'hard'},
+            {name:'The d- and f-Block Elements',difficulty:'medium'},
+            {name:'Coordination Compounds',difficulty:'hard'},
+            {name:'Haloalkanes and Haloarenes',difficulty:'hard'},
+            {name:'Alcohols, Phenols and Ethers',difficulty:'hard'},
+            {name:'Aldehydes, Ketones and Carboxylic Acids',difficulty:'hard'},
+            {name:'Amines',difficulty:'hard'},
+            {name:'Biomolecules',difficulty:'medium'},
+            {name:'Polymers',difficulty:'easy'},
+            {name:'Chemistry in Everyday Life',difficulty:'easy'}
+        ]},
+        {name:'Biology',icon:'🌿',color:'#22c55e',chapters:[
+            {name:'Reproduction in Organisms',difficulty:'easy'},
+            {name:'Sexual Reproduction in Flowering Plants',difficulty:'medium'},
+            {name:'Human Reproduction',difficulty:'medium'},
+            {name:'Reproductive Health',difficulty:'easy'},
+            {name:'Principles of Inheritance and Variation',difficulty:'hard'},
+            {name:'Molecular Basis of Inheritance',difficulty:'hard'},
+            {name:'Evolution',difficulty:'medium'},
+            {name:'Human Health and Disease',difficulty:'medium'},
+            {name:'Strategies for Enhancement in Food Production',difficulty:'easy'},
+            {name:'Microbes in Human Welfare',difficulty:'easy'},
+            {name:'Biotechnology: Principles and Processes',difficulty:'hard'},
+            {name:'Biotechnology and its Applications',difficulty:'medium'},
+            {name:'Organisms and Populations',difficulty:'medium'},
+            {name:'Ecosystem',difficulty:'medium'},
+            {name:'Biodiversity and Conservation',difficulty:'easy'},
+            {name:'Environmental Issues',difficulty:'easy'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Last Lesson',difficulty:'medium'},
+            {name:'Lost Spring',difficulty:'medium'},
+            {name:'Deep Water',difficulty:'medium'},
+            {name:'The Rattrap',difficulty:'medium'},
+            {name:'Indigo',difficulty:'medium'},
+            {name:'Poets and Pancakes',difficulty:'medium'},
+            {name:'The Interview',difficulty:'medium'},
+            {name:'Going Places',difficulty:'medium'},
+            {name:'My Mother at Sixty-six (Poem)',difficulty:'medium'},
+            {name:'Keeping Quiet (Poem)',difficulty:'medium'},
+            {name:'A Thing of Beauty (Poem)',difficulty:'medium'},
+            {name:'A Roadside Stand (Poem)',difficulty:'medium'},
+            {name:'Aunt Jennifer\'s Tigers (Poem)',difficulty:'medium'},
+            {name:'Third Level',difficulty:'medium'},
+            {name:'The Tiger King',difficulty:'medium'},
+            {name:'Journey to the End of the Earth',difficulty:'medium'},
+            {name:'The Enemy',difficulty:'medium'},
+            {name:'Should Wizard Hit Mommy',difficulty:'medium'},
+            {name:'On the Face of It',difficulty:'medium'},
+            {name:'Evans Tries an O-level',difficulty:'medium'},
+            {name:'Memories of Childhood',difficulty:'medium'}
+        ]},
+        {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:[
+            {name:'Planning in Sports',difficulty:'easy'},
+            {name:'Sports and Nutrition',difficulty:'easy'},
+            {name:'Yoga and Lifestyle',difficulty:'easy'},
+            {name:'Physical Education and Sports for CWSN',difficulty:'easy'},
+            {name:'Children and Women in Sports',difficulty:'easy'},
+            {name:'Test, Measurement and Evaluation in Sports',difficulty:'medium'},
+            {name:'Physiology and Injuries in Sports',difficulty:'medium'},
+            {name:'Biomechanics and Sports',difficulty:'medium'},
+            {name:'Psychology and Sports',difficulty:'medium'},
+            {name:'Training in Sports',difficulty:'medium'}
+        ]}
     ],
 
     // ── CLASS 12 COMMERCE ────────────────────────────────────────────────
     CLASS12_COMMERCE_DATA:[
-        {name:'Accountancy',icon:'💰',color:'#a855f7',chapters:['Accounting for Not-for-Profit Organisation','Accounting for Partnership: Basic Concepts','Reconstitution of a Partnership Firm — Admission of a Partner','Reconstitution of a Partnership Firm — Retirement/Death of a Partner','Dissolution of Partnership Firm','Accounting for Share Capital','Issue and Redemption of Debentures','Financial Statements of a Company','Analysis of Financial Statements','Accounting Ratios','Cash Flow Statement','Computerised Accounting System']},
-        {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:['Nature and Significance of Management','Principles of Management','Business Environment','Planning','Organising','Staffing','Directing','Controlling','Financial Management','Financial Markets','Marketing Management','Consumer Protection','Entrepreneurship Development']},
-        {name:'Economics',icon:'📈',color:'#f97316',chapters:['Introduction to Macroeconomics','National Income Accounting','Money and Banking','Determination of Income and Employment','Government Budget and the Economy','Open Economy Macroeconomics','Indian Economy on the Eve of Independence','Indian Economy 1950–1990','Liberalisation, Privatisation and Globalisation','Poverty','Human Capital Formation in India','Rural Development','Employment: Growth, Informalisation and Other Issues','Infrastructure','Environment and Sustainable Development']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Last Lesson','Lost Spring','Deep Water','The Rattrap','Indigo','Poets and Pancakes','The Interview','Going Places','My Mother at Sixty-six (Poem)','Keeping Quiet (Poem)','A Thing of Beauty (Poem)','A Roadside Stand (Poem)','Aunt Jennifer\'s Tigers (Poem)','Third Level','The Tiger King','Journey to the End of the Earth','The Enemy','Should Wizard Hit Mommy','On the Face of It','Evans Tries an O-level','Memories of Childhood']},
-        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Relations and Functions','Inverse Trigonometric Functions','Matrices','Determinants','Continuity and Differentiability','Application of Derivatives','Integrals','Application of Integrals','Differential Equations','Vector Algebra','Three Dimensional Geometry','Linear Programming','Probability']}
+        {name:'Accountancy',icon:'💰',color:'#a855f7',chapters:[
+            {name:'Accounting for Not-for-Profit Organisation',difficulty:'hard'},
+            {name:'Accounting for Partnership: Basic Concepts',difficulty:'medium'},
+            {name:'Reconstitution of a Partnership Firm — Admission of a Partner',difficulty:'hard'},
+            {name:'Reconstitution of a Partnership Firm — Retirement/Death of a Partner',difficulty:'hard'},
+            {name:'Dissolution of Partnership Firm',difficulty:'hard'},
+            {name:'Accounting for Share Capital',difficulty:'hard'},
+            {name:'Issue and Redemption of Debentures',difficulty:'hard'},
+            {name:'Financial Statements of a Company',difficulty:'medium'},
+            {name:'Analysis of Financial Statements',difficulty:'medium'},
+            {name:'Accounting Ratios',difficulty:'medium'},
+            {name:'Cash Flow Statement',difficulty:'hard'},
+            {name:'Computerised Accounting System',difficulty:'easy'}
+        ]},
+        {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:[
+            {name:'Nature and Significance of Management',difficulty:'easy'},
+            {name:'Principles of Management',difficulty:'easy'},
+            {name:'Business Environment',difficulty:'medium'},
+            {name:'Planning',difficulty:'medium'},
+            {name:'Organising',difficulty:'medium'},
+            {name:'Staffing',difficulty:'medium'},
+            {name:'Directing',difficulty:'medium'},
+            {name:'Controlling',difficulty:'medium'},
+            {name:'Financial Management',difficulty:'hard'},
+            {name:'Financial Markets',difficulty:'hard'},
+            {name:'Marketing Management',difficulty:'medium'},
+            {name:'Consumer Protection',difficulty:'easy'},
+            {name:'Entrepreneurship Development',difficulty:'easy'}
+        ]},
+        {name:'Economics',icon:'📈',color:'#f97316',chapters:[
+            {name:'Introduction to Macroeconomics',difficulty:'easy'},
+            {name:'National Income Accounting',difficulty:'hard'},
+            {name:'Money and Banking',difficulty:'medium'},
+            {name:'Determination of Income and Employment',difficulty:'hard'},
+            {name:'Government Budget and the Economy',difficulty:'medium'},
+            {name:'Open Economy Macroeconomics',difficulty:'hard'},
+            {name:'Indian Economy on the Eve of Independence',difficulty:'easy'},
+            {name:'Indian Economy 1950–1990',difficulty:'easy'},
+            {name:'Liberalisation, Privatisation and Globalisation',difficulty:'medium'},
+            {name:'Poverty',difficulty:'easy'},
+            {name:'Human Capital Formation in India',difficulty:'easy'},
+            {name:'Rural Development',difficulty:'easy'},
+            {name:'Employment: Growth, Informalisation and Other Issues',difficulty:'medium'},
+            {name:'Infrastructure',difficulty:'easy'},
+            {name:'Environment and Sustainable Development',difficulty:'easy'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Last Lesson',difficulty:'medium'},
+            {name:'Lost Spring',difficulty:'medium'},
+            {name:'Deep Water',difficulty:'medium'},
+            {name:'The Rattrap',difficulty:'medium'},
+            {name:'Indigo',difficulty:'medium'},
+            {name:'Poets and Pancakes',difficulty:'medium'},
+            {name:'The Interview',difficulty:'medium'},
+            {name:'Going Places',difficulty:'medium'},
+            {name:'My Mother at Sixty-six (Poem)',difficulty:'medium'},
+            {name:'Keeping Quiet (Poem)',difficulty:'medium'},
+            {name:'A Thing of Beauty (Poem)',difficulty:'medium'},
+            {name:'A Roadside Stand (Poem)',difficulty:'medium'},
+            {name:'Aunt Jennifer\'s Tigers (Poem)',difficulty:'medium'},
+            {name:'Third Level',difficulty:'medium'},
+            {name:'The Tiger King',difficulty:'medium'},
+            {name:'Journey to the End of the Earth',difficulty:'medium'},
+            {name:'The Enemy',difficulty:'medium'},
+            {name:'Should Wizard Hit Mommy',difficulty:'medium'},
+            {name:'On the Face of It',difficulty:'medium'},
+            {name:'Evans Tries an O-level',difficulty:'medium'},
+            {name:'Memories of Childhood',difficulty:'medium'}
+        ]},
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
+            {name:'Relations and Functions',difficulty:'medium'},
+            {name:'Inverse Trigonometric Functions',difficulty:'hard'},
+            {name:'Matrices',difficulty:'medium'},
+            {name:'Determinants',difficulty:'hard'},
+            {name:'Continuity and Differentiability',difficulty:'hard'},
+            {name:'Application of Derivatives',difficulty:'hard'},
+            {name:'Integrals',difficulty:'hard'},
+            {name:'Application of Integrals',difficulty:'hard'},
+            {name:'Differential Equations',difficulty:'hard'},
+            {name:'Vector Algebra',difficulty:'medium'},
+            {name:'Three Dimensional Geometry',difficulty:'hard'},
+            {name:'Linear Programming',difficulty:'medium'},
+            {name:'Probability',difficulty:'hard'}
+        ]}
     ],
 
     // ── CBSE_DATA master object (keyed by class) ─────────────────────────
@@ -1409,16 +1906,17 @@ const App={
         this.CLASS10_DATA.forEach(sub=>{
             if(this.state.subjects.some(s=>s.name.trim().toLowerCase()===sub.name.trim().toLowerCase()))return;
             const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
-            sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});
+            // ch is now {name, difficulty} — use ch.difficulty so each chapter
+            // gets its correct difficulty instead of the old hardcoded 'medium'
+            sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch.name,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:ch.difficulty,notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
             if(_lcUid){
                 DB.subjects.create(_lcUid,{name:sub.name,icon:sub.icon,color:sub.color}).then(({data,error})=>{
                     if(error){console.error('[DB] loadCBSE subjects.create:',error);return;}
                     if(data&&data.id){
-                        const order_index_base=sj.chapters.length;
                         sj.id=data.id;
                         sj.chapters.forEach((ch,i)=>{
-                            DB.chapters.create({user_id:_lcUid,subject_id:data.id,name:ch.name,status:'not-started',difficulty:'medium',revision_count:0,order_index:i}).then(({data:cd,error:ce})=>{
+                            DB.chapters.create({user_id:_lcUid,subject_id:data.id,name:ch.name,status:'not-started',difficulty:ch.difficulty,revision_count:0,order_index:i}).then(({data:cd,error:ce})=>{
                                 if(ce){console.error('[DB] loadCBSE chapters.create:',ce);return;}
                                 if(cd&&cd.id)ch.id=cd.id;
                             });
@@ -1444,7 +1942,9 @@ const App={
         data.forEach(sub => {
             if(this.state.subjects.some(s=>s.name.trim().toLowerCase()===sub.name.trim().toLowerCase()))return;
             const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
-            sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:'medium',notes:'',exercises:[],createdAt:Date.now()})});
+            // ch is now {name, difficulty} — use ch.difficulty so each chapter
+            // gets its correct difficulty instead of the old hardcoded 'medium'
+            sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch.name,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:ch.difficulty,notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
             if(_lcUid){
                 DB.subjects.create(_lcUid,{name:sub.name,icon:sub.icon,color:sub.color}).then(({data:sd,error})=>{
@@ -1452,7 +1952,7 @@ const App={
                     if(sd&&sd.id){
                         sj.id=sd.id;
                         sj.chapters.forEach((ch,i)=>{
-                            DB.chapters.create({user_id:_lcUid,subject_id:sd.id,name:ch.name,status:'not-started',difficulty:'medium',revision_count:0,order_index:i}).then(({data:cd,error:ce})=>{
+                            DB.chapters.create({user_id:_lcUid,subject_id:sd.id,name:ch.name,status:'not-started',difficulty:ch.difficulty,revision_count:0,order_index:i}).then(({data:cd,error:ce})=>{
                                 if(ce){console.error('[DB] loadCBSEForClass chapters:',ce);return;}
                                 if(cd&&cd.id)ch.id=cd.id;
                             });
@@ -3382,17 +3882,63 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     openAddChapterModal(pSub){
         const subs=this.state.subjects;
         if(subs.length===0){this.toast('Add a subject first!','warning');this.openModal('modal-subject');return}
-        document.getElementById('chapter-form-body').innerHTML=`<div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="ch-subject">${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter Name</label><input type="text" id="ch-name" class="form-input" placeholder="e.g., Real Numbers"></div><div class="form-row"><div class="form-group"><label class="form-label">Difficulty</label><select class="form-select" id="ch-diff"><option value="easy">Easy</option><option value="medium" selected>Medium</option><option value="hard">Hard</option></select></div><div class="form-group"><label class="form-label">Deadline</label><input type="date" id="ch-deadline" class="form-input"></div></div>`;
+        document.getElementById('chapter-form-body').innerHTML=`
+<div class="form-group">
+  <label class="form-label">Subject</label>
+  <select class="form-select" id="ch-subject">
+    ${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}
+  </select>
+</div>
+<div class="form-group">
+  <label class="form-label">Chapter Name</label>
+  <input type="text" id="ch-name" class="form-input" placeholder="e.g., Real Numbers">
+</div>
+<div class="form-row">
+  <div class="form-group">
+    <label class="form-label">
+      Difficulty
+      <span id="ch-diff-required" style="color:var(--text-danger,#ef4444);font-size:.75rem;margin-left:6px;display:none">*Required</span>
+    </label>
+    <select class="form-select" id="ch-diff" onchange="App._onChDiffChange()">
+      <option value="" disabled selected>— Select difficulty —</option>
+      <option value="easy">Easy</option>
+      <option value="medium">Medium</option>
+      <option value="hard">Hard</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label class="form-label">Deadline</label>
+    <input type="date" id="ch-deadline" class="form-input">
+  </div>
+</div>`;
+        // Disable Save button until difficulty is chosen
+        const saveBtn = document.querySelector('#modal-chapter .btn-primary');
+        if(saveBtn){ saveBtn.disabled = true; saveBtn.style.opacity = '0.5'; saveBtn.style.cursor = 'not-allowed'; }
         this.openModal('modal-chapter');
+    },
+    // Called by the difficulty dropdown onchange — re-enables Save and hides the required hint
+    _onChDiffChange(){
+        const saveBtn = document.querySelector('#modal-chapter .btn-primary');
+        if(saveBtn){ saveBtn.disabled = false; saveBtn.style.opacity = ''; saveBtn.style.cursor = ''; }
+        const req = document.getElementById('ch-diff-required');
+        if(req) req.style.display = 'none';
     },
     saveChapter(){
         const sId=document.getElementById('ch-subject').value,name=document.getElementById('ch-name').value.trim();
         if(!name){this.toast('Enter chapter name','warning');return}
+        const diff=document.getElementById('ch-diff').value;
+        if(!diff){
+            // Show inline required hint and keep Save disabled
+            const req=document.getElementById('ch-diff-required');
+            if(req) req.style.display='inline';
+            this.toast('Please select a difficulty','warning');
+            return;
+        }
         const sub=this.getSubjectById(sId);if(!sub)return;
-        const _newCh={id:this.uid(),name,status:'not-started',deadline:document.getElementById('ch-deadline').value||'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:document.getElementById('ch-diff').value,notes:'',exercises:[],createdAt:Date.now()};
+        const _newCh={id:this.uid(),name,status:'not-started',deadline:document.getElementById('ch-deadline').value||'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:diff,notes:'',exercises:[],createdAt:Date.now()};
         sub.chapters.push(_newCh);
         const _chUid=window._supabaseUserId;
-        if(_chUid){DB.chapters.create({user_id:_chUid,subject_id:sId,name,status:'not-started',difficulty:_newCh.difficulty,deadline:_newCh.deadline||null,revision_count:0,order_index:sub.chapters.length-1}).then(({data,error})=>{if(error){console.error('[DB] chapters.create:',error);return;}if(data&&data.id)_newCh.id=data.id;});}
+        if(_chUid){DB.chapters.create({user_id:_chUid,subject_id:sId,name,status:'not-started',difficulty:diff,deadline:_newCh.deadline||null,revision_count:0,order_index:sub.chapters.length-1}).then(({data,error})=>{if(error){console.error('[DB] chapters.create:',error);return;}if(data&&data.id)_newCh.id=data.id;});}
         this.save();this.closeModal('modal-chapter');this.render();this.toast(`📖 "${name}" added!`,'success');
     },
     saveSubject(){
