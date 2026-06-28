@@ -95,21 +95,219 @@ const App={
     ],
 
     // ── CLASS 9 ──────────────────────────────────────────────────────────
+    // chapters are {name, difficulty} objects — difficulty is used when pre-loading to Supabase
     CLASS9_DATA:[
-        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Number Systems','Polynomials','Coordinate Geometry','Linear Equations in Two Variables','Introduction to Euclid\'s Geometry','Lines and Angles','Triangles','Quadrilaterals','Circles','Heron\'s Formula','Surface Areas and Volumes','Statistics']},
-        {name:'Science',icon:'🔬',color:'#10b981',chapters:['Matter in Our Surroundings','Is Matter Around Us Pure','Atoms and Molecules','Structure of the Atom','The Fundamental Unit of Life','Tissues','Motion','Force and Laws of Motion','Gravitation','Work and Energy','Sound','Why Do We Fall Ill','Natural Resources']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['The Fun They Had','The Sound of Music','The Little Girl','A Truly Beautiful Mind','The Snake and the Mirror','My Childhood','Packing','Reach for the Top','The Bond of Love','Kathmandu','If I Were You','The Road Not Taken (Poem)','Wind (Poem)','Rain on the Roof (Poem)','The Lake Isle of Innisfree (Poem)','A Legend of the Northland (Poem)','No Men Are Foreign (Poem)','The Duck and the Kangaroo (Poem)','On Killing a Tree (Poem)','The Snake Trying (Poem)','A Slumber Did My Spirit Seal (Poem)']},
-        {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:['The French Revolution','Socialism in Europe and the Russian Revolution','Nazism and the Rise of Hitler','Forest Society and Colonialism','Pastoralists in the Modern World','India — Size and Location','Physical Features of India','Drainage','Climate','Natural Vegetation and Wildlife','Population','What is Democracy? Why Democracy?','Constitutional Design','Electoral Politics','Working of Institutions','Democratic Rights','The Story of Village Palampur','People as Resource','Poverty as a Challenge','Food Security in India']},
-        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:['दो बैलों की कथा','ल्हासा की ओर','उपभोक्तावाद की संस्कृति','साँवले सपनों की याद','नाना साहब की पुत्री देवी मैना को भस्म कर दिया गया','प्रेमचंद के फटे जूते','मेरे बचपन के दिन','एक कुत्ता और एक मैना','इस जल प्रलय में','रैदास के पद','रहीम के दोहे','कबीर की साखियाँ','ललद्यद','वाख','सवैये','कैदी और कोकिला','ग्राम श्री','चंद्र गहना से लौटती बेर','मेघ आए','यमराज की दिशा','बच्चे काम पर जा रहे हैं']}
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
+            {name:'Number Systems',difficulty:'medium'},
+            {name:'Polynomials',difficulty:'medium'},
+            {name:'Coordinate Geometry',difficulty:'hard'},
+            {name:'Linear Equations in Two Variables',difficulty:'medium'},
+            {name:'Introduction to Euclid\'s Geometry',difficulty:'easy'},
+            {name:'Lines and Angles',difficulty:'easy'},
+            {name:'Triangles',difficulty:'medium'},
+            {name:'Quadrilaterals',difficulty:'medium'},
+            {name:'Circles',difficulty:'hard'},
+            {name:'Heron\'s Formula',difficulty:'easy'},
+            {name:'Surface Areas and Volumes',difficulty:'medium'},
+            {name:'Statistics',difficulty:'medium'}
+        ]},
+        {name:'Science',icon:'🔬',color:'#10b981',chapters:[
+            // Chemistry
+            {name:'Matter in Our Surroundings',difficulty:'easy'},
+            {name:'Is Matter Around Us Pure',difficulty:'medium'},
+            {name:'Atoms and Molecules',difficulty:'medium'},
+            {name:'Structure of the Atom',difficulty:'hard'},
+            // Biology
+            {name:'The Fundamental Unit of Life',difficulty:'easy'},
+            {name:'Tissues',difficulty:'medium'},
+            // Physics
+            {name:'Motion',difficulty:'hard'},
+            {name:'Force and Laws of Motion',difficulty:'hard'},
+            {name:'Gravitation',difficulty:'medium'},
+            {name:'Work and Energy',difficulty:'medium'},
+            {name:'Sound',difficulty:'medium'},
+            // Biology/Health
+            {name:'Why Do We Fall Ill',difficulty:'easy'},
+            {name:'Natural Resources',difficulty:'easy'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'The Fun They Had',difficulty:'medium'},
+            {name:'The Sound of Music',difficulty:'medium'},
+            {name:'The Little Girl',difficulty:'medium'},
+            {name:'A Truly Beautiful Mind',difficulty:'medium'},
+            {name:'The Snake and the Mirror',difficulty:'medium'},
+            {name:'My Childhood',difficulty:'medium'},
+            {name:'Packing',difficulty:'medium'},
+            {name:'Reach for the Top',difficulty:'medium'},
+            {name:'The Bond of Love',difficulty:'medium'},
+            {name:'Kathmandu',difficulty:'medium'},
+            {name:'If I Were You',difficulty:'medium'},
+            {name:'The Road Not Taken (Poem)',difficulty:'medium'},
+            {name:'Wind (Poem)',difficulty:'medium'},
+            {name:'Rain on the Roof (Poem)',difficulty:'medium'},
+            {name:'The Lake Isle of Innisfree (Poem)',difficulty:'medium'},
+            {name:'A Legend of the Northland (Poem)',difficulty:'medium'},
+            {name:'No Men Are Foreign (Poem)',difficulty:'medium'},
+            {name:'The Duck and the Kangaroo (Poem)',difficulty:'medium'},
+            {name:'On Killing a Tree (Poem)',difficulty:'medium'},
+            {name:'The Snake Trying (Poem)',difficulty:'medium'},
+            {name:'A Slumber Did My Spirit Seal (Poem)',difficulty:'medium'}
+        ]},
+        {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:[
+            // History — medium
+            {name:'The French Revolution',difficulty:'medium'},
+            {name:'Socialism in Europe and the Russian Revolution',difficulty:'medium'},
+            {name:'Nazism and the Rise of Hitler',difficulty:'medium'},
+            {name:'Forest Society and Colonialism',difficulty:'medium'},
+            {name:'Pastoralists in the Modern World',difficulty:'medium'},
+            // Geography — easy
+            {name:'India — Size and Location',difficulty:'easy'},
+            {name:'Physical Features of India',difficulty:'easy'},
+            {name:'Drainage',difficulty:'easy'},
+            {name:'Climate',difficulty:'easy'},
+            {name:'Natural Vegetation and Wildlife',difficulty:'easy'},
+            {name:'Population',difficulty:'easy'},
+            // Political Science — easy
+            {name:'What is Democracy? Why Democracy?',difficulty:'easy'},
+            {name:'Constitutional Design',difficulty:'easy'},
+            {name:'Electoral Politics',difficulty:'easy'},
+            {name:'Working of Institutions',difficulty:'easy'},
+            {name:'Democratic Rights',difficulty:'easy'},
+            // Economics — easy
+            {name:'The Story of Village Palampur',difficulty:'easy'},
+            {name:'People as Resource',difficulty:'easy'},
+            {name:'Poverty as a Challenge',difficulty:'easy'},
+            {name:'Food Security in India',difficulty:'easy'}
+        ]},
+        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:[
+            {name:'दो बैलों की कथा',difficulty:'medium'},
+            {name:'ल्हासा की ओर',difficulty:'medium'},
+            {name:'उपभोक्तावाद की संस्कृति',difficulty:'medium'},
+            {name:'साँवले सपनों की याद',difficulty:'medium'},
+            {name:'नाना साहब की पुत्री देवी मैना को भस्म कर दिया गया',difficulty:'medium'},
+            {name:'प्रेमचंद के फटे जूते',difficulty:'medium'},
+            {name:'मेरे बचपन के दिन',difficulty:'medium'},
+            {name:'एक कुत्ता और एक मैना',difficulty:'medium'},
+            {name:'इस जल प्रलय में',difficulty:'medium'},
+            {name:'रैदास के पद',difficulty:'medium'},
+            {name:'रहीम के दोहे',difficulty:'medium'},
+            {name:'कबीर की साखियाँ',difficulty:'medium'},
+            {name:'ललद्यद',difficulty:'medium'},
+            {name:'वाख',difficulty:'medium'},
+            {name:'सवैये',difficulty:'medium'},
+            {name:'कैदी और कोकिला',difficulty:'medium'},
+            {name:'ग्राम श्री',difficulty:'medium'},
+            {name:'चंद्र गहना से लौटती बेर',difficulty:'medium'},
+            {name:'मेघ आए',difficulty:'medium'},
+            {name:'यमराज की दिशा',difficulty:'medium'},
+            {name:'बच्चे काम पर जा रहे हैं',difficulty:'medium'}
+        ]}
     ],
 
-    // ── CLASS 10 (original — untouched) ──────────────────────────────────
+    // ── CLASS 10 ─────────────────────────────────────────────────────────
     CLASS10_DATA:[
-        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:['Real Numbers','Polynomials','Linear Equations in Two Variables','Quadratic Equations','Arithmetic Progressions','Triangles','Coordinate Geometry','Intro to Trigonometry','Applications of Trigonometry','Circles','Areas Related to Circles','Surface Areas & Volumes','Statistics','Probability']},
-        {name:'Science',icon:'🔬',color:'#10b981',chapters:['Chemical Reactions & Equations','Acids, Bases & Salts','Metals & Non-metals','Carbon & its Compounds','Life Processes','Control & Coordination','How do Organisms Reproduce','Heredity & Evolution','Light: Reflection & Refraction','Human Eye & Colourful World','Electricity','Magnetic Effects of Current','Our Environment']},
-        {name:'English',icon:'📝',color:'#f59e0b',chapters:['A Letter to God','Dust of Snow (Poem)','Fire and Ice (Poem)','Nelson Mandela','A Tiger in the Zoo (Poem)','Two Stories about Flying','How to Tell Wild Animals (Poem)','The Ball Poem (Poem)','Anne Frank Diary','Amanda! (Poem)','Glimpses of India','The Trees (Poem)','Mijbil the Otter','Fog (Poem)','Madam Rides the Bus','The Tale of Custrd the Dragon (Poem)','The Sermon at Benares','For Anne Gregory (Poem)','The Proposal']},
-        {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:['Rise of Nationalism in Europe','Nationalism in India','Making of a Global World','Age of Industrialisation','Print Culture & Modern World','Resources & Development','Forest & Wildlife Resources','Water Resources','Agriculture','Minerals & Energy Resources','Manufacturing Industries','Lifelines of National Economy','Power Sharing','Federalism','Political Parties','Outcomes of Democracy','Development','Sectors of Indian Economy','Money & Credit','Globalisation & Indian Economy']},
-        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:['साखी','पद','मनुष्यता','पर्वत प्रदेश में पावस','तोप','कर चले हम फ़िदा','आत्मत्राण','बड़े भाई साहब','डायरी का एक पन्ना','तताँरा-वामीरो कथा','तीसरी कसम के शिल्पकार शैलेन्द्र','अब कहाँ दूसरे के दुख से दुखी होने वाले','पतझर में टूटी पत्तियाँ','कारतूस','हरिहर काका','सपनों के-से दिन','टोपी शुक्ला','व्याकरण']}
+        {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
+            {name:'Real Numbers',difficulty:'easy'},
+            {name:'Polynomials',difficulty:'medium'},
+            {name:'Linear Equations in Two Variables',difficulty:'medium'},
+            {name:'Quadratic Equations',difficulty:'hard'},
+            {name:'Arithmetic Progressions',difficulty:'medium'},
+            {name:'Triangles',difficulty:'medium'},
+            {name:'Coordinate Geometry',difficulty:'hard'},
+            {name:'Intro to Trigonometry',difficulty:'hard'},
+            {name:'Applications of Trigonometry',difficulty:'hard'},
+            {name:'Circles',difficulty:'hard'},
+            {name:'Areas Related to Circles',difficulty:'medium'},
+            {name:'Surface Areas & Volumes',difficulty:'medium'},
+            {name:'Statistics',difficulty:'medium'},
+            {name:'Probability',difficulty:'easy'}
+        ]},
+        {name:'Science',icon:'🔬',color:'#10b981',chapters:[
+            // Chemistry
+            {name:'Chemical Reactions & Equations',difficulty:'medium'},
+            {name:'Acids, Bases & Salts',difficulty:'medium'},
+            {name:'Metals & Non-metals',difficulty:'medium'},
+            {name:'Carbon & its Compounds',difficulty:'hard'},
+            // Biology
+            {name:'Life Processes',difficulty:'medium'},
+            {name:'Control & Coordination',difficulty:'medium'},
+            {name:'How do Organisms Reproduce',difficulty:'easy'},
+            {name:'Heredity & Evolution',difficulty:'medium'},
+            // Physics
+            {name:'Light: Reflection & Refraction',difficulty:'medium'},
+            {name:'Human Eye & Colourful World',difficulty:'easy'},
+            {name:'Electricity',difficulty:'hard'},
+            {name:'Magnetic Effects of Current',difficulty:'hard'},
+            // Environment
+            {name:'Our Environment',difficulty:'easy'}
+        ]},
+        {name:'English',icon:'📝',color:'#f59e0b',chapters:[
+            {name:'A Letter to God',difficulty:'medium'},
+            {name:'Dust of Snow (Poem)',difficulty:'medium'},
+            {name:'Fire and Ice (Poem)',difficulty:'medium'},
+            {name:'Nelson Mandela',difficulty:'medium'},
+            {name:'A Tiger in the Zoo (Poem)',difficulty:'medium'},
+            {name:'Two Stories about Flying',difficulty:'medium'},
+            {name:'How to Tell Wild Animals (Poem)',difficulty:'medium'},
+            {name:'The Ball Poem (Poem)',difficulty:'medium'},
+            {name:'Anne Frank Diary',difficulty:'medium'},
+            {name:'Amanda! (Poem)',difficulty:'medium'},
+            {name:'Glimpses of India',difficulty:'medium'},
+            {name:'The Trees (Poem)',difficulty:'medium'},
+            {name:'Mijbil the Otter',difficulty:'medium'},
+            {name:'Fog (Poem)',difficulty:'medium'},
+            {name:'Madam Rides the Bus',difficulty:'medium'},
+            {name:'The Tale of Custrd the Dragon (Poem)',difficulty:'medium'},
+            {name:'The Sermon at Benares',difficulty:'medium'},
+            {name:'For Anne Gregory (Poem)',difficulty:'medium'},
+            {name:'The Proposal',difficulty:'medium'}
+        ]},
+        {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:[
+            // History — medium
+            {name:'Rise of Nationalism in Europe',difficulty:'medium'},
+            {name:'Nationalism in India',difficulty:'medium'},
+            {name:'Making of a Global World',difficulty:'medium'},
+            {name:'Age of Industrialisation',difficulty:'medium'},
+            {name:'Print Culture & Modern World',difficulty:'medium'},
+            // Geography — easy
+            {name:'Resources & Development',difficulty:'easy'},
+            {name:'Forest & Wildlife Resources',difficulty:'easy'},
+            {name:'Water Resources',difficulty:'easy'},
+            {name:'Agriculture',difficulty:'easy'},
+            {name:'Minerals & Energy Resources',difficulty:'easy'},
+            {name:'Manufacturing Industries',difficulty:'easy'},
+            {name:'Lifelines of National Economy',difficulty:'easy'},
+            // Political Science — easy
+            {name:'Power Sharing',difficulty:'easy'},
+            {name:'Federalism',difficulty:'easy'},
+            {name:'Political Parties',difficulty:'easy'},
+            {name:'Outcomes of Democracy',difficulty:'easy'},
+            // Economics — easy
+            {name:'Development',difficulty:'easy'},
+            {name:'Sectors of Indian Economy',difficulty:'easy'},
+            {name:'Money & Credit',difficulty:'easy'},
+            {name:'Globalisation & Indian Economy',difficulty:'easy'}
+        ]},
+        {name:'Hindi',icon:'📜',color:'#ef4444',chapters:[
+            {name:'साखी',difficulty:'medium'},
+            {name:'पद',difficulty:'medium'},
+            {name:'मनुष्यता',difficulty:'medium'},
+            {name:'पर्वत प्रदेश में पावस',difficulty:'medium'},
+            {name:'तोप',difficulty:'medium'},
+            {name:'कर चले हम फ़िदा',difficulty:'medium'},
+            {name:'आत्मत्राण',difficulty:'medium'},
+            {name:'बड़े भाई साहब',difficulty:'medium'},
+            {name:'डायरी का एक पन्ना',difficulty:'medium'},
+            {name:'तताँरा-वामीरो कथा',difficulty:'medium'},
+            {name:'तीसरी कसम के शिल्पकार शैलेन्द्र',difficulty:'medium'},
+            {name:'अब कहाँ दूसरे के दुख से दुखी होने वाले',difficulty:'medium'},
+            {name:'पतझर में टूटी पत्तियाँ',difficulty:'medium'},
+            {name:'कारतूस',difficulty:'medium'},
+            {name:'हरिहर काका',difficulty:'medium'},
+            {name:'सपनों के-से दिन',difficulty:'medium'},
+            {name:'टोपी शुक्ला',difficulty:'medium'},
+            {name:'व्याकरण',difficulty:'medium'}
+        ]}
     ],
 
     // ── CLASS 11 PCM ─────────────────────────────────────────────────────
