@@ -575,7 +575,7 @@ const App={
         // ── sessions (full history) ──────────────────────────────────────────
         // Used by: log, weekly, dashboard heatmap / week graph.
         // Re-fetched every time the log tab opens (sessions grow with each log).
-        if (tab === 'log' || tab === 'weekly') {
+        if (tab === 'log' || tab === 'weekly' || tab === 'coach') {
             try {
                 const { data: sessions, error } = await DB.sessions.getAll(userId);
                 if (error) throw error;
@@ -2384,7 +2384,11 @@ const App={
             const lastWeekEnd=new Date();lastWeekEnd.setDate(lastWeekEnd.getDate()-7);
             const lwSessions=this.state.sessions.filter(s=>{const d=new Date(s.date);return d>=lastWeekStart&&d<lastWeekEnd});
             const lwMin=lwSessions.reduce((a,s)=>a+s.timeSpent,0);
-            const thisWeekChapters=this.getAllChapters().filter(c=>c.completionDate&&wk.days.includes(c.completionDate)).length;
+            // BUG 2 FIX: count distinct chapters with sessions this week.
+            // Previous code checked c.completionDate which is undefined for Supabase-loaded
+            // chapters (Supabase returns completion_date snake_case, never mapped to camelCase).
+            // Sessions are always populated and correctly date-stamped at log time.
+            const thisWeekChapters=new Set(wk.sessions.filter(s=>s.chapterId).map(s=>s.chapterId)).size;
             const lastWeekChapters=this.getAllChapters().filter(c=>{if(!c.completionDate)return false;const d=new Date(c.completionDate);const lws=new Date();lws.setDate(lws.getDate()-14);const lwe=new Date();lwe.setDate(lwe.getDate()-7);return d>=lws&&d<lwe}).length;
             // Weakest chapter this week (lowest avg confidence)
             const chConfMap={};ws.forEach(s=>{if(s.chapterId&&s.confidence){if(!chConfMap[s.chapterId])chConfMap[s.chapterId]={name:s.chapterName,sub:s.subjectName,total:0,count:0};chConfMap[s.chapterId].total+=s.confidence;chConfMap[s.chapterId].count++}});
@@ -2746,14 +2750,18 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     renderCoach(){
         const el=document.getElementById('page-coach');
         const od=this.getOverdueChapters(),rd=this.getRevisionsDue();
-        const tm=this.getTodayMinutes(),gm=this.state.profile.dailyGoalMinutes;
+        // BUG 1 FIX: totalRevisions = sum of chapter.revisionCount (same source as Revision Tracker)
+        const totalRevisions=this.getAllChapters().reduce((a,c)=>a+c.revisionCount,0);
+        const tm=this.getTodayMinutes();
+        // BUG 3 FIX: guard against 0/undefined dailyGoalMinutes to prevent NaN/0% display
+        const gm=this.state.profile.dailyGoalMinutes||120;
         const sp=this.getTotalChapters()>0?Math.round(this.getCompletedCount()/this.getTotalChapters()*100):0;
         const ws=this.state.subjects.filter(s=>{const d=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;return s.chapters.length>0&&d/s.chapters.length<0.3});
         const udoubtsCount=this.state.doubts.filter(d=>d.status==='unresolved').length;
         const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
         const plan=this.getTomorrowPlan();
         const dte=this.getDaysToExam();
-        const goalPct=Math.min(100,Math.round(tm/gm*100));
+        const goalPct=gm>0?Math.min(100,Math.round(tm/gm*100)):0;
         const suggestions=[];
         if(od.length>0)suggestions.push('My '+od.length+' overdue chapters — help me catch up');
         if(rd.length>0)suggestions.push('Plan my revisions for today');
@@ -2765,7 +2773,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
 <div class="coach-stat-strip">
     <div class="coach-stat-item"><div class="coach-stat-val">${sp}%</div><div class="coach-stat-lbl">Done</div></div>
     <div class="coach-stat-item"><div class="coach-stat-val ${od.length>0?'danger':''}">${od.length}</div><div class="coach-stat-lbl">Overdue</div></div>
-    <div class="coach-stat-item"><div class="coach-stat-val ${rd.length>0?'warning':''}">${rd.length}</div><div class="coach-stat-lbl">Revisions</div></div>
+    <div class="coach-stat-item"><div class="coach-stat-val">${totalRevisions}</div><div class="coach-stat-lbl">Revisions</div></div>
     <div class="coach-stat-item"><div class="coach-stat-val ${goalPct>=100?'success':''}">${goalPct}%</div><div class="coach-stat-lbl">Goal</div></div>
 </div>
 <div class="coach-card">
