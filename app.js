@@ -987,6 +987,14 @@ const App={
                 } else {
                     setTimeout(rerender, 100);
                 }
+                // Run the one-time difficulty migration after subjects are in memory.
+                // Uses requestIdleCallback so it never blocks rendering.
+                const runMigration = () => this._migrateCBSEDifficulty();
+                if (window.requestIdleCallback) {
+                    requestIdleCallback(runMigration, { timeout: 5000 });
+                } else {
+                    setTimeout(runMigration, 1500);
+                }
             });
         }
 
@@ -1892,6 +1900,80 @@ const App={
         this._updateWelcomeStep4Label();
         this.welcomeNext(4);
     },
+    // ── ONE-TIME DIFFICULTY MIGRATION ────────────────────────────────────────
+    // Existing Supabase chapters were written with difficulty:'medium' before
+    // per-chapter difficulty data was added to CLASS*_DATA. This function runs
+    // once per device (guarded by localStorage) after subjects are loaded and
+    // silently patches any chapter whose stored difficulty doesn't match what
+    // CBSE_DATA now specifies. It only touches chapters that need changing —
+    // user-overridden difficulties on manually-added chapters are left alone
+    // because those won't be found in the CBSE lookup map.
+    async _migrateCBSEDifficulty(){
+        const MIGRATION_KEY = 'boardos_difficulty_migration_v1';
+        if(localStorage.getItem(MIGRATION_KEY)) return; // already done on this device
+
+        const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
+        // Build a flat name→difficulty lookup from ALL CBSE_DATA entries
+        const difficultyMap = new Map(); // chapter name (lowercase) → difficulty
+        const _indexSubjects = (subjectArr) => {
+            if(!Array.isArray(subjectArr)) return;
+            subjectArr.forEach(sub => {
+                if(!Array.isArray(sub.chapters)) return;
+                sub.chapters.forEach(ch => {
+                    difficultyMap.set(ch.name.trim().toLowerCase(), ch.difficulty);
+                });
+            });
+        };
+        // Index all classes and streams
+        _indexSubjects(this.CLASS9_DATA);
+        _indexSubjects(this.CLASS10_DATA);
+        _indexSubjects(this.CLASS11_PCM_DATA);
+        _indexSubjects(this.CLASS11_PCB_DATA);
+        _indexSubjects(this.CLASS11_COMMERCE_DATA);
+        _indexSubjects(this.CLASS12_PCM_DATA);
+        _indexSubjects(this.CLASS12_PCB_DATA);
+        _indexSubjects(this.CLASS12_COMMERCE_DATA);
+
+        let updatedCount = 0;
+        const updatePromises = [];
+
+        this.state.subjects.forEach(sub => {
+            sub.chapters.forEach(ch => {
+                if(!_isUUID(ch.id)) return; // skip local-only chapters (not yet in DB)
+                const correctDiff = difficultyMap.get(ch.name.trim().toLowerCase());
+                if(!correctDiff) return; // not a CBSE chapter — don't touch it
+                if(ch.difficulty === correctDiff) return; // already correct
+
+                // Update in-memory state immediately so UI reflects change
+                ch.difficulty = correctDiff;
+
+                // Queue the Supabase update
+                updatePromises.push(
+                    DB.chapters.update(ch.id, { difficulty: correctDiff })
+                        .then(({ error }) => {
+                            if(error) console.error(`[Migration] chapters.update failed for "${ch.name}":`, error);
+                            else updatedCount++;
+                        })
+                );
+            });
+        });
+
+        if(updatePromises.length === 0){
+            // Nothing to fix — still mark done so we never run again
+            localStorage.setItem(MIGRATION_KEY, '1');
+            return;
+        }
+
+        await Promise.allSettled(updatePromises);
+        localStorage.setItem(MIGRATION_KEY, '1');
+        console.log(`[Migration] difficulty_v1 complete — ${updatedCount}/${updatePromises.length} chapters updated`);
+
+        // Re-render the current page so difficulty tags update without a reload
+        this.save();
+        this.render();
+    },
+
     _updateWelcomeStep4Label(){
         const cls = this._welcomeClass || 10;
         const stream = this._welcomeStream || null;
