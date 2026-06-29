@@ -3201,64 +3201,92 @@ const App={
         }
 
 
-        // ── FIX A: Study Consistency Heatmap (last 90 days) ─────────────────
+        // ── FIX A: Study Consistency Heatmap (last 90 days, GitHub-style columns=weeks) ──
         const heatmapDayMap={};
         this.state.sessions.forEach(s=>{
-            // s.date is 'YYYY-MM-DD'; convert to local date string using en-CA locale (also YYYY-MM-DD)
             const localDate=new Date(s.date+'T12:00').toLocaleDateString('en-CA');
             heatmapDayMap[localDate]=(heatmapDayMap[localDate]||0)+s.timeSpent;
         });
-        // Build 90-day grid padded to start on Sunday
         const heatToday=new Date();heatToday.setHours(0,0,0,0);
         const day90=new Date(heatToday);day90.setDate(day90.getDate()-89);
-        // Pad start back to previous Sunday so cols align
-        const startOffset=day90.getDay(); // 0=Sun
+        // Pad back to Sunday so week columns align
+        const startOffset=day90.getDay();
         const gridStart=new Date(day90);gridStart.setDate(gridStart.getDate()-startOffset);
-        const heatCells=[];
+        // Build columns: each column = one week (Sun→Sat), rows = day-of-week
+        // We collect all days into a flat array then chunk into weeks
+        const allDays=[];
         for(let cur=new Date(gridStart);;cur.setDate(cur.getDate()+1)){
             const label=cur.toLocaleDateString('en-CA');
-            const isFuture=cur>heatToday;
-            const isOutOfRange=cur<day90;
-            heatCells.push({label,mins:heatmapDayMap[label]||0,future:isFuture,outOfRange:isOutOfRange,isToday:label===this.today()});
+            allDays.push({
+                label,
+                mins:heatmapDayMap[label]||0,
+                outOfRange:cur<day90,
+                isToday:label===this.today()
+            });
             if(cur>=heatToday)break;
         }
-        // Pad tail to complete the last row (fill to next Saturday)
-        while(heatCells.length%7!==0)heatCells.push({label:'',mins:0,future:true,outOfRange:true,isToday:false});
-        // Cell color helper
-        const heatColor=mins=>{
+        // Pad tail to Saturday
+        while(allDays.length%7!==0)allDays.push({label:'',mins:0,outOfRange:true,isToday:false});
+        // Chunk into weeks (arrays of 7 days Sun-Sat)
+        const weeks=[];
+        for(let i=0;i<allDays.length;i+=7)weeks.push(allDays.slice(i,i+7));
+        const CELL=11,GAP=3;
+        const heatColorVal=mins=>{
             if(mins<=0)return'var(--color-surface-hover)';
-            if(mins<30)return'color-mix(in srgb, var(--accent) 25%, transparent)';
-            if(mins<60)return'color-mix(in srgb, var(--accent) 60%, transparent)';
+            if(mins<30)return'color-mix(in srgb,var(--accent) 22%,transparent)';
+            if(mins<60)return'color-mix(in srgb,var(--accent) 55%,transparent)';
             return'var(--accent)';
         };
-        const heatCellsHTML=heatCells.map(c=>{
-            const bg=c.future||c.outOfRange?'var(--color-surface-hover)':heatColor(c.mins);
-            const opacity=c.outOfRange||c.future?'opacity:.25;':'';
-            const border=c.isToday?'outline:2px solid var(--accent);outline-offset:1px;':'';
-            const title=c.label&&!c.outOfRange&&!c.future?`title="${c.label}: ${c.mins}m"`:'';
-            return`<div ${title} style="width:10px;height:10px;border-radius:2px;background:${bg};${opacity}${border}flex-shrink:0"></div>`;
-        }).join('');
-        const heatDayLabels=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'].map(d=>`<div style="font-size:.6rem;color:var(--text-muted);text-align:center;width:10px">${d[0]}</div>`).join('');
+        // Build SVG: columns=weeks, rows=day-of-week (0=Sun at top)
+        const DAY_LABELS=['S','M','T','W','T','F','S'];
+        const LEFT_PAD=16; // space for day labels
+        const svgW=LEFT_PAD+(weeks.length*(CELL+GAP))-GAP+4;
+        const svgH=7*(CELL+GAP)-GAP+20; // +20 for month labels at top
+        // Month label positions
+        const monthNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const monthLabels=[];
+        weeks.forEach((wk,wi)=>{
+            const firstInRange=wk.find(d=>!d.outOfRange&&d.label);
+            if(!firstInRange)return;
+            const d=new Date(firstInRange.label+'T12:00');
+            // Show month label on first week of each month
+            if(d.getDate()<=7){
+                monthLabels.push({x:LEFT_PAD+wi*(CELL+GAP),month:monthNames[d.getMonth()]});
+            }
+        });
+        const monthLabelsSVG=monthLabels.map(m=>`<text x="${m.x}" y="11" font-size="9" fill="var(--text-muted)" font-family="inherit">${m.month}</text>`).join('');
+        const dayLabelsSVG=DAY_LABELS.map((l,i)=>`<text x="${LEFT_PAD-4}" y="${20+i*(CELL+GAP)+CELL/2+3.5}" font-size="8" fill="var(--text-muted)" text-anchor="end" font-family="inherit" dominant-baseline="middle">${i%2===0?l:''}</text>`).join('');
+        const cellsSVG=weeks.map((wk,wi)=>wk.map((c,di)=>{
+            const x=LEFT_PAD+wi*(CELL+GAP);
+            const y=20+di*(CELL+GAP);
+            const fill=c.outOfRange?'var(--color-surface-hover)':heatColorVal(c.mins);
+            const opacity=c.outOfRange?'0.25':'1';
+            const todayRing=c.isToday?`<rect x="${x-1}" y="${y-1}" width="${CELL+2}" height="${CELL+2}" rx="3" fill="none" stroke="var(--accent)" stroke-width="1.5"/>`:'';
+            const tip=c.label&&!c.outOfRange?`<title>${c.label}: ${c.mins}m</title>`:'';
+            return`<rect x="${x}" y="${y}" width="${CELL}" height="${CELL}" rx="2" fill="${fill}" opacity="${opacity}">${tip}</rect>${todayRing}`;
+        }).join('')).join('');
         const studiedDays90=Object.keys(heatmapDayMap).filter(d=>{const dt=new Date(d+'T12:00');return dt>=day90&&dt<=heatToday}).length;
         const heatmapHTML=`<div class="card" style="margin-bottom:20px">
-            <div class="card-header" style="margin-bottom:10px">
+            <div class="card-header" style="margin-bottom:12px">
                 <span class="card-title">Study Consistency</span>
                 <span style="font-size:.75rem;color:var(--text-muted);margin-left:auto">${studiedDays90} of 90 days</span>
             </div>
-            <div style="overflow-x:auto">
-                <div style="display:inline-flex;flex-direction:column;gap:3px;min-width:max-content">
-                    <div style="display:grid;grid-template-columns:repeat(7,10px);gap:3px;margin-bottom:2px">${heatDayLabels}</div>
-                    <div style="display:grid;grid-template-columns:repeat(7,10px);gap:3px">${heatCellsHTML}</div>
-                </div>
+            <div style="overflow-x:auto;padding-bottom:4px">
+                <svg width="${svgW}" height="${svgH}" style="display:block">
+                    ${monthLabelsSVG}
+                    ${dayLabelsSVG}
+                    ${cellsSVG}
+                </svg>
             </div>
-            <div style="display:flex;align-items:center;gap:8px;margin-top:10px;flex-wrap:wrap">
+            <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
                 <span style="font-size:.65rem;color:var(--text-muted)">Less</span>
-                <div style="width:10px;height:10px;border-radius:2px;background:var(--color-surface-hover);border:1px solid var(--border)"></div>
-                <div style="width:10px;height:10px;border-radius:2px;background:color-mix(in srgb, var(--accent) 25%, transparent)"></div>
-                <div style="width:10px;height:10px;border-radius:2px;background:color-mix(in srgb, var(--accent) 60%, transparent)"></div>
-                <div style="width:10px;height:10px;border-radius:2px;background:var(--accent)"></div>
+                <rect width="10" height="10"/>
+                <svg width="10" height="10"><rect width="10" height="10" rx="2" fill="var(--color-surface-hover)" stroke="var(--border)" stroke-width="1"/></svg>
+                <svg width="10" height="10"><rect width="10" height="10" rx="2" fill="color-mix(in srgb,var(--accent) 22%,transparent)"/></svg>
+                <svg width="10" height="10"><rect width="10" height="10" rx="2" fill="color-mix(in srgb,var(--accent) 55%,transparent)"/></svg>
+                <svg width="10" height="10"><rect width="10" height="10" rx="2" fill="var(--accent)"/></svg>
                 <span style="font-size:.65rem;color:var(--text-muted)">More</span>
-                <span style="font-size:.63rem;color:var(--text-muted);margin-left:6px">None · &lt;30m · 30–60m · 60m+</span>
+                <span style="font-size:.63rem;color:var(--text-muted);margin-left:8px">None · &lt;30m · 30–60m · 60m+</span>
             </div>
         </div>`;
         // ── END FIX A ────────────────────────────────────────────────────────
@@ -3324,7 +3352,116 @@ const App={
         ${pacingForecastHTML}
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Daily Study Time</span></div><div class="week-graph">${dd.map(d=>{const pc=d.minutes/mx*100;const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T12:00').getDay()];return`<div class="bar-col"><div class="bar-value">${d.minutes>0?this.formatMin(d.minutes):''}</div><div class="bar" style="height:${Math.max(2,pc)}%;${d.date===this.today()?'background:var(--gradient-3)':''}"></div><div class="bar-label">${dn}</div></div>`}).join('')}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--text-success)':'var(--text-danger)'};font-weight:600">${tmMin>=lmMin?'↑':'↓'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'vs last month':'below last month'}</p></div><div class="card"><div class="card-header"><span class="card-title">Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
-        <div class="card">${(()=>{const subjectsWithTime=this.state.subjects.filter(s=>allSubTime[s.id]>0);if(subjectsWithTime.length===0){return`<div class="card-header"><span class="card-title">Subject Balance \u2014 All Time</span></div><p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px">No study sessions recorded yet</p>`;}const CX=80,CY=80,R=64,strokeW=24;const circumference=2*Math.PI*R;let offset=0;const sorted=[...subjectsWithTime].sort((a,b)=>(allSubTime[b.id]||0)-(allSubTime[a.id]||0));const segments=sorted.map(s=>{const min=allSubTime[s.id]||0;const frac=min/totalAllTime;const dash=frac*circumference;const gap=circumference-dash;const seg={id:s.id,icon:s.icon,name:s.name,color:s.color,min,frac,dash,gap,offset};offset+=dash;return seg;});const svgCircles=segments.map(seg=>`<circle cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${seg.color}" stroke-width="${strokeW}" stroke-dasharray="${seg.dash.toFixed(2)} ${seg.gap.toFixed(2)}" stroke-dashoffset="${(-seg.offset+circumference/4).toFixed(2)}" style="transition:stroke-dashoffset .6s ease"/>`).join('');const legendRows=sorted.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);return`<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--border)"><span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${s.color};flex-shrink:0"></span><span style="font-size:.78rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${s.icon} ${s.name}</span><span style="font-size:.75rem;color:var(--text-muted);flex-shrink:0">${this.formatMin(min)}</span><span style="font-size:.75rem;font-weight:700;color:${s.color};flex-shrink:0;min-width:32px;text-align:right">${pc}%</span></div>`;}).join('');return`<div class="card-header"><span class="card-title">Subject Balance \u2014 All Time</span></div><div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap"><svg viewBox="0 0 160 160" width="160" height="160" style="flex-shrink:0;overflow:visible">${svgCircles}<text x="${CX}" y="${CY}" text-anchor="middle" dominant-baseline="middle" style="font-size:9px;fill:var(--text-muted);font-family:inherit">All Time</text></svg><div style="flex:1;min-width:140px">${legendRows}</div></div>`;})()}</div>`;
+        <div class="card" id="subbal-card">${(()=>{
+            const subjectsWithTime=this.state.subjects.filter(s=>allSubTime[s.id]>0);
+            if(subjectsWithTime.length===0){
+                return`<div class="card-header"><span class="card-title">Subject Balance \u2014 All Time</span></div><p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px">No study sessions recorded yet</p>`;
+            }
+            const CX=90,CY=90,R=68,strokeW=22,R_HOV=72,strokeW_HOV=28;
+            const circumference=2*Math.PI*R;
+            const circumferenceH=2*Math.PI*R_HOV;
+            let offset=0;
+            const sorted=[...subjectsWithTime].sort((a,b)=>(allSubTime[b.id]||0)-(allSubTime[a.id]||0));
+            const segments=sorted.map((s,i)=>{
+                const min=allSubTime[s.id]||0;
+                const frac=min/totalAllTime;
+                const dash=frac*circumference;
+                const gap=circumference-dash;
+                const dashH=frac*circumferenceH;
+                const gapH=circumferenceH-dashH;
+                const seg={idx:i,id:s.id,icon:s.icon,name:s.name,color:s.color,min,frac,dash,gap,dashH,gapH,offset,offsetH:offset*(circumferenceH/circumference)};
+                offset+=dash;
+                return seg;
+            });
+            // Each arc is TWO stacked circles: idle (normal) + hover (bigger r, hidden by default)
+            // Toggled via JS. This avoids SVG filter hacks and works cross-browser.
+            const svgArcs=segments.map(seg=>`
+                <circle class="donut-arc" data-idx="${seg.idx}"
+                    cx="${CX}" cy="${CY}" r="${R}" fill="none"
+                    stroke="${seg.color}" stroke-width="${strokeW}"
+                    stroke-dasharray="${seg.dash.toFixed(2)} ${seg.gap.toFixed(2)}"
+                    stroke-dashoffset="${(-seg.offset+circumference/4).toFixed(2)}"
+                    style="transition:r .18s ease,stroke-width .18s ease,opacity .18s ease;cursor:pointer"/>
+            `).join('');
+            const centerLabel=`<text id="donut-center-name" x="${CX}" y="${CY-7}" text-anchor="middle" font-size="10" fill="var(--text-primary)" font-family="inherit" font-weight="600"></text>
+            <text id="donut-center-pct" x="${CX}" y="${CY+8}" text-anchor="middle" font-size="14" fill="var(--text-primary)" font-family="inherit" font-weight="700"></text>
+            <text id="donut-center-time" x="${CX}" y="${CY+21}" text-anchor="middle" font-size="9" fill="var(--text-muted)" font-family="inherit"></text>`;
+            const legendRows=segments.map((seg,i)=>{
+                const pc=Math.round(seg.frac*100);
+                return`<div class="donut-legend-row" data-idx="${i}" style="display:flex;align-items:center;gap:8px;padding:7px 6px;border-radius:6px;cursor:pointer;transition:background .15s ease">
+                    <span style="display:inline-block;width:10px;height:10px;border-radius:3px;background:${seg.color};flex-shrink:0;transition:transform .15s ease"></span>
+                    <span style="font-size:.78rem;font-weight:600;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${seg.icon} ${seg.name}</span>
+                    <span style="font-size:.75rem;color:var(--text-muted);flex-shrink:0">${this.formatMin(seg.min)}</span>
+                    <span style="font-size:.75rem;font-weight:700;color:${seg.color};flex-shrink:0;min-width:32px;text-align:right">${pc}%</span>
+                </div>`;
+            }).join('');
+            return`<div class="card-header"><span class="card-title">Subject Balance \u2014 All Time</span></div>
+            <div style="display:flex;gap:24px;align-items:center;flex-wrap:wrap">
+                <svg id="donut-svg" viewBox="0 0 180 180" width="180" height="180" style="flex-shrink:0;overflow:visible">
+                    ${svgArcs}
+                    ${centerLabel}
+                </svg>
+                <div id="donut-legend" style="flex:1;min-width:150px">${legendRows}</div>
+            </div>`;
+        })()}</div>`;
+        // ── Donut interactivity: attach after render via setTimeout ──────────
+        setTimeout(()=>{
+            const svg=document.getElementById('donut-svg');
+            const legend=document.getElementById('donut-legend');
+            if(!svg||!legend)return;
+            const arcs=[...svg.querySelectorAll('.donut-arc')];
+            const rows=[...legend.querySelectorAll('.donut-legend-row')];
+            const nameEl=document.getElementById('donut-center-name');
+            const pctEl=document.getElementById('donut-center-pct');
+            const timeEl=document.getElementById('donut-center-time');
+            // Pre-build segment data for tooltip from data-idx on arc
+            const segData=arcs.map(arc=>{
+                const row=rows[+arc.dataset.idx];
+                return{
+                    arc,row,
+                    color:arc.getAttribute('stroke'),
+                    name:row?row.querySelector('span:nth-child(2)')?.textContent.trim():'',
+                    time:row?row.querySelector('span:nth-child(3)')?.textContent.trim():'',
+                    pct:row?row.querySelector('span:nth-child(4)')?.textContent.trim():''
+                };
+            });
+            const activate=idx=>{
+                segData.forEach((s,i)=>{
+                    const isActive=i===idx;
+                    // Arc: expand stroke-width and radius via attribute (avoids transform issues on strokes)
+                    s.arc.setAttribute('r', isActive?'72':'68');
+                    s.arc.setAttribute('stroke-width', isActive?'28':'22');
+                    s.arc.style.opacity=idx===-1||isActive?'1':'0.45';
+                    // Legend row highlight
+                    if(s.row){
+                        s.row.style.background=isActive?`color-mix(in srgb,${s.color} 12%,transparent)`:'';
+                        const swatch=s.row.querySelector('span:first-child');
+                        if(swatch)swatch.style.transform=isActive?'scale(1.4)':'scale(1)';
+                    }
+                });
+                // Center label
+                if(idx===-1){
+                    if(nameEl)nameEl.textContent='';
+                    if(pctEl)pctEl.textContent='';
+                    if(timeEl)timeEl.textContent='';
+                } else {
+                    const s=segData[idx];
+                    if(nameEl)nameEl.textContent=s.name.replace(/^\S+\s/,''); // strip emoji for space
+                    if(pctEl){pctEl.textContent=s.pct;pctEl.setAttribute('fill',s.color);}
+                    if(timeEl)timeEl.textContent=s.time;
+                }
+            };
+            // Arc events
+            arcs.forEach((arc,i)=>{
+                arc.addEventListener('mouseenter',()=>activate(i));
+                arc.addEventListener('mouseleave',()=>activate(-1));
+            });
+            // Legend row events
+            rows.forEach((row,i)=>{
+                row.addEventListener('mouseenter',()=>activate(i));
+                row.addEventListener('mouseleave',()=>activate(-1));
+            });
+        },0);
     },
 
     // POMODORO + STOPWATCH
