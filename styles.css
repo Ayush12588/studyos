@@ -2410,7 +2410,7 @@ body { overscroll-behavior-y: contain; }
 #content { max-width: 100%; overflow-x: hidden; }
 .page { max-width: 100%; overflow-x: hidden; }
 .card { max-width: 100%; overflow: hidden; }
-.chapter-item { max-width: 100%; overflow: hidden; }
+.chapter-item { max-width: 100%; overflow: visible; } /* visible: dropdown must escape row bounds */
 .subject-tabs { max-width: 100%; overflow-x: auto; -webkit-overflow-scrolling: touch; scrollbar-width: none; }
 .subject-tabs::-webkit-scrollbar { display: none; }
 
