@@ -1187,12 +1187,12 @@ const App={
         const warn = (label, e) => console.warn(`[StudyOS] _loadTabData(${tab}) — ${label} failed:`, e);
 
         // ── subjects + chapters ──────────────────────────────────────────────
-        // Used by: subjects, revisions, planning, weekly, dashboard (subject list),
+        // Used by: subjects, revisions, weekly, dashboard (subject list),
         //          quiz, exams, log modal, task auto-plan, rewards (badge checks).
         // We load this lazily on the first navigate to ANY content tab that
         // needs subjects, because the dashboard itself doesn't require them for
         // its first paint (streak / goal / challenge render without subjects).
-        if (tab === 'subjects' || tab === 'revisions' || tab === 'planning' ||
+        if (tab === 'subjects' || tab === 'revisions' ||
             tab === 'weekly'   || tab === 'quiz'      || tab === 'exercises' || tab === 'backlog') {
             if (!this._loadedTabs.has('subjects')) {
                 try {
@@ -1626,7 +1626,7 @@ const App={
     // Pages in each nav group (for auto-expand on navigate)
     NAV_GROUPS:{
         work:['revisions','quiz','coach','pomodoro','doubts'],
-        review:['planning','exams','weekly'],
+        review:['exams','weekly'],
         library:['notes','exercises','resources']
     },
     toggleTheme(theme){
@@ -2098,7 +2098,7 @@ const App={
                 }
             }
         });
-        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',exercises:'Exercises',planning:'Deadlines',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
+        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',exercises:'Exercises',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
 
         // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
@@ -2121,7 +2121,7 @@ const App={
             dashboard:dateStr,tasks:dateStr,log:dateStr,
             subjects:'Your syllabus',revisions:'Spaced repetition',
             coach:'Powered by Groq',quiz:'Active recall',
-            planning:'Stay on track',weekly:'Analytics & plan',
+            weekly:'Analytics & plan',
             pomodoro:'Focus timer',notes:'Notes & formulas',
             resources:'Study links',doubts:'Track your doubts',
             exams:'Score history',exercises:'Chapter exercises',
@@ -2152,7 +2152,7 @@ const App={
             }else{ep.style.display='none'}
         }
     },
-    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),planning:()=>this.renderPlanning(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage()};if(r[p])r[p]()},
+    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage()};if(r[p])r[p]()},
     render(){
         const page = this.state.currentPage;
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2954,7 +2954,7 @@ const App={
     // The following methods are defined in Part 2:
     // renderExams, openExamModal, saveExamScore, renderRevisions,
     // renderDoubts, openDoubtModal, saveDoubt, renderResources, openResourceModal, saveResource,
-    // renderPlanning, renderWeekly, renderPomodoro, startPomodoro, pausePomodoro, resetPomodoro,
+    // renderWeekly, renderPomodoro, startPomodoro, pausePomodoro, resetPomodoro,
     // skipPomodoro, pomodoroComplete, updatePomodoroSetting, startStopwatch, startStopwatchTimer,
     // stopStopwatch, renderNotes, addNote (modal version), saveNoteFromModal, deleteNote,
     // renderCoach, getCoachMessage, renderRewards, renderSettings,
@@ -3111,7 +3111,7 @@ const App={
     },
     deleteResource(id){if(!confirm('Delete resource?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.resources.delete(id).then(({error})=>{if(error)console.error('[DB] resources.delete:',error);});}this.state.resources=this.state.resources.filter(r=>r.id!==id);this.save();this.render()},
 
-    // PLANNING
+    // SPRINT PLANNER (helper, currently unused — formerly powered the removed Planning page)
     // P2-2: Generate 3-week day-by-day sprint plan
     generateSprintPlan(){
         const dte=this.getDaysToExam();
@@ -3158,64 +3158,6 @@ const App={
         return{days:plan,totalChapters:allCh.filter(c=>c.status!=='completed'&&c.status!=='revised').length,coveredInSprint:plan.reduce((a,d)=>a+d.chapters.length,0)};
     },
 
-    renderPlanning(){
-        const el=document.getElementById('page-planning'),ac=this.getAllChapters(),od=this.getOverdueChapters(),up=ac.filter(c=>c.deadline&&c.deadline>=this.today()&&c.status!=='completed'&&c.status!=='revised').sort((a,b)=>a.deadline.localeCompare(b.deadline)),nd=ac.filter(c=>!c.deadline&&c.status!=='completed'&&c.status!=='revised');
-        const pred=this.getPredictedCompletion();
-        const dte=this.getDaysToExam();
-
-        // P2-2: Sprint planner (only when ≤21 days to exam)
-        const sprint=this.generateSprintPlan();
-        let sprintHTML='';
-        if(sprint){
-            const coveredPct=sprint.totalChapters>0?Math.round(sprint.coveredInSprint/sprint.totalChapters*100):100;
-            sprintHTML=`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--warning)">
-                <div class="card-header" style="margin-bottom:12px">
-                    <span class="card-title">Exam Sprint — ${dte} Days Left</span>
-                    <span style="font-size:.7rem;background:rgba(245,158,11,0.12);color:var(--text-warning);padding:3px 8px;border-radius:6px;font-weight:600">${sprint.coveredInSprint}/${sprint.totalChapters} chapters planned</span>
-                </div>
-                <p style="font-size:.75rem;color:var(--text-muted);margin-bottom:14px">Auto-prioritized: weak chapters first, then overdue, then hard topics. ${coveredPct<100?`<strong style="color:var(--text-danger)">${sprint.totalChapters-sprint.coveredInSprint} chapters won't fit — focus on these first.</strong>`:'All pending chapters covered ✅'}</p>
-                <div style="display:flex;flex-direction:column;gap:6px">
-                ${sprint.days.map(day=>`<div style="border-radius:8px;padding:10px 12px;background:${day.isToday?'rgba(79,70,229,0.1)':'var(--color-surface-hover)'};border:1px solid ${day.isToday?'var(--color-brand)':'transparent'}">
-                    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:${day.chapters.length>0||day.revisions.length>0?'7px':'0'}">
-                        <span style="font-size:.75rem;font-weight:700;color:${day.isToday?'var(--accent-light)':'var(--text-secondary)'}">${day.isToday?'TODAY':day.label} <span style="font-weight:400;color:var(--text-muted)">${day.date}</span>${day.isWeekend?' 🏖️':''}</span>
-                        ${day.chapters.length===0&&day.revisions.length===0?'<span style="font-size:.65rem;color:var(--text-success)">✅ Rest day</span>':''}
-                    </div>
-                    ${day.chapters.map(c=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 0"><span style="font-size:.7rem;color:var(--text-muted);flex-shrink:0">${c.sprintReason}</span><span style="font-size:.78rem;font-weight:500;flex:1">${c.subjectIcon} ${c.name}</span></div>`).join('')}
-                    ${day.revisions.map(c=>`<div style="display:flex;align-items:center;gap:6px;padding:3px 0"><span style="font-size:.7rem;color:var(--info);flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg> Revise</span><span style="font-size:.78rem;flex:1">${c.subjectIcon} ${c.name}</span></div>`).join('')}
-                </div>`).join('')}
-                </div>
-            </div>`;
-        }
-        let predHtml='';
-        if(pred&&dte!==null){
-            // Compare daysNeeded directly against dte — avoids date-string roundtrip precision loss.
-            // remaining is already baked into pred.daysNeeded by getPredictedCompletion().
-            const remaining=this.getTotalChapters()-this.getCompletedCount();
-            const neededPace=dte>0?Math.round((remaining/dte)*10)/10:Infinity;
-            const daysAhead=dte-pred.daysNeeded; // positive = finishing before exam
-            // Severity: green = on track, amber = gap ≤14 days, red = gap >14 days
-            let borderColor,statusColor,statusMsg;
-            if(pred.daysNeeded<=dte){
-                borderColor='var(--success)';statusColor='var(--text-success)';
-                const buffer=dte-pred.daysNeeded;
-                statusMsg=`Finishing ${buffer} day${buffer!==1?'s':''} before your exam — keep this pace.`;
-            } else {
-                const daysBehind=pred.daysNeeded-dte;
-                const paceGap=Math.round((neededPace-pred.rate)*10)/10;
-                if(daysBehind<=14){
-                    borderColor='var(--warning)';statusColor='var(--text-warning)';
-                    statusMsg=`${paceGap} more ch/day closes the gap. Minor adjustment needed.`;
-                } else {
-                    borderColor='var(--danger)';statusColor='var(--text-danger)';
-                    statusMsg=`${paceGap} more ch/day needed — ${daysBehind} days behind. Consider daily study bursts.`;
-                }
-            }
-            predHtml=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${borderColor}"><div class="card-header"><span class="card-title">Predicted Completion</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${statusColor}">${statusMsg}</p>${dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: <strong>${neededPace} ch/day</strong> to finish by exam.</p>`:''}</div>`;
-        }
-
-        el.innerHTML=`<div class="grid grid-3" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(239,68,68,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3>${od.length}</h3><p>Overdue</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${up.length}</h3><p>Upcoming</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></div><div class="stat-info"><h3>${nd.length}</h3><p>No deadline</p></div></div></div>${sprintHTML}${predHtml}${od.length>0?`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--danger)"><div class="card-header"><span class="card-title">Overdue</span></div>${od.map(c=>`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${this.daysBetween(c.deadline,this.today())}d overdue</p></div></div>`).join('')}</div>`:''}<div class="card"><div class="card-header"><span class="card-title">Upcoming Deadlines</span></div>${up.length===0?'<p style="color:var(--text-muted)">None</p>':up.map(c=>{const dl=this.daysBetween(this.today(),c.deadline);return`<div class="plan-card" onclick="App.openChapterDetail('${c.subjectId}','${c.id}')"><div class="plan-emoji">${c.subjectIcon}</div><div class="plan-info"><h4>${c.name}</h4><p>${c.subjectName} • ${c.deadline}</p></div><span class="tag" style="color:var(--${dl<=3?'danger':dl<=7?'warning':'success'})">${dl}d</span></div>`}).join('')}</div>`;
-    },
-
     // WEEKLY / ANALYTICS
     renderWeekly(){
         const el=document.getElementById('page-weekly'),wk=this.getWeekSessions(),ws=wk.sessions,tm=ws.reduce((a,s)=>a+s.timeSpent,0),ds=new Set(ws.map(s=>s.date)).size;
@@ -3247,6 +3189,36 @@ const App={
         // Subject balance for radar visual
         const allSubTime={};this.state.sessions.forEach(s=>{allSubTime[s.subjectId]=(allSubTime[s.subjectId]||0)+s.timeSpent});
         const totalAllTime=Object.values(allSubTime).reduce((a,b)=>a+b,0)||1;
+
+        // Pacing Forecast (moved from former Planning page — Predicted Completion block)
+        const pred=this.getPredictedCompletion();
+        const dte=this.getDaysToExam();
+        let pacingForecastHTML='';
+        if(pred&&dte!==null){
+            // Compare daysNeeded directly against dte — avoids date-string roundtrip precision loss.
+            // remaining is already baked into pred.daysNeeded by getPredictedCompletion().
+            const remaining=this.getTotalChapters()-this.getCompletedCount();
+            const neededPace=dte>0?Math.round((remaining/dte)*10)/10:Infinity;
+            const daysAhead=dte-pred.daysNeeded; // positive = finishing before exam
+            // Severity: green = on track, amber = gap ≤14 days, red = gap >14 days
+            let borderColor,statusColor,statusMsg;
+            if(pred.daysNeeded<=dte){
+                borderColor='var(--success)';statusColor='var(--text-success)';
+                const buffer=dte-pred.daysNeeded;
+                statusMsg=`Finishing ${buffer} day${buffer!==1?'s':''} before your exam — keep this pace.`;
+            } else {
+                const daysBehind=pred.daysNeeded-dte;
+                const paceGap=Math.round((neededPace-pred.rate)*10)/10;
+                if(daysBehind<=14){
+                    borderColor='var(--warning)';statusColor='var(--text-warning)';
+                    statusMsg=`${paceGap} more ch/day closes the gap. Minor adjustment needed.`;
+                } else {
+                    borderColor='var(--danger)';statusColor='var(--text-danger)';
+                    statusMsg=`${paceGap} more ch/day needed — ${daysBehind} days behind. Consider daily study bursts.`;
+                }
+            }
+            pacingForecastHTML=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${borderColor}"><div class="card-header"><span class="card-title">Pacing Forecast</span></div><p style="font-size:.9rem">At current pace (<strong>${pred.rate} ch/day</strong>), you'll finish by <strong>${pred.date}</strong> (${pred.daysNeeded} days).</p><p style="font-size:.82rem;margin-top:6px;color:${statusColor}">${statusMsg}</p>${dte>0?`<p style="font-size:.78rem;color:var(--text-muted);margin-top:4px">Need: <strong>${neededPace} ch/day</strong> to finish by exam.</p>`:''}</div>`;
+        }
 
         // P2-3: Honest weekly report — shown every Sunday, or any day if triggered
         const isSunday=new Date().getDay()===0;
@@ -3306,6 +3278,7 @@ const App={
             </div>`;
         }
         el.innerHTML=weeklyReportHTML+`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>This week</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${ds}/7</h3><p>Days studied</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${this.formatMin(tmMin)}</h3><p>This month</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="stat-info"><h3>${avgSession}m</h3><p>Avg session</p></div></div></div>
+        ${pacingForecastHTML}
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Daily Study Time</span></div><div class="week-graph">${dd.map(d=>{const pc=d.minutes/mx*100;const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T12:00').getDay()];return`<div class="bar-col"><div class="bar-value">${d.minutes>0?this.formatMin(d.minutes):''}</div><div class="bar" style="height:${Math.max(2,pc)}%;${d.date===this.today()?'background:var(--gradient-3)':''}"></div><div class="bar-label">${dn}</div></div>`}).join('')}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--text-success)':'var(--text-danger)'};font-weight:600">${tmMin>=lmMin?'↑':'↓'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'Improving!':'Study more!'}</p></div><div class="card"><div class="card-header"><span class="card-title">Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
         <div class="card"><div class="card-header"><span class="card-title">Subject Balance — All Time</span></div><div style="display:flex;flex-wrap:wrap;gap:12px;justify-content:center">${this.state.subjects.map(s=>{const min=allSubTime[s.id]||0;const pc=Math.round(min/totalAllTime*100);const isLow=pc<(100/Math.max(1,this.state.subjects.length))*0.5;return`<div style="text-align:center;min-width:60px;flex:0 0 auto"><div style="width:60px;height:60px;border-radius:50%;border:4px solid ${s.color};display:flex;align-items:center;justify-content:center;margin:0 auto 6px;font-size:1.5rem;${isLow?'opacity:.5':''}">${s.icon}</div><p style="font-size:.78rem;font-weight:600">${s.name}</p><p style="font-size:.72rem;color:${isLow?'var(--text-danger)':s.color}">${pc}%</p>${isLow?'<p style="font-size:.6rem;color:var(--text-danger)">⚠️ Low</p>':''}`}).join('')}</div></div>`;
