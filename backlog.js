@@ -233,8 +233,8 @@
       items:         [],
       loading:       false,
       filter:        'all',
-      recoveryHours: 2,          // hard default — overwritten once profile loads
-      _syncedFromSettings: false // tracks whether we already pulled from profile
+      recoveryHours: 2,             // hard default until settings sync or manual override
+      _userOverrodeRecoveryHours: false // true only once the user picks a value via the dropdown
     },
 
     // ── Bootstrap ────────────────────────────────────────────────────────────
@@ -248,15 +248,19 @@
     },
 
     // Pull daily_study_goal from profile and snap to nearest dropdown option.
-    // Safe to call multiple times — only overwrites the default once, so a
-    // manual dropdown override by the user is never clobbered mid-session.
+    // Re-checks on every call (init, every renderPage) rather than locking
+    // after one attempt — the profile fetch can still be unresolved or
+    // stale on an early call, so a single permanent lock risks freezing in
+    // a wrong value if the settings change later. The ONLY thing that
+    // permanently stops this auto-sync is the user manually picking a
+    // value via the dropdown (see setRecoveryHours, which sets
+    // _userOverrodeRecoveryHours).
     _syncRecoveryHoursFromSettings() {
-      if (this.state._syncedFromSettings) return;        // already applied once
+      if (this.state._userOverrodeRecoveryHours) return;  // respect manual choice, permanently
       const mins = App?.state?.profile?.dailyGoalMinutes;
       const snapped = _snapToRecoveryOption(mins);
-      if (snapped === null) return;                       // profile not ready yet
+      if (snapped === null) return;                       // profile not ready yet — try again next call
       this.state.recoveryHours = snapped;
-      this.state._syncedFromSettings = true;
     },
 
     // ── Data ─────────────────────────────────────────────────────────────────
@@ -613,7 +617,7 @@
       const parsed = parseFloat(h);
       if (isNaN(parsed) || parsed <= 0) return;
       this.state.recoveryHours = parsed;
-      this.state._syncedFromSettings = true; // user chose manually — don't overwrite
+      this.state._userOverrodeRecoveryHours = true; // user chose manually — never auto-sync over this again
       const el = document.getElementById('bl-recovery-plan');
       if (el) el.outerHTML = this._renderRecoveryPlan();
     },
