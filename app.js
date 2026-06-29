@@ -1193,7 +1193,7 @@ const App={
         // needs subjects, because the dashboard itself doesn't require them for
         // its first paint (streak / goal / challenge render without subjects).
         if (tab === 'subjects' || tab === 'revisions' ||
-            tab === 'weekly'   || tab === 'quiz'      || tab === 'exercises' || tab === 'backlog') {
+            tab === 'weekly'   || tab === 'quiz'      || tab === 'backlog') {
             if (!this._loadedTabs.has('subjects')) {
                 try {
                     const { data: subjects, error } = await DB.subjects.getAll(userId);
@@ -1627,7 +1627,7 @@ const App={
     NAV_GROUPS:{
         work:['revisions','quiz','coach','pomodoro','doubts'],
         review:['exams','weekly'],
-        library:['notes','exercises','resources']
+        library:['notes','resources']
     },
     toggleTheme(theme){
         if(theme){this.state.theme=theme}
@@ -2098,7 +2098,7 @@ const App={
                 }
             }
         });
-        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',exercises:'Exercises',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
+        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
 
         // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
@@ -2124,7 +2124,7 @@ const App={
             weekly:'Analytics & plan',
             pomodoro:'Focus timer',notes:'Notes & formulas',
             resources:'Study links',doubts:'Track your doubts',
-            exams:'Score history',exercises:'Chapter exercises',
+            exams:'Score history',
             rewards:'XP & badges',settings:'Preferences',
             backlog:'Study debt tracker',
         };
@@ -2152,7 +2152,7 @@ const App={
             }else{ep.style.display='none'}
         }
     },
-    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),exercises:()=>this.renderExercises(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage()};if(r[p])r[p]()},
+    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage()};if(r[p])r[p]()},
     render(){
         const page = this.state.currentPage;
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
@@ -2635,6 +2635,9 @@ const App={
         }
     },
     // SUBJECTS
+    // TODO(Fix 17): once the chapter-row "..." overflow menu lands, add an
+    // "Add exercise" item here that shows a "Coming soon" toast — placeholder
+    // for the chapter detail modal exercise UI planned in Sprint 4.
     renderSubjects(){
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
@@ -2655,7 +2658,7 @@ const App={
             const health=this.computeSubjectHealth(s);
             const healthColor=health>=70?'var(--success)':health>=40?'var(--warning)':'var(--danger)';
             const healthLabel=health>=70?'Strong':'Needs work';
-            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:.65rem;color:var(--text-muted);flex-shrink:0">Health</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${health}%;background:${healthColor};border-radius:3px;transition:width .8s ease"></div></div><span style="font-size:.65rem;font-weight:700;color:${healthColor};flex-shrink:0">${health} · ${healthLabel}</span></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';const lastStudied=fmtShort(lastStudiedMap.get(c.id));const studiedTag=lastStudied?`<span style="font-size:.65rem;color:var(--text-muted)">Last: ${lastStudied}</span>`:'';return`<div class="chapter-item" style="box-sizing:border-box"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span style="font-size:.65rem">🔄${c.revisionCount}</span>`:''}${studiedTag}${confTag}${c.weakFlag?'<span class="tag" style="background:rgba(239,68,68,0.1);color:var(--text-danger)">weak</span>':''}${ov?'<span class="tag tag-overdue">!</span>':''}</div></div><div class="chapter-actions" style="flex-shrink:0"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`}).join('')}</div></div>`})}
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="display:flex;align-items:center;gap:8px;margin-bottom:14px"><span style="font-size:.65rem;color:var(--text-muted);flex-shrink:0">Health</span><div style="flex:1;height:5px;background:var(--border);border-radius:3px;overflow:hidden"><div style="height:100%;width:${health}%;background:${healthColor};border-radius:3px;transition:width .8s ease"></div></div><span style="font-size:.65rem;font-weight:700;color:${healthColor};flex-shrink:0">${health} · ${healthLabel}</span></div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';const lastStudied=fmtShort(lastStudiedMap.get(c.id));const studiedTag=lastStudied?`<span style="font-size:.65rem;color:var(--text-muted)">Last: ${lastStudied}</span>`:'';const exList=this.state.exercises[s.id+'_'+c.id]||[];const exTag=exList.length>0?`<span class="tag" style="background:rgba(99,102,241,0.1);color:var(--accent-light)">${exList.filter(e=>e.done).length}/${exList.length} exercises</span>`:'';return`<div class="chapter-item" style="box-sizing:border-box"><div class="chapter-check ${c.status==='completed'||c.status==='revised'?'done':''}" onclick="event.stopPropagation();App.toggleChapter('${s.id}','${c.id}')">${c.status==='completed'||c.status==='revised'?'✓':''}</div><div class="chapter-info" onclick="App.openChapterDetail('${s.id}','${c.id}')"><div class="chapter-name">${c.name}</div><div class="chapter-meta"><span class="tag tag-${c.status.replace(' ','-')}">${c.status.replace('-',' ')}</span><span class="tag tag-${c.difficulty}">${c.difficulty}</span>${c.revisionCount>0?`<span style="font-size:.65rem">🔄${c.revisionCount}</span>`:''}${studiedTag}${confTag}${exTag}${c.weakFlag?'<span class="tag" style="background:rgba(239,68,68,0.1);color:var(--text-danger)">weak</span>':''}${ov?'<span class="tag tag-overdue">!</span>':''}</div></div><div class="chapter-actions" style="flex-shrink:0"><button class="ch-btn" onclick="event.stopPropagation();App.quickRevision('${s.id}','${c.id}')" title="Revise"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></button><button class="ch-btn" onclick="event.stopPropagation();App.deleteChapter('${s.id}','${c.id}')" title="Delete"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`}).join('')}</div></div>`})}
         el.innerHTML=h;
     },
     filterSubject(id){this.state.selectedSubjectFilter=id;this.renderSubjects()},
@@ -2709,29 +2712,6 @@ const App={
         if(this.state.exercises[exKey][idx].done)this.addXP(5,'Exercise done');
         this._syncExercises(sId,cId);this.openChapterDetail(sId,cId);
     },
-    renderExercises(){
-        const el=document.getElementById('page-exercises');
-        let h='<div style="margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">Track NCERT exercises, RD Sharma, and sample papers per chapter.</p></div>';
-        const subs=this.state.subjects;
-        if(subs.length===0){h+='<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg></div></span><div class="empty-state-title">Add subjects first</div><div class="empty-state-desc">Exercises are tracked per chapter. Load your CBSE syllabus or add subjects to get started.</div><button class="btn btn-primary" onclick="App.navigate(\'subjects\')">Go to Subjects →</button></div>';el.innerHTML=h;return}
-        subs.forEach(s=>{
-            const chaptersWithEx=s.chapters.filter(c=>{const k=s.id+'_'+c.id;return this.state.exercises[k]&&this.state.exercises[k].length>0});
-            if(chaptersWithEx.length===0)return;
-            h+=`<div class="card" style="margin-bottom:16px;border-left:3px solid ${s.color}"><div class="card-header"><span class="card-title">${s.icon} ${s.name}</span></div>`;
-            chaptersWithEx.forEach(c=>{
-                const k=s.id+'_'+c.id;const exs=this.state.exercises[k]||[];
-                const doneCount=exs.filter(e=>e.done).length;
-                h+=`<div style="margin-bottom:12px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px"><span style="font-size:.85rem;font-weight:600">${c.name}</span><span style="font-size:.75rem;color:var(--text-muted)">${doneCount}/${exs.length}</span></div><div class="exercise-grid">${exs.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${s.id}','${c.id}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>`;
-            });
-            h+='</div>';
-        });
-        // Also show chapters with no exercises
-        let emptyCount=0;
-        subs.forEach(s=>{s.chapters.forEach(c=>{const k=s.id+'_'+c.id;if(!this.state.exercises[k]||this.state.exercises[k].length===0)emptyCount++})});
-        if(emptyCount>0)h+=`<p style="color:var(--text-muted);font-size:.82rem;text-align:center;margin-top:16px">${emptyCount} chapters have no exercises tracked. Open chapter details to add them.</p>`;
-        el.innerHTML=h;
-    },
-
     // STUDY LOG
     openQuickLog(pSub,pCh){
         const subs=this.state.subjects;let co='';
