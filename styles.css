@@ -1218,11 +1218,15 @@ a { color: inherit; text-decoration: none; }
     box-sizing: border-box;
     overflow: visible; /* was: hidden — clipped the ··· dropdown */
     flex-wrap: wrap;   /* allows inline confirm bar to sit below on its own row */
+    position: relative;
+    z-index: 0;
 }
-.chapter-item:hover {
+.chapter-item:hover,
+.chapter-item:focus-within {
     border-color: var(--border-hover);
     background: var(--color-surface-hover);
-    transform: none; /* Remove translateX jank */
+    transform: none;
+    z-index: 10; /* lift above siblings so dropdown never goes behind the next row */
 }
 .chapter-check {
     width: 20px; height: 20px;
