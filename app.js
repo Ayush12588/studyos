@@ -1305,7 +1305,17 @@ const App={
             try {
                 const { data: tasks, error } = await DB.tasks.getByDate(userId, this.today());
                 if (error) throw error;
-                if (tasks) this.state.tasks = tasks;
+                // Normalize snake_case DB columns to the camelCase shape used by
+                // locally-created task objects (see addTask/autoGenerateTasks) —
+                // same pattern as the doubts loader below. Without this, tasks
+                // loaded from Supabase carry subject_id/chapter_id while tasks
+                // created this session carry subjectId/chapterId, and every
+                // reader has to defensively check both.
+                if (tasks) this.state.tasks = tasks.map(t => ({
+                    ...t,
+                    subjectId: t.subject_id ?? t.subjectId ?? null,
+                    chapterId: t.chapter_id ?? t.chapterId ?? null,
+                }));
             } catch(e){ warn('tasks', e); }
         }
 
@@ -2871,14 +2881,72 @@ const App={
             this.save();
         }
         const doneCount=todayTasks.filter(t=>t.done).length;
-        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${doneCount}/${todayTasks.length} done</p><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.autoGenerateTasks()">Auto-Plan</button></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Add Task</span></div><div style="display:flex;gap:8px"><input type="text" id="new-task" class="form-input" placeholder="e.g., Solve Ex 2.3..." style="flex:1" onkeydown="if(event.key==='Enter')App.addTask()"><button class="btn btn-primary btn-sm" onclick="App.addTask()">Add</button></div></div>`;
+        const subs=this.state.subjects||[];
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${doneCount}/${todayTasks.length} done</p><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.autoGenerateTasks()">Auto-Plan</button></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Add Task</span></div><div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" id="new-task" class="form-input" placeholder="e.g., Solve Ex 2.3..." style="flex:1" onkeydown="if(event.key==='Enter')App.addTask()"><button class="btn btn-primary btn-sm" onclick="App.addTask()">Add</button></div><div style="display:flex;gap:8px"><select id="new-task-subject" class="form-select" style="flex:1;font-size:.78rem;color:var(--text-muted);padding:6px 8px" onchange="App.updateNewTaskChapters()"><option value="">Subject (optional)</option>${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select><select id="new-task-chapter" class="form-select" style="flex:1;font-size:.78rem;color:var(--text-muted);padding:6px 8px"><option value="">Chapter (optional)</option></select></div></div>`;
         h+=`<div class="card"><div class="card-header"><span class="card-title">Today's Tasks</span></div>`;
         if(todayTasks.length===0){h+=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div></span><div class="empty-state-title">No tasks for today</div><div class="empty-state-desc">Tasks help you stay focused on what matters. Add your own or let AI plan your day automatically.</div><button class="btn btn-primary" onclick="App.autoGenerateTasks()">Auto-Plan My Day</button><div class="empty-state-hint"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Tip: Auto-Plan pulls from your overdue chapters and revisions</div></div>`}
-        else{todayTasks.forEach(t=>{h+=`<div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="App.toggleTask('${t.id}')">${t.done?'✓':''}</div><span class="task-text ${t.done?'done':''}">${t.text}</span><button class="ch-btn" onclick="App.deleteTask('${t.id}')" style="width:24px;height:24px;font-size:.7rem">✕</button></div>`})}
+        else{todayTasks.forEach(t=>{
+            let pillHtml='';
+            if(t.subjectId){
+                const sub=this.getSubjectById(t.subjectId);
+                if(sub){
+                    const ch=t.chapterId?this.getChapter(t.subjectId,t.chapterId):null;
+                    pillHtml=`<div style="margin-left:32px;margin-top:2px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text-muted);background:rgba(99,102,241,0.08);border-radius:6px;padding:2px 8px">${sub.icon} ${sub.name}${ch?' • '+ch.name:''}</span></div>`;
+                }
+            }
+            h+=`<div class="task-item-wrap"><div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="App.toggleTask('${t.id}')">${t.done?'✓':''}</div><span class="task-text ${t.done?'done':''}">${t.text}</span><button class="ch-btn" onclick="App.deleteTask('${t.id}')" style="width:24px;height:24px;font-size:.7rem">✕</button></div>${pillHtml}</div>`;
+        })}
         h+='</div>';el.innerHTML=h;
     },
-    addTask(){const inp=document.getElementById('new-task');const text=inp.value.trim();if(!text)return;const _t={id:this.uid(),text,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_t);const _tUid=window._supabaseUserId;if(_tUid){DB.tasks.create({user_id:_tUid,text,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] tasks.create:',error);return;}if(data&&data.id)_t.id=data.id;});}this.save();inp.value='';this.renderTasks();this.toast('Task added','success')},
-    toggleTask(id){const t=this.state.tasks.find(x=>x.id===id);if(!t)return;t.done=!t.done;if(t.done)this.addXP(5,'Task completed');const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);const _tuUid=window._supabaseUserId;if(_tuUid&&_isUUID(t.id)){DB.tasks.update(t.id,{done:t.done}).then(({error})=>{if(error)console.error('[DB] tasks.update:',error);});}this.save();this.renderTasks();this.checkDailyChallenges()},
+    // Populates the chapter dropdown in the Add Task row when a subject is chosen.
+    updateNewTaskChapters(){
+        const sId=document.getElementById('new-task-subject').value;
+        const sel=document.getElementById('new-task-chapter');
+        const s=this.getSubjectById(sId);
+        sel.innerHTML='<option value="">Chapter (optional)</option>'+(s?s.chapters.map(c=>`<option value="${c.id}">${c.name}</option>`).join(''):'');
+    },
+    addTask(){
+        const inp=document.getElementById('new-task');const text=inp.value.trim();if(!text)return;
+        const subSel=document.getElementById('new-task-subject');
+        const chSel=document.getElementById('new-task-chapter');
+        const subjectId=subSel&&subSel.value?subSel.value:null;
+        const chapterId=chSel&&chSel.value?chSel.value:null;
+        const _t={id:this.uid(),text,done:false,date:this.today(),createdAt:Date.now(),subjectId,chapterId};
+        this.state.tasks.push(_t);
+        const _tUid=window._supabaseUserId;
+        if(_tUid){
+            DB.tasks.create({user_id:_tUid,text,done:false,date:this.today(),subject_id:subjectId,chapter_id:chapterId}).then(({data,error})=>{
+                if(error){console.error('[DB] tasks.create:',error);return;}
+                if(data&&data.id)_t.id=data.id;
+            });
+        }
+        this.save();inp.value='';
+        if(subSel)subSel.value='';
+        if(chSel)chSel.innerHTML='<option value="">Chapter (optional)</option>';
+        this.renderTasks();this.toast('Task added','success')
+    },
+    toggleTask(id){
+        const t=this.state.tasks.find(x=>x.id===id);if(!t)return;
+        t.done=!t.done;
+        if(t.done)this.addXP(5,'Task completed');
+        const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        const _tuUid=window._supabaseUserId;
+        if(_tuUid&&_isUUID(t.id)){
+            DB.tasks.update(t.id,{done:t.done}).then(({error})=>{if(error)console.error('[DB] tasks.update:',error);});
+        }
+        // Task completion is a weaker signal than an actual logged session or
+        // Pomodoro, so this writes a separate task_touched_date column instead
+        // of overloading last_studied_date (which Pomodoro/session-complete
+        // writes to — see ~line 3407). Does NOT touch chapter status.
+        if(t.done&&t.chapterId){
+            const ch=this.getChapter(t.subjectId,t.chapterId);
+            if(ch)ch.taskTouchedDate=this.today();
+            if(_isUUID(t.chapterId)){
+                DB.chapters.update(t.chapterId,{task_touched_date:this.today()}).then(({error})=>{if(error)console.error('[DB] toggleTask chapters.update task_touched_date:',error);});
+            }
+        }
+        this.save();this.renderTasks();this.checkDailyChallenges()
+    },
     deleteTask(id){const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.tasks.delete(id).then(({error})=>{if(error)console.error('[DB] tasks.delete:',error);});}this.state.tasks=this.state.tasks.filter(t=>t.id!==id);this.save();this.renderTasks()},
     autoGenerateTasks(){const tasks=[];const od=this.getOverdueChapters();od.slice(0,2).forEach(c=>tasks.push(`📌 Complete: ${c.subjectIcon} ${c.name}`));const rd=this.getRevisionsDue();rd.slice(0,2).forEach(c=>tasks.push(`🔄 Revise: ${c.subjectIcon} ${c.name}`));const pending=this.getAllChapters().filter(c=>c.status==='in-progress');pending.slice(0,2).forEach(c=>tasks.push(`📖 Continue: ${c.subjectIcon} ${c.name}`));if(tasks.length===0)tasks.push('📚 Study for '+this.formatMin(this.state.profile.dailyGoalMinutes));const _agUid=window._supabaseUserId;tasks.forEach(t=>{if(!this.state.tasks.some(x=>x.text===t&&x.date===this.today())){const _at={id:this.uid(),text:t,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_at);if(_agUid){DB.tasks.create({user_id:_agUid,text:t,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] auto tasks.create:',error);return;}if(data&&data.id)_at.id=data.id;});}}});this.save();this.renderTasks();this.toast('Tasks auto-generated! 🤖','success')},
 

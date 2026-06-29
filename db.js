@@ -403,6 +403,18 @@ export const DB = {
   // When to call: user opens the daily planner for a specific date.
   // Tasks are date-scoped so we don't cache them globally — a fresh fetch
   // per date is cheap and avoids stale-data bugs around midnight.
+  //
+  // SCHEMA — run once in Supabase SQL editor (idempotent):
+  //
+  //   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS subject_id UUID REFERENCES subjects(id) ON DELETE SET NULL;
+  //   ALTER TABLE tasks ADD COLUMN IF NOT EXISTS chapter_id UUID REFERENCES chapters(id) ON DELETE SET NULL;
+  //   ALTER TABLE chapters ADD COLUMN IF NOT EXISTS task_touched_date DATE;
+  //
+  // task_touched_date is intentionally separate from chapters.last_studied_date
+  // (written by sessions/Pomodoro completion — see app.js pomodoroComplete).
+  // Checking off a task is a weaker signal than an actual logged study session,
+  // so it should not silently inflate the same field your engagement-signal
+  // RPC and streak logic read from last_studied_date.
 
   tasks: {
     async getByDate(userId, date) {
