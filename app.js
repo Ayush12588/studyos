@@ -3201,7 +3201,7 @@ const App={
         }
 
 
-        // ── Study Consistency Heatmap — SVG, columns=weeks, rows=day-of-week ──
+        // ── Study Consistency Heatmap ─────────────────────────────────────────────
         const heatmapDayMap={};
         this.state.sessions.forEach(s=>{
             const ld=new Date(s.date+'T12:00').toLocaleDateString('en-CA');
@@ -3211,71 +3211,85 @@ const App={
         const day90=new Date(heatToday);day90.setDate(day90.getDate()-89);
         // Roll back to Sunday of the week containing day90
         const gridStart=new Date(day90);gridStart.setDate(gridStart.getDate()-gridStart.getDay());
-        // Build flat day list
+        // Build flat day list (gridStart → today)
         const heatDays=[];
         for(let d=new Date(gridStart);d<=heatToday;d.setDate(d.getDate()+1)){
             const lbl=d.toLocaleDateString('en-CA');
             heatDays.push({lbl,mins:heatmapDayMap[lbl]||0,pre:d<day90,today:lbl===this.today()});
         }
-        // Pad tail to Saturday
+        // Pad tail to Saturday so grid is full columns
         while(heatDays.length%7!==0)heatDays.push({lbl:'',mins:0,pre:true,today:false});
-        // Chunk into weeks (each = 7 days, Sun→Sat)
+        // Chunk into weeks
         const heatWeeks=[];
         for(let i=0;i<heatDays.length;i+=7)heatWeeks.push(heatDays.slice(i,i+7));
-        // SVG layout constants
-        const CS=12,CG=3; // cell size, cell gap
-        const DL=14;      // day-label column width (left)
-        const MT=18;      // month-label row height (top)
-        const totalW=DL+heatWeeks.length*(CS+CG)-CG;
-        const totalH=MT+7*(CS+CG)-CG;
+        // Layout: use a fixed viewBox but scale with width:100%
+        // Day labels on left, month labels on top, cells fill the rest
+        const DL=22; // day-label col width
+        const MT=20; // month-label row height
+        const CG=3;  // gap between cells
+        // Target ~600px viewBox width so it scales nicely
+        const NUM_WEEKS=heatWeeks.length;
+        const CS=Math.max(10,Math.floor((560-DL-CG*(NUM_WEEKS-1))/NUM_WEEKS)); // cell size, min 10
+        const VB_W=DL+NUM_WEEKS*(CS+CG)-CG;
+        const VB_H=MT+7*(CS+CG)-CG;
         // Colour scale
-        const hCV=m=>m<=0?'var(--color-surface-hover)':m<30?'color-mix(in srgb,var(--accent) 20%,transparent)':m<60?'color-mix(in srgb,var(--accent) 55%,transparent)':'var(--accent)';
-        // Month labels: show on first week that contains the 1st of a month
+        const hCV=m=>m<=0?'var(--color-surface-hover)':m<30?'color-mix(in srgb,var(--accent) 25%,transparent)':m<60?'color-mix(in srgb,var(--accent) 60%,transparent)':'var(--accent)';
+        // Month labels — track which months we've already shown to avoid duplicates
         const mNames=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        const shownMonths=new Set();
         const mLabelsSVG=heatWeeks.map((wk,wi)=>{
-            const firstReal=wk.find(d=>!d.pre&&d.lbl);
+            // find first real (non-pre) day in this week
+            const firstReal=wk.find(d=>d.lbl&&!d.pre);
             if(!firstReal)return'';
             const dt=new Date(firstReal.lbl+'T12:00');
-            if(dt.getDate()>7)return'';
+            const mo=dt.getMonth();
+            // show label on the week that contains the 1st, or the very first visible week
+            if(dt.getDate()>7&&wi>0)return'';
+            if(shownMonths.has(mo))return'';
+            shownMonths.add(mo);
             const x=DL+wi*(CS+CG);
-            return`<text x="${x}" y="${MT-5}" font-size="9" fill="var(--text-muted)" font-family="inherit">${mNames[dt.getMonth()]}</text>`;
+            return`<text x="${x}" y="${MT-6}" font-size="10" fill="var(--text-muted)" font-family="inherit" font-weight="500">${mNames[mo]}</text>`;
         }).join('');
-        // Day-of-week labels flush left (only odd rows to avoid cramping: Sun/Tue/Thu/Sat)
-        const dNames=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
-        const dLabelsSVG=dNames.map((n,i)=>i%2===0?`<text x="${DL-3}" y="${MT+i*(CS+CG)+CS/2}" font-size="8" fill="var(--text-muted)" text-anchor="end" dominant-baseline="middle" font-family="inherit">${n[0]}</text>`:'').join('');
-        // Cells — each cell gets data-lbl and data-mins for JS tooltip
+        // Day-of-week labels — ALL 7, alternating opacity for clean look
+        const dLabels=['S','M','T','W','T','F','S'];
+        const dLabelsSVG=dLabels.map((n,i)=>{
+            const y=MT+i*(CS+CG)+CS/2;
+            const op=i%2===0?'1':'0.45'; // Sun/Tue/Thu/Sat full, Mon/Wed/Fri dimmed
+            return`<text x="${DL-4}" y="${y}" font-size="9" fill="var(--text-muted)" text-anchor="end" dominant-baseline="middle" font-family="inherit" opacity="${op}">${n}</text>`;
+        }).join('');
+        // Cells
         const cellsSVG=heatWeeks.map((wk,wi)=>wk.map((c,di)=>{
             const x=DL+wi*(CS+CG);
             const y=MT+di*(CS+CG);
             const fill=c.pre?'var(--color-surface-hover)':hCV(c.mins);
-            const op=c.pre?'0.2':'1';
-            const ring=c.today?`<rect x="${x-1.5}" y="${y-1.5}" width="${CS+3}" height="${CS+3}" rx="3.5" fill="none" stroke="var(--accent)" stroke-width="1.5"/>`:'';
+            const op=c.pre?'0.25':'1';
+            const ring=c.today?`<rect x="${x-1.5}" y="${y-1.5}" width="${CS+3}" height="${CS+3}" rx="${CS/4+1}" fill="none" stroke="var(--accent)" stroke-width="1.5"/>`:'';
             const attrs=c.lbl&&!c.pre?` data-lbl="${c.lbl}" data-mins="${c.mins}"`:' ';
-            return`${ring}<rect${attrs} class="heat-cell" x="${x}" y="${y}" width="${CS}" height="${CS}" rx="2.5" fill="${fill}" opacity="${op}"/>`;
+            return`${ring}<rect${attrs} class="heat-cell" x="${x}" y="${y}" width="${CS}" height="${CS}" rx="${Math.max(2,CS/4)}" fill="${fill}" opacity="${op}"/>`;
         }).join('')).join('');
         const studiedDays90=Object.keys(heatmapDayMap).filter(d=>{const dt=new Date(d+'T12:00');return dt>=day90&&dt<=heatToday}).length;
         const heatmapHTML=`<div class="card" style="margin-bottom:20px">
-            <div class="card-header" style="margin-bottom:8px">
+            <div class="card-header" style="margin-bottom:12px">
                 <span class="card-title">Study Consistency</span>
                 <span style="font-size:.75rem;color:var(--text-muted);margin-left:auto">${studiedDays90} of 90 days</span>
             </div>
-            <div style="overflow-x:auto;padding-bottom:2px">
-                <svg id="heat-svg" width="${totalW}" height="${totalH}" style="display:block">
+            <div style="overflow-x:auto">
+                <svg id="heat-svg" viewBox="0 0 ${VB_W} ${VB_H}" width="100%" style="display:block;min-width:${Math.min(VB_W,320)}px">
                     ${mLabelsSVG}${dLabelsSVG}${cellsSVG}
-                    <!-- Tooltip group, hidden by default -->
                     <g id="heat-tip" style="display:none;pointer-events:none">
-                        <rect id="heat-tip-bg" rx="5" fill="var(--color-surface)" stroke="var(--border)" stroke-width="1"/>
+                        <rect id="heat-tip-bg" rx="5" fill="var(--color-surface)" stroke="var(--color-border)" stroke-width="1"/>
                         <text id="heat-tip-txt" font-size="10" fill="var(--text-primary)" font-family="inherit" font-weight="600"/>
                     </g>
                 </svg>
             </div>
             <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
-                <span style="font-size:.65rem;color:var(--text-muted)">Less</span>
-                <svg width="12" height="12"><rect width="12" height="12" rx="2" fill="var(--color-surface-hover)" stroke="var(--border)" stroke-width="1"/></svg>
-                <svg width="12" height="12"><rect width="12" height="12" rx="2" fill="color-mix(in srgb,var(--accent) 20%,transparent)"/></svg>
-                <svg width="12" height="12"><rect width="12" height="12" rx="2" fill="color-mix(in srgb,var(--accent) 55%,transparent)"/></svg>
-                <svg width="12" height="12"><rect width="12" height="12" rx="2" fill="var(--accent)"/></svg>
-                <span style="font-size:.65rem;color:var(--text-muted)">More &nbsp;·&nbsp; None &nbsp;·&nbsp; &lt;30m &nbsp;·&nbsp; 30–60m &nbsp;·&nbsp; 60m+</span>
+                <span style="font-size:.7rem;color:var(--text-muted)">Less</span>
+                <svg width="11" height="11"><rect width="11" height="11" rx="2" fill="var(--color-surface-hover)" stroke="var(--color-border)" stroke-width="1"/></svg>
+                <svg width="11" height="11"><rect width="11" height="11" rx="2" fill="color-mix(in srgb,var(--accent) 25%,transparent)"/></svg>
+                <svg width="11" height="11"><rect width="11" height="11" rx="2" fill="color-mix(in srgb,var(--accent) 60%,transparent)"/></svg>
+                <svg width="11" height="11"><rect width="11" height="11" rx="2" fill="var(--accent)"/></svg>
+                <span style="font-size:.7rem;color:var(--text-muted)">More</span>
+                <span style="font-size:.7rem;color:var(--text-muted);margin-left:4px">· None / &lt;30m / 30–60m / 60m+</span>
             </div>
         </div>`;
         // ── END heatmap ───────────────────────────────────────────────────────
@@ -3284,7 +3298,7 @@ const App={
         const isSunday=new Date().getDay()===0;
         const reportDismissed=localStorage.getItem('weekly_report_dismissed')===this.today();
         let weeklyReportHTML='';
-        if((isSunday||ws.length>0)&&!reportDismissed){
+        if(true){
             // Last week sessions (7–14 days ago)
             const lastWeekStart=new Date();lastWeekStart.setDate(lastWeekStart.getDate()-14);
             const lastWeekEnd=new Date();lastWeekEnd.setDate(lastWeekEnd.getDate()-7);
@@ -3314,7 +3328,7 @@ const App={
             weeklyReportHTML=`<div class="card" style="margin-bottom:20px;border-left:3px solid var(--accent)">
                 <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:14px">
                     <span class="card-title">Weekly Report</span>
-                    <button onclick="localStorage.setItem('weekly_report_dismissed','${this.today()}');this.closest('.card').remove()" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:2px 4px">×</button>
+                    <button onclick="this.closest('.card').style.display='none'" title="Hide" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1rem;padding:2px 4px;border-radius:4px;line-height:1">×</button>
                 </div>
                 <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin-bottom:14px">
                     <div style="text-align:center;padding:10px;background:var(--color-surface-hover);border-radius:8px">
@@ -3339,7 +3353,23 @@ const App={
         }
         el.innerHTML=heatmapHTML+weeklyReportHTML+`<div class="grid grid-4" style="margin-bottom:20px"><div class="card stat-card"><div class="stat-icon" style="background:rgba(99,102,241,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div><div class="stat-info"><h3>${this.formatMin(tm)}</h3><p>This week</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(16,185,129,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${ds}/7</h3><p>Days studied</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(245,158,11,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></div><div class="stat-info"><h3>${this.formatMin(tmMin)}</h3><p>This month</p></div></div><div class="card stat-card"><div class="stat-icon" style="background:rgba(139,92,246,0.12)"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></div><div class="stat-info"><h3>${avgSession}m</h3><p>Avg session</p></div></div></div>
         ${pacingForecastHTML}
-        <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Daily Study Time</span></div><div class="week-graph">${dd.map(d=>{const pc=d.minutes/mx*100;const dn=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][new Date(d.date+'T12:00').getDay()];return`<div class="bar-col"><div class="bar-value">${d.minutes>0?this.formatMin(d.minutes):''}</div><div class="bar" style="height:${Math.max(2,pc)}%;${d.date===this.today()?'background:var(--gradient-3)':''}"></div><div class="bar-label">${dn}</div></div>`}).join('')}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
+        <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Daily Study Time</span></div><div style="padding-top:4px">${(()=>{
+            const BW=24,BG=8,CHARTW=7*(BW+BG)-BG,CHARTH=96,LABH=18,VALH=14;
+            const SVG_H=CHARTH+LABH+VALH+8;
+            const bars=dd.map((d,i)=>{
+                const pc=mx>0?d.minutes/mx:0;
+                const bh=Math.max(pc>0?3:0,Math.round(pc*CHARTH));
+                const x=i*(BW+BG);
+                const dn=['S','M','T','W','T','F','S'][new Date(d.date+'T12:00').getDay()];
+                const isToday=d.date===this.today();
+                const fill=isToday?'var(--accent)':pc>0?'color-mix(in srgb,var(--accent) 35%,transparent)':'var(--color-surface-hover)';
+                const valTxt=d.minutes>0?`<text x="${x+BW/2}" y="${VALH+CHARTH-bh-5}" text-anchor="middle" font-size="9" fill="${isToday?'var(--accent)':'var(--text-muted)'}" font-family="inherit" font-weight="600">${this.formatMin(d.minutes)}</text>`:'';
+                const bar=`<rect x="${x}" y="${VALH+CHARTH-bh}" width="${BW}" height="${Math.max(bh,2)}" rx="4" fill="${fill}"/>`;
+                const lbl=`<text x="${x+BW/2}" y="${VALH+CHARTH+14}" text-anchor="middle" font-size="10" fill="${isToday?'var(--accent)':'var(--text-muted)'}" font-family="inherit" font-weight="${isToday?'700':'400'}">${dn}</text>`;
+                return valTxt+bar+lbl;
+            }).join('');
+            return`<svg viewBox="0 0 ${7*(BW+BG)-BG} ${SVG_H}" width="100%" height="${SVG_H}" style="display:block">${bars}</svg>`;
+        })()}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--text-success)':'var(--text-danger)'};font-weight:600">${tmMin>=lmMin?'↑':'↓'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'vs last month':'below last month'}</p></div><div class="card"><div class="card-header"><span class="card-title">Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
         <div class="card" id="subbal-card">${(()=>{
             const swt=this.state.subjects.filter(s=>allSubTime[s.id]>0);
@@ -3400,7 +3430,7 @@ const App={
                     const cx=+cell.getAttribute('x');
                     const cy=+cell.getAttribute('y');
                     // keep inside SVG bounds
-                    const svgW=hsvg.viewBox?hsvg.viewBox.baseVal.width:hsvg.width.baseVal.value;
+                    const svgVB=hsvg.viewBox&&hsvg.viewBox.baseVal;const svgW=svgVB?svgVB.width:(hsvg.getBoundingClientRect().width||400);
                     const tx=Math.min(cx,svgW-tw-4);
                     const ty=cy>30?cy-th-4:cy+16;
                     tipBg.setAttribute('x',tx);tipBg.setAttribute('y',ty);tipBg.setAttribute('width',tw);tipBg.setAttribute('height',th);
