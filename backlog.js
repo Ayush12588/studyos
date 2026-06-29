@@ -226,9 +226,23 @@
 
     async init(userId) {
       if (!userId) return;
+      this._initRecoveryHoursFromSettings();
       await this._loadItems(userId);
       this._refreshDashboardWidget();
       updateNavBadge(this._activeItems().length);
+    },
+
+    // Default the Recovery Plan dropdown to the user's daily_study_goal
+    // (stored as dailyGoalMinutes), snapped to the nearest available option.
+    _initRecoveryHoursFromSettings() {
+      const RECOVERY_HOUR_OPTIONS = [1, 1.5, 2, 3, 4];
+      const mins = App?.state?.profile?.dailyGoalMinutes;
+      if (!mins || mins <= 0) return; // keep existing default (2h) if settings unavailable
+      const goalHours = mins / 60;
+      const nearest = RECOVERY_HOUR_OPTIONS.reduce((best, opt) =>
+        Math.abs(opt - goalHours) < Math.abs(best - goalHours) ? opt : best
+      );
+      this.state.recoveryHours = nearest;
     },
 
     // ── Data ─────────────────────────────────────────────────────────────────
