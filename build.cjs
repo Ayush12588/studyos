@@ -16,6 +16,15 @@ const { minify } = require('terser');
 const CleanCSS  = require('clean-css');
 const fs        = require('fs');
 const path      = require('path');
+const crypto    = require('crypto');
+
+// Returns first 8 chars of MD5 hash of content
+function hashContent(content) {
+  return crypto.createHash('md5').update(content).digest('hex').slice(0, 8);
+}
+
+// fileMap: { 'app.js': 'app.a3f9c2b1.js', 'styles.css': 'styles.4d2e1f9a.css', ... }
+const fileMap = {};
 
 const OUT = path.join(__dirname, 'dist');
 if (!fs.existsSync(OUT)) fs.mkdirSync(OUT);
@@ -33,8 +42,12 @@ async function build() {
     target: 'es2020',
     outfile: path.join(OUT, 'db.js'),
   });
-  const dbSize = fs.statSync(path.join(OUT, 'db.js')).size;
-  console.log(`  ✓ dist/db.js (${(dbSize/1024).toFixed(1)} KB)\n`);
+  const dbOut = fs.readFileSync(path.join(OUT, 'db.js'));
+  const dbHash = hashContent(dbOut);
+  const dbHashed = `db.${dbHash}.js`;
+  fs.renameSync(path.join(OUT, 'db.js'), path.join(OUT, dbHashed));
+  fileMap['db.js'] = dbHashed;
+  console.log(`  ✓ dist/${dbHashed} (${(dbOut.length/1024).toFixed(1)} KB)\n`);
 
   // 2. Minify JS files with Terser
   const jsFiles = ['app.js', 'migrate.js', 'tour.js', 'analytics.js', 'backlog.js', 'notifications.js'];
@@ -55,10 +68,13 @@ async function build() {
         ],
       },
     });
-    fs.writeFileSync(path.join(OUT, file), result.code);
+    const jsHash = hashContent(result.code);
+    const jsHashed = file.replace('.js', `.${jsHash}.js`);
+    fs.writeFileSync(path.join(OUT, jsHashed), result.code);
+    fileMap[file] = jsHashed;
     const origKB = (src.length / 1024).toFixed(1);
     const minKB  = (result.code.length / 1024).toFixed(1);
-    console.log(`  ✓ dist/${file} (${origKB} KB → ${minKB} KB)\n`);
+    console.log(`  ✓ dist/${jsHashed} (${origKB} KB → ${minKB} KB)\n`);
   }
 
   // 3. Minify CSS
@@ -66,15 +82,37 @@ async function build() {
   const srcCSS = fs.readFileSync('styles.css', 'utf8');
   const cssResult = new CleanCSS({ level: 2 }).minify(srcCSS);
   if (cssResult.errors.length) throw new Error(cssResult.errors.join('\n'));
-  fs.writeFileSync(path.join(OUT, 'styles.css'), cssResult.styles);
+  const cssHash = hashContent(cssResult.styles);
+  const cssHashed = `styles.${cssHash}.css`;
+  fs.writeFileSync(path.join(OUT, cssHashed), cssResult.styles);
+  fileMap['styles.css'] = cssHashed;
   const origKB = (srcCSS.length / 1024).toFixed(1);
   const minKB  = (cssResult.styles.length / 1024).toFixed(1);
-  console.log(`  ✓ dist/styles.css (${origKB} KB → ${minKB} KB)\n`);
+  console.log(`  ✓ dist/${cssHashed} (${origKB} KB → ${minKB} KB)\n`);
 
-  // 4. Copy static files unchanged
+  // 4. Copy static files — HTML files get script/link srcs rewritten to hashed filenames
   const staticFiles = ['index.html','app.html', 'auth.html', 'sw.js', 'manifest.json', 'favicon.ico', 'sitemap.xml', 'robots.txt'];
   for (const file of staticFiles) {
-    if (fs.existsSync(file)) {
+    if (!fs.existsSync(file)) continue;
+    if (file.endsWith('.html')) {
+      let html = fs.readFileSync(file, 'utf8');
+      // Rewrite script src / link href to hashed filenames.
+      // Handles bare refs (app.js) and already-versioned refs (app.js?v=2).
+      for (const [orig, hashed] of Object.entries(fileMap)) {
+        // Strip any existing ?v=... query string then swap filename
+        html = html
+          .split(`src="${orig}?`).join(`__SPLIT__SRC__`)
+          .split(`href="${orig}?`).join(`__SPLIT__HREF__`)
+          .split(`src="${orig}"`).join(`src="${hashed}"`)
+          .split(`href="${orig}"`).join(`href="${hashed}"`);
+        // Clean up the split markers (drop stale ?v=N entirely)
+        html = html
+          .replace(/__SPLIT__SRC__[^"]*"/g, `src="${hashed}"`)
+          .replace(/__SPLIT__HREF__[^"]*"/g, `href="${hashed}"`);
+      }
+      fs.writeFileSync(path.join(OUT, file), html);
+      console.log(`  ✓ dist/${file} (rewritten with hashed assets)`);
+    } else {
       fs.copyFileSync(file, path.join(OUT, file));
       console.log(`  ✓ dist/${file} (copied)`);
     }
