@@ -212,6 +212,20 @@
 
   function isActive(item) { return item.status !== STATUS.MASTERED; }
 
+  // ─── Recovery-hours sync helper ───────────────────────────────────────────
+  // Snaps a minute value to the nearest dropdown option.
+  // Extracted so both init() and renderPage() can call it.
+
+  const RECOVERY_HOUR_OPTIONS = [1, 1.5, 2, 3, 4];
+
+  function _snapToRecoveryOption(goalMinutes) {
+    if (!goalMinutes || goalMinutes <= 0) return null;   // caller keeps current default
+    const goalHours = goalMinutes / 60;
+    return RECOVERY_HOUR_OPTIONS.reduce((best, opt) =>
+      Math.abs(opt - goalHours) < Math.abs(best - goalHours) ? opt : best
+    );
+  }
+
   // ─── Main Object ──────────────────────────────────────────────────────────
 
   const Backlog = {
@@ -219,17 +233,30 @@
       items:         [],
       loading:       false,
       filter:        'all',
-      recoveryHours: 2,
+      recoveryHours: 2,          // hard default — overwritten once profile loads
+      _syncedFromSettings: false // tracks whether we already pulled from profile
     },
-    _recoveryHoursSynced: false, // becomes true once we've pulled the default from settings
 
     // ── Bootstrap ────────────────────────────────────────────────────────────
 
     async init(userId) {
       if (!userId) return;
+      this._syncRecoveryHoursFromSettings();
       await this._loadItems(userId);
       this._refreshDashboardWidget();
       updateNavBadge(this._activeItems().length);
+    },
+
+    // Pull daily_study_goal from profile and snap to nearest dropdown option.
+    // Safe to call multiple times — only overwrites the default once, so a
+    // manual dropdown override by the user is never clobbered mid-session.
+    _syncRecoveryHoursFromSettings() {
+      if (this.state._syncedFromSettings) return;        // already applied once
+      const mins = App?.state?.profile?.dailyGoalMinutes;
+      const snapped = _snapToRecoveryOption(mins);
+      if (snapped === null) return;                       // profile not ready yet
+      this.state.recoveryHours = snapped;
+      this.state._syncedFromSettings = true;
     },
 
     // ── Data ─────────────────────────────────────────────────────────────────
@@ -586,6 +613,7 @@
       const parsed = parseFloat(h);
       if (isNaN(parsed) || parsed <= 0) return;
       this.state.recoveryHours = parsed;
+      this.state._syncedFromSettings = true; // user chose manually — don't overwrite
       const el = document.getElementById('bl-recovery-plan');
       if (el) el.outerHTML = this._renderRecoveryPlan();
     },
@@ -637,6 +665,10 @@
       if (!userId) { el.innerHTML = `<div class="empty-state"><div class="empty-state-title">Sign in to view your backlog</div></div>`; return; }
       el.innerHTML = `<div style="padding:40px;text-align:center;color:var(--text-muted);font-size:.85rem">Loading…</div>`;
       await this._loadItems(userId);
+
+      // ── Second-chance sync: profile is guaranteed loaded by now ──
+      this._syncRecoveryHoursFromSettings();
+
       const active = this._activeItems();
       updateNavBadge(active.length);
 
@@ -710,28 +742,7 @@
         </div>`;
     },
 
-    // Defaults the Recovery Plan hours to the user's daily_study_goal
-    // (App.state.profile.dailyGoalMinutes, in minutes), snapped to the
-    // nearest available dropdown option. Runs once, on first render of this
-    // widget — by then App's profile fetch has long since resolved (unlike
-    // Backlog.init(), which can fire before the profile loads). Guarded by
-    // _recoveryHoursSynced so a manual override via setRecoveryHours() is
-    // never silently overwritten on a later re-render.
-    _syncRecoveryHoursOnce() {
-      if (this._recoveryHoursSynced) return;
-      this._recoveryHoursSynced = true;
-      const RECOVERY_HOUR_OPTIONS = [1, 1.5, 2, 3, 4];
-      const mins = App?.state?.profile?.dailyGoalMinutes;
-      if (!mins || mins <= 0) return; // keep existing default (2h) if settings unavailable
-      const goalHours = mins / 60;
-      const nearest = RECOVERY_HOUR_OPTIONS.reduce((best, opt) =>
-        Math.abs(opt - goalHours) < Math.abs(best - goalHours) ? opt : best
-      );
-      this.state.recoveryHours = nearest;
-    },
-
     _renderRecoveryPlan() {
-      this._syncRecoveryHoursOnce();
       const stats = this._stats();
       const h     = this.state.recoveryHours;
       const daysToExam = App?.getDaysToExam?.() ?? null;
