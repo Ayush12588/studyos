@@ -1676,10 +1676,10 @@ const App={
             case 'social': // lucide: globe
                 return `<svg ${common} ${stroke}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`;
             case 'hindi':
-                // No Devanagari glyph exists in Lucide. Bumped from 15px/700 -> 17px/800 so
-                // the glyph carries equivalent visual weight to a 2px-stroke 24x24 icon at
-                // the same render size — re-check against real text next to it in app.html.
-                return `<svg ${common}><text x="12" y="17.5" text-anchor="middle" font-size="17" font-weight="800" fill="${color}">ह</text></svg>`;
+                // No Devanagari glyph exists in Lucide. 17px/800 still read as visibly
+                // smaller/thinner than the 2px-stroke icons (confirmed against rendered
+                // screenshot) — pushed further to 21px/900 and nudged baseline down.
+                return `<svg ${common}><text x="12" y="18" text-anchor="middle" font-size="21" font-weight="900" fill="${color}">ह</text></svg>`;
             case 'custom':
             default:{
                 const letter=((subject&&subject.name)||'?').trim().charAt(0).toUpperCase()||'?';
