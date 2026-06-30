@@ -568,7 +568,7 @@
 
     // ── Add Modal ─────────────────────────────────────────────────────────────
 
-    async openAddModal() {
+    async openAddModal(prefill) {
       if (!App?.state?.subjects?.length) await App?._loadTabData('subjects');
       const subjects   = App?.state?.subjects || [];
       const subjectSel = document.getElementById('bl-subject');
@@ -592,6 +592,20 @@
       document.getElementById('bl-topic').value = '';
       document.getElementById('bl-due').value   = '';
       document.querySelectorAll('input[name="bl-type"]').forEach(r => r.checked = false);
+      // Optional prefill — e.g. from the chapter detail modal's "Add to Backlog" button.
+      // Existing callers pass no args, so this block is a no-op for them.
+      if (prefill?.subjectName) {
+        const subjectExists = subjects.some(s => s.name === prefill.subjectName);
+        if (subjectExists) {
+          subjectSel.value = prefill.subjectName;
+          subjectSel.onchange(); // manually populate bl-chapter, since it's normally built lazily on change
+          if (prefill.chapterName) {
+            const chapterSel = document.getElementById('bl-chapter');
+            const chapterExists = [...chapterSel.options].some(o => o.value === prefill.chapterName);
+            if (chapterExists) chapterSel.value = prefill.chapterName;
+          }
+        }
+      }
       App.openModal('modal-backlog-add');
     },
 

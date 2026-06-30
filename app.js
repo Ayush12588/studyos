@@ -1654,6 +1654,7 @@ const App={
     daysBetween(d1,d2){return Math.floor((new Date(d2)-new Date(d1))/864e5)},
     formatMin(m){const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}m`:`${min}m`},
     formatSec(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`},
+    fmtShort(ds){return ds?new Date(ds+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):null},
     getAllChapters(){const c=[];this.state.subjects.forEach(s=>s.chapters.forEach(ch=>c.push({...ch,subjectName:s.name,subjectColor:s.color,subjectIcon:s.icon,subjectId:s.id})));return c},
     getSubjectById(id){return this.state.subjects.find(s=>s.id===id)},
     getChapter(sId,cId){const s=this.getSubjectById(sId);return s?s.chapters.find(c=>c.id===cId):null},
@@ -1664,6 +1665,21 @@ const App={
     getTotalChapters(){return this.getAllChapters().length},
     getOverdueChapters(){const t=this.today();return this.getAllChapters().filter(c=>c.deadline&&c.deadline<t&&c.status!=='completed'&&c.status!=='revised')},
     getRevisionsDue(){const t=new Date(),r=[];this.getAllChapters().forEach(ch=>{if(ch.status==='completed'||ch.status==='revised'){const lr=(ch.revisionDates||[]).length>0?new Date((ch.revisionDates||[])[((ch.revisionDates||[]).length-1)]):(ch.completionDate?new Date(ch.completionDate):null);if(lr){const ds=Math.floor((t-lr)/864e5),iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount,iv.length-1)];if(ds>=ni)r.push({...ch,daysSince:ds,nextInterval:ni})}}});return r},
+    // Per-chapter SRS due-date calc, reusing the same [1,3,7,14,30] table as getRevisionsDue.
+    // Unlike getRevisionsDue (which only returns chapters that ARE due), this returns the
+    // due date regardless of state, for display purposes (e.g. "Due Jun 20" vs "Overdue 2d").
+    getNextRevisionInfo(ch){
+        if(!ch||(ch.status!=='completed'&&ch.status!=='revised'))return null;
+        const dates=ch.revisionDates||[];
+        const anchor=dates.length>0?dates[dates.length-1]:ch.completionDate;
+        if(!anchor)return null;
+        const iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount||0,iv.length-1)];
+        const anchorDate=new Date(anchor+'T12:00');
+        const dueDate=new Date(anchorDate);dueDate.setDate(dueDate.getDate()+ni);
+        const today=new Date(this.today()+'T12:00');
+        const daysUntil=Math.round((dueDate-today)/864e5);
+        return{dueDate:dueDate.toISOString().split('T')[0],isDue:daysUntil<=0,daysUntil};
+    },
 
     getReadinessScore(){
         const total=this.getTotalChapters();if(!total)return 0;
@@ -2790,7 +2806,7 @@ const App={
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
-        const fmtShort=ds=>ds?new Date(ds+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):null;
+        const fmtShort=this.fmtShort.bind(this);
 
         // Built once per render O(sessions) — keyed by chapterId
         const lastStudiedMap=new Map();
@@ -2888,13 +2904,109 @@ const App={
 
     openChapterDetail(sId,cId){
         const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
-        const ss=this.state.sessions.filter(s=>s.chapterId===cId),tt=ss.reduce((a,s)=>a+s.timeSpent,0);
+        const ss=this.state.sessions.filter(s=>s.chapterId===cId);
+        const lastStudied=ss.length?ss.reduce((a,s)=>s.date>a?s.date:a,ss[0].date):null;
         const ov=ch.deadline&&ch.deadline<this.today()&&ch.status!=='completed'&&ch.status!=='revised';
         const exKey=sId+'_'+cId;
         const exercises=this.state.exercises[exKey]||[];
-        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div><div class="grid grid-3" style="margin-bottom:18px"><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${this.formatMin(tt)}</p><p style="font-size:.7rem;color:var(--text-muted)">Time</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ch.revisionCount}</p><p style="font-size:.7rem;color:var(--text-muted)">Revisions</p></div><div class="card" style="padding:14px;text-align:center"><p style="font-size:1.2rem;font-weight:700">${ss.length}</p><p style="font-size:.7rem;color:var(--text-muted)">Sessions</p></div></div><div class="form-row" style="margin-bottom:16px"><div class="form-group" style="margin:0"><label class="form-label">Status</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','status',this.value)"><option value="not-started" ${ch.status==='not-started'?'selected':''}>Not Started</option><option value="in-progress" ${ch.status==='in-progress'?'selected':''}>In Progress</option><option value="completed" ${ch.status==='completed'?'selected':''}>Completed</option><option value="revised" ${ch.status==='revised'?'selected':''}>Revised</option></select></div><div class="form-group" style="margin:0"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div></div><div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--text-danger);font-size:.75rem;margin-top:4px">Overdue!</p>':''}</div><div class="form-group"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Study notes..." onchange="App.updateChapterField('${sId}','${cId}','notes',this.value)">${ch.notes||''}</textarea></div><div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>`;
-        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">Log Study</button>`;
+        const hasDeadlineOrExercises=!!ch.deadline||exercises.length>0;
+
+        // SECTION 1 — stats
+        const revInfo=this.getNextRevisionInfo(ch);
+        let nextRevHtml,nextRevColor='var(--text-primary)';
+        if(!revInfo){nextRevHtml='Not due yet';nextRevColor='var(--text-muted)';}
+        else if(revInfo.isDue){nextRevHtml=revInfo.daysUntil<0?`Overdue ${Math.abs(revInfo.daysUntil)}d`:'Due today';nextRevColor='var(--text-danger)';}
+        else{nextRevHtml=`Due ${this.fmtShort(revInfo.dueDate)}`;}
+
+        const statusLabels={'not-started':'Not Started','in-progress':'In Progress','completed':'Completed','revised':'Revised'};
+        const statTiles=`<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Last studied</p><p style="font-size:.95rem;font-weight:600">${lastStudied?this.fmtShort(lastStudied):'Never'}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Times revised</p><p style="font-size:.95rem;font-weight:600">${ch.revisionCount||0}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Next revision</p><p style="font-size:.95rem;font-weight:600;color:${nextRevColor}">${nextRevHtml}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Difficulty</p><p style="font-size:.95rem;font-weight:600;text-transform:capitalize">${ch.difficulty}</p></div>
+        </div>`;
+
+        // SECTION 2 — quick actions
+        const quickActions=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">Log Session</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.markRevised('${sId}','${cId}')">Mark Revised</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.openBacklogFromChapter('${sId}','${cId}')">Add to Backlog</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.startFocusFromChapter('${sId}','${cId}')">Start Focus Timer</button>
+        </div>`;
+
+        // SECTION 3 — revision history (max 5, quality badge if present)
+        const qualityStyle={shaky:'background:rgba(239,68,68,0.12);color:var(--text-danger)',ok:'background:rgba(249,115,22,0.12);color:#F97316',solid:'background:rgba(34,197,94,0.12);color:#22C55E'};
+        const qualityLabel={shaky:'Shaky',ok:'OK',solid:'Solid'};
+        const revDates=ch.revisionDates||[],revQuality=ch.revisionQuality||[];
+        const revRows=revDates.slice().reverse().slice(0,5).map((d,i)=>{
+            const origIdx=revDates.length-1-i;
+            const q=revQuality[origIdx];
+            return`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:.8rem"><span>${this.fmtShort(d)} · Rev ${origIdx+1}</span>${q?`<span class="tag" style="font-size:.68rem;${qualityStyle[q]||''}">${qualityLabel[q]||q}</span>`:''}</div>`;
+        }).join('');
+        const revisionHistory=revDates.length>0?`<div style="margin-bottom:18px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Revision history</p>${revRows}${revDates.length>5?`<button class="btn btn-ghost btn-sm" style="font-size:.72rem;color:#F97316;padding:4px 0" onclick="App.navigate('revisions')">View all ${revDates.length} →</button>`:''}</div>`:'';
+
+        // SECTION 4 — status segmented control + difficulty dropdown
+        const statusSeg=`<div style="margin-bottom:14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Status</p><div style="display:flex;border:1px solid var(--border,#27272a);border-radius:8px;overflow:hidden">${Object.entries(statusLabels).map(([val,label],i)=>`<button onclick="App.setChapterStatus('${sId}','${cId}','${val}')" style="flex:1;padding:7px 4px;font-size:.7rem;border:none;cursor:pointer;${i>0?'border-left:1px solid var(--border,#27272a);':''}background:${ch.status===val?'var(--accent,#F97316)':'transparent'};color:${ch.status===val?'#fff':'var(--text-secondary)'}">${label}</button>`).join('')}</div></div>
+        <div class="form-group" style="margin-bottom:18px"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div>`;
+
+        // SECTION 5 — notes, save on blur only
+        const notesSection=`<div class="form-group" style="margin-bottom:18px"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Study notes..." onblur="App.saveChapterNotes('${sId}','${cId}',this.value)">${ch.notes||''}</textarea></div>`;
+
+        // Deadline + Exercises — collapsed below notes, open by default only if populated
+        const deadlineExercises=`<details ${hasDeadlineOrExercises?'open':''} style="margin-bottom:4px"><summary style="font-size:.75rem;color:var(--text-muted);cursor:pointer;margin-bottom:10px">Deadline & exercises</summary>
+            <div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--text-danger);font-size:.75rem;margin-top:4px">Overdue!</p>':''}</div>
+            <div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>
+        </details>`;
+
+        document.getElementById('detail-body').innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px"><div><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><span class="tag tag-${ch.status.replace(' ','-')}" style="margin-left:6px">${ch.status.replace('-',' ')}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div></div>${statTiles}${quickActions}${revisionHistory}${statusSeg}${notesSection}${deadlineExercises}`;
+        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button>`;
         this.openModal('modal-detail');
+    },
+    setChapterStatus(sId,cId,status){
+        this.updateChapterField(sId,cId,'status',status);
+        this.openChapterDetail(sId,cId);
+    },
+    saveChapterNotes(sId,cId,val){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        if(ch.notes===val)return; // no-op if unchanged, matches native blur/onchange semantics
+        this.updateChapterField(sId,cId,'notes',val);
+    },
+    markRevised(sId,cId){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        this._pendingRevisionQuality={sId,cId};
+        document.getElementById('detail-body').insertAdjacentHTML('afterbegin',`<div id="rev-quality-prompt" style="background:var(--card-bg,#18181b);border:1px solid var(--border,#27272a);border-radius:8px;padding:10px 12px;margin-bottom:14px"><p style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">How did that revision go?</p><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" style="flex:1" onclick="App.confirmRevision('${sId}','${cId}','shaky')">Shaky</button><button class="btn btn-sm btn-secondary" style="flex:1" onclick="App.confirmRevision('${sId}','${cId}','ok')">OK</button><button class="btn btn-sm btn-secondary" style="flex:1" onclick="App.confirmRevision('${sId}','${cId}','solid')">Solid</button></div></div>`);
+    },
+    confirmRevision(sId,cId,quality){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        ch.revisionCount=(ch.revisionCount||0)+1;
+        ch.revisionDates=ch.revisionDates||[];ch.revisionDates.push(this.today());
+        ch.revisionQuality=ch.revisionQuality||[];ch.revisionQuality.push(quality);
+        ch.status='revised';
+        if(!ch.completionDate)ch.completionDate=this.today();
+        const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        if(_isUUID(ch.id)){
+            DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,revision_quality:ch.revisionQuality,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] confirmRevision chapters.update:',error);});
+        }
+        this.addXP(15,'Revision done');this.recordStudyDay();this.save();
+        this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success');
+        this.openChapterDetail(sId,cId);
+    },
+    openBacklogFromChapter(sId,cId){
+        const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
+        this.closeModal('modal-detail');
+        if(window.Backlog&&typeof window.Backlog.openAddModal==='function'){
+            window.Backlog.openAddModal({subjectName:sub.name,chapterName:ch.name});
+        }
+    },
+    startFocusFromChapter(sId,cId){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        this.closeModal('modal-detail');
+        // Set state directly rather than calling setFocusSubject/setFocusChapter —
+        // those each trigger their own renderPomodoro() pass and a .focus() call,
+        // which is wasted work (and a stray focus-steal) before the page is visible.
+        this.pomodoro.focusSubjectId=sId;
+        this.pomodoro.focusChapterId=cId;
+        this.navigate('pomodoro');
     },
     updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){const _dbField={status:'status',difficulty:'difficulty',deadline:'deadline',notes:'notes'}[f];if(_dbField){const _payload={[_dbField]:v};if(f==='status'&&v==='completed')_payload.completion_date=ch.completionDate;DB.chapters.update(ch.id,_payload).then(({error})=>{if(error)console.error('[DB] updateChapterField:',error);});}}this.save();this.render()},
 
