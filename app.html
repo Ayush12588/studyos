@@ -203,11 +203,16 @@
             </div>
         </div>
         <nav class="nav">
-            <!-- CORE: always visible, no collapse, highest-frequency actions -->
+            <!-- CORE: always visible, no collapse, daily-touch actions -->
             <div class="nav-section">Core</div>
             <div class="nav-item active" data-page="dashboard" onclick="App.navigate('dashboard')">
                 <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/></svg></span>
                 <span class="nav-label">Dashboard</span>
+            </div>
+            <div class="nav-item" data-page="subjects" onclick="App.navigate('subjects')">
+                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
+                <span class="nav-label">Subjects</span>
+                <span class="nav-badge nav-badge-neutral" id="doubt-badge" style="display:none">0</span>
             </div>
             <div class="nav-item" data-page="tasks" onclick="App.navigate('tasks')">
                 <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span>
@@ -218,21 +223,13 @@
                 <span class="nav-label">Backlog</span>
                 <span class="nav-badge nav-badge-neutral" id="backlog-nav-badge" style="display:none">0</span>
             </div>
-            <div class="nav-item" data-page="subjects" onclick="App.navigate('subjects')">
-                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg></span>
-                <span class="nav-label">Subjects</span>
-            </div>
-            <div class="nav-item" data-page="log" onclick="App.navigate('log')">
-                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg></span>
-                <span class="nav-label">Study Log</span>
-            </div>
 
-            <!-- WORK: collapsible, default open -->
-            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('work')" id="nav-group-work-header">
-                <span>Work</span>
-                <span class="nav-chevron" id="nav-chevron-work">▾</span>
+            <!-- STUDY: frequent, secondary; collapsible, default expanded -->
+            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('study')" id="nav-group-study-header">
+                <span>Study</span>
+                <span class="nav-chevron" id="nav-chevron-study">▾</span>
             </div>
-            <div class="nav-group" id="nav-group-work">
+            <div class="nav-group" id="nav-group-study">
                 <div class="nav-item" data-page="revisions" onclick="App.navigate('revisions')">
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></span>
                     <span class="nav-label">Revisions</span>
@@ -247,72 +244,32 @@
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                     <span class="nav-label">AI Coach</span>
                 </div>
-                <div class="nav-item" data-page="pomodoro" onclick="App.navigate('pomodoro')">
-                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span>
-                    <span class="nav-label">Focus Timer</span>
-                </div>
-                <div class="nav-item" data-page="doubts" onclick="App.navigate('doubts')">
-                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg></span>
-                    <span class="nav-label">Doubts</span>
-                    <span class="nav-badge nav-badge-neutral" id="doubt-badge" style="display:none">0</span>
-                </div>
             </div>
 
-            <!-- REVIEW: collapsible, default collapsed -->
+            <!-- REVIEW: occasional; collapsible, default collapsed -->
             <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('review')" id="nav-group-review-header">
                 <span>Review</span>
                 <span class="nav-chevron collapsed" id="nav-chevron-review">▾</span>
             </div>
             <div class="nav-group collapsed" id="nav-group-review">
-                <div class="nav-item" data-page="exams" onclick="App.navigate('exams')">
-                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
-                    <span class="nav-label">Exam Scores</span>
-                </div>
                 <div class="nav-item" data-page="weekly" onclick="App.navigate('weekly')">
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
                     <span class="nav-label">Analytics</span>
                     <span class="nav-badge" id="overdue-badge" style="display:none">0</span>
                 </div>
-            </div>
-
-            <!-- LIBRARY: collapsible, default collapsed -->
-            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('library')" id="nav-group-library-header">
-                <span>Library</span>
-                <span class="nav-chevron collapsed" id="nav-chevron-library">▾</span>
-            </div>
-            <div class="nav-group collapsed" id="nav-group-library">
-                <div class="nav-item" data-page="notes" onclick="App.navigate('notes')">
-                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span>
-                    <span class="nav-label">Notes</span>
+                <div class="nav-item" data-page="exams" onclick="App.navigate('exams')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/></svg></span>
+                    <span class="nav-label">Exam Scores</span>
                 </div>
-                <div class="nav-item" data-page="resources" onclick="App.navigate('resources')">
-                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
-                    <span class="nav-label">Resources</span>
+                <div class="nav-item" data-page="settings" onclick="App.navigate('settings')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
+                    <span class="nav-label">Settings</span>
                 </div>
-            </div>
-
-            <!-- ACCOUNT: pinned, no collapse (kept out of scroll-heavy groups) -->
-            <div class="nav-section">Account</div>
-            <div class="nav-item" data-page="rewards" onclick="App.navigate('rewards')">
-                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg></span>
-                <span class="nav-label">Rewards</span>
-            </div>
-            <div class="nav-item" data-page="settings" onclick="App.navigate('settings')">
-                <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></span>
-                <span class="nav-label">Settings</span>
             </div>
         </nav>
 
-        <!-- Profile + Exam countdown -->
+        <!-- Exam countdown -->
         <div class="sidebar-profile">
-            <div class="profile-card">
-                <div class="profile-level">
-                    <span class="profile-name" id="sb-name">Student</span>
-                    <span class="profile-lvl" id="sb-level">LVL 1</span>
-                </div>
-                <div class="xp-bar"><div class="xp-fill" id="sb-xp-fill" style="width:0%"></div></div>
-                <div class="xp-text" id="sb-xp-text">0 / 50 XP</div>
-            </div>
             <div class="exam-countdown-chip" id="sidebar-exam-chip" style="display:none">
                 <div>
                     <div class="ecc-days" id="sidebar-exam-days">—</div>
@@ -428,7 +385,7 @@
 </div>
 
 <!-- MODALS — header titles cleaned of emojis -->
-<div class="modal-overlay" id="modal-log"><div class="modal"><div class="modal-header"><h2>Log Study Session</h2><button class="modal-close" onclick="App.closeModal('modal-log')" aria-label="Close">×</button></div><div class="modal-body" id="log-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-log')">Cancel</button><button class="btn btn-primary" onclick="App.saveStudyLog()">Save Session</button></div></div></div>
+<div class="modal-overlay" id="modal-log"><div class="modal"><div class="modal-header"><h2>Log Study Session</h2><button class="modal-close" onclick="App.closeModal('modal-log')" aria-label="Close">×</button></div><div class="modal-body" id="log-form-body"></div><div class="modal-footer"><button class="btn btn-link" onclick="App.closeModal('modal-log');App.navigate('log')">View History</button><button class="btn btn-secondary" onclick="App.closeModal('modal-log')">Cancel</button><button class="btn btn-primary" onclick="App.saveStudyLog()">Save Session</button></div></div></div>
 
 <div class="modal-overlay" id="modal-chapter"><div class="modal"><div class="modal-header"><h2>Add Chapter</h2><button class="modal-close" onclick="App.closeModal('modal-chapter')" aria-label="Close">×</button></div><div class="modal-body" id="chapter-form-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-chapter')">Cancel</button><button class="btn btn-primary" onclick="App.saveChapter()">Save Chapter</button></div></div></div>
 
