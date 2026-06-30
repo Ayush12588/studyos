@@ -2629,14 +2629,20 @@ const App={
         </div>`;
 
         // ── SECTION 4: THIS WEEK BAR CHART (with goal reference line) ─────
-        // The goal line sits GOAL_LINE_INSET_PX from the top of .db-week-strip
-        // (STRIP_HEIGHT_PX tall). Bar heights are scaled against the remaining
-        // space below that inset, so a bar at exactly 100% of the daily goal
-        // reaches precisely the line, and anything under goal stays strictly
-        // below it — never touching. Keep GOAL_LINE_INSET_PX in sync with the
-        // .db-week-goal-line `top` value in styles.css.
-        const STRIP_HEIGHT_PX=72, GOAL_LINE_INSET_PX=10;
-        const maxBarPct=Math.round((STRIP_HEIGHT_PX-GOAL_LINE_INSET_PX)/STRIP_HEIGHT_PX*100); // % of strip a goal-reaching bar may fill
+        // The goal line sits GOAL_LINE_INSET_PX from the top of .db-week-strip.
+        // Bars render inside .db-week-bar-wrap, which is SHORTER than the 72px
+        // strip because .db-week-day (the day label below) eats vertical space
+        // from the same flex column. Measured via DevTools: bar-wrap ≈ 54.5px.
+        // Both .db-week-bar-wrap and the goal line's inset share the same
+        // top-origin coordinate system (bar-wrap is flush to the column's top
+        // since it's first in flex-direction:column order), so maxBarPct is
+        // simply (wrap height - inset) / wrap height. A bar at exactly the
+        // daily goal then reaches precisely the line; anything under goal
+        // stays strictly below it. If .db-week-day's font-size/margin ever
+        // changes, re-measure .db-week-bar-wrap's computed height and update
+        // BAR_WRAP_HEIGHT_PX below.
+        const GOAL_LINE_INSET_PX=10, BAR_WRAP_HEIGHT_PX=54.5;
+        const maxBarPct=Math.round((BAR_WRAP_HEIGHT_PX-GOAL_LINE_INSET_PX)/BAR_WRAP_HEIGHT_PX*100); // % of bar-wrap a goal-reaching bar may fill
         const weekHTML=`<div class="db-week-card card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">This Week</span>
