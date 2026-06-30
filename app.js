@@ -2629,9 +2629,14 @@ const App={
         </div>`;
 
         // ── SECTION 4: THIS WEEK BAR CHART (with goal reference line) ─────
-        // The goal line marks 100% of the daily goal. It's pinned near the top
-        // of .db-week-strip via the .db-week-goal-line CSS class, matching the
-        // same ceiling that bar heights are clamped to below (Math.min(100,...)).
+        // The goal line sits GOAL_LINE_INSET_PX from the top of .db-week-strip
+        // (STRIP_HEIGHT_PX tall). Bar heights are scaled against the remaining
+        // space below that inset, so a bar at exactly 100% of the daily goal
+        // reaches precisely the line, and anything under goal stays strictly
+        // below it — never touching. Keep GOAL_LINE_INSET_PX in sync with the
+        // .db-week-goal-line `top` value in styles.css.
+        const STRIP_HEIGHT_PX=72, GOAL_LINE_INSET_PX=10;
+        const maxBarPct=Math.round((STRIP_HEIGHT_PX-GOAL_LINE_INSET_PX)/STRIP_HEIGHT_PX*100); // % of strip a goal-reaching bar may fill
         const weekHTML=`<div class="db-week-card card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">This Week</span>
@@ -2644,7 +2649,7 @@ const App={
                 ${wd.days.map(d=>{
                     const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);
                     const isToday=d===this.today();
-                    const height=mins>0?Math.max(20,Math.min(100,Math.round(mins/gm*100)))+'%':'4px';
+                    const height=mins>0?Math.max(20,Math.min(maxBarPct,Math.round(mins/gm*maxBarPct)))+'%':'4px';
                     const dayName=new Date(d+'T12:00').toLocaleDateString('en',{weekday:'short'});
                     return`<div class="db-week-col">
                         <div class="db-week-bar-wrap">

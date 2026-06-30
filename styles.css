@@ -1121,12 +1121,14 @@ a { color: inherit; text-decoration: none; }
 
 /* Week chart bars */
 .db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
-/* Goal reference line: pinned near the top of the strip = 100% of daily goal.
-   Bars are height-clamped to the same 100% ceiling in JS, so this stays aligned
-   with the tallest possible bar regardless of db-week-strip's height. */
+/* Goal reference line: sits GOAL_LINE_INSET px from the top of the strip.
+   Bar heights in JS are scaled against (strip height - GOAL_LINE_INSET), so a
+   bar at exactly 100% of the daily goal reaches precisely this line, and any
+   bar under goal stays strictly below it. Keep this value in sync with the
+   GOAL_LINE_INSET constant in app.js's renderWeekChart. */
 .db-week-goal-line {
     position: absolute;
-    top: 6px;
+    top: 10px;
     left: 0;
     right: 28px;
     border-top: 1.5px dashed #F97316;
