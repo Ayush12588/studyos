@@ -2629,28 +2629,22 @@ const App={
         </div>`;
 
         // ── SECTION 4: THIS WEEK BAR CHART (with goal reference line) ─────
-        // .db-week-strip uses align-items:flex-end, so the strip and
-        // .db-week-bar-wrap share the SAME BOTTOM EDGE (verified — bar-wrap is
-        // NOT flush to the strip's top; .db-week-day pushes it up from the
-        // bottom). Strip (72px) and wrap (measured ≈54.5px) are different
-        // heights, so a CSS % can't describe "the goal line" consistently in
-        // both boxes — we need one absolute px distance from that shared
-        // bottom edge. Bars are scaled 0–100% of the wrap's own height (their
-        // native coordinate space), so "100% of goal" bar height equals
-        // BAR_WRAP_HEIGHT_PX exactly. The goal line is positioned at that same
-        // px value via the --goal-line-bottom-px CSS var, so a bar reaching
-        // the daily goal touches the line by construction — not by two
-        // independently-tuned constants. If .db-week-day's font/margin changes,
-        // re-measure .db-week-bar-wrap's computed height in DevTools and
-        // update BAR_WRAP_HEIGHT_PX.
-        const BAR_WRAP_HEIGHT_PX=54.5;
+        // .db-week-col has no justify-content set (defaults to flex-start), so
+        // .db-week-bar-wrap (first child) packs against the column's TOP —
+        // verified via DevTools that bar-wrap's top edge === strip's top edge.
+        // The goal line (CSS: top:0 on .db-week-goal-line) shares that exact
+        // origin. Bars render at 0–100% height of their own bar-wrap (the
+        // mins/gm*100 formula below, clamped to 100), so a bar at exactly the
+        // daily goal fills its wrap completely and its top edge lands exactly
+        // at the goal line — by shared coordinate origin, not a hardcoded
+        // pixel constant.
         const weekHTML=`<div class="db-week-card card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">This Week</span>
                 <span style="font-size:.78rem;color:var(--text-muted)">${wd.sessions.reduce((a,s)=>a+s.timeSpent,0)>0?this.formatMin(wd.sessions.reduce((a,s)=>a+s.timeSpent,0))+' total':''}</span>
             </div>
             <div class="db-week-strip" style="position:relative;">
-                <div class="db-week-goal-line" style="--goal-line-bottom-px:${BAR_WRAP_HEIGHT_PX}px">
+                <div class="db-week-goal-line">
                     <span>Goal</span>
                 </div>
                 ${wd.days.map(d=>{
