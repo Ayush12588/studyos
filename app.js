@@ -4585,6 +4585,13 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         this.renderQuiz();
     },
 
+    toggleQuizSettings(subjectId){
+        if(!this._quizSettingsOpen) this._quizSettingsOpen=new Set();
+        if(this._quizSettingsOpen.has(subjectId)) this._quizSettingsOpen.delete(subjectId);
+        else this._quizSettingsOpen.add(subjectId);
+        this.renderQuiz();
+    },
+
     renderQuiz(){
         const el=document.getElementById('page-quiz');
         if(!el) return;
@@ -4642,27 +4649,29 @@ ${subjects.map(s=>{
         dueBadge=`<span class="quiz-due-badge ok">${nextLabel}</span>`;
     }
     const barColor=lastScore>=80?'var(--color-success)':lastScore>=50?'var(--color-warning)':'var(--color-danger)';
+    const settingsOpen=this._quizSettingsOpen&&this._quizSettingsOpen.has(s.id);
     return `<div class="quiz-subject-card ${cardClass}">
-    <div style="padding:16px">
-        <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">
-            <div style="width:42px;height:42px;border-radius:10px;background:${s.color}22;display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0">${s.icon}</div>
-            <div style="flex:1;min-width:0">
-                <div style="font-size:.88rem;font-weight:700;color:var(--color-text-primary)">${s.name}</div>
-                <div style="font-size:.7rem;color:var(--text-muted);margin-top:2px">${completed.length} chapter${completed.length!==1?'s':''} ready</div>
+    <div class="quiz-subject-body">
+        <div class="quiz-subject-header">
+            <div class="quiz-subject-icon" style="--icon-bg:${s.color}22">${s.icon}</div>
+            <div class="quiz-subject-info">
+                <div class="quiz-subject-name">${s.name}</div>
+                <div class="quiz-subject-meta">${completed.length} chapter${completed.length!==1?'s':''} ready</div>
             </div>
             ${dueBadge}
+            <button class="quiz-gear-btn" title="Review interval settings" aria-label="Review interval settings" aria-expanded="${settingsOpen?'true':'false'}" onclick="event.stopPropagation();App.toggleQuizSettings('${s.id}')">⚙</button>
         </div>
+        ${settingsOpen?`<div class="quiz-interval-row">
+            <span class="quiz-interval-label">Review interval</span>
+            <div class="quiz-interval-chips">
+                ${[3,5,7,14].map(d=>`<button class="quiz-interval-chip ${interval===d?'selected':''}" onclick="event.stopPropagation();App.setQuizInterval('${s.id}',${d})">${d}d</button>`).join('')}
+            </div>
+        </div>`:''}
         ${lastScore!==undefined?`<div class="quiz-score-row">
             <div class="quiz-score-bar-wrap"><div class="quiz-score-bar-fill" style="width:${lastScore}%;background:${barColor}"></div></div>
             <div class="quiz-score-label">Last: <strong>${lastScore}%</strong>${avgScore!==null&&history.length>1?` · Avg <strong>${avgScore}%</strong>`:''}</div>
         </div>`:''}
-        ${history.length>0?`<div class="quiz-stats-row"><div class="quiz-stat-chip">Taken <strong>${history.length}×</strong></div>${hasCached?'<div class="quiz-stat-chip" style="color:var(--color-success)">✓ Cached</div>':''}</div>`:''}
-        <div class="quiz-interval-row">
-            <span class="quiz-interval-label">Review every</span>
-            <div class="quiz-interval-chips">
-                ${[3,5,7,14].map(d=>`<button class="quiz-interval-chip ${interval===d?'selected':''}" onclick="event.stopPropagation();App.setQuizInterval('${s.id}',${d})">${d}d</button>`).join('')}
-            </div>
-        </div>
+        ${history.length>0?`<div class="quiz-stats-row"><div class="quiz-stat-chip">Taken <strong>${history.length}×</strong></div>${hasCached?'<div class="quiz-stat-chip" style="color:var(--color-success)" title="Questions are pre-generated and ready to go" aria-label="Questions ready">✓ Ready</div>':''}</div>`:''}
         <button class="btn btn-primary" style="width:100%;justify-content:center" onclick="App.startQuiz('${s.id}')">
             ${isDue||!qd.lastQuizDate?'⚡ Start Quiz':'🔁 Quiz Again'}
         </button>
