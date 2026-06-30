@@ -1,11 +1,16 @@
-const CACHE_NAME = 'boardos-v8'; // bumped: exclude clarity.ms/umami.is from SW fetch interception
+const CACHE_NAME = 'boardos-v9'; // bumped: NETWORK_FIRST now covers extension-less paths after cleanUrls
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
 ];
 
 // App files — always fetched from network, never served stale from cache
-const NETWORK_FIRST = ['/', '/index.html', '/app.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
+// NOTE: both extension-less and .html variants are listed because Vercel's
+// cleanUrls rewrites /app.html -> /app at the routing layer, but a stale
+// service worker, a cached link, or a hardcoded .html reference could still
+// request the .html path during the transition. Keep both until every
+// internal reference has been migrated off .html.
+const NETWORK_FIRST = ['/', '/index', '/index.html', '/app', '/app.html', '/db.js', '/migrate.js', '/sw.js', '/manifest.json'];
 
 // ── Install: cache only external assets ──────────────────────────────
 self.addEventListener('install', event => {
