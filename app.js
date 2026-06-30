@@ -1805,6 +1805,147 @@ const App={
         // to be awarded on milestone days (day 7, 14, 21...).
     },
 
+    // ── STREAK MODAL ─────────────────────────────────────────────────────
+    // NOTE: "Best streak" has no persisted field in profile/Supabase today
+    // (only current streak is tracked). We compute it client-side from
+    // state.sessions as a best-effort longest-run estimate — accurate once
+    // session history is loaded, but not a true historical high if sessions
+    // predate this feature or get pruned. A real persisted best_streak would
+    // need a new Supabase column + _syncFullProfile field — flag if wanted.
+    async openStreakModal(){
+        this.openModal('modal-streak');
+        const body=document.getElementById('streak-modal-body');
+        body.innerHTML='<div class="streak-empty-hint">Loading…</div>';
+
+        // state.sessions is lazy-loaded per-tab (subjects/log/weekly/coach only).
+        // If none of those tabs have been visited yet, fetch full history now
+        // so the calendar + recent list aren't silently empty/wrong.
+        if(!this._loadedTabs?.has('sessions')){
+            const userId=window._supabaseUserId;
+            if(userId){
+                try{
+                    const{data:sessions,error}=await DB.sessions.getAll(userId);
+                    if(error)throw error;
+                    if(sessions){
+                        this.state.sessions=sessions.map(s=>({
+                            ...s,
+                            timeSpent:  s.time_spent  ?? s.timeSpent  ?? 0,
+                            subjectId:  s.subject_id  ?? s.subjectId  ?? '',
+                            chapterId:  s.chapter_id  ?? s.chapterId  ?? '',
+                            createdAt:  s.created_at  ?? s.createdAt  ?? Date.now(),
+                            time_spent:  undefined,
+                            subject_id:  undefined,
+                            chapter_id:  undefined,
+                            created_at:  undefined,
+                        }));
+                    }
+                    this._loadedTabs?.add('sessions');
+                }catch(e){console.error('[StudyOS] openStreakModal sessions fetch:',e)}
+            }
+        }
+        this.renderStreakModal();
+    },
+
+    renderStreakModal(){
+        const body=document.getElementById('streak-modal-body');
+        if(!body)return;
+        const sessions=this.state.sessions||[];
+        const studiedDates=new Set(sessions.map(s=>s.date).filter(Boolean));
+
+        // ── Stats ──
+        const currentStreak=this.state.profile.streak||0;
+        const bestStreak=this._calcBestStreak(studiedDates,currentStreak);
+        const daysStudied=this._activeDays||studiedDates.size||0;
+        const firstSession=this._firstSessionDate||(sessions.length>0?[...sessions].sort((a,b)=>a.date.localeCompare(b.date))[0].date:null);
+        const daysSinceFirst=firstSession?Math.max(1,this.daysBetween(firstSession,this.today())+1):1;
+        const consistency=firstSession?Math.min(100,Math.round((daysStudied/daysSinceFirst)*100)):0;
+
+        // ── Freeze slots ──
+        const freezes=this.state.streakFreezes||0;
+        const freezeSlots=Array.from({length:3},(_,i)=>i<freezes);
+
+        // ── Calendar ──
+        const calHtml=this._buildStreakCalendar(studiedDates);
+
+        // ── Recent sessions (last 5) ──
+        const recent=[...sessions].sort((a,b)=>(b.date||'').localeCompare(a.date||'')||(b.createdAt||0)-(a.createdAt||0)).slice(0,5);
+        const recentHtml=recent.length===0?'<div class="streak-empty-hint">No sessions logged yet.</div>':recent.map(s=>{
+            const d=new Date(s.date+'T00:00:00');
+            const dLabel=isNaN(d)?'—':d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+            const isFrozenDay=this.state.lastFreezeUsedDate===s.date;
+            if(isFrozenDay){
+                return `<div class="streak-session-row"><span class="streak-session-date">${dLabel}</span><span class="streak-session-main frozen-note">🧊 Freeze used · streak protected</span></div>`;
+            }
+            const ch=this.getChapter(s.subjectId,s.chapterId);
+            const subj=this.getSubjectById(s.subjectId);
+            const chapterName=ch?ch.name:'—';
+            const subjectLabel=subj?`${subj.icon} ${subj.name}`:'—';
+            return `<div class="streak-session-row"><span class="streak-session-date">${dLabel}</span><span class="streak-session-main">${chapterName} · ${subjectLabel}</span><span class="streak-session-dur">${this.formatMin(s.timeSpent||0)}</span></div>`;
+        }).join('');
+
+        body.innerHTML=`
+            <div class="streak-stats-row">
+                <div class="streak-stat-card"><div class="streak-stat-val">${currentStreak}</div><div class="streak-stat-label">Current Streak</div></div>
+                <div class="streak-stat-card"><div class="streak-stat-val">${bestStreak}</div><div class="streak-stat-label">Best Streak</div></div>
+                <div class="streak-stat-card"><div class="streak-stat-val">${consistency}%</div><div class="streak-stat-label">Consistency</div></div>
+            </div>
+            <div class="streak-section">
+                <div class="streak-section-title">Freeze Slots</div>
+                <div class="streak-freeze-row">${freezeSlots.map(f=>`<div class="streak-freeze-slot ${f?'filled':''}">${f?'🧊':''}</div>`).join('')}</div>
+                <div class="streak-freeze-hint">Earn a freeze at each 7-day streak.</div>
+            </div>
+            <div class="streak-section">
+                <div class="streak-section-title">${new Date().toLocaleDateString('en-US',{month:'long',year:'numeric'})}</div>
+                <div class="streak-calendar-grid">${calHtml}</div>
+            </div>
+            <div class="streak-section">
+                <div class="streak-section-title">Recent Sessions</div>
+                ${recentHtml}
+            </div>
+        `;
+    },
+
+    // Longest run of consecutive studied dates, ending at today if the
+    // current streak is active (keeps best >= current, which is always true).
+    _calcBestStreak(studiedDates,currentStreak){
+        if(studiedDates.size===0)return currentStreak;
+        const sorted=[...studiedDates].sort();
+        let best=1,run=1;
+        for(let i=1;i<sorted.length;i++){
+            if(this.daysBetween(sorted[i-1],sorted[i])===1)run++;
+            else run=1;
+            if(run>best)best=run;
+        }
+        return Math.max(best,currentStreak);
+    },
+
+    _buildStreakCalendar(studiedDates){
+        const now=new Date();
+        const year=now.getFullYear(),month=now.getMonth();
+        const firstOfMonth=new Date(year,month,1);
+        const daysInMonth=new Date(year,month+1,0).getDate();
+        const startDow=firstOfMonth.getDay(); // 0=Sun
+        const todayStr=this.today();
+        const lastFreezeDate=this.state.lastFreezeUsedDate;
+
+        const dow=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="streak-cal-dow">${d}</div>`).join('');
+        const leadingBlanks=Array.from({length:startDow},()=>'<div class="streak-cal-day empty"></div>').join('');
+
+        let cells='';
+        for(let day=1;day<=daysInMonth;day++){
+            const dateObj=new Date(year,month,day);
+            const dateStr=dateObj.toLocaleDateString('en-CA');
+            let cls='streak-cal-day';
+            if(dateStr===lastFreezeDate)cls+=' frozen';
+            else if(studiedDates.has(dateStr))cls+=' studied';
+            else if(dateStr>todayStr)cls+=' future';
+            else if(dateStr<todayStr)cls+=' missed';
+            if(dateStr===todayStr)cls+=' today';
+            cells+=`<div class="${cls}">${day}</div>`;
+        }
+        return dow+leadingBlanks+cells;
+    },
+
     // XP
     addXP(amt,reason){const ol=this.state.profile.level;this.state.profile.xp+=amt;this.state.profile.level=Math.floor(Math.sqrt(this.state.profile.xp/50))+1;this.updateSidebar();this.toast(`+${amt} XP — ${reason}`,'xp');if(this.state.profile.level>ol)setTimeout(()=>this.showLevelUp(this.state.profile.level),600);this.checkBadges();this._syncFullProfile();},
     // Fire-and-forget profile sync helpers
@@ -2980,7 +3121,8 @@ const App={
     // stopStopwatch, renderNotes, addNote (modal version), saveNoteFromModal, deleteNote,
     // renderCoach, getCoachMessage, renderRewards, renderSettings,
     // handleSearch, openModal, closeModal, openAddChapterModal, saveChapter, saveSubject, pickColor,
-    // exportData, importData, resetAll, toast, celebrate
+    // exportData, importData, resetAll, toast, celebrate,
+    // openStreakModal, renderStreakModal, _calcBestStreak, _buildStreakCalendar
         // EXAMS
     renderExams(){
         const el=document.getElementById('page-exams');const scores=this.state.examScores||[];
