@@ -1663,17 +1663,23 @@ const App={
         const color=(subject&&subject.color)||'#6366f1';
         const type=(subject&&subject.iconType)||this.getIconType(subject&&subject.name);
         const common=`width="${size}" height="${size}" viewBox="0 0 24 24" style="flex-shrink:0;vertical-align:-3px"`;
+        // Path-based icons below are verbatim path data from lucide-static (ISC license),
+        // chosen so all share viewBox/stroke-width and none reads smaller/weaker than another.
+        const stroke=`fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"`;
         switch(type){
-            case 'math':
-                return `<svg ${common}><text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="${color}" font-family="Georgia,serif">Σ</text></svg>`;
-            case 'science':
-                return `<svg ${common} fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-5.5 9.5A1 1 0 0 0 5.36 20h13.28a1 1 0 0 0 .86-1.5L14 9V3"/><path d="M8.5 14h7"/></svg>`;
-            case 'english':
-                return `<svg ${common} fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5C2 5.5 4.5 4 8 4s6 1.5 6 1.5v14S11.5 18 8 18s-6 1.5-6 1.5z"/><path d="M22 5.5C22 5.5 19.5 4 16 4s-6 1.5-6 1.5v14S12.5 18 16 18s6 1.5 6 1.5z"/></svg>`;
-            case 'social':
-                return `<svg ${common} fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>`;
+            case 'math': // lucide: sigma
+                return `<svg ${common} ${stroke}><path d="M18 7V5a1 1 0 0 0-1-1H6.5a.5.5 0 0 0-.4.8l4.5 6a2 2 0 0 1 0 2.4l-4.5 6a.5.5 0 0 0 .4.8H17a1 1 0 0 0 1-1v-2"/></svg>`;
+            case 'science': // lucide: flask-conical
+                return `<svg ${common} ${stroke}><path d="M14 2v6a2 2 0 0 0 .245.96l5.51 10.08A2 2 0 0 1 18 22H6a2 2 0 0 1-1.755-2.96l5.51-10.08A2 2 0 0 0 10 8V2"/><path d="M6.453 15h11.094"/><path d="M8.5 2h7"/></svg>`;
+            case 'english': // lucide: book-open
+                return `<svg ${common} ${stroke}><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V4a1 1 0 0 1 1-1h5a4 4 0 0 1 4 4 4 4 0 0 1 4-4h5a1 1 0 0 1 1 1v13a1 1 0 0 1-1 1h-6a3 3 0 0 0-3 3 3 3 0 0 0-3-3z"/></svg>`;
+            case 'social': // lucide: globe
+                return `<svg ${common} ${stroke}><circle cx="12" cy="12" r="10"/><path d="M12 2a14.5 14.5 0 0 0 0 20 14.5 14.5 0 0 0 0-20"/><path d="M2 12h20"/></svg>`;
             case 'hindi':
-                return `<svg ${common}><text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="${color}">ह</text></svg>`;
+                // No Devanagari glyph exists in Lucide. Bumped from 15px/700 -> 17px/800 so
+                // the glyph carries equivalent visual weight to a 2px-stroke 24x24 icon at
+                // the same render size — re-check against real text next to it in app.html.
+                return `<svg ${common}><text x="12" y="17.5" text-anchor="middle" font-size="17" font-weight="800" fill="${color}">ह</text></svg>`;
             case 'custom':
             default:{
                 const letter=((subject&&subject.name)||'?').trim().charAt(0).toUpperCase()||'?';
