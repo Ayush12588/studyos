@@ -224,11 +224,8 @@
                 <span class="nav-badge nav-badge-neutral" id="backlog-nav-badge" style="display:none">0</span>
             </div>
 
-            <!-- STUDY: frequent, secondary; collapsible, default expanded -->
-            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('study')" id="nav-group-study-header">
-                <span>Study</span>
-                <span class="nav-chevron" id="nav-chevron-study">▾</span>
-            </div>
+            <!-- STUDY: frequent, secondary; always expanded -->
+            <div class="nav-section">Study</div>
             <div class="nav-group" id="nav-group-study">
                 <div class="nav-item" data-page="revisions" onclick="App.navigate('revisions')">
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg></span>
@@ -246,12 +243,9 @@
                 </div>
             </div>
 
-            <!-- REVIEW: occasional; collapsible, default collapsed -->
-            <div class="nav-section nav-collapsible" onclick="App.toggleNavGroup('review')" id="nav-group-review-header">
-                <span>Review</span>
-                <span class="nav-chevron collapsed" id="nav-chevron-review">▾</span>
-            </div>
-            <div class="nav-group collapsed" id="nav-group-review">
+            <!-- REVIEW: occasional; always expanded -->
+            <div class="nav-section">Review</div>
+            <div class="nav-group" id="nav-group-review">
                 <div class="nav-item" data-page="weekly" onclick="App.navigate('weekly')">
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg></span>
                     <span class="nav-label">Analytics</span>

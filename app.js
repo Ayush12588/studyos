@@ -1615,19 +1615,6 @@ const App={
 
     applyTheme(){document.documentElement.setAttribute('data-theme',this.state.theme)},
 
-    toggleNavGroup(group){
-        const el=document.getElementById('nav-group-'+group);
-        const chevron=document.getElementById('nav-chevron-'+group);
-        if(!el||!chevron)return;
-        el.classList.toggle('collapsed');
-        chevron.classList.toggle('collapsed');
-    },
-
-    // Pages in each nav group (for auto-expand on navigate)
-    NAV_GROUPS:{
-        study:['revisions','quiz','coach'],
-        review:['weekly','exams','settings']
-    },
     toggleTheme(theme){
         if(theme){this.state.theme=theme}
         else{const themes=['dark','light','warm-dark'];const ci=themes.indexOf(this.state.theme);this.state.theme=themes[(ci+1)%themes.length]}
@@ -2265,17 +2252,6 @@ const App={
         const pe=document.getElementById('page-'+page);if(pe)pe.classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
         document.querySelectorAll('.mob-nav-item').forEach((n,i)=>{const pages=['dashboard','subjects','','tasks','rewards'];n.classList.toggle('active',pages[i]===page)});
-        // Auto-expand nav group containing this page
-        Object.entries(this.NAV_GROUPS||{}).forEach(([group,pages])=>{
-            if(pages.includes(page)){
-                const el=document.getElementById('nav-group-'+group);
-                const chevron=document.getElementById('nav-chevron-'+group);
-                if(el&&el.classList.contains('collapsed')){
-                    el.classList.remove('collapsed');
-                    if(chevron)chevron.classList.remove('collapsed');
-                }
-            }
-        });
         const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
 
