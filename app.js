@@ -3153,7 +3153,8 @@ const App={
         const defaultHintColor='var(--color-success)';
         const defaultHintText='✓ Counts toward your streak';
         document.getElementById('log-form-body').innerHTML=`
-<div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="log-subject" onchange="App.updateLogChapters()"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div></div>
+<div class="form-group"><label class="form-label">Subject</label><input type="hidden" id="log-subject" value="${pSub||''}"><div class="log-subject-grid" id="log-subject-grid">${subs.map(s=>`<div class="log-subject-pill ${s.id===pSub?'selected':''}" data-sid="${s.id}" onclick="App.selectLogSubject('${s.id}')">${this.renderSubjectIcon(s,16)}<span>${s.name}</span></div>`).join('')}</div></div>
+<div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div>
 <div class="form-group">
     <label class="form-label">What did you cover?</label>
     <input type="text" id="log-covered" class="form-input" placeholder="e.g. Completed Newton's laws, revised Chapter 3..." maxlength="200">
@@ -3188,6 +3189,14 @@ const App={
         }
     },
     updateLogChapters(){const sId=document.getElementById('log-subject').value,s=this.getSubjectById(sId),sel=document.getElementById('log-chapter');sel.innerHTML='<option value="">Select</option>';if(s)s.chapters.forEach(c=>{sel.innerHTML+=`<option value="${c.id}">${c.name}</option>`})},
+    // Custom subject pill grid in Log Session modal — mirrors the old <select onchange>
+    // behavior (set hidden value + repopulate chapters) but supports inline SVG icons,
+    // which native <option> elements cannot render.
+    selectLogSubject(sId){
+        document.getElementById('log-subject').value=sId;
+        document.querySelectorAll('#log-subject-grid .log-subject-pill').forEach(p=>{p.classList.toggle('selected',p.dataset.sid===sId)});
+        this.updateLogChapters();
+    },
     selectTime(el){
         document.querySelectorAll('#time-chips .quick-chip').forEach(c=>c.classList.remove('selected'));
         el.classList.add('selected');
