@@ -2922,7 +2922,7 @@ const App={
         const statTiles=`<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
             <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Last studied</p><p style="font-size:.95rem;font-weight:600">${lastStudied?this.fmtShort(lastStudied):'Never'}</p></div>
             <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Times revised</p><p style="font-size:.95rem;font-weight:600">${ch.revisionCount||0}</p></div>
-            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Next revision</p><p style="font-size:.95rem;font-weight:600;color:${nextRevColor}">${nextRevHtml}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Next revision</p><p id="chdet-next-rev" style="font-size:.95rem;font-weight:600;color:${nextRevColor}">${nextRevHtml}</p></div>
             <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Difficulty</p><p style="font-size:.95rem;font-weight:600;text-transform:capitalize">${ch.difficulty}</p></div>
         </div>`;
 
@@ -2946,7 +2946,7 @@ const App={
         const revisionHistory=revDates.length>0?`<div style="margin-bottom:18px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Revision history</p>${revRows}${revDates.length>5?`<button class="btn btn-ghost btn-sm" style="font-size:.72rem;color:#F97316;padding:4px 0" onclick="App.navigate('revisions')">View all ${revDates.length} →</button>`:''}</div>`:'';
 
         // SECTION 4 — status segmented control + difficulty dropdown
-        const statusSeg=`<div style="margin-bottom:14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Status</p><div style="display:flex;border:1px solid var(--border,#27272a);border-radius:8px;overflow:hidden">${Object.entries(statusLabels).map(([val,label],i)=>`<button onclick="App.setChapterStatus('${sId}','${cId}','${val}')" style="flex:1;padding:7px 4px;font-size:.7rem;border:none;cursor:pointer;${i>0?'border-left:1px solid var(--border,#27272a);':''}background:${ch.status===val?'var(--accent,#F97316)':'transparent'};color:${ch.status===val?'#fff':'var(--text-secondary)'}">${label}</button>`).join('')}</div></div>
+        const statusSeg=`<div style="margin-bottom:14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Status</p><div id="chdet-status-seg" style="display:flex;border:1px solid var(--border,#27272a);border-radius:8px;overflow:hidden">${Object.entries(statusLabels).map(([val,label],i)=>`<button id="chdet-seg-${val}" onclick="App.setChapterStatus('${sId}','${cId}','${val}')" style="flex:1;padding:7px 4px;font-size:.7rem;border:none;cursor:pointer;${i>0?'border-left:1px solid var(--border,#27272a);':''}background:${ch.status===val?'var(--accent,#F97316)':'transparent'};color:${ch.status===val?'#fff':'var(--text-secondary)'}">${label}</button>`).join('')}</div></div>
         <div class="form-group" style="margin-bottom:18px"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div>`;
 
         // SECTION 5 — notes, save on blur only
@@ -2958,13 +2958,37 @@ const App={
             <div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>
         </details>`;
 
-        document.getElementById('detail-body').innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px"><div><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><span class="tag tag-${ch.status.replace(' ','-')}" style="margin-left:6px">${ch.status.replace('-',' ')}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div></div>${statTiles}${quickActions}${revisionHistory}${statusSeg}${notesSection}${deadlineExercises}`;
+        document.getElementById('detail-body').innerHTML=`<div style="display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:18px"><div><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><span id="chdet-status-badge" class="tag tag-${ch.status.replace(' ','-')}" style="margin-left:6px">${ch.status.replace('-',' ')}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div><button onclick="App.closeModal('modal-detail')" title="Close" aria-label="Close" style="background:none;border:none;cursor:pointer;color:var(--text-muted);font-size:1.3rem;padding:2px 6px;line-height:1;flex-shrink:0">×</button></div>${statTiles}${quickActions}${revisionHistory}${statusSeg}${notesSection}${deadlineExercises}`;
         document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button>`;
         this.openModal('modal-detail');
     },
     setChapterStatus(sId,cId,status){
         this.updateChapterField(sId,cId,'status',status);
-        this.openChapterDetail(sId,cId);
+        // Surgical patch only — header badge + segmented control active state.
+        // Deliberately NOT calling openChapterDetail() here: that would wipe an
+        // in-progress (unsaved, blur-pending) Notes draft and re-trigger the
+        // open/close-details collapse state, which the spec didn't ask for.
+        const badge=document.getElementById('chdet-status-badge');
+        if(badge){badge.className=`tag tag-${status.replace(' ','-')}`;badge.textContent=status.replace('-',' ');}
+        const statusLabels={'not-started':'Not Started','in-progress':'In Progress','completed':'Completed','revised':'Revised'};
+        Object.keys(statusLabels).forEach(val=>{
+            const btn=document.getElementById(`chdet-seg-${val}`);
+            if(!btn)return;
+            const active=val===status;
+            btn.style.background=active?'var(--accent,#F97316)':'transparent';
+            btn.style.color=active?'#fff':'var(--text-secondary)';
+        });
+        // Next-revision stat tile can change meaning when status flips into/out of
+        // completed/revised (getNextRevisionInfo only applies to those states) —
+        // that one tile needs its value recalculated even in a surgical patch.
+        const ch=this.getChapter(sId,cId);
+        const revInfo=this.getNextRevisionInfo(ch);
+        const valEl=document.getElementById('chdet-next-rev');
+        if(valEl){
+            if(!revInfo){valEl.textContent='Not due yet';valEl.style.color='var(--text-muted)';}
+            else if(revInfo.isDue){valEl.textContent=revInfo.daysUntil<0?`Overdue ${Math.abs(revInfo.daysUntil)}d`:'Due today';valEl.style.color='var(--text-danger)';}
+            else{valEl.textContent=`Due ${this.fmtShort(revInfo.dueDate)}`;valEl.style.color='var(--text-primary)';}
+        }
     },
     saveChapterNotes(sId,cId,val){
         const ch=this.getChapter(sId,cId);if(!ch)return;
