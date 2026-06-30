@@ -1654,6 +1654,7 @@ const App={
     daysBetween(d1,d2){return Math.floor((new Date(d2)-new Date(d1))/864e5)},
     formatMin(m){const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}m`:`${min}m`},
     formatSec(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`},
+    fmtShort(ds){return ds?new Date(ds+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):null},
     getAllChapters(){const c=[];this.state.subjects.forEach(s=>s.chapters.forEach(ch=>c.push({...ch,subjectName:s.name,subjectColor:s.color,subjectIcon:s.icon,subjectId:s.id})));return c},
     getSubjectById(id){return this.state.subjects.find(s=>s.id===id)},
     getChapter(sId,cId){const s=this.getSubjectById(sId);return s?s.chapters.find(c=>c.id===cId):null},
@@ -1664,6 +1665,21 @@ const App={
     getTotalChapters(){return this.getAllChapters().length},
     getOverdueChapters(){const t=this.today();return this.getAllChapters().filter(c=>c.deadline&&c.deadline<t&&c.status!=='completed'&&c.status!=='revised')},
     getRevisionsDue(){const t=new Date(),r=[];this.getAllChapters().forEach(ch=>{if(ch.status==='completed'||ch.status==='revised'){const lr=(ch.revisionDates||[]).length>0?new Date((ch.revisionDates||[])[((ch.revisionDates||[]).length-1)]):(ch.completionDate?new Date(ch.completionDate):null);if(lr){const ds=Math.floor((t-lr)/864e5),iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount,iv.length-1)];if(ds>=ni)r.push({...ch,daysSince:ds,nextInterval:ni})}}});return r},
+    // Per-chapter SRS due-date calc, reusing the same [1,3,7,14,30] table as getRevisionsDue.
+    // Unlike getRevisionsDue (which only returns chapters that ARE due), this returns the
+    // due date regardless of state, for display purposes (e.g. "Due Jun 20" vs "Overdue 2d").
+    getNextRevisionInfo(ch){
+        if(!ch||(ch.status!=='completed'&&ch.status!=='revised'))return null;
+        const dates=ch.revisionDates||[];
+        const anchor=dates.length>0?dates[dates.length-1]:ch.completionDate;
+        if(!anchor)return null;
+        const iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount||0,iv.length-1)];
+        const anchorDate=new Date(anchor+'T12:00');
+        const dueDate=new Date(anchorDate);dueDate.setDate(dueDate.getDate()+ni);
+        const today=new Date(this.today()+'T12:00');
+        const daysUntil=Math.round((dueDate-today)/864e5);
+        return{dueDate:dueDate.toISOString().split('T')[0],isDue:daysUntil<=0,daysUntil};
+    },
 
     getReadinessScore(){
         const total=this.getTotalChapters();if(!total)return 0;
@@ -2790,7 +2806,7 @@ const App={
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><div></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
-        const fmtShort=ds=>ds?new Date(ds+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):null;
+        const fmtShort=this.fmtShort.bind(this);
 
         // Built once per render O(sessions) — keyed by chapterId
         const lastStudiedMap=new Map();
@@ -2822,7 +2838,8 @@ const App={
                 ?`<span style="font-size:.72rem;font-weight:600;color:var(--color-success,#10b981)">All chapters on track</span>`
                 :`<span style="font-size:.72rem;color:var(--text-secondary)">${revisionsOverdue>0?`<span style="color:var(--color-warning,#f59e0b);font-weight:600">${revisionsOverdue} revision${revisionsOverdue!==1?'s':''} overdue</span>`:''}${revisionsOverdue>0&&notStarted>0?' · ':''}${notStarted>0?`<span style="color:var(--text-muted)">${notStarted} not started</span>`:''}</span>`;
 
-            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="margin-bottom:14px">${healthLine}</div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{
+            const subSafeId=s.id.replace(/[^a-zA-Z0-9_]/g,'_');
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><div style="position:relative"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();App._toggleSubMenu('${s.id}','${subSafeId}')" title="More" style="font-size:1rem;letter-spacing:1px;padding:0 8px">···</button><div id="submenu-${subSafeId}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;background:var(--surface-2,var(--card-bg));border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);min-width:170px;z-index:200;overflow:hidden"><button onclick="event.stopPropagation();App._subMenuDelete('${s.id}','${subSafeId}')" style="display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:.82rem;color:var(--color-danger,#ef4444);cursor:pointer">Delete subject</button></div></div></div></div><div id="subdel-${subSafeId}" style="display:none;padding:10px 12px;margin-bottom:12px;background:var(--surface-2,var(--card-bg));border:1px solid var(--color-danger,#ef4444);border-radius:8px;font-size:.8rem;color:var(--text-secondary)">Delete "<strong>${s.name}</strong>" and all ${s.chapters.length} chapter${s.chapters.length===1?'':'s'} inside it? This cannot be undone. <div style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">Confirm delete</button><button class="btn btn-sm btn-secondary" style="margin-left:6px" onclick="document.getElementById('subdel-${subSafeId}').style.display='none'">Cancel</button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="margin-bottom:14px">${healthLine}</div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{
                 const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';
                 const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};
                 const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';
@@ -2882,184 +2899,162 @@ const App={
         if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] chapters.update status:',error);});}
         this.save();this.render();
     },
-    // Shared mutation for "mark this chapter as revised" — used by both the
-    // chapter-row quick-revise button (quickRevision, re-renders the page)
-    // and the chapter detail modal's "Mark Revised" action (markRevised,
-    // re-renders the modal in place). Returns the chapter for the caller's
-    // toast/follow-up; returns null if chapter wasn't found.
-    _applyRevision(sId,cId){
-        const ch=this.getChapter(sId,cId);if(!ch)return null;
-        ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';
-        if(!ch.completionDate)ch.completionDate=this.today();
-        const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
-        if(_isUUID(ch.id)){
-            DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate})
-                .then(({error})=>{if(error)console.error('[DB] _applyRevision chapters.update:',error);});
-        }
-        this.addXP(15,'Revision done');this.recordStudyDay();this.save();
-        this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success');
-        return ch;
-    },
-    quickRevision(sId,cId){if(!this._applyRevision(sId,cId))return;this.render()},
+    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
     deleteChapter(sId,cId){const s=this.getSubjectById(sId);if(!s)return;const _dc=s.chapters.find(c=>c.id===cId);s.chapters=s.chapters.filter(c=>c.id!==cId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_dc&&_isUUID(_dc.id)){DB.chapters.delete(_dc.id).then(({error})=>{if(error)console.error('[DB] chapters.delete:',error);});}this.save();this.render()},
-    deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;const _ds=this.state.subjects.find(s=>s.id===sId);this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_ds&&_isUUID(_ds.id)){DB.subjects.delete(_ds.id).then(({error})=>{if(error)console.error('[DB] subjects.delete:',error);});}this.save();this.render()},
-
-    // SRS — shared interval table, single source of truth for both the
-    // bulk "revisions due" list and the per-chapter detail modal.
-    SRS_INTERVALS:[1,3,7,14,30],
-    getNextRevisionInfo(ch){
-        if(ch.status!=='completed'&&ch.status!=='revised')return null;
-        const dates=ch.revisionDates||[];
-        const lastStr=dates.length>0?dates[dates.length-1]:ch.completionDate;
-        if(!lastStr)return null;
-        const last=new Date(lastStr);
-        const iv=this.SRS_INTERVALS,ni=iv[Math.min(ch.revisionCount,iv.length-1)];
-        const due=new Date(last);due.setDate(due.getDate()+ni);
-        const daysUntil=Math.ceil((due-new Date())/864e5);
-        return{dueDate:due.toISOString().split('T')[0],isDue:daysUntil<=0,daysUntil};
+    _toggleSubMenu(sId,safeId){
+        const menuEl=document.getElementById('submenu-'+safeId);
+        if(!menuEl)return;
+        const isOpen=menuEl.style.display!=='none';
+        this._closeSubMenu();
+        if(!isOpen){menuEl.style.display='block';this._subMenuOpen=safeId;}
     },
+    _closeSubMenu(){
+        if(this._subMenuOpen){
+            const m=document.getElementById('submenu-'+this._subMenuOpen);
+            if(m)m.style.display='none';
+            this._subMenuOpen=null;
+        }
+    },
+    _subMenuDelete(sId,safeId){
+        this._closeSubMenu();
+        const confirmEl=document.getElementById('subdel-'+safeId);
+        if(confirmEl)confirmEl.style.display='block';
+    },
+    deleteSubject(sId){const _ds=this.state.subjects.find(s=>s.id===sId);this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_ds&&_isUUID(_ds.id)){DB.subjects.delete(_ds.id).then(({error})=>{if(error)console.error('[DB] subjects.delete:',error);});}this.save();this.render()},
 
     openChapterDetail(sId,cId){
         const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
-        const ss=this.state.sessions.filter(s=>s.chapterId===cId).sort((a,b)=>(b.createdAt||0)-(a.createdAt||0));
+        const ss=this.state.sessions.filter(s=>s.chapterId===cId);
+        const lastStudied=ss.length?ss.reduce((a,s)=>s.date>a?s.date:a,ss[0].date):null;
         const ov=ch.deadline&&ch.deadline<this.today()&&ch.status!=='completed'&&ch.status!=='revised';
         const exKey=sId+'_'+cId;
         const exercises=this.state.exercises[exKey]||[];
-        const statusLabel={'not-started':'Not Started','in-progress':'In Progress',completed:'Completed',revised:'Revised'};
-
-        // SECTION 1 — key stats
-        const lastStudied=ss.length>0?this._fmtShortDate(ss[0].date):'Never';
-        const nextRev=this.getNextRevisionInfo(ch);
-        const nextRevText=nextRev?(nextRev.isDue?'Due now':this._fmtShortDate(nextRev.dueDate)):'Not due yet';
-        const diffLabel={easy:'Easy',medium:'Medium',hard:'Hard'}[ch.difficulty]||'—';
-
-        // SECTION 3 — revision history (max 5, newest first)
-        const revHistory=(ch.revisionDates||[]).map((d,i)=>({date:d,n:i+1})).reverse();
-        const revRows=revHistory.slice(0,5).map(r=>{
-            const note=(ss.find(s=>s.date===r.date&&s.type==='revision')||{}).coveredNote||'';
-            return `<div class="rev-item" style="padding:8px 0"><div class="rev-info"><h4 style="font-size:.85rem">${this._fmtShortDate(r.date)} · Revision ${r.n}</h4>${note?`<p style="font-size:.78rem;color:var(--text-secondary)">${note.replace(/</g,'&lt;')}</p>`:''}</div></div>`;
-        }).join('');
-        const revMore=revHistory.length>5?`<button class="btn btn-sm btn-secondary" style="margin-top:6px" onclick="App.openRevisionHistory('${sId}','${cId}')">View all ${revHistory.length} →</button>`:'';
-
         const hasDeadlineOrExercises=!!ch.deadline||exercises.length>0;
 
-        document.getElementById('detail-body').innerHTML=`
-<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:18px">
-  <div>
-    <span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span>
-    <h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3>
-  </div>
-  <span class="tag tag-${ch.status}" id="cd-status-badge">${statusLabel[ch.status]}</span>
-</div>
+        // SECTION 1 — stats
+        const revInfo=this.getNextRevisionInfo(ch);
+        let nextRevHtml,nextRevColor='var(--text-primary)';
+        if(!revInfo){nextRevHtml='Not due yet';nextRevColor='var(--text-muted)';}
+        else if(revInfo.isDue){nextRevHtml=revInfo.daysUntil<0?`Overdue ${Math.abs(revInfo.daysUntil)}d`:'Due today';nextRevColor='var(--text-danger)';}
+        else{nextRevHtml=`Due ${this.fmtShort(revInfo.dueDate)}`;}
 
-<div class="grid grid-2" style="margin-bottom:18px;gap:10px">
-  <div class="card" style="padding:14px"><p style="font-size:.7rem;color:var(--text-muted)">Last studied</p><p style="font-size:1rem;font-weight:700;margin-top:2px">${lastStudied}</p></div>
-  <div class="card" style="padding:14px"><p style="font-size:.7rem;color:var(--text-muted)">Times revised</p><p style="font-size:1rem;font-weight:700;margin-top:2px">${ch.revisionCount}</p></div>
-  <div class="card" style="padding:14px"><p style="font-size:.7rem;color:var(--text-muted)">Next revision</p><p style="font-size:1rem;font-weight:700;margin-top:2px;${nextRev&&nextRev.isDue?'color:var(--text-danger)':''}">${nextRevText}</p></div>
-  <div class="card" style="padding:14px" id="cd-difficulty-card">
-    <p style="font-size:.7rem;color:var(--text-muted)">Difficulty</p>
-    <div id="cd-difficulty-display" style="display:flex;align-items:center;justify-content:space-between;margin-top:2px">
-      <span class="tag tag-${ch.difficulty}" style="font-size:.8rem">${diffLabel}</span>
-      <button class="ch-btn" title="Edit difficulty" onclick="App._editDifficulty('${sId}','${cId}')" style="padding:2px 6px"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg></button>
-    </div>
-  </div>
-</div>
+        const statusLabels={'not-started':'Not Started','in-progress':'In Progress','completed':'Completed','revised':'Revised'};
+        const statTiles=`<div class="grid" style="grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px">
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Last studied</p><p style="font-size:.95rem;font-weight:600">${lastStudied?this.fmtShort(lastStudied):'Never'}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Times revised</p><p style="font-size:.95rem;font-weight:600">${ch.revisionCount||0}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Next revision</p><p id="chdet-next-rev" style="font-size:.95rem;font-weight:600;color:${nextRevColor}">${nextRevHtml}</p></div>
+            <div class="card" style="padding:12px 14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:2px">Difficulty</p><p style="font-size:.95rem;font-weight:600;text-transform:capitalize">${ch.difficulty}</p></div>
+        </div>`;
 
-<div class="form-group" style="margin-bottom:18px">
-  <label class="form-label">Quick actions</label>
-  <div style="display:flex;flex-wrap:wrap;gap:8px">
-    <button class="btn btn-sm btn-primary" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">Log Session</button>
-    <button class="btn btn-sm btn-secondary" onclick="App.markRevised('${sId}','${cId}')">Mark Revised</button>
-    <button class="btn btn-sm btn-secondary" onclick="App.closeModal('modal-detail');Backlog.openAddModal({subjectName:'${sub.name.replace(/'/g,"\\'")}',chapterName:'${ch.name.replace(/'/g,"\\'")}'})">Add to Backlog</button>
-    <button class="btn btn-sm btn-secondary" onclick="App.startFocusOnChapter('${sId}','${cId}')">Start Focus Timer</button>
-  </div>
-</div>
+        // SECTION 2 — quick actions
+        const quickActions=`<div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px">
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.openQuickLog('${sId}','${cId}');App.closeModal('modal-detail')">Log Session</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.markRevised('${sId}','${cId}')">Mark Revised</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.openBacklogFromChapter('${sId}','${cId}')">Add to Backlog</button>
+            <button class="btn btn-secondary btn-sm" style="flex:1;min-width:120px" onclick="App.startFocusFromChapter('${sId}','${cId}')">Start Focus Timer</button>
+        </div>`;
 
-${ch.revisionCount>0?`<div class="form-group" style="margin-bottom:18px">
-  <label class="form-label">Revision history</label>
-  <div class="card" style="padding:4px 14px">${revRows}</div>
-  ${revMore}
-</div>`:''}
+        // SECTION 3 — revision history (max 5, quality badge if present)
+        const qualityStyle={shaky:'background:rgba(239,68,68,0.12);color:var(--text-danger)',ok:'background:rgba(249,115,22,0.12);color:#F97316',solid:'background:rgba(34,197,94,0.12);color:#22C55E'};
+        const qualityLabel={shaky:'Shaky',ok:'OK',solid:'Solid'};
+        const revDates=ch.revisionDates||[],revQuality=ch.revisionQuality||[];
+        const revRows=revDates.slice().reverse().slice(0,5).map((d,i)=>{
+            const origIdx=revDates.length-1-i;
+            const q=revQuality[origIdx];
+            return`<div style="display:flex;align-items:center;justify-content:space-between;padding:5px 0;font-size:.8rem"><span>${this.fmtShort(d)} · Rev ${origIdx+1}</span>${q?`<span class="tag" style="font-size:.68rem;${qualityStyle[q]||''}">${qualityLabel[q]||q}</span>`:''}</div>`;
+        }).join('');
+        const revisionHistory=revDates.length>0?`<div style="margin-bottom:18px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Revision history</p>${revRows}${revDates.length>5?`<button class="btn btn-ghost btn-sm" style="font-size:.72rem;color:#F97316;padding:4px 0" onclick="App.navigate('revisions')">View all ${revDates.length} →</button>`:''}</div>`:'';
 
-<div class="form-group" style="margin-bottom:18px">
-  <label class="form-label">Status</label>
-  <div class="segmented" id="cd-status-segmented" style="display:flex;border:1px solid var(--border);border-radius:10px;overflow:hidden">
-    ${['not-started','in-progress','completed','revised'].map(s=>`<button class="seg-btn ${ch.status===s?'active':''}" data-status="${s}" onclick="App.setChapterStatus('${sId}','${cId}',this)" style="flex:1;padding:9px 4px;border:none;font-size:.74rem;cursor:pointer;background:${ch.status===s?'var(--accent,#6366f1)':'transparent'};color:${ch.status===s?'#fff':'var(--text-secondary)'}">${statusLabel[s]}</button>`).join('')}
-  </div>
-</div>
+        // SECTION 4 — status segmented control + difficulty dropdown
+        const statusSeg=`<div style="margin-bottom:14px"><p style="font-size:.7rem;color:var(--text-muted);margin-bottom:6px">Status</p><div id="chdet-status-seg" style="display:flex;border:1px solid var(--border,#27272a);border-radius:8px;overflow:hidden">${Object.entries(statusLabels).map(([val,label],i)=>`<button id="chdet-seg-${val}" onclick="App.setChapterStatus('${sId}','${cId}','${val}')" style="flex:1;padding:7px 4px;font-size:.7rem;border:none;cursor:pointer;${i>0?'border-left:1px solid var(--border,#27272a);':''}background:${ch.status===val?'var(--accent,#F97316)':'transparent'};color:${ch.status===val?'#fff':'var(--text-secondary)'}">${label}</button>`).join('')}</div></div>
+        <div class="form-group" style="margin-bottom:18px"><label class="form-label">Difficulty</label><select class="form-select" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value)"><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select></div>`;
 
-<div class="form-group" style="margin-bottom:18px">
-  <label class="form-label">Notes</label>
-  <textarea class="form-textarea" id="cd-notes" placeholder="Study notes..." onblur="App.saveChapterNotes('${sId}','${cId}',this.value)">${ch.notes||''}</textarea>
-</div>
+        // SECTION 5 — notes, save on blur only
+        const notesSection=`<div class="form-group" style="margin-bottom:18px"><label class="form-label">Notes</label><textarea class="form-textarea" placeholder="Study notes..." onblur="App.saveChapterNotes('${sId}','${cId}',this.value)">${ch.notes||''}</textarea></div>`;
 
-<details style="margin-bottom:4px" ${hasDeadlineOrExercises?'open':''}>
-  <summary style="cursor:pointer;font-size:.78rem;color:var(--text-muted);margin-bottom:10px">Deadline & Exercises</summary>
-  <div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--text-danger);font-size:.75rem;margin-top:4px">Overdue!</p>':''}</div>
-  <div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>
-</details>`;
-        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button>`;
+        // Deadline + Exercises — collapsed below notes, open by default only if populated
+        const deadlineExercises=`<details ${hasDeadlineOrExercises?'open':''} style="margin-bottom:4px"><summary style="font-size:.75rem;color:var(--text-muted);cursor:pointer;margin-bottom:10px">Deadline & exercises</summary>
+            <div class="form-group"><label class="form-label">Deadline</label><input type="date" class="form-input" value="${ch.deadline||''}" onchange="App.updateChapterField('${sId}','${cId}','deadline',this.value)">${ov?'<p style="color:var(--text-danger);font-size:.75rem;margin-top:4px">Overdue!</p>':''}</div>
+            <div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>
+        </details>`;
+
+        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><span id="chdet-status-badge" class="tag tag-${ch.status.replace(' ','-')}" style="margin-left:6px">${ch.status.replace('-',' ')}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div>${statTiles}${quickActions}${revisionHistory}${statusSeg}${notesSection}${deadlineExercises}`;
+        const footerEl=document.getElementById('detail-footer');
+        footerEl.innerHTML='';
+        footerEl.style.display='none';
         this.openModal('modal-detail');
     },
-
-    // Short "Jun 14" style date formatter for the detail modal.
-    _fmtShortDate(dateStr){
-        if(!dateStr)return'—';
-        const d=new Date(dateStr+(dateStr.length<=10?'T00:00:00':''));
-        if(isNaN(d))return'—';
-        return d.toLocaleDateString('en-US',{month:'short',day:'numeric'});
+    setChapterStatus(sId,cId,status){
+        this.updateChapterField(sId,cId,'status',status);
+        // Surgical patch only — header badge + segmented control active state.
+        // Deliberately NOT calling openChapterDetail() here: that would wipe an
+        // in-progress (unsaved, blur-pending) Notes draft and re-trigger the
+        // open/close-details collapse state, which the spec didn't ask for.
+        const badge=document.getElementById('chdet-status-badge');
+        if(badge){badge.className=`tag tag-${status.replace(' ','-')}`;badge.textContent=status.replace('-',' ');}
+        const statusLabels={'not-started':'Not Started','in-progress':'In Progress','completed':'Completed','revised':'Revised'};
+        Object.keys(statusLabels).forEach(val=>{
+            const btn=document.getElementById(`chdet-seg-${val}`);
+            if(!btn)return;
+            const active=val===status;
+            btn.style.background=active?'var(--accent,#F97316)':'transparent';
+            btn.style.color=active?'#fff':'var(--text-secondary)';
+        });
+        // Next-revision stat tile can change meaning when status flips into/out of
+        // completed/revised (getNextRevisionInfo only applies to those states) —
+        // that one tile needs its value recalculated even in a surgical patch.
+        const ch=this.getChapter(sId,cId);
+        const revInfo=this.getNextRevisionInfo(ch);
+        const valEl=document.getElementById('chdet-next-rev');
+        if(valEl){
+            if(!revInfo){valEl.textContent='Not due yet';valEl.style.color='var(--text-muted)';}
+            else if(revInfo.isDue){valEl.textContent=revInfo.daysUntil<0?`Overdue ${Math.abs(revInfo.daysUntil)}d`:'Due today';valEl.style.color='var(--text-danger)';}
+            else{valEl.textContent=`Due ${this.fmtShort(revInfo.dueDate)}`;valEl.style.color='var(--text-primary)';}
+        }
     },
-
-    // Swaps the difficulty tile into an inline <select> for editing, then
-    // re-renders the modal once a value is chosen (onchange below).
-    _editDifficulty(sId,cId){
-        const ch=this.getChapter(sId,cId);if(!ch)return;
-        const el=document.getElementById('cd-difficulty-display');if(!el)return;
-        el.innerHTML=`<select class="form-select" style="font-size:.8rem;padding:4px 6px" onchange="App.updateChapterField('${sId}','${cId}','difficulty',this.value);App.openChapterDetail('${sId}','${cId}')" autofocus><option value="easy" ${ch.difficulty==='easy'?'selected':''}>Easy</option><option value="medium" ${ch.difficulty==='medium'?'selected':''}>Medium</option><option value="hard" ${ch.difficulty==='hard'?'selected':''}>Hard</option></select>`;
-    },
-
-    // SECTION 4 — status segmented control. Updates Supabase immediately
-    // and re-renders the whole modal (cheapest correct way to keep the
-    // header badge, stats, and revision-due text all in sync).
-    setChapterStatus(sId,cId,btnEl){
-        const v=btnEl.dataset.status;
-        this.updateChapterField(sId,cId,'status',v);
-        this.openChapterDetail(sId,cId);
-    },
-
-    // SECTION 5 — notes textarea, saved on blur only (not per keystroke).
     saveChapterNotes(sId,cId,val){
         const ch=this.getChapter(sId,cId);if(!ch)return;
-        if(ch.notes===val)return; // no-op if nothing changed since open
+        if(ch.notes===val)return; // no-op if unchanged, matches native blur/onchange semantics
         this.updateChapterField(sId,cId,'notes',val);
     },
-
-    // "Mark Revised" quick action — same data effects as quickRevision()
-    // (see _applyRevision) but re-opens the chapter modal in place instead
-    // of returning to whatever page was behind it.
     markRevised(sId,cId){
-        if(!this._applyRevision(sId,cId))return;
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        this._pendingRevisionQuality={sId,cId};
+        document.getElementById('detail-body').insertAdjacentHTML('afterbegin',`<div id="rev-quality-prompt" style="background:var(--card-bg,#18181b);border:1px solid var(--border,#27272a);border-radius:8px;padding:10px 12px;margin-bottom:14px"><p style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">How did that revision go?</p><div style="display:flex;gap:6px"><button class="btn btn-sm btn-secondary" style="flex:1" onclick="App.confirmRevision('${sId}','${cId}','shaky')">Shaky</button><button class="btn btn-sm btn-secondary" style="flex:1" onclick="App.confirmRevision('${sId}','${cId}','ok')">OK</button><button class="btn btn-sm btn-secondary" style="flex:1" onclick="App.confirmRevision('${sId}','${cId}','solid')">Solid</button></div></div>`);
+    },
+    confirmRevision(sId,cId,quality){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        ch.revisionCount=(ch.revisionCount||0)+1;
+        ch.revisionDates=ch.revisionDates||[];ch.revisionDates.push(this.today());
+        ch.revisionQuality=ch.revisionQuality||[];ch.revisionQuality.push(quality);
+        ch.status='revised';
+        if(!ch.completionDate)ch.completionDate=this.today();
+        const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        if(_isUUID(ch.id)){
+            DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,revision_quality:ch.revisionQuality,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] confirmRevision chapters.update:',error);});
+        }
+        this.addXP(15,'Revision done');this.recordStudyDay();this.save();
+        this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success');
         this.openChapterDetail(sId,cId);
     },
-
-    // "Start Focus Timer" quick action — closes this modal, pre-selects the
-    // subject+chapter on the Pomodoro screen, then navigates there.
-    startFocusOnChapter(sId,cId){
+    openBacklogFromChapter(sId,cId){
+        const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
         this.closeModal('modal-detail');
+        if(window.Backlog&&typeof window.Backlog.openAddModal==='function'){
+            window.Backlog.openAddModal({subjectName:sub.name,chapterName:ch.name});
+        }
+    },
+    startFocusFromChapter(sId,cId){
+        const ch=this.getChapter(sId,cId);if(!ch)return;
+        this.closeModal('modal-detail');
+        // Set state directly rather than calling setFocusSubject/setFocusChapter —
+        // those each trigger their own renderPomodoro() pass and a .focus() call,
+        // which is wasted work (and a stray focus-steal) before the page is visible.
         this.pomodoro.focusSubjectId=sId;
         this.pomodoro.focusChapterId=cId;
         this.navigate('pomodoro');
     },
-
     updateChapterField(sId,cId,f,v){const ch=this.getChapter(sId,cId);if(!ch)return;ch[f]=v;if(f==='status'&&v==='completed'&&!ch.completionDate){ch.completionDate=this.today();this.addXP(20,'Chapter completed')}const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){const _dbField={status:'status',difficulty:'difficulty',deadline:'deadline',notes:'notes'}[f];if(_dbField){const _payload={[_dbField]:v};if(f==='status'&&v==='completed')_payload.completion_date=ch.completionDate;DB.chapters.update(ch.id,_payload).then(({error})=>{if(error)console.error('[DB] updateChapterField:',error);});}}this.save();this.render()},
-
-    // SECTION 3 overflow — simple list view for chapters with >5 revisions.
-    openRevisionHistory(sId,cId){
-        const ch=this.getChapter(sId,cId);if(!ch)return;
-        const rows=(ch.revisionDates||[]).map((d,i)=>`<div class="rev-item"><div class="rev-info"><h4 style="font-size:.85rem">${this._fmtShortDate(d)} · Revision ${i+1}</h4></div></div>`).reverse().join('');
-        document.getElementById('detail-body').innerHTML=`<h3 style="font-size:1.05rem;margin-bottom:14px">${ch.name} — All Revisions</h3><div class="card" style="padding:4px 14px">${rows}</div>`;
-        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.openChapterDetail('${sId}','${cId}')">← Back</button>`;
-    },
 
     // EXERCISES
     addExercise(sId,cId){
@@ -4132,7 +4127,9 @@ ${ch.revisionCount>0?`<div class="form-group" style="margin-bottom:18px">
                 :`<div class="note-attach-item" onclick="App.openLightbox('${id}',${i})" title="${a.name}"><div class="note-attach-pdf">📄<span>${a.name}</span></div></div>`
             ).join('')}</div></div>`:'';
         document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:14px">${sub?`<span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span>`:''} ${note.isFormula?'<span class="tag" style="background:rgba(99,102,241,0.12);color:var(--accent-light)">📐 Formula</span>':''}</div><h3 style="font-size:1.15rem;margin-bottom:14px">${note.title}</h3><div style="white-space:pre-wrap;font-size:.9rem;line-height:1.8;color:var(--text-secondary);background:var(--bg-card);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border)">${note.content||'<span style="opacity:.4">No text content</span>'}</div>${attachHtml}`;
-        document.getElementById('detail-footer').innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.closeModal('modal-detail');App.openNoteModal('${id}')">Edit</button>`;
+        const noteFooterEl=document.getElementById('detail-footer');
+        noteFooterEl.style.display='';
+        noteFooterEl.innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.closeModal('modal-detail');App.openNoteModal('${id}')">Edit</button>`;
         this.openModal('modal-detail');
     },
     openLightbox(noteId,attachIdx){
@@ -5658,6 +5655,7 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 // FIX B: close chapter overflow menu on any click outside it
 document.addEventListener('click',()=>{
     if(window.App&&App._chMenuOpen)App._closeChMenu();
+    if(window.App&&App._subMenuOpen)App._closeSubMenu();
 });
 
 // Keyboard shortcuts
@@ -5665,6 +5663,7 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
         document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));
         if(window.App&&App._chMenuOpen)App._closeChMenu(); // FIX B: also close overflow menu
+        if(window.App&&App._subMenuOpen)App._closeSubMenu();
     }
     if(e.ctrlKey&&e.key==='l'){e.preventDefault();App.openQuickLog()}
     if(e.ctrlKey&&e.key==='p'){e.preventDefault();App.navigate('pomodoro')}
