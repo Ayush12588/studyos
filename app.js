@@ -2629,20 +2629,17 @@ const App={
         </div>`;
 
         // ── SECTION 4: THIS WEEK BAR CHART (with goal reference line) ─────
-        // The goal line is a horizontal dashed div positioned absolutely at
-        // the height corresponding to 100% of the daily goal within the bar
-        // container. Bar heights are scaled: 100% bar height = gm minutes.
-        // We render the chart inside a position:relative wrapper so the goal
-        // line div can be absolutely positioned.
-        const maxBarHeightPx=100; // matches CSS max in db-week-bar (100%)
+        // The goal line marks 100% of the daily goal. It's pinned near the top
+        // of .db-week-strip via the .db-week-goal-line CSS class, matching the
+        // same ceiling that bar heights are clamped to below (Math.min(100,...)).
         const weekHTML=`<div class="db-week-card card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">This Week</span>
                 <span style="font-size:.78rem;color:var(--text-muted)">${wd.sessions.reduce((a,s)=>a+s.timeSpent,0)>0?this.formatMin(wd.sessions.reduce((a,s)=>a+s.timeSpent,0))+' total':''}</span>
             </div>
             <div class="db-week-strip" style="position:relative;">
-                <div style="position:absolute;bottom:calc(20px + ${Math.min(100,Math.round(gm/gm*100))}% * (${maxBarHeightPx}/100));left:0;right:28px;border-top:1.5px dashed #F97316;pointer-events:none;z-index:2">
-                    <span style="position:absolute;right:-28px;top:-9px;font-size:.62rem;font-weight:700;color:#F97316;white-space:nowrap">Goal</span>
+                <div class="db-week-goal-line">
+                    <span>Goal</span>
                 </div>
                 ${wd.days.map(d=>{
                     const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);

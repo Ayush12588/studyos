@@ -1121,6 +1121,27 @@ a { color: inherit; text-decoration: none; }
 
 /* Week chart bars */
 .db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
+/* Goal reference line: pinned near the top of the strip = 100% of daily goal.
+   Bars are height-clamped to the same 100% ceiling in JS, so this stays aligned
+   with the tallest possible bar regardless of db-week-strip's height. */
+.db-week-goal-line {
+    position: absolute;
+    top: 6px;
+    left: 0;
+    right: 28px;
+    border-top: 1.5px dashed #F97316;
+    pointer-events: none;
+    z-index: 2;
+}
+.db-week-goal-line span {
+    position: absolute;
+    right: -28px;
+    top: -9px;
+    font-size: .62rem;
+    font-weight: 700;
+    color: #F97316;
+    white-space: nowrap;
+}
 .db-week-col { display: flex; flex-direction: column; align-items: center; flex: 1; height: 100%; }
 .db-week-bar-wrap { flex: 1; display: flex; align-items: flex-end; width: 100%; }
 .db-week-bar {
