@@ -2172,6 +2172,20 @@ const App={
     getHeatmapData(){const data={};const now=new Date();for(let i=89;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);data[d.toISOString().split('T')[0]]=0}this.state.sessions.forEach(s=>{if(data[s.date]!==undefined)data[s.date]+=s.timeSpent});return data},
 
     // DASHBOARD
+    // ─────────────────────────────────────────────────────────────────────────
+    // NEW helper — call from hero "Skip →" button.
+    // Stores skipped chapter IDs in localStorage, keyed to today so the skip
+    // list auto-clears at midnight with zero state pollution.
+    // ─────────────────────────────────────────────────────────────────────────
+    skipHeroChapter(chapterId){
+        const key=`db_hero_skips_${this.today()}`;
+        let skips=[];
+        try{skips=JSON.parse(localStorage.getItem(key)||'[]')}catch(_){}
+        if(!skips.includes(chapterId))skips.push(chapterId);
+        localStorage.setItem(key,JSON.stringify(skips));
+        this.renderDashboard();
+    },
+
     renderDashboard(){
         const el=document.getElementById('page-dashboard');
         if(!el)return;
@@ -2179,17 +2193,18 @@ const App={
         const tm=this.getTodayMinutes(),gm=this.state.profile.dailyGoalMinutes||120,gp=Math.min(100,Math.round(tm/gm*100));
         const comp=this.getCompletedCount(),tot=this.getTotalChapters(),sp=tot>0?Math.round(comp/tot*100):0;
         const od=this.getOverdueChapters(),rd=this.getRevisionsDue(),ts=this.getTodaySessions(),st=this.state.profile.streak||0;
-        const wd=this.getWeekSessions(),plan=this.getTomorrowPlan(),dte=this.getDaysToExam(),rs=this.getReadinessScore();
+        const wd=this.getWeekSessions(),dte=this.getDaysToExam(),rs=this.getReadinessScore();
         const hm=this.getHeatmapData();
-        const dc=this.state.dailyChallenges||{date:'',challenges:[],completed:[]};
         const pred=this.getPredictedCompletion();
-        const todayMood=this.state.profile.moodHistory.find(m=>m.date===this.today());
         const avgMin=this.state.sessions.length>0?Math.round(this.state.sessions.reduce((a,s)=>a+s.timeSpent,0)/Math.max(1,new Set(this.state.sessions.map(s=>s.date)).size)):0;
-        const urgentCount=od.length+rd.length;
 
-        // ── HERO: What to do right now ──────────────────────────
-        const heroChapter=plan[0];
-        // P0-2: Compute pace intelligence
+        // ── HERO SKIP: filter already-skipped chapters from today's plan ──────
+        const _skipKey=`db_hero_skips_${this.today()}`;
+        let _skippedIds=[];
+        try{_skippedIds=JSON.parse(localStorage.getItem(_skipKey)||'[]')}catch(_){}
+        const plan=this.getTomorrowPlan().filter(p=>!_skippedIds.includes(p.id));
+
+        // ── PACE INTELLIGENCE ──────────────────────────────────────────────
         const remaining=tot-comp;
         let paceMsg='',paceColor='rgba(186,220,255,0.75)';
         if(dte!==null&&dte>0&&tot>0){
@@ -2203,15 +2218,17 @@ const App={
         }else if(dte===null){paceMsg='Set exam date for pace tracking'}
         else if(dte===0){paceMsg='Exam is today — best of luck! 🌟';paceColor='#FBBF24'}
         else if(remaining===0){paceMsg='All chapters done!';paceColor='#4ADE80'}
-        // Determine ring color: green if daily goal already hit, cyan for WIP
+
+        // Ring color: green once daily goal hit, cyan while WIP
         const ringColor=gp>=100?'#22C55E':'#22d3ee';
-        // Find subject color for hero chapter subject tag
+        const heroChapter=plan[0];
         const heroSubject=heroChapter?this.state.subjects.find(s=>s.id===heroChapter.subjectId):null;
         const heroSubjectColor=heroSubject?heroSubject.color:'#6F72FD';
         const heroSubjectColorRgba=heroSubjectColor.startsWith('#')
             ?(()=>{const r=parseInt(heroSubjectColor.slice(1,3),16),g=parseInt(heroSubjectColor.slice(3,5),16),b=parseInt(heroSubjectColor.slice(5,7),16);return`rgba(${r},${g},${b},0.15)`})()
             :'rgba(99,102,241,0.15)';
 
+        // ── SECTION 1: STUDY NOW HERO ──────────────────────────────────────
         const heroHTML=heroChapter
             ?`<div class="db-hero" onclick="App.openChapterDetail('${heroChapter.subjectId}','${heroChapter.id}')">
                 <div class="db-hero-left">
@@ -2221,9 +2238,10 @@ const App={
                         ${heroChapter.subjectIcon} ${heroChapter.subjectName}
                     </div>
                     ${paceMsg?`<div style="font-size:.75rem;margin-top:8px;font-style:italic;color:${paceColor}">${paceMsg}</div>`:''}
-                    <div style="display:flex;gap:8px;margin-top:16px">
+                    <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
                         <button class="btn btn-primary" onclick="event.stopPropagation();App.openQuickLog()" style="font-size:.8rem;padding:8px 16px;border-radius:12px">Log Session</button>
                         <button class="btn btn-secondary" onclick="event.stopPropagation();App.navigate('pomodoro')" style="font-size:.8rem;padding:8px 16px;border-radius:12px">Focus Timer</button>
+                        <button class="btn btn-ghost" onclick="event.stopPropagation();App.skipHeroChapter('${heroChapter.id}')" style="font-size:.8rem;padding:8px 14px;border-radius:12px;color:var(--text-muted)" title="Show next recommendation">Skip →</button>
                     </div>
                 </div>
                 <div class="db-hero-ring">
@@ -2250,14 +2268,71 @@ const App={
                 <div style="font-size:4rem;position:relative;z-index:1"></div>
             </div>`;
 
-        // ── STREAK HERO + 3 SUPPORTING STATS ─────────────────────
-        // STREAK FREEZE — read freeze state for display
+        // ── SECTION 2: REVISIONS DUE TODAY ────────────────────────────────
+        // getRevisionsDue() returns {daysSince, nextInterval, ...ch}
+        // daysOverdue = daysSince - nextInterval (>0 means overdue)
+        const rdSorted=rd.slice().sort((a,b)=>(b.daysSince-b.nextInterval)-(a.daysSince-a.nextInterval));
+        const revisionsDueHTML=rd.length>0?`
+        <div style="border:1.5px solid #F97316;border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:rgba(251,146,60,0.05)">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
+                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#F97316">🔁 Revisions Due</span>
+                <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:#F97316">See all (${rd.length}) →</button>
+            </div>
+            ${rdSorted.slice(0,3).map(c=>{
+                const daysOverdue=c.daysSince-c.nextInterval;
+                const subj=this.state.subjects.find(s=>s.id===c.subjectId);
+                return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(249,115,22,0.15);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
+                    <span style="font-size:1rem;flex-shrink:0">${subj?subj.icon:'📖'}</span>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
+                        <div style="font-size:.72rem;color:var(--text-muted)">${c.subjectName||''}</div>
+                    </div>
+                    <span style="font-size:.72rem;font-weight:700;color:${daysOverdue>=3?'#EF4444':'#F97316'};white-space:nowrap;flex-shrink:0">${daysOverdue}d overdue</span>
+                </div>`;
+            }).join('')}
+        </div>`:'';
+
+        // ── SECTION 3: THREE STAT CARDS ───────────────────────────────────
+        // Stat 1 — time studied today vs daily goal
+        const goalLabel=this.formatMin(gm);
+
+        // Stat 2 — chapters done vs total + weekly gap
+        // "chapters completed this week" = distinct chapterIds in sessions this week
+        const thisWeekChapters=new Set(wd.sessions.filter(s=>s.chapterId).map(s=>s.chapterId)).size;
+        // Derive a simple weekly chapter target from pace needed to finish before exam.
+        // Fallback to a reasonable default (5/week) if no exam date.
+        let weeklyChapterTarget=5;
+        if(dte!==null&&dte>0&&remaining>0){
+            const weeksLeft=dte/7;
+            weeklyChapterTarget=Math.max(1,Math.ceil(remaining/Math.max(1,weeksLeft)));
+        }
+        const weekChapterGap=weeklyChapterTarget-thisWeekChapters;
+        const chapterSubline=weekChapterGap>0
+            ?`<div class="db-stat-trend" style="color:#F97316;font-weight:600">Need ${weekChapterGap} more this week</div>`
+            :`<div class="db-stat-trend" style="color:var(--trend-green)">✓ Week target met</div>`;
+
+        // Stat 3 — days to exam + pace gap
+        let paceSubline='';
+        if(dte!==null&&dte>0&&remaining>0){
+            const needed=remaining/dte;
+            const actual=pred?pred.rate:0;
+            if(actual>0&&actual>=needed*0.9){
+                paceSubline=`<div class="db-stat-trend" style="color:var(--trend-green)">On track ✅</div>`;
+            }else{
+                paceSubline=`<div class="db-stat-trend" style="color:#F97316">${actual>0?actual.toFixed(1):'0'}/day · Need ${needed.toFixed(1)}/day</div>`;
+            }
+        }else if(dte===null){
+            paceSubline=`<div class="db-stat-trend" style="color:var(--text-muted)">Set exam date</div>`;
+        }else if(remaining===0){
+            paceSubline=`<div class="db-stat-trend" style="color:var(--trend-green)">All done! 🎉</div>`;
+        }
+
+        // Streak freeze display
         const sf=this.state.streakFreezes||0;
         const freezeSlotsHTML=[0,1,2].map(i=>`<span style="font-size:1rem;opacity:${i<sf?'1':'0.25'}">🧊</span>`).join('');
         const freezeLabelHTML=sf===0
             ?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:4px">no freezes — earn one at a 7-day streak</div>`
             :`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:4px">streak freeze${sf!==1?'s':''}</div>`;
-        // STREAK FREEZE — dismissible freeze-used banner
         const freezeBannerHTML=this.state.pendingFreezeNotice
             ?`<div id="freeze-notice-banner" style="background:var(--color-focus-bg);border:1px solid var(--color-focus);border-radius:var(--radius-sm);padding:12px 16px;font-size:.82rem;display:flex;align-items:center;gap:10px;margin-bottom:12px">
                 <span style="flex-shrink:0;font-size:1.1rem">🧊</span>
@@ -2268,10 +2343,9 @@ const App={
         const streakHeroStyle=st>0
             ?`background:rgba(249,115,22,0.10);border:1.5px solid #F97316;`
             :`background:var(--color-surface);border:1.5px solid var(--color-border);`;
-        const streakSubline=st>0
-            ?`🔥 ${st} day streak — keep it alive`
-            :`Start your streak today — any session counts`;
+        const streakSubline=st>0?`🔥 ${st} day streak — keep it alive`:`Start your streak today — any session counts`;
         const streakSubColor=st>0?`#F97316`:`var(--color-text-secondary)`;
+
         const statsHTML=`
         <div style="${streakHeroStyle}border-radius:var(--radius);padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:default;">
             <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
@@ -2281,7 +2355,8 @@ const App={
                     <div style="font-size:.78rem;color:${streakSubColor};margin-top:5px;font-weight:${st>0?'600':'400'}">${streakSubline}</div>
                     ${st===0?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:3px">Log a session below to begin</div>`:''}
                     <div style="margin-top:8px;display:flex;align-items:center;gap:4px">${freezeSlotsHTML}</div>
-                    ${freezeLabelHTML}                </div>
+                    ${freezeLabelHTML}
+                </div>
             </div>
             <div style="text-align:right;flex-shrink:0">
                 <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-text-secondary);font-weight:700;margin-bottom:2px">Streak</div>
@@ -2292,39 +2367,37 @@ const App={
             <div class="db-stat db-stat-indigo">
                 <div class="db-stat-val">${this.formatMin(tm)}</div>
                 <div class="db-stat-lbl">Today${avgMin>0?' · avg '+this.formatMin(avgMin):''}</div>
+                <div class="db-stat-trend" style="color:var(--text-muted);font-size:.7rem">of ${goalLabel} goal</div>
                 <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--accent-light)':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>
             </div>
             <div class="db-stat db-stat-green">
                 <div class="db-stat-val">${comp}<span style="font-size:.9rem;font-weight:400;color:var(--color-text-secondary)">/${tot}</span></div>
                 <div class="db-stat-lbl">Chapters done</div>
-                <div class="db-stat-trend" style="color:${sp>=50?'var(--trend-green)':'var(--text-muted)'}">${sp>=50?'↑ Strong':'—'}</div>
+                ${chapterSubline}
             </div>
             <div class="db-stat db-stat-purple">
                 <div class="db-stat-val">${dte!==null&&dte>0?dte:'—'}</div>
                 <div class="db-stat-lbl">${dte!==null&&dte>0?'Days to boards':'Exam date'}</div>
-                <div class="db-stat-trend" style="color:${dte!==null&&dte<30?'var(--text-danger)':dte!==null&&dte<60?'var(--trend-purple)':'var(--text-muted)'}">${dte!==null&&dte>0?(dte<30?'↓ Very soon':dte<60?'Getting close':'Plenty of time'):'Not set'}</div>
+                ${paceSubline}
             </div>
         </div>`;
 
-        // ── URGENCY BANNER (only if needed) ──────────────────────
-        const urgencyHTML=urgentCount>0?`<div class="db-urgency" onclick="App.navigate('revisions')">
-            <div style="display:flex;align-items:center;gap:10px;flex:1">
-                <span style="font-size:1.2rem">${od.length>0?'🚨':'🔔'}</span>
-                <div>
-                    <div style="font-weight:600;font-size:.85rem">${od.length>0?(od.length+' overdue chapter'+(od.length>1?'s':'')+(rd.length>0?' + ':'')):''}${rd.length>0?(rd.length+' revision'+(rd.length>1?'s':'')+' due'):''}</div>
-                    <div style="font-size:.75rem;color:var(--color-text-secondary)">${od.length>0?(od[0].name+(od.length>1?' and '+(od.length-1)+' more':'')):((rd[0]&&rd[0].name)||'')} · Tap to review</div>
-                </div>
-            </div>
-            <span style="color:var(--color-text-secondary);font-size:.8rem">→</span>
-        </div>`:'';
-
-        // ── WEEK STRIP ────────────────────────────────────────────
+        // ── SECTION 4: THIS WEEK BAR CHART (with goal reference line) ─────
+        // The goal line is a horizontal dashed div positioned absolutely at
+        // the height corresponding to 100% of the daily goal within the bar
+        // container. Bar heights are scaled: 100% bar height = gm minutes.
+        // We render the chart inside a position:relative wrapper so the goal
+        // line div can be absolutely positioned.
+        const maxBarHeightPx=100; // matches CSS max in db-week-bar (100%)
         const weekHTML=`<div class="db-week-card card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">This Week</span>
                 <span style="font-size:.78rem;color:var(--text-muted)">${wd.sessions.reduce((a,s)=>a+s.timeSpent,0)>0?this.formatMin(wd.sessions.reduce((a,s)=>a+s.timeSpent,0))+' total':''}</span>
             </div>
-            <div class="db-week-strip">
+            <div class="db-week-strip" style="position:relative;">
+                <div style="position:absolute;bottom:calc(20px + ${Math.min(100,Math.round(gm/gm*100))}% * (${maxBarHeightPx}/100));left:0;right:28px;border-top:1.5px dashed #F97316;pointer-events:none;z-index:2">
+                    <span style="position:absolute;right:-28px;top:-9px;font-size:.62rem;font-weight:700;color:#F97316;white-space:nowrap">Goal</span>
+                </div>
                 ${wd.days.map(d=>{
                     const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);
                     const isToday=d===this.today();
@@ -2340,80 +2413,10 @@ const App={
             </div>
         </div>`;
 
-        // ── MOOD (compact, inline) ────────────────────────────────
-        const moodHTML=!todayMood?`<div class="card db-mood-card">
-            <div style="font-size:.78rem;font-weight:600;color:var(--text-muted);text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">How are you feeling?</div>
-            <div style="display:flex;gap:8px">
-                ${['🤩','😊','😐','😴','😤'].map(m=>`<button class="db-mood-btn" onclick="App.setMood('${m}')">${m}</button>`).join('')}
-            </div>
-        </div>`:
-        `<div class="card db-mood-card" style="display:flex;align-items:center;gap:12px">
-            <span style="font-size:1.6rem">${todayMood.mood}</span>
-            <div>
-                <div style="font-size:.8rem;font-weight:600">Feeling ${{'🤩':'amazing','😊':'good','😐':'okay','😴':'tired','😤':'frustrated'}[todayMood.mood]||'okay'} today</div>
-                <div style="font-size:.72rem;color:var(--text-muted)">${this.getMoodAdvice(todayMood.mood).slice(0,60)}...</div>
-            </div>
-        </div>`;
-
-        // ── DAILY CHALLENGES ──────────────────────────────────────
-        // ── DAILY CHALLENGES ──────────────────────────────────────
-        const _dcTotal=dc.challenges.length||3;
-        const _dcDone=dc.completed.length;
-        const _dcPct=_dcTotal>0?Math.round(_dcDone/_dcTotal*100):0;
-        const _allDone=_dcDone===_dcTotal&&_dcTotal>0;
-        const _totalXP=dc.challenges.reduce((a,c)=>a+c.xp,0);
-
-        const challengeHTML=(()=>{
-            // Empty state
-            if(!dc.date||dc.date!==this.today()||dc.challenges.length===0){
-                return`<div class="card" style="text-align:center;padding:24px 16px">
-                    <span style="font-size:1.3rem">🎯</span>
-                    <p style="font-size:.82rem;color:var(--text-muted);margin-top:8px">Challenges refresh daily</p>
-                </div>`;
-            }
-            return`<div class="card" id="dc-card" style="${_allDone?'border:1px solid rgba(34,197,94,0.3)':''}">
-                <div class="card-header" style="margin-bottom:6px">
-                    <span class="card-title">Daily Challenges</span>
-                    <span style="font-size:.72rem;color:var(--text-muted)">${_dcDone}/${_dcTotal} done</span>
-                </div>
-                <div style="height:3px;background:var(--border);border-radius:2px;overflow:hidden;margin-bottom:14px">
-                    <div style="height:100%;width:${_dcPct}%;background:linear-gradient(90deg,var(--color-brand),#22d3ee);border-radius:2px;transition:width .5s ease"></div>
-                </div>
-                ${dc.challenges.map((ch,idx)=>{
-                    const done=dc.completed.includes(ch.id);
-                    const isLast=idx===dc.challenges.length-1;
-                    return`<div style="display:flex;align-items:center;gap:10px;padding:10px 0;${isLast?'':'border-bottom:1px solid var(--border)'}">
-                        <div id="dc-chk-${ch.id}" onclick="App._dcToggleAnim(${ch.id},this)" style="width:20px;height:20px;border-radius:6px;border:2px solid ${done?'var(--color-brand)':'var(--border)'};background:${done?'var(--color-brand)':'transparent'};display:flex;align-items:center;justify-content:center;flex-shrink:0;cursor:pointer;transition:all .25s cubic-bezier(0.34,1.56,0.64,1)">
-                            ${done?`<svg width="10" height="10" viewBox="0 0 10 10" style="display:block"><polyline points="1.5,5 4,7.5 8.5,2" stroke="white" stroke-width="1.8" fill="none" stroke-linecap="round" stroke-linejoin="round"/></svg>`:''}
-                        </div>
-                        <span style="font-size:.82rem;flex:1;transition:opacity .2s;${done?'text-decoration:line-through;opacity:.45':''}">${ch.text}</span>
-                        <span style="font-size:.7rem;font-weight:700;background:rgba(99,102,241,0.12);color:var(--accent-light);padding:3px 8px;border-radius:8px;white-space:nowrap">+${ch.xp} XP</span>
-                    </div>`;
-                }).join('')}
-                ${_allDone?`<div style="font-size:.75rem;color:var(--text-success);text-align:center;padding-top:10px">All done! +${_totalXP} XP earned</div>`:''}
-            </div>`;
-        })();
-
-        // ── SUBJECT PROGRESS ──────────────────────────────────────
-        // PERF FIX (LCP): state.subjects is [] on the FIRST dashboard render —
-        // subjects are fetched lazily in the background (see init()) and
-        // renderDashboard() re-runs once that fetch resolves. Previously
-        // render #1 painted a tiny "No subjects yet" card here, then render #2
-        // swapped it for a full db-subj-grid of N subject cells — THAT size
-        // jump (not the heatmap) is the "Element render delay" Lighthouse is
-        // flagging, because it lands below the heatmap card in db-col-main.
-        //
-        // Fix: while subjects are still loading, render a db-subj-grid
-        // SKELETON with the same cell count we expect once data arrives
-        // (derived from the student's CBSE class/stream — already known from
-        // bootstrap, zero extra fetches). When the real subjects load, the
-        // skeleton cells are replaced in place by real ones: same grid, same
-        // dimensions, only the content inside each cell changes.
-        //
-        // NOTE: getHeatmapData() / the heatmap card below is intentionally
-        // UNCHANGED — it always returns exactly 90 entries regardless of
-        // subjects/sessions state, so its size is identical on render #1 and
-        // render #2. It was not actually the source of the resize.
+        // ── SECTION 5: SUBJECTS GRID (pacing tag replaces health bar) ─────
+        // Pacing: chapters_remaining_per_subject / days_to_exam vs
+        // chapters_remaining_total / days_to_exam. We compare the subject's
+        // own remaining-to-due ratio against total needed pace.
         const subjectsHTML=this.state.subjects.length>0?`<div class="card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">Subjects</span>
@@ -2422,24 +2425,45 @@ const App={
             <div class="db-subj-grid">
             ${this.state.subjects.map(s=>{
                 const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;
-                const pc=s.chapters.length>0?Math.round(dn/s.chapters.length*100):0;
-                const health=this.computeSubjectHealth(s);
-                const hc=health>=70?'var(--success)':health>=40?'var(--warning)':'var(--danger)';
+                const subjTotal=s.chapters.length;
+                const pc=subjTotal>0?Math.round(dn/subjTotal*100):0;
+                // Pacing tag calculation
+                const subjRemaining=subjTotal-dn;
+                let paceTag='',paceTagColor='',paceTagBg='';
+                if(subjRemaining===0){
+                    paceTag='Done ✓';paceTagColor='var(--text-success)';paceTagBg='rgba(34,197,94,0.12)';
+                }else if(dte!==null&&dte>0){
+                    // needed chapters/day just for this subject to finish before exam
+                    const subjNeeded=subjRemaining/dte;
+                    // overall needed rate for reference
+                    const overallNeeded=remaining>0?remaining/dte:0;
+                    // use actual pace ratio — if subject completion % is >= overall % it's "on track"
+                    const subjPct=subjTotal>0?dn/subjTotal:0;
+                    const overallPct=tot>0?comp/tot:0;
+                    if(subjPct>=overallPct*0.9){
+                        paceTag='On track';paceTagColor='var(--text-success)';paceTagBg='rgba(34,197,94,0.12)';
+                    }else if(subjPct>=overallPct*0.6){
+                        paceTag='Behind';paceTagColor='#D97706';paceTagBg='rgba(245,158,11,0.12)';
+                    }else{
+                        paceTag='At risk';paceTagColor='var(--text-danger)';paceTagBg='rgba(239,68,68,0.12)';
+                    }
+                }else{
+                    // No exam date — fall back to completion %
+                    if(pc>=66){paceTag='On track';paceTagColor='var(--text-success)';paceTagBg='rgba(34,197,94,0.12)';}
+                    else if(pc>=33){paceTag='Behind';paceTagColor='#D97706';paceTagBg='rgba(245,158,11,0.12)';}
+                    else{paceTag='At risk';paceTagColor='var(--text-danger)';paceTagBg='rgba(239,68,68,0.12)';}
+                }
                 return`<div class="db-subj-cell" onclick="App.navigate('subjects')">
                     <div class="db-subj-cell-top">
                         <span class="db-subj-cell-icon">${s.icon}</span>
                         <span class="db-subj-cell-name">${s.name}</span>
-                        <span class="db-subj-cell-count">${dn}/${s.chapters.length}</span>
+                        <span class="db-subj-cell-count">${dn}/${subjTotal}</span>
                     </div>
                     <div class="db-subj-cell-bar-track">
                         <div class="db-subj-cell-bar-fill" style="width:${pc}%;background:${s.color}"></div>
                     </div>
-                    <div class="db-subj-cell-health">
-                        <span class="db-subj-cell-hlabel">Health</span>
-                        <div class="db-subj-cell-htrack">
-                            <div class="db-subj-cell-hfill" style="width:${health}%;background:${hc}"></div>
-                        </div>
-                        <span class="db-subj-cell-hval" style="color:${hc}">${health}</span>
+                    <div class="db-subj-cell-health" style="justify-content:flex-end">
+                        <span style="font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:6px;background:${paceTagBg};color:${paceTagColor}">${paceTag}</span>
                     </div>
                 </div>`;
             }).join('')}
@@ -2450,12 +2474,6 @@ const App={
             <div style="font-size:.8rem;color:var(--text-muted);margin-bottom:16px">Load your CBSE syllabus or add subjects manually</div>
             <button class="btn btn-primary btn-sm" onclick="App.navigate('subjects')">Get Started →</button>
         </div>`:(()=>{
-            // Subjects haven't loaded yet (first paint). Estimate the cell
-            // count for the skeleton from the student's selected CBSE
-            // class/stream — every CBSE class/stream combo ships exactly 5
-            // subjects, so this matches the real grid for the vast majority
-            // of users. Custom subject lists may differ by a cell or two,
-            // which is a one-time, minor resize vs. today's empty→full jump.
             const _cls=this.state.profile.selectedClass||10;
             const _stream=this.state.profile.selectedStream;
             const _cbse=this.CBSE_DATA[_cls];
@@ -2484,22 +2502,7 @@ const App={
             </div>`;
         })());
 
-        // ── UP NEXT ───────────────────────────────────────────────
-        const upNextHTML=`<div class="card">
-            <div class="card-header" style="margin-bottom:12px">
-                <span class="card-title">Up Next</span>
-                <button class="btn btn-ghost btn-sm" onclick="App.navigate('coach')" style="font-size:.72rem">Full plan →</button>
-            </div>
-            ${plan.length===0
-                ?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:20px 0">All caught up!</p>'
-                :plan.slice(0,4).map(p=>`<div class="plan-card" onclick="App.openChapterDetail('${p.subjectId}','${p.id}')">
-                    <div class="plan-emoji">${p.subjectIcon}</div>
-                    <div class="plan-info"><h3>${p.name}</h3><p>${p.subjectName}</p></div>
-                    <span style="font-size:.65rem;padding:3px 8px;border-radius:6px;white-space:nowrap;background:${p.priority==='overdue'?'rgba(239,68,68,0.1)':p.priority==='revised'?'rgba(6,182,212,0.1)':'rgba(99,102,241,0.1)'};color:${p.priority==='overdue'?'var(--text-danger)':p.priority==='revised'?'var(--info)':'var(--accent-light)'}">${p.reason}</span>
-                </div>`).join('')}
-        </div>`;
-
-        // ── HEATMAP ───────────────────────────────────────────────
+        // ── HEATMAP ───────────────────────────────────────────────────────
         const hmDates=Object.keys(hm);
         const heatmapHTML=`<div class="card">
             <div class="card-header" style="margin-bottom:14px">
@@ -2513,7 +2516,7 @@ const App={
             <div class="heatmap">${hmDates.map(d=>{const m=hm[d];const lvl=m===0?'':m<30?'l1':m<60?'l2':m<120?'l3':'l4';return`<div class="heatmap-cell ${lvl}" title="${d}: ${this.formatMin(m)}"></div>`}).join('')}</div>
         </div>`;
 
-        // ── BOARD READINESS (only if exam date set) ───────────────
+        // ── BOARD READINESS ───────────────────────────────────────────────
         const readinessHTML=dte!==null&&dte>0?`<div class="card" style="display:flex;align-items:center;gap:20px">
             <div class="readiness-ring" style="flex-shrink:0">
                 <svg width="80" height="80" viewBox="0 0 80 80">
@@ -2531,10 +2534,7 @@ const App={
             </div>
         </div>`:'';
 
-        // ── SAVED INDICATOR ───────────────────────────────────────
-        const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a href="#" onclick="App.exportData();return false;" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
-
-        // ── P0-3: WEAK CHAPTERS ───────────────────────────────────
+        // ── WEAK CHAPTERS ────────────────────────────────────────────────
         const weakChapters=this.getAllChapters().filter(c=>c.weakFlag);
         const weakHTML=weakChapters.length>0?`<div class="card" style="border-left:3px solid var(--danger);margin-bottom:0">
             <div class="card-header" style="margin-bottom:10px">
@@ -2550,41 +2550,24 @@ const App={
             ${weakChapters.length>5?`<p style="font-size:.72rem;color:var(--text-muted);margin-top:6px;text-align:center">+${weakChapters.length-5} more · <span style="color:var(--accent-light);cursor:pointer" onclick="App.navigate('subjects')">View all →</span></p>`:''}
         </div>`:'';
 
-        // ── P1-2: PROACTIVE COACH NUDGE ───────────────────────────
+        // ── PROACTIVE COACH NUDGE ────────────────────────────────────────
         let coachNudge='';
         const lastStudyDate=this.state.profile.lastStudyDate;
         const daysSinceStudy=lastStudyDate?this.daysBetween(lastStudyDate,this.today()):999;
         const nudgeDismissed=localStorage.getItem('nudge_dismissed')===this.today();
         if(!nudgeDismissed){
             let nudgeMsg='',nudgeIcon='🤖',nudgeBorder='var(--accent)';
-            // BUG FIX: user has already studied today — silence is the reward, show nothing
             if(daysSinceStudy===0){
                 coachNudge='';
             }else{
-                // BUG FIX: all nudge logic runs only when daysSinceStudy > 0
-                if(daysSinceStudy===1){
-                    nudgeMsg=`Study something today to protect your streak — even 20 minutes counts.`;
-                    nudgeIcon='⚡';nudgeBorder='var(--warning)';
-                }else if(daysSinceStudy<=3){
-                    nudgeMsg=`Your streak is paused. Log any session today to restart it.`;
-                    nudgeIcon='🎯';nudgeBorder='var(--warning)';
-                }else if(daysSinceStudy<=6){
-                    nudgeMsg=`It's been a few days — no pressure. One session today puts you back on track.`;
-                    nudgeIcon='💪';nudgeBorder='var(--accent)';
-                }else if(daysSinceStudy>=7){
-                    nudgeMsg=`Fresh start. Log one session today — your streak begins now.`;
-                    nudgeIcon='🌱';nudgeBorder='var(--success)';
-                }
-                if(!nudgeMsg&&weakChapters.length>=3){
-                    nudgeMsg=`${weakChapters.length} chapters flagged as weak (${weakChapters.slice(0,2).map(c=>c.name).join(', ')}${weakChapters.length>2?'…':''}). These need focused re-study before boards.`;
-                    nudgeIcon='📉';nudgeBorder='var(--danger)';
-                }
+                if(daysSinceStudy===1){nudgeMsg=`Study something today to protect your streak — even 20 minutes counts.`;nudgeIcon='⚡';nudgeBorder='var(--warning)';}
+                else if(daysSinceStudy<=3){nudgeMsg=`Your streak is paused. Log any session today to restart it.`;nudgeIcon='🎯';nudgeBorder='var(--warning)';}
+                else if(daysSinceStudy<=6){nudgeMsg=`It's been a few days — no pressure. One session today puts you back on track.`;nudgeIcon='💪';nudgeBorder='var(--accent)';}
+                else if(daysSinceStudy>=7){nudgeMsg=`Fresh start. Log one session today — your streak begins now.`;nudgeIcon='🌱';nudgeBorder='var(--success)';}
+                if(!nudgeMsg&&weakChapters.length>=3){nudgeMsg=`${weakChapters.length} chapters flagged as weak (${weakChapters.slice(0,2).map(c=>c.name).join(', ')}${weakChapters.length>2?'…':''}). These need focused re-study before boards.`;nudgeIcon='📉';nudgeBorder='var(--danger)';}
                 if(!nudgeMsg&&dte!==null&&dte>0&&remaining>0){
                     const needed=remaining/dte;const actual=pred?pred.rate:0;
-                    if(actual>0&&actual<needed*0.6){
-                        nudgeMsg=`At your current pace (${actual} ch/day) you need ${needed.toFixed(1)} ch/day to finish before boards. You're behind — consider pushing 1 extra chapter today.`;
-                        nudgeIcon='⏰';nudgeBorder='var(--danger)';
-                    }
+                    if(actual>0&&actual<needed*0.6){nudgeMsg=`At your current pace (${actual} ch/day) you need ${needed.toFixed(1)} ch/day to finish before boards. You're behind — consider pushing 1 extra chapter today.`;nudgeIcon='⏰';nudgeBorder='var(--danger)';}
                 }
                 if(nudgeMsg){
                     coachNudge=`<div style="background:rgba(79,70,229,0.06);border:1px solid ${nudgeBorder};border-left:3px solid ${nudgeBorder};border-radius:var(--radius-sm);padding:12px 14px;margin-bottom:16px;display:flex;gap:12px;align-items:flex-start">
@@ -2599,27 +2582,31 @@ const App={
             }
         }
 
-        // ── ASSEMBLE ──────────────────────────────────────────────
+        // ── SAVED INDICATOR ───────────────────────────────────────────────
+        const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a href="#" onclick="App.exportData();return false;" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
+
+        // ── ASSEMBLE ──────────────────────────────────────────────────────
+        // Order: freeze banner → greeting → S1 hero → S2 revisions due →
+        //        S3 stat cards → backlog widget → coach nudge →
+        //        S4 week chart + heatmap + S5 subjects (main col) |
+        //        readiness + weak chapters (side col)
         el.innerHTML=`
         ${freezeBannerHTML}
         <p class="db-greeting-compact">Good ${this.getGreeting()}, ${this.state.profile.name} 👋 &nbsp;·&nbsp; ${this.getMotivation()} ✨</p>
         ${heroHTML}
+        ${revisionsDueHTML}
         ${statsHTML}
-        ${urgencyHTML}
         <div id="backlog-dashboard-widget">${window.Backlog ? Backlog.renderDashboardWidget() : ''}</div>
         ${coachNudge}
         <div class="db-two-col">
             <div class="db-col-main">
                 ${weekHTML}
-                ${challengeHTML}
                 ${heatmapHTML}
                 ${subjectsHTML}
             </div>
             <div class="db-col-side">
-                ${moodHTML}
                 ${readinessHTML}
                 ${weakHTML}
-                ${upNextHTML}
             </div>
         </div>
         ${savedHTML}`;
