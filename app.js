@@ -2838,7 +2838,8 @@ const App={
                 ?`<span style="font-size:.72rem;font-weight:600;color:var(--color-success,#10b981)">All chapters on track</span>`
                 :`<span style="font-size:.72rem;color:var(--text-secondary)">${revisionsOverdue>0?`<span style="color:var(--color-warning,#f59e0b);font-weight:600">${revisionsOverdue} revision${revisionsOverdue!==1?'s':''} overdue</span>`:''}${revisionsOverdue>0&&notStarted>0?' · ':''}${notStarted>0?`<span style="color:var(--text-muted)">${notStarted} not started</span>`:''}</span>`;
 
-            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="margin-bottom:14px">${healthLine}</div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{
+            const subSafeId=s.id.replace(/[^a-zA-Z0-9_]/g,'_');
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><div style="position:relative"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();App._toggleSubMenu('${s.id}','${subSafeId}')" title="More" style="font-size:1rem;letter-spacing:1px;padding:0 8px">···</button><div id="submenu-${subSafeId}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;background:var(--surface-2,var(--card-bg));border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);min-width:170px;z-index:200;overflow:hidden"><button onclick="event.stopPropagation();App._subMenuDelete('${s.id}','${subSafeId}')" style="display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:.82rem;color:var(--color-danger,#ef4444);cursor:pointer">Delete subject</button></div></div></div></div><div id="subdel-${subSafeId}" style="display:none;padding:10px 12px;margin-bottom:12px;background:var(--surface-2,var(--card-bg));border:1px solid var(--color-danger,#ef4444);border-radius:8px;font-size:.8rem;color:var(--text-secondary)">Delete "<strong>${s.name}</strong>" and all ${s.chapters.length} chapter${s.chapters.length===1?'':'s'} inside it? This cannot be undone. <div style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">Confirm delete</button><button class="btn btn-sm btn-secondary" style="margin-left:6px" onclick="document.getElementById('subdel-${subSafeId}').style.display='none'">Cancel</button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="margin-bottom:14px">${healthLine}</div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{
                 const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';
                 const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};
                 const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';
@@ -2900,7 +2901,26 @@ const App={
     },
     quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
     deleteChapter(sId,cId){const s=this.getSubjectById(sId);if(!s)return;const _dc=s.chapters.find(c=>c.id===cId);s.chapters=s.chapters.filter(c=>c.id!==cId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_dc&&_isUUID(_dc.id)){DB.chapters.delete(_dc.id).then(({error})=>{if(error)console.error('[DB] chapters.delete:',error);});}this.save();this.render()},
-    deleteSubject(sId){if(!confirm('Delete subject and all its chapters?'))return;const _ds=this.state.subjects.find(s=>s.id===sId);this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_ds&&_isUUID(_ds.id)){DB.subjects.delete(_ds.id).then(({error})=>{if(error)console.error('[DB] subjects.delete:',error);});}this.save();this.render()},
+    _toggleSubMenu(sId,safeId){
+        const menuEl=document.getElementById('submenu-'+safeId);
+        if(!menuEl)return;
+        const isOpen=menuEl.style.display!=='none';
+        this._closeSubMenu();
+        if(!isOpen){menuEl.style.display='block';this._subMenuOpen=safeId;}
+    },
+    _closeSubMenu(){
+        if(this._subMenuOpen){
+            const m=document.getElementById('submenu-'+this._subMenuOpen);
+            if(m)m.style.display='none';
+            this._subMenuOpen=null;
+        }
+    },
+    _subMenuDelete(sId,safeId){
+        this._closeSubMenu();
+        const confirmEl=document.getElementById('subdel-'+safeId);
+        if(confirmEl)confirmEl.style.display='block';
+    },
+    deleteSubject(sId){const _ds=this.state.subjects.find(s=>s.id===sId);this.state.subjects=this.state.subjects.filter(s=>s.id!==sId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_ds&&_isUUID(_ds.id)){DB.subjects.delete(_ds.id).then(({error})=>{if(error)console.error('[DB] subjects.delete:',error);});}this.save();this.render()},
 
     openChapterDetail(sId,cId){
         const ch=this.getChapter(sId,cId),sub=this.getSubjectById(sId);if(!ch||!sub)return;
@@ -5631,6 +5651,7 @@ document.querySelectorAll('.modal-overlay').forEach(m=>{
 // FIX B: close chapter overflow menu on any click outside it
 document.addEventListener('click',()=>{
     if(window.App&&App._chMenuOpen)App._closeChMenu();
+    if(window.App&&App._subMenuOpen)App._closeSubMenu();
 });
 
 // Keyboard shortcuts
@@ -5638,6 +5659,7 @@ document.addEventListener('keydown',e=>{
     if(e.key==='Escape'){
         document.querySelectorAll('.modal-overlay.show').forEach(m=>m.classList.remove('show'));
         if(window.App&&App._chMenuOpen)App._closeChMenu(); // FIX B: also close overflow menu
+        if(window.App&&App._subMenuOpen)App._closeSubMenu();
     }
     if(e.ctrlKey&&e.key==='l'){e.preventDefault();App.openQuickLog()}
     if(e.ctrlKey&&e.key==='p'){e.preventDefault();App.navigate('pomodoro')}
