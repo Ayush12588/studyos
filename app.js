@@ -48,7 +48,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
 const App={
     state:{
-        profile:{name:'Student',xp:0,level:1,streak:0,lastStudyDate:null,dailyGoalMinutes:120,maxDailyMinutes:0,examDate:'',targetScore:85,mood:'',moodHistory:[]},
+        profile:{name:'Student',xp:0,level:1,streak:0,lastStudyDate:null,dailyGoalMinutes:120,maxDailyMinutes:0,examDate:'',targetScore:90,mood:'',moodHistory:[]},
         subjects:[],sessions:[],earnedBadges:[],currentPage:'dashboard',selectedSubjectFilter:'all',
         pomodoroSettings:{workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4},
         examScores:[],tasks:[],notes:[],resources:[],doubts:[],exercises:{},
@@ -989,7 +989,7 @@ const App={
                 }
                 // Run the one-time difficulty migration after subjects are in memory.
                 // Uses requestIdleCallback so it never blocks rendering.
-                const runMigration = () => this._migrateCBSEDifficulty();
+                const runMigration = () => { this._migrateCBSEDifficulty(); this._migrateSubjectIconType(); };
                 if (window.requestIdleCallback) {
                     requestIdleCallback(runMigration, { timeout: 5000 });
                 } else {
@@ -1239,6 +1239,7 @@ const App={
 
                         const withChapters = subjects.map(sub => ({
                             ...sub,
+                            iconType: sub.icon_type || this.getIconType(sub.name),
                             chapters: chaptersBySubject.get(sub.id) || [],
                         }));
                         this.state.subjects = withChapters;
@@ -1641,9 +1642,55 @@ const App={
     formatMin(m){const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}m`:`${min}m`},
     formatSec(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`},
     fmtShort(ds){return ds?new Date(ds+'T12:00').toLocaleDateString('en-US',{month:'short',day:'numeric'}):null},
-    getAllChapters(){const c=[];this.state.subjects.forEach(s=>s.chapters.forEach(ch=>c.push({...ch,subjectName:s.name,subjectColor:s.color,subjectIcon:s.icon,subjectId:s.id})));return c},
+    getAllChapters(){const c=[];this.state.subjects.forEach(s=>s.chapters.forEach(ch=>c.push({...ch,subjectName:s.name,subjectColor:s.color,subjectIcon:this.renderSubjectIcon(s,16),subjectGlyph:this.getSubjectGlyph(s),subjectId:s.id})));return c},
     getSubjectById(id){return this.state.subjects.find(s=>s.id===id)},
     getChapter(sId,cId){const s=this.getSubjectById(sId);return s?s.chapters.find(c=>c.id===cId):null},
+    // Auto-detect icon type from subject name (no-emoji design system)
+    getIconType(name){
+        if(!name) return 'custom';
+        const n=name.trim().toLowerCase();
+        if(/math/.test(n)) return 'math';
+        if(/science|physic|chemistry|biolog/.test(n)) return 'science';
+        if(/english/.test(n)) return 'english';
+        if(/social|history|geography|civics|polity|economics/.test(n)) return 'social';
+        if(/hindi|sanskrit/.test(n)) return 'hindi';
+        return 'custom';
+    },
+    // Render a themed SVG icon for a subject. Falls back to initial-letter square
+    // if iconType is missing/unrecognized (e.g. pre-migration data not yet backfilled).
+    renderSubjectIcon(subject,size){
+        size=size||18;
+        const color=(subject&&subject.color)||'#6366f1';
+        const type=(subject&&subject.iconType)||this.getIconType(subject&&subject.name);
+        const common=`width="${size}" height="${size}" viewBox="0 0 24 24" style="flex-shrink:0;vertical-align:-3px"`;
+        switch(type){
+            case 'math':
+                return `<svg ${common}><text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="${color}" font-family="Georgia,serif">Σ</text></svg>`;
+            case 'science':
+                return `<svg ${common} fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 3h6"/><path d="M10 3v6l-5.5 9.5A1 1 0 0 0 5.36 20h13.28a1 1 0 0 0 .86-1.5L14 9V3"/><path d="M8.5 14h7"/></svg>`;
+            case 'english':
+                return `<svg ${common} fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 5.5C2 5.5 4.5 4 8 4s6 1.5 6 1.5v14S11.5 18 8 18s-6 1.5-6 1.5z"/><path d="M22 5.5C22 5.5 19.5 4 16 4s-6 1.5-6 1.5v14S12.5 18 16 18s6 1.5 6 1.5z"/></svg>`;
+            case 'social':
+                return `<svg ${common} fill="none" stroke="${color}" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><ellipse cx="12" cy="12" rx="4" ry="9"/><path d="M3 12h18"/></svg>`;
+            case 'hindi':
+                return `<svg ${common}><text x="12" y="17" text-anchor="middle" font-size="15" font-weight="700" fill="${color}">ह</text></svg>`;
+            case 'custom':
+            default:{
+                const letter=((subject&&subject.name)||'?').trim().charAt(0).toUpperCase()||'?';
+                return `<svg ${common}><rect x="2" y="2" width="20" height="20" rx="5" fill="${color}22" stroke="${color}" stroke-width="1.5"/><text x="12" y="16.5" text-anchor="middle" font-size="11" font-weight="700" fill="${color}">${letter}</text></svg>`;
+            }
+        }
+    },
+    // Plain-text glyph fallback for contexts where HTML/SVG can't render
+    // (e.g. <option> elements, toast strings, AI prompt text). Returns a
+    // single Unicode character representative of the icon type — not the
+    // old emoji, just a neutral symbol that keeps text-only UI scannable.
+    getSubjectGlyph(subject){
+        const type=(subject&&subject.iconType)||this.getIconType(subject&&subject.name);
+        const glyphs={math:'Σ',science:'⚗',english:'❧',social:'◎',hindi:'ह'};
+        if(glyphs[type]) return glyphs[type];
+        return ((subject&&subject.name)||'?').trim().charAt(0).toUpperCase()||'?';
+    },
     getTodaySessions(){return this.state.sessions.filter(s=>s.date===this.today())},
     getTodayMinutes(){return this.getTodaySessions().reduce((a,s)=>a+s.timeSpent,0)},
     getWeekSessions(){const n=new Date(),w=[];for(let i=6;i>=0;i--){const d=new Date(n);d.setDate(d.getDate()-i);w.push(d.toISOString().split('T')[0])}return{days:w,sessions:this.state.sessions.filter(s=>w.includes(s.date))}},
@@ -1881,7 +1928,7 @@ const App={
             const ch=this.getChapter(s.subjectId,s.chapterId);
             const subj=this.getSubjectById(s.subjectId);
             const chapterName=ch?ch.name:'—';
-            const subjectLabel=subj?`${subj.icon} ${subj.name}`:'—';
+            const subjectLabel=subj?`${this.renderSubjectIcon(subj,14)} ${subj.name}`:'—';
             return `<div class="streak-session-row"><span class="streak-session-date">${dLabel}</span><span class="streak-session-main">${chapterName} · ${subjectLabel}</span><span class="streak-session-dur">${this.formatMin(s.timeSpent||0)}</span></div>`;
         }).join('');
 
@@ -2149,6 +2196,45 @@ const App={
         this.render();
     },
 
+    async _migrateSubjectIconType(){
+        const MIGRATION_KEY = 'boardos_icontype_migration_v1';
+        if(localStorage.getItem(MIGRATION_KEY)) return; // already done on this device
+
+        const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+
+        let updatedCount = 0;
+        const updatePromises = [];
+
+        this.state.subjects.forEach(sub => {
+            if(sub.iconType) return; // already has a type, leave it alone
+            const type = this.getIconType(sub.name);
+            sub.iconType = type; // update in-memory immediately so UI renders correctly
+
+            if(!_isUUID(sub.id)) return; // local-only subject, nothing to sync yet
+
+            updatePromises.push(
+                DB.subjects.update(sub.id, { icon_type: type })
+                    .then(({ error }) => {
+                        if(error) console.error(`[Migration] subjects.update icon_type failed for "${sub.name}":`, error);
+                        else updatedCount++;
+                    })
+            );
+        });
+
+        if(updatePromises.length === 0){
+            localStorage.setItem(MIGRATION_KEY, '1');
+            this.save();
+            return;
+        }
+
+        await Promise.allSettled(updatePromises);
+        localStorage.setItem(MIGRATION_KEY, '1');
+        console.log(`[Migration] icontype_v1 complete — ${updatedCount}/${updatePromises.length} subjects updated`);
+
+        this.save();
+        this.render();
+    },
+
     _updateWelcomeStep4Label(){
         const cls = this._welcomeClass || 10;
         const stream = this._welcomeStream || null;
@@ -2162,13 +2248,13 @@ const App={
         const _lcUid=window._supabaseUserId;
         this.CLASS10_DATA.forEach(sub=>{
             if(this.state.subjects.some(s=>s.name.trim().toLowerCase()===sub.name.trim().toLowerCase()))return;
-            const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
+            const sj={id:this.uid(),name:sub.name,iconType:this.getIconType(sub.name),color:sub.color,chapters:[]};
             // ch is now {name, difficulty} — use ch.difficulty so each chapter
             // gets its correct difficulty instead of the old hardcoded 'medium'
             sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch.name,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:ch.difficulty,notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
             if(_lcUid){
-                DB.subjects.create(_lcUid,{name:sub.name,icon:sub.icon,color:sub.color}).then(({data,error})=>{
+                DB.subjects.create(_lcUid,{name:sub.name,icon_type:sj.iconType,color:sub.color}).then(({data,error})=>{
                     if(error){console.error('[DB] loadCBSE subjects.create:',error);return;}
                     if(data&&data.id){
                         sj.id=data.id;
@@ -2198,13 +2284,13 @@ const App={
         const _lcUid = window._supabaseUserId;
         data.forEach(sub => {
             if(this.state.subjects.some(s=>s.name.trim().toLowerCase()===sub.name.trim().toLowerCase()))return;
-            const sj={id:this.uid(),name:sub.name,icon:sub.icon,color:sub.color,chapters:[]};
+            const sj={id:this.uid(),name:sub.name,iconType:this.getIconType(sub.name),color:sub.color,chapters:[]};
             // ch is now {name, difficulty} — use ch.difficulty so each chapter
             // gets its correct difficulty instead of the old hardcoded 'medium'
             sub.chapters.forEach(ch=>{sj.chapters.push({id:this.uid(),name:ch.name,status:'not-started',deadline:'',completionDate:null,revisionCount:0,revisionDates:[],difficulty:ch.difficulty,notes:'',exercises:[],createdAt:Date.now()})});
             this.state.subjects.push(sj);
             if(_lcUid){
-                DB.subjects.create(_lcUid,{name:sub.name,icon:sub.icon,color:sub.color}).then(({data:sd,error})=>{
+                DB.subjects.create(_lcUid,{name:sub.name,icon_type:sj.iconType,color:sub.color}).then(({data:sd,error})=>{
                     if(error){console.error('[DB] loadCBSEForClass subjects:',error);return;}
                     if(sd&&sd.id){
                         sj.id=sd.id;
@@ -2436,7 +2522,7 @@ const App={
                 const daysOverdue=c.daysSince-c.nextInterval;
                 const subj=this.state.subjects.find(s=>s.id===c.subjectId);
                 return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(249,115,22,0.15);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
-                    <span style="font-size:1rem;flex-shrink:0">${subj?subj.icon:'📖'}</span>
+                    <span style="font-size:1rem;flex-shrink:0">${subj?this.renderSubjectIcon(subj,16):'?'}</span>
                     <div style="flex:1;min-width:0">
                         <div style="font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
                         <div style="font-size:.72rem;color:var(--text-muted)">${c.subjectName||''}</div>
@@ -2609,7 +2695,7 @@ const App={
                 }
                 return`<div class="db-subj-cell" onclick="App.navigate('subjects')">
                     <div class="db-subj-cell-top">
-                        <span class="db-subj-cell-icon">${s.icon}</span>
+                        <span class="db-subj-cell-icon">${this.renderSubjectIcon(s,18)}</span>
                         <span class="db-subj-cell-name">${s.name}</span>
                         <span class="db-subj-cell-count">${dn}/${subjTotal}</span>
                     </div>
@@ -2779,7 +2865,7 @@ const App={
     // FIX 17: chapter-row "..." overflow menu — "Add exercise" coming in Sprint 4.
     renderSubjects(){
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
-        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="App.navigate('notes')">📝 Notes & Formulas</button><button class="btn btn-primary btn-sm" onclick="App.openDoubtModal()">❓ Add Doubt</button></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${s.icon} ${s.name}</div>`).join('')}</div>`;
+        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="App.navigate('notes')">📝 Notes & Formulas</button><button class="btn btn-primary btn-sm" onclick="App.openDoubtModal()">❓ Add Doubt</button></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${this.renderSubjectIcon(s,14)} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
         const fmtShort=this.fmtShort.bind(this);
 
@@ -2814,7 +2900,7 @@ const App={
                 :`<span style="font-size:.72rem;color:var(--text-secondary)">${revisionsOverdue>0?`<span style="color:var(--color-warning,#f59e0b);font-weight:600">${revisionsOverdue} revision${revisionsOverdue!==1?'s':''} overdue</span>`:''}${revisionsOverdue>0&&notStarted>0?' · ':''}${notStarted>0?`<span style="color:var(--text-muted)">${notStarted} not started</span>`:''}</span>`;
 
             const subSafeId=s.id.replace(/[^a-zA-Z0-9_]/g,'_');
-            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${s.icon} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><div style="position:relative"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();App._toggleSubMenu('${s.id}','${subSafeId}')" title="More" style="font-size:1rem;letter-spacing:1px;padding:0 8px">···</button><div id="submenu-${subSafeId}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;background:var(--surface-2,var(--card-bg));border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);min-width:170px;z-index:200;overflow:hidden"><button onclick="event.stopPropagation();App._subMenuDelete('${s.id}','${subSafeId}')" style="display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:.82rem;color:var(--color-danger,#ef4444);cursor:pointer">Delete subject</button></div></div></div></div><div id="subdel-${subSafeId}" style="display:none;padding:10px 12px;margin-bottom:12px;background:var(--surface-2,var(--card-bg));border:1px solid var(--color-danger,#ef4444);border-radius:8px;font-size:.8rem;color:var(--text-secondary)">Delete "<strong>${s.name}</strong>" and all ${s.chapters.length} chapter${s.chapters.length===1?'':'s'} inside it? This cannot be undone. <div style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">Confirm delete</button><button class="btn btn-sm btn-secondary" style="margin-left:6px" onclick="document.getElementById('subdel-${subSafeId}').style.display='none'">Cancel</button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="margin-bottom:14px">${healthLine}</div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{
+            h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${s.color}"><div class="card-header" style="flex-wrap:wrap"><div style="flex:1;min-width:0"><span class="card-title" style="font-size:1rem">${this.renderSubjectIcon(s,18)} ${s.name} ${trophyIcon}</span><p style="font-size:.72rem;color:var(--text-muted);margin-top:4px">${dn}/${s.chapters.length} • ${pc}%</p></div><div style="display:flex;gap:4px;flex-shrink:0"><button class="btn btn-sm btn-secondary" onclick="App.openAddChapterModal('${s.id}')">+</button><div style="position:relative"><button class="btn btn-sm btn-secondary" onclick="event.stopPropagation();App._toggleSubMenu('${s.id}','${subSafeId}')" title="More" style="font-size:1rem;letter-spacing:1px;padding:0 8px">···</button><div id="submenu-${subSafeId}" style="display:none;position:absolute;right:0;top:100%;margin-top:2px;background:var(--surface-2,var(--card-bg));border:1px solid var(--border);border-radius:8px;box-shadow:0 4px 16px rgba(0,0,0,.18);min-width:170px;z-index:200;overflow:hidden"><button onclick="event.stopPropagation();App._subMenuDelete('${s.id}','${subSafeId}')" style="display:block;width:100%;text-align:left;padding:9px 14px;background:none;border:none;font-size:.82rem;color:var(--color-danger,#ef4444);cursor:pointer">Delete subject</button></div></div></div></div><div id="subdel-${subSafeId}" style="display:none;padding:10px 12px;margin-bottom:12px;background:var(--surface-2,var(--card-bg));border:1px solid var(--color-danger,#ef4444);border-radius:8px;font-size:.8rem;color:var(--text-secondary)">Delete "<strong>${s.name}</strong>" and all ${s.chapters.length} chapter${s.chapters.length===1?'':'s'} inside it? This cannot be undone. <div style="margin-top:8px"><button class="btn btn-sm btn-danger" onclick="App.deleteSubject('${s.id}')">Confirm delete</button><button class="btn btn-sm btn-secondary" style="margin-left:6px" onclick="document.getElementById('subdel-${subSafeId}').style.display='none'">Cancel</button></div></div><div class="progress-bar" style="margin-bottom:10px"><div class="progress-fill" style="width:${pc}%;background:${s.color}"></div></div><div style="margin-bottom:14px">${healthLine}</div><div style="display:flex;flex-direction:column;gap:8px">${s.chapters.length===0?'<p style="color:var(--text-muted);font-size:.85rem;text-align:center;padding:16px">No chapters</p>':s.chapters.map(c=>{
                 const ov=c.deadline&&c.deadline<this.today()&&c.status!=='completed'&&c.status!=='revised';
                 const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};
                 const confTag=c.confidence?`<span style="font-size:.65rem">${confMap[c.confidence]}</span>`:'';
@@ -2867,7 +2953,7 @@ const App={
             // Check if subject is now fully complete
             const sub=this.getSubjectById(sId);
             if(sub&&sub.chapters.every(c=>c.status==='completed'||c.status==='revised')){
-                setTimeout(()=>{this.celebrate();this.toast(`🏆 ${sub.icon} ${sub.name} complete! Amazing!`,'success')},800);
+                setTimeout(()=>{this.celebrate();this.toast(`🏆 ${sub.name} complete! Amazing!`,'success')},800);
             }
         }
         const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -2953,7 +3039,7 @@ const App={
             <div class="form-group"><label class="form-label">Exercises</label><div style="display:flex;gap:6px;margin-bottom:8px"><input type="text" id="ex-new-${exKey.replace(/[^a-zA-Z0-9]/g,'')}" class="form-input" placeholder="Ex 1.1, Ex 1.2..." style="flex:1"><button class="btn btn-sm btn-secondary" onclick="App.addExercise('${sId}','${cId}')">Add</button></div><div class="exercise-grid">${exercises.map((ex,i)=>`<div class="exercise-chip ${ex.done?'done':''}" onclick="App.toggleExercise('${sId}','${cId}',${i})">${ex.name} ${ex.done?'✓':''}</div>`).join('')}</div></div>
         </details>`;
 
-        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span><span id="chdet-status-badge" class="tag tag-${ch.status.replace(' ','-')}" style="margin-left:6px">${ch.status.replace('-',' ')}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div>${statTiles}${quickActions}${revisionHistory}${statusSeg}${notesSection}${deadlineExercises}`;
+        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:18px"><span class="tag" style="background:${sub.color}22;color:${sub.color}">${this.renderSubjectIcon(sub,14)} ${sub.name}</span><span id="chdet-status-badge" class="tag tag-${ch.status.replace(' ','-')}" style="margin-left:6px">${ch.status.replace('-',' ')}</span><h3 style="font-size:1.15rem;margin-top:8px">${ch.name}</h3></div>${statTiles}${quickActions}${revisionHistory}${statusSeg}${notesSection}${deadlineExercises}`;
         const footerEl=document.getElementById('detail-footer');
         footerEl.innerHTML='';
         footerEl.style.display='none';
@@ -3058,7 +3144,7 @@ const App={
         const defaultHintColor='var(--color-success)';
         const defaultHintText='✓ Counts toward your streak';
         document.getElementById('log-form-body').innerHTML=`
-<div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="log-subject" onchange="App.updateLogChapters()"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div></div>
+<div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="log-subject" onchange="App.updateLogChapters()"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter</label><select class="form-select" id="log-chapter"><option value="">Select</option>${co}</select></div></div>
 <div class="form-group">
     <label class="form-label">What did you cover?</label>
     <input type="text" id="log-covered" class="form-input" placeholder="e.g. Completed Newton's laws, revised Chapter 3..." maxlength="200">
@@ -3181,7 +3267,7 @@ const App={
         const el=document.getElementById('page-log'),ss=[...this.state.sessions].sort((a,b)=>b.date!==a.date?b.date.localeCompare(a.date):(b.createdAt||0)-(a.createdAt||0)),gr={};ss.forEach(s=>{if(!gr[s.date])gr[s.date]=[];gr[s.date].push(s)});
         let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${this.state.sessions.length} sessions • ${this.formatMin(this.state.sessions.reduce((a,s)=>a+s.timeSpent,0))}</p><button class="btn btn-primary" onclick="App.openQuickLog()">Log</button></div>`;
         if(ss.length===0){h+=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div></span><div class="empty-state-title">No sessions logged yet</div><div class="empty-state-desc">Every study session you log builds your streak, earns XP, and helps the AI Coach give you better advice.</div><button class="btn btn-primary" onclick="App.openQuickLog()">Log Your First Session</button><div class="empty-state-hint"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Even 15 minutes counts!</div></div>`}
-        else{Object.keys(gr).sort((a,b)=>b.localeCompare(a)).forEach(d=>{const dm=gr[d].reduce((a,s)=>a+s.timeSpent,0);h+=`<div style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><h3 style="font-size:.9rem;font-weight:600">${d===this.today()?'Today':d}</h3><span style="font-size:.78rem;color:var(--accent-light);font-weight:600">${this.formatMin(dm)}</span></div>${gr[d].map(s=>{const sub=this.getSubjectById(s.subjectId);const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confEmoji=s.confidence?confMap[s.confidence]:'';return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?sub.icon:'📖'}</div><div class="plan-info"><h4>${sub?sub.name:'?'} ${s.chapterName?'— '+s.chapterName:''}</h4><p>${s.type} ${'⭐'.repeat(s.rating||0)}</p></div><div style="text-align:right"><div class="plan-time">${this.formatMin(s.timeSpent)} ${confEmoji}</div><button class="ch-btn" style="margin-top:4px" onclick="App.deleteSession('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`}).join('')}</div>`})}
+        else{Object.keys(gr).sort((a,b)=>b.localeCompare(a)).forEach(d=>{const dm=gr[d].reduce((a,s)=>a+s.timeSpent,0);h+=`<div style="margin-bottom:20px"><div style="display:flex;justify-content:space-between;margin-bottom:10px"><h3 style="font-size:.9rem;font-weight:600">${d===this.today()?'Today':d}</h3><span style="font-size:.78rem;color:var(--accent-light);font-weight:600">${this.formatMin(dm)}</span></div>${gr[d].map(s=>{const sub=this.getSubjectById(s.subjectId);const confMap={1:'🔴',2:'🟡',3:'🟢',4:'⚡'};const confEmoji=s.confidence?confMap[s.confidence]:'';return`<div class="plan-card" style="cursor:default"><div class="plan-emoji">${sub?this.renderSubjectIcon(sub,18):'?'}</div><div class="plan-info"><h4>${sub?sub.name:'?'} ${s.chapterName?'— '+s.chapterName:''}</h4><p>${s.type} ${'⭐'.repeat(s.rating||0)}</p></div><div style="text-align:right"><div class="plan-time">${this.formatMin(s.timeSpent)} ${confEmoji}</div><button class="ch-btn" style="margin-top:4px" onclick="App.deleteSession('${s.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`}).join('')}</div>`})}
         el.innerHTML=h;
     },
     deleteSession(id){if(!confirm('Delete?'))return;const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.sessions.delete(id).then(({error})=>{if(error)console.error('[DB] sessions.delete:',error);});}this.state.sessions=this.state.sessions.filter(s=>s.id!==id);this.save();this.render()},
@@ -3199,7 +3285,7 @@ const App={
         }
         const doneCount=todayTasks.filter(t=>t.done).length;
         const subs=this.state.subjects||[];
-        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${doneCount}/${todayTasks.length} done</p><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.autoGenerateTasks()">Auto-Plan</button></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Add Task</span></div><div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" id="new-task" class="form-input" placeholder="e.g., Solve Ex 2.3..." style="flex:1" onkeydown="if(event.key==='Enter')App.addTask()"><button class="btn btn-primary btn-sm" onclick="App.addTask()">Add</button></div><div style="display:flex;gap:8px"><select id="new-task-subject" class="form-select" style="flex:1;font-size:.78rem;color:var(--text-muted);padding:6px 8px" onchange="App.updateNewTaskChapters()"><option value="">Subject (optional)</option>${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select><select id="new-task-chapter" class="form-select" style="flex:1;font-size:.78rem;color:var(--text-muted);padding:6px 8px"><option value="">Chapter (optional)</option></select></div></div>`;
+        let h=`<div style="display:flex;justify-content:space-between;margin-bottom:18px"><p style="color:var(--text-secondary);font-size:.9rem">${doneCount}/${todayTasks.length} done</p><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.autoGenerateTasks()">Auto-Plan</button></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Add Task</span></div><div style="display:flex;gap:8px;margin-bottom:8px"><input type="text" id="new-task" class="form-input" placeholder="e.g., Solve Ex 2.3..." style="flex:1" onkeydown="if(event.key==='Enter')App.addTask()"><button class="btn btn-primary btn-sm" onclick="App.addTask()">Add</button></div><div style="display:flex;gap:8px"><select id="new-task-subject" class="form-select" style="flex:1;font-size:.78rem;color:var(--text-muted);padding:6px 8px" onchange="App.updateNewTaskChapters()"><option value="">Subject (optional)</option>${subs.map(s=>`<option value="${s.id}">${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select><select id="new-task-chapter" class="form-select" style="flex:1;font-size:.78rem;color:var(--text-muted);padding:6px 8px"><option value="">Chapter (optional)</option></select></div></div>`;
         h+=`<div class="card"><div class="card-header"><span class="card-title">Today's Tasks</span></div>`;
         if(todayTasks.length===0){h+=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div></span><div class="empty-state-title">No tasks for today</div><div class="empty-state-desc">Tasks help you stay focused on what matters. Add your own or let AI plan your day automatically.</div><button class="btn btn-primary" onclick="App.autoGenerateTasks()">Auto-Plan My Day</button><div class="empty-state-hint"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>Tip: Auto-Plan pulls from your overdue chapters and revisions</div></div>`}
         else{todayTasks.forEach(t=>{
@@ -3208,7 +3294,7 @@ const App={
                 const sub=this.getSubjectById(t.subjectId);
                 if(sub){
                     const ch=t.chapterId?this.getChapter(t.subjectId,t.chapterId):null;
-                    pillHtml=`<div style="margin-left:32px;margin-top:2px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text-muted);background:rgba(99,102,241,0.08);border-radius:6px;padding:2px 8px">${sub.icon} ${sub.name}${ch?' • '+ch.name:''}</span></div>`;
+                    pillHtml=`<div style="margin-left:32px;margin-top:2px"><span style="display:inline-flex;align-items:center;gap:4px;font-size:.72rem;color:var(--text-muted);background:rgba(99,102,241,0.08);border-radius:6px;padding:2px 8px">${this.renderSubjectIcon(sub,12)} ${sub.name}${ch?' • '+ch.name:''}</span></div>`;
                 }
             }
             h+=`<div class="task-item-wrap"><div class="task-item"><div class="task-check ${t.done?'done':''}" onclick="App.toggleTask('${t.id}')">${t.done?'✓':''}</div><span class="task-text ${t.done?'done':''}">${t.text}</span><button class="ch-btn" onclick="App.deleteTask('${t.id}')" style="width:24px;height:24px;font-size:.7rem">✕</button></div>${pillHtml}</div>`;
@@ -3265,7 +3351,7 @@ const App={
         this.save();this.renderTasks();this.checkDailyChallenges()
     },
     deleteTask(id){const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.tasks.delete(id).then(({error})=>{if(error)console.error('[DB] tasks.delete:',error);});}this.state.tasks=this.state.tasks.filter(t=>t.id!==id);this.save();this.renderTasks()},
-    autoGenerateTasks(){const tasks=[];const od=this.getOverdueChapters();od.slice(0,2).forEach(c=>tasks.push(`📌 Complete: ${c.subjectIcon} ${c.name}`));const rd=this.getRevisionsDue();rd.slice(0,2).forEach(c=>tasks.push(`🔄 Revise: ${c.subjectIcon} ${c.name}`));const pending=this.getAllChapters().filter(c=>c.status==='in-progress');pending.slice(0,2).forEach(c=>tasks.push(`📖 Continue: ${c.subjectIcon} ${c.name}`));if(tasks.length===0)tasks.push('📚 Study for '+this.formatMin(this.state.profile.dailyGoalMinutes));const _agUid=window._supabaseUserId;tasks.forEach(t=>{if(!this.state.tasks.some(x=>x.text===t&&x.date===this.today())){const _at={id:this.uid(),text:t,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_at);if(_agUid){DB.tasks.create({user_id:_agUid,text:t,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] auto tasks.create:',error);return;}if(data&&data.id)_at.id=data.id;});}}});this.save();this.renderTasks();this.toast('Tasks auto-generated! 🤖','success')},
+    autoGenerateTasks(){const tasks=[];const od=this.getOverdueChapters();od.slice(0,2).forEach(c=>tasks.push(`📌 Complete: ${c.subjectGlyph} ${c.name}`));const rd=this.getRevisionsDue();rd.slice(0,2).forEach(c=>tasks.push(`🔄 Revise: ${c.subjectGlyph} ${c.name}`));const pending=this.getAllChapters().filter(c=>c.status==='in-progress');pending.slice(0,2).forEach(c=>tasks.push(`📖 Continue: ${c.subjectGlyph} ${c.name}`));if(tasks.length===0)tasks.push('📚 Study for '+this.formatMin(this.state.profile.dailyGoalMinutes));const _agUid=window._supabaseUserId;tasks.forEach(t=>{if(!this.state.tasks.some(x=>x.text===t&&x.date===this.today())){const _at={id:this.uid(),text:t,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_at);if(_agUid){DB.tasks.create({user_id:_agUid,text:t,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] auto tasks.create:',error);return;}if(data&&data.id)_at.id=data.id;});}}});this.save();this.renderTasks();this.toast('Tasks auto-generated! 🤖','success')},
 
     // --- END OF PART 1 --- (continued in Part 2)
     // The following methods are defined in Part 2:
@@ -3295,27 +3381,22 @@ const App={
                 const latest=exams[exams.length-1];const pct=Math.round(latest.scored/latest.total*100);
                 const prevPct=exams.length>1?Math.round(exams[exams.length-2].scored/exams[exams.length-2].total*100):null;
                 const trend=prevPct!==null?(pct>prevPct?'↑':'↓'):'';
-                h+=`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name} ${trend}</span><span class="sp-pct" style="color:${pct>=80?'var(--text-success)':pct>=50?'var(--text-warning)':'var(--text-danger)'}">${pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${sub.color}"></div></div>${prevPct!==null?`<p style="font-size:.68rem;color:var(--text-muted);margin-top:2px">Previous: ${prevPct}% → Current: ${pct}% (${pct-prevPct>=0?'+':''}${pct-prevPct}%)</p>`:''}</div>`;
+                h+=`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${this.renderSubjectIcon(sub,14)} ${sub.name} ${trend}</span><span class="sp-pct" style="color:${pct>=80?'var(--text-success)':pct>=50?'var(--text-warning)':'var(--text-danger)'}">${pct}%</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pct}%;background:${sub.color}"></div></div>${prevPct!==null?`<p style="font-size:.68rem;color:var(--text-muted);margin-top:2px">Previous: ${prevPct}% → Current: ${pct}% (${pct-prevPct>=0?'+':''}${pct-prevPct}%)</p>`:''}</div>`;
             });
             h+='</div>';
             // Target vs actual
             if(this.state.profile.targetScore){
-                const target=this.state.profile.targetScore;
-                let evalLabel,evalColor;
-                if(avg>=target-5){evalLabel='On track';evalColor='var(--text-success)'}
-                else if(avg>=target-15){evalLabel='Close to target';evalColor='var(--text-warning)'}
-                else{evalLabel='Needs improvement';evalColor='var(--color-orange,#f97316)'}
-                h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${evalColor}"><div class="card-header"><span class="card-title">Target vs Actual</span></div><p style="font-size:.9rem">Target: <strong>${target}%</strong> | Average: <strong style="color:${evalColor}">${avg}%</strong> <span style="color:${evalColor}">${evalLabel}</span></p></div>`;
+                h+=`<div class="card" style="margin-bottom:20px;border-left:3px solid ${avg>=this.state.profile.targetScore?'var(--success)':'var(--warning)'}"><div class="card-header"><span class="card-title">Target vs Actual</span></div><p style="font-size:.9rem">Target: <strong>${this.state.profile.targetScore}%</strong> | Average: <strong style="color:${avg>=this.state.profile.targetScore?'var(--text-success)':'var(--text-danger)'}">${avg}%</strong> ${avg>=this.state.profile.targetScore?'On track!':'Needs improvement'}</p></div>`;
             }
         }
         h+=`<div class="card"><div class="card-header"><span class="card-title">All Scores</span></div>`;
         if(scores.length===0)h+='<p style="color:var(--text-muted);font-size:.85rem">No scores yet. Log your first exam!</p>';
-        else{[...scores].reverse().forEach(e=>{const sub=this.getSubjectById(e.subjectId);const pct=Math.round(e.scored/e.total*100);h+=`<div class="rev-item"><div class="rev-info"><h4>${sub?sub.icon:''} ${e.name}</h4><p>${sub?sub.name:''} • ${e.date} • ${e.scored}/${e.total}</p></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.85rem;font-weight:700;color:${pct>=80?'var(--text-success)':pct>=50?'var(--text-warning)':'var(--text-danger)'}">${pct}%</span><button class="ch-btn" onclick="App.deleteExam('${e.id}')" style="width:24px;height:24px;font-size:.65rem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`})}
+        else{[...scores].reverse().forEach(e=>{const sub=this.getSubjectById(e.subjectId);const pct=Math.round(e.scored/e.total*100);h+=`<div class="rev-item"><div class="rev-info"><h4>${sub?this.renderSubjectIcon(sub,14):''} ${e.name}</h4><p>${sub?sub.name:''} • ${e.date} • ${e.scored}/${e.total}</p></div><div style="display:flex;align-items:center;gap:8px"><span style="font-size:.85rem;font-weight:700;color:${pct>=80?'var(--text-success)':pct>=50?'var(--text-warning)':'var(--text-danger)'}">${pct}%</span><button class="ch-btn" onclick="App.deleteExam('${e.id}')" style="width:24px;height:24px;font-size:.65rem"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`})}
         h+='</div>';el.innerHTML=h;
     },
     openExamModal(){
         const subs=this.state.subjects;
-        document.getElementById('exam-form-body').innerHTML=`<div class="form-group"><label class="form-label">Exam Name</label><input type="text" id="exam-name" class="form-input" placeholder="e.g., Unit Test 3"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="exam-subject">${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Date</label><input type="date" id="exam-date" class="form-input" value="${this.today()}"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Marks Obtained</label><input type="number" id="exam-scored" class="form-input" placeholder="28" min="0"></div><div class="form-group"><label class="form-label">Total Marks</label><input type="number" id="exam-total" class="form-input" placeholder="40" min="1"></div></div>`;
+        document.getElementById('exam-form-body').innerHTML=`<div class="form-group"><label class="form-label">Exam Name</label><input type="text" id="exam-name" class="form-input" placeholder="e.g., Unit Test 3"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="exam-subject">${subs.map(s=>`<option value="${s.id}">${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Date</label><input type="date" id="exam-date" class="form-input" value="${this.today()}"></div></div><div class="form-row"><div class="form-group"><label class="form-label">Marks Obtained</label><input type="number" id="exam-scored" class="form-input" placeholder="28" min="0"></div><div class="form-group"><label class="form-label">Total Marks</label><input type="number" id="exam-total" class="form-input" placeholder="40" min="1"></div></div>`;
         this.openModal('modal-exam');
     },
     saveExamScore(){
@@ -3353,7 +3434,7 @@ const App={
             let html=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${emoji} ${title} (${list.length})</span></div>`;
             list.forEach(d=>{
                 const sub=this.getSubjectById(d.subjectId);
-                html+=`<div class="doubt-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h4>${d.text}</h4><p>${sub?sub.icon+' '+sub.name:''} ${d.chapter?'• '+d.chapter:''} ${d.priority==='must-clear'?'<span class="tag tag-hard" style="margin-left:4px">Must Clear</span>':''}</p></div><span class="tag tag-${d.status}">${d.status}</span></div><div class="doubt-actions">${d.status==='unresolved'?`<button class="btn btn-sm btn-warning" onclick="App.updateDoubtStatus('${d.id}','asked')">Asked Teacher</button>`:''} ${d.status!=='understood'?`<button class="btn btn-sm btn-success" onclick="App.updateDoubtStatus('${d.id}','understood')">Understood</button>`:''}<button class="ch-btn" onclick="App.deleteDoubt('${d.id}')" style="width:28px;height:28px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`;
+                html+=`<div class="doubt-item"><div style="display:flex;justify-content:space-between;align-items:flex-start"><div><h4>${d.text}</h4><p>${sub?this.renderSubjectIcon(sub,12)+' '+sub.name:''} ${d.chapter?'• '+d.chapter:''} ${d.priority==='must-clear'?'<span class="tag tag-hard" style="margin-left:4px">Must Clear</span>':''}</p></div><span class="tag tag-${d.status}">${d.status}</span></div><div class="doubt-actions">${d.status==='unresolved'?`<button class="btn btn-sm btn-warning" onclick="App.updateDoubtStatus('${d.id}','asked')">Asked Teacher</button>`:''} ${d.status!=='understood'?`<button class="btn btn-sm btn-success" onclick="App.updateDoubtStatus('${d.id}','understood')">Understood</button>`:''}<button class="ch-btn" onclick="App.deleteDoubt('${d.id}')" style="width:28px;height:28px"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div></div>`;
             });
             html+='</div>';return html;
         };
@@ -3369,7 +3450,7 @@ const App={
     },
     openDoubtModal(){
         const subs=this.state.subjects;
-        document.getElementById('doubt-form-body').innerHTML=`<div class="form-group"><label class="form-label">Doubt / Topic</label><input type="text" id="doubt-text" class="form-input" placeholder="e.g., I don't understand trigonometric identities proof"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="doubt-subject"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="doubt-chapter" class="form-input" placeholder="e.g., Trigonometry"></div></div><div class="form-group"><label class="form-label">Priority</label><div class="quick-log"><div class="quick-chip selected" data-priority="must-clear" onclick="App.pickDoubtPriority(this)">🔴 Must Clear Before Exam</div><div class="quick-chip" data-priority="nice-to-know" onclick="App.pickDoubtPriority(this)">🟡 Nice to Know</div></div></div>`;
+        document.getElementById('doubt-form-body').innerHTML=`<div class="form-group"><label class="form-label">Doubt / Topic</label><input type="text" id="doubt-text" class="form-input" placeholder="e.g., I don't understand trigonometric identities proof"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="doubt-subject"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}">${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="doubt-chapter" class="form-input" placeholder="e.g., Trigonometry"></div></div><div class="form-group"><label class="form-label">Priority</label><div class="quick-log"><div class="quick-chip selected" data-priority="must-clear" onclick="App.pickDoubtPriority(this)">🔴 Must Clear Before Exam</div><div class="quick-chip" data-priority="nice-to-know" onclick="App.pickDoubtPriority(this)">🟡 Nice to Know</div></div></div>`;
         this.openModal('modal-doubt');
     },
     pickDoubtPriority(el){document.querySelectorAll('#doubt-form-body .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
@@ -3407,7 +3488,7 @@ const App={
             const bySub={};resources.forEach(r=>{const k=r.subjectId||'general';if(!bySub[k])bySub[k]=[];bySub[k].push(r)});
             Object.entries(bySub).forEach(([sId,rs])=>{
                 const sub=this.getSubjectById(sId);
-                h+=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${sub?sub.icon+' '+sub.name:'General'}</span></div>`;
+                h+=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${sub?this.renderSubjectIcon(sub,16)+' '+sub.name:'General'}</span></div>`;
                 rs.forEach(r=>{
                     const typeIcons={youtube:'🎬',pdf:'📄',website:'🌐',other:'📎'};
                     h+=`<div class="resource-item"><span style="font-size:1.3rem">${typeIcons[r.type]||'📎'}</span><div style="flex:1;min-width:0"><h4 style="font-size:.85rem;font-weight:600">${r.title}</h4><a href="${r.url}" target="_blank" rel="noopener" style="font-size:.78rem;color:var(--accent-light);word-break:break-all">${r.url.substring(0,60)}${r.url.length>60?'...':''}</a>${r.chapter?`<p style="font-size:.7rem;color:var(--text-muted)">Ch: ${r.chapter}</p>`:''}</div><button class="ch-btn" onclick="App.deleteResource('${r.id}')" style="flex-shrink:0"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>`;
@@ -3419,7 +3500,7 @@ const App={
     },
     openResourceModal(){
         const subs=this.state.subjects;
-        document.getElementById('resource-form-body').innerHTML=`<div class="form-group"><label class="form-label">Title</label><input type="text" id="res-title" class="form-input" placeholder="e.g., Best Electricity chapter video"></div><div class="form-group"><label class="form-label">URL / Link</label><input type="url" id="res-url" class="form-input" placeholder="https://youtube.com/..."></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="res-subject"><option value="">General</option>${subs.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><select class="form-select" id="res-type"><option value="youtube">YouTube</option><option value="pdf">PDF</option><option value="website">Website</option><option value="other">📎 Other</option></select></div></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="res-chapter" class="form-input" placeholder="e.g., Electricity"></div>`;
+        document.getElementById('resource-form-body').innerHTML=`<div class="form-group"><label class="form-label">Title</label><input type="text" id="res-title" class="form-input" placeholder="e.g., Best Electricity chapter video"></div><div class="form-group"><label class="form-label">URL / Link</label><input type="url" id="res-url" class="form-input" placeholder="https://youtube.com/..."></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="res-subject"><option value="">General</option>${subs.map(s=>`<option value="${s.id}">${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><select class="form-select" id="res-type"><option value="youtube">YouTube</option><option value="pdf">PDF</option><option value="website">Website</option><option value="other">📎 Other</option></select></div></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="res-chapter" class="form-input" placeholder="e.g., Electricity"></div>`;
         this.openModal('modal-resource');
     },
     saveResource(){
@@ -3712,7 +3793,7 @@ const App={
                 return valTxt+bar+lbl;
             }).join('');
             return`<svg viewBox="0 0 ${7*(BW+BG)-BG} ${SVG_H}" width="100%" height="${SVG_H}" style="display:block">${bars}</svg>`;
-        })()}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${sub.icon} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
+        })()}</div></div><div class="card"><div class="card-header"><span class="card-title">Subject Split — This Week</span></div>${Object.keys(sb).length===0?'<p style="color:var(--text-muted)">No data this week</p>':Object.entries(sb).sort((a,b)=>b[1]-a[1]).map(([sId,min])=>{const sub=this.getSubjectById(sId);if(!sub)return'';const pc=Math.round(min/tm*100);return`<div class="subject-progress"><div class="sp-header"><span class="sp-name">${this.renderSubjectIcon(sub,14)} ${sub.name}</span><span class="sp-pct" style="color:${sub.color}">${this.formatMin(min)} (${pc}%)</span></div><div class="progress-bar"><div class="progress-fill" style="width:${pc}%;background:${sub.color}"></div></div></div>`}).join('')}</div></div>
         <div class="grid grid-2" style="margin-bottom:20px"><div class="card"><div class="card-header"><span class="card-title">Monthly Comparison</span></div><p style="font-size:.9rem;margin-bottom:12px">This month: <strong style="color:var(--text-primary)">${this.formatMin(tmMin)}</strong></p><p style="font-size:.9rem;margin-bottom:12px">Last month: <strong style="color:var(--text-primary)">${this.formatMin(lmMin)}</strong></p><p style="font-size:.85rem;color:${tmMin>=lmMin?'var(--text-success)':'var(--text-danger)'};font-weight:600">${tmMin>=lmMin?'↑':'↓'} ${monthChange>=0?'+':''}${monthChange}% ${tmMin>=lmMin?'vs last month':'below last month'}</p></div><div class="card"><div class="card-header"><span class="card-title">Productivity Patterns</span></div><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem">🕐</span> Best time: <strong style="color:var(--text-primary)">${bestHour?bestHour[0]+':00':'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg></span> Best day: <strong style="color:var(--text-primary)">${bestDay?dayNames[bestDay[0]]:'--'}</strong></p><p style="font-size:.85rem;color:var(--text-secondary);line-height:2"><span style="font-size:1.1rem"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></span> Avg session: <strong style="color:var(--text-primary)">${avgSession}m</strong></p></div></div>
         <div class="card" id="subbal-card">${(()=>{
             const swt=this.state.subjects.filter(s=>allSubTime[s.id]>0);
@@ -3722,7 +3803,7 @@ const App={
             let off=0;
             const segs=[...swt].sort((a,b)=>(allSubTime[b.id]||0)-(allSubTime[a.id]||0)).map((s,i)=>{
                 const m=allSubTime[s.id]||0,fr=m/totalAllTime,da=fr*C,ga=C-da;
-                const seg={i,id:s.id,icon:s.icon,name:s.name,color:s.color,m,fr,da,ga,off};
+                const seg={i,id:s.id,icon:this.renderSubjectIcon(s,14),name:s.name,color:s.color,m,fr,da,ga,off};
                 off+=da;return seg;
             });
             const arcs=segs.map(sg=>`<circle class="sb-arc" data-i="${sg.i}" cx="${CX}" cy="${CY}" r="${R}" fill="none" stroke="${sg.color}" stroke-width="${SW}" stroke-dasharray="${sg.da.toFixed(2)} ${sg.ga.toFixed(2)}" stroke-dashoffset="${(-sg.off+C/4).toFixed(2)}" style="cursor:pointer;transition:stroke-width .15s ease,opacity .15s ease"/>`).join('');
@@ -3795,7 +3876,7 @@ const App={
 
         // ── Build subject options for the focus-subject dropdown ──────────
         const subjectOpts=this.state.subjects.length>0
-            ?this.state.subjects.map(s=>`<option value="${s.id}"${p.focusSubjectId===s.id?' selected':''}>${s.icon} ${s.name}</option>`).join('')
+            ?this.state.subjects.map(s=>`<option value="${s.id}"${p.focusSubjectId===s.id?' selected':''}>${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')
             :'<option value="" disabled>No subjects added yet</option>';
 
         // ── Build chapter options, ordered: in_progress → not-started → completed/revised ──
@@ -3873,7 +3954,7 @@ const App={
         ?`<button class="btn btn-danger" onclick="App.stopStopwatch()">Stop &amp; Log</button>`
         :`<div style="width:100%">
             <select id="sw-subject" class="form-select" style="margin-bottom:8px">
-              ${this.state.subjects.map(s=>`<option value="${s.id}">${s.icon} ${s.name}</option>`).join('')}
+              ${this.state.subjects.map(s=>`<option value="${s.id}">${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}
             </select>
             <button class="btn btn-primary" onclick="App.startStopwatch()" style="width:100%">▶ Start Timer</button>
           </div>`}
@@ -4022,7 +4103,7 @@ const App={
             const bySub={};notes.forEach(n=>{const k=n.subjectId||'general';if(!bySub[k])bySub[k]=[];bySub[k].push(n)});
             Object.entries(bySub).forEach(([sId,ns])=>{
                 const sub=this.getSubjectById(sId);
-                h+=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${sub?sub.icon+' '+sub.name:'General'}</span></div>${ns.map(n=>{const ac=(n.attachments&&n.attachments.length)?n.attachments.length:0;return`<div class="plan-card" style="cursor:pointer" onclick="App.viewNote('${n.id}')"><div class="plan-info"><h4>${n.title} ${n.isFormula?' (Formula)':''} ${ac?`<span style="font-size:.68rem;background:rgba(99,102,241,0.15);color:var(--accent-light);padding:2px 6px;border-radius:8px;margin-left:4px">📎 ${ac}</span>`:''}</h4><p style="white-space:pre-wrap;margin-top:4px;font-size:.8rem;color:var(--text-secondary)">${n.content.substring(0,180)}${n.content.length>180?'...':''}</p></div><button class="ch-btn" onclick="event.stopPropagation();App.deleteNote('${n.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>`}).join('')}</div>`;
+                h+=`<div class="card" style="margin-bottom:16px"><div class="card-header"><span class="card-title">${sub?this.renderSubjectIcon(sub,16)+' '+sub.name:'General'}</span></div>${ns.map(n=>{const ac=(n.attachments&&n.attachments.length)?n.attachments.length:0;return`<div class="plan-card" style="cursor:pointer" onclick="App.viewNote('${n.id}')"><div class="plan-info"><h4>${n.title} ${n.isFormula?' (Formula)':''} ${ac?`<span style="font-size:.68rem;background:rgba(99,102,241,0.15);color:var(--accent-light);padding:2px 6px;border-radius:8px;margin-left:4px">📎 ${ac}</span>`:''}</h4><p style="white-space:pre-wrap;margin-top:4px;font-size:.8rem;color:var(--text-secondary)">${n.content.substring(0,180)}${n.content.length>180?'...':''}</p></div><button class="ch-btn" onclick="event.stopPropagation();App.deleteNote('${n.id}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M9 6V4h6v2"/></svg></button></div>`}).join('')}</div>`;
             });
             h+='</div>';
         }
@@ -4033,7 +4114,7 @@ const App={
         const existing=editId?(this.state.notes||[]).find(n=>n.id===editId):null;
         this._pendingAttachments=existing&&existing.attachments?[...existing.attachments]:[];
         const attachHtml=this._buildAttachPreviewHtml();
-        document.getElementById('note-edit-body').innerHTML=`<div class="form-group"><label class="form-label">Title</label><input type="text" id="note-title" class="form-input" placeholder="e.g., Trigonometry Formulas" value="${existing?existing.title:''}"></div><div class="form-group"><label class="form-label">Content / Formulas</label><textarea class="form-textarea" id="note-content" placeholder="Write your notes, formulas, key concepts..." style="min-height:120px">${existing?existing.content:''}</textarea></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="note-subject"><option value="">General</option>${subs.map(s=>`<option value="${s.id}" ${existing&&existing.subjectId===s.id?'selected':''}>${s.icon} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><div class="quick-log"><div class="quick-chip ${!existing||!existing.isFormula?'selected':''}" data-formula="false" onclick="App.pickNoteType(this)">📝 Notes</div><div class="quick-chip ${existing&&existing.isFormula?'selected':''}" data-formula="true" onclick="App.pickNoteType(this)">📐 Formula</div></div></div></div><div class="form-group"><label class="form-label">📎 Attachments <span style="font-size:.72rem;color:var(--text-muted)">(Images &amp; PDFs • max 4 MB each)</span></label><div class="attach-zone" id="attach-zone" onclick="document.getElementById('attach-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="App._handleAttachDrop(event)"><div style="font-size:1.8rem">📁</div><p>Click to upload or drag &amp; drop<br><span style="font-size:.7rem">JPG · PNG · GIF · WebP · PDF</span></p><input type="file" id="attach-file-input" accept="image/*,.pdf" multiple style="display:none" onchange="App._handleAttachFiles(this.files)"></div><div class="attach-preview" id="attach-preview">${attachHtml}</div></div>${editId?`<input type="hidden" id="note-edit-id" value="${editId}">`:''}`;
+        document.getElementById('note-edit-body').innerHTML=`<div class="form-group"><label class="form-label">Title</label><input type="text" id="note-title" class="form-input" placeholder="e.g., Trigonometry Formulas" value="${existing?existing.title:''}"></div><div class="form-group"><label class="form-label">Content / Formulas</label><textarea class="form-textarea" id="note-content" placeholder="Write your notes, formulas, key concepts..." style="min-height:120px">${existing?existing.content:''}</textarea></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="note-subject"><option value="">General</option>${subs.map(s=>`<option value="${s.id}" ${existing&&existing.subjectId===s.id?'selected':''}>${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Type</label><div class="quick-log"><div class="quick-chip ${!existing||!existing.isFormula?'selected':''}" data-formula="false" onclick="App.pickNoteType(this)">📝 Notes</div><div class="quick-chip ${existing&&existing.isFormula?'selected':''}" data-formula="true" onclick="App.pickNoteType(this)">📐 Formula</div></div></div></div><div class="form-group"><label class="form-label">📎 Attachments <span style="font-size:.72rem;color:var(--text-muted)">(Images &amp; PDFs • max 4 MB each)</span></label><div class="attach-zone" id="attach-zone" onclick="document.getElementById('attach-file-input').click()" ondragover="event.preventDefault();this.classList.add('drag-over')" ondragleave="this.classList.remove('drag-over')" ondrop="App._handleAttachDrop(event)"><div style="font-size:1.8rem">📁</div><p>Click to upload or drag &amp; drop<br><span style="font-size:.7rem">JPG · PNG · GIF · WebP · PDF</span></p><input type="file" id="attach-file-input" accept="image/*,.pdf" multiple style="display:none" onchange="App._handleAttachFiles(this.files)"></div><div class="attach-preview" id="attach-preview">${attachHtml}</div></div>${editId?`<input type="hidden" id="note-edit-id" value="${editId}">`:''}`;
         document.querySelector('#modal-note-edit .modal-header h2').textContent=editId?'📓 Edit Note':'📓 Add Note';
         this.openModal('modal-note-edit');
     },
@@ -4106,7 +4187,7 @@ const App={
                 ?`<div class="note-attach-item" onclick="App.openLightbox('${id}',${i})" title="${a.name}"><img src="${a.data}" alt="${a.name}"></div>`
                 :`<div class="note-attach-item" onclick="App.openLightbox('${id}',${i})" title="${a.name}"><div class="note-attach-pdf">📄<span>${a.name}</span></div></div>`
             ).join('')}</div></div>`:'';
-        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:14px">${sub?`<span class="tag" style="background:${sub.color}22;color:${sub.color}">${sub.icon} ${sub.name}</span>`:''} ${note.isFormula?'<span class="tag" style="background:rgba(99,102,241,0.12);color:var(--accent-light)">📐 Formula</span>':''}</div><h3 style="font-size:1.15rem;margin-bottom:14px">${note.title}</h3><div style="white-space:pre-wrap;font-size:.9rem;line-height:1.8;color:var(--text-secondary);background:var(--bg-card);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border)">${note.content||'<span style="opacity:.4">No text content</span>'}</div>${attachHtml}`;
+        document.getElementById('detail-body').innerHTML=`<div style="margin-bottom:14px">${sub?`<span class="tag" style="background:${sub.color}22;color:${sub.color}">${this.renderSubjectIcon(sub,14)} ${sub.name}</span>`:''} ${note.isFormula?'<span class="tag" style="background:rgba(99,102,241,0.12);color:var(--accent-light)">📐 Formula</span>':''}</div><h3 style="font-size:1.15rem;margin-bottom:14px">${note.title}</h3><div style="white-space:pre-wrap;font-size:.9rem;line-height:1.8;color:var(--text-secondary);background:var(--bg-card);padding:16px;border-radius:var(--radius-sm);border:1px solid var(--border)">${note.content||'<span style="opacity:.4">No text content</span>'}</div>${attachHtml}`;
         const noteFooterEl=document.getElementById('detail-footer');
         noteFooterEl.style.display='';
         noteFooterEl.innerHTML=`<button class="btn btn-secondary" onclick="App.closeModal('modal-detail')">Close</button><button class="btn btn-primary" onclick="App.closeModal('modal-detail');App.openNoteModal('${id}')">Edit</button>`;
@@ -4139,7 +4220,7 @@ const App={
         if(notes.length===0){container.innerHTML='<p style="color:var(--text-muted);text-align:center;padding:20px">No matching notes</p>';return}
         container.innerHTML=notes.map(n=>{
             const sub=this.getSubjectById(n.subjectId);
-            return`<div class="plan-card" style="cursor:pointer;margin-bottom:6px" onclick="App.viewNote('${n.id}')"><div class="plan-info"><h4>${n.title} ${n.isFormula?' (Formula)':''}</h4><p style="font-size:.78rem;color:var(--text-muted)">${sub?sub.icon+' '+sub.name:'General'}</p></div></div>`;
+            return`<div class="plan-card" style="cursor:pointer;margin-bottom:6px" onclick="App.viewNote('${n.id}')"><div class="plan-info"><h4>${n.title} ${n.isFormula?' (Formula)':''}</h4><p style="font-size:.78rem;color:var(--text-muted)">${sub?this.renderSubjectIcon(sub,12)+' '+sub.name:'General'}</p></div></div>`;
         }).join('');
     },
 
@@ -4164,7 +4245,7 @@ const App={
         const recentSessions=this.state.sessions.slice(-5).map(s=>`${s.subjectName} - ${s.chapterName} (${s.timeSpent}min, ${s.type}${s.confidence?', conf:'+['','🔴','🟡','🟢','⚡'][s.confidence]:''})`).join('; ');
         const subjectProgress=this.state.subjects.map(s=>{
             const done=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;
-            return `${s.icon} ${s.name}: ${done}/${s.chapters.length} chapters`;
+            return `${this.getSubjectGlyph(s)} ${s.name}: ${done}/${s.chapters.length} chapters`;
         }).join(', ');
         const weakChaps=this.getAllChapters().filter(c=>c.weakFlag);
         const todayCheckin=this.state.checkins&&this.state.checkins[this.today()];
@@ -4443,9 +4524,9 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     renderSettings(){
         const el=document.getElementById('page-settings'),p=this.state.profile,stats=this.getStats();
         const userEmail=window._supabaseSession?.user?.email||window._supabaseUserEmail||'';
-        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Profile</span></div>${userEmail?`<div class="form-group"><label class="form-label">Email</label><div class="form-input" style="background:var(--color-surface-hover);cursor:default;color:var(--text-muted);font-size:.82rem">${userEmail}</div></div>`:''}<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.updateSidebar();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Class</label><select class="form-select" onchange="App.changeClass(parseInt(this.value))">${[9,10,11,12].map(c=>`<option value="${c}" ${p.selectedClass===c?'selected':''}>Class ${c}</option>`).join('')}</select></div>${(p.selectedClass===11||p.selectedClass===12)?`<div class="form-group"><label class="form-label">Stream</label><select class="form-select" onchange="App.state.profile.selectedStream=this.value;App._syncFullProfile()">${['PCM','PCB','Commerce'].map(s=>`<option value="${s}" ${p.selectedStream===s?'selected':''} >${s}</option>`).join('')}</select></div>`:''}<div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App._syncFullProfile()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.updatePageSubtitle();App.updateTopbarPills();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||85}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App._syncFullProfile()"></div></div>
+        el.innerHTML=`<div class="grid grid-2"><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Profile</span></div>${userEmail?`<div class="form-group"><label class="form-label">Email</label><div class="form-input" style="background:var(--color-surface-hover);cursor:default;color:var(--text-muted);font-size:.82rem">${userEmail}</div></div>`:''}<div class="form-group"><label class="form-label">Name</label><input type="text" class="form-input" value="${p.name}" onchange="App.state.profile.name=this.value;App.updateSidebar();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Class</label><select class="form-select" onchange="App.changeClass(parseInt(this.value))">${[9,10,11,12].map(c=>`<option value="${c}" ${p.selectedClass===c?'selected':''}>Class ${c}</option>`).join('')}</select></div>${(p.selectedClass===11||p.selectedClass===12)?`<div class="form-group"><label class="form-label">Stream</label><select class="form-select" onchange="App.state.profile.selectedStream=this.value;App._syncFullProfile()">${['PCM','PCB','Commerce'].map(s=>`<option value="${s}" ${p.selectedStream===s?'selected':''} >${s}</option>`).join('')}</select></div>`:''}<div class="form-group"><label class="form-label">Daily Study Goal</label><select class="form-select" onchange="App.state.profile.dailyGoalMinutes=parseInt(this.value);App._syncFullProfile()">${[60,90,120,150,180,240,300].map(v=>`<option value="${v}" ${p.dailyGoalMinutes===v?'selected':''}>${v/60}h (${v}m)</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Board Exam Date</label><input type="date" class="form-input" value="${p.examDate||''}" onchange="App.state.profile.examDate=this.value;App.updatePageSubtitle();App.updateTopbarPills();App._syncFullProfile()"></div><div class="form-group"><label class="form-label">Target Score (%)</label><input type="number" class="form-input" value="${p.targetScore||90}" min="1" max="100" onchange="App.state.profile.targetScore=parseInt(this.value);App._syncFullProfile()"></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Theme</span></div><div style="display:flex;flex-direction:column;gap:12px"><div style="display:flex;gap:8px;flex-wrap:wrap"><button class="btn btn-sm ${this.state.theme==='dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('dark')">Dark</button><button class="btn btn-sm ${this.state.theme==='light'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('light')">Light</button><button class="btn btn-sm ${this.state.theme==='warm-dark'?'btn-primary':'btn-secondary'}" onclick="App.toggleTheme('warm-dark')">Warm Dark</button></div><div style="display:flex;align-items:center;gap:10px;padding-top:8px;border-top:1px solid var(--border)"><input type="checkbox" id="auto-theme-check" ${this.state.autoTheme?'checked':''} onchange="App.toggleAutoTheme()" style="width:16px;height:16px;cursor:pointer"><label for="auto-theme-check" style="font-size:.82rem;cursor:pointer">Auto switch (Light 7AM–7PM, Dark at night)</label></div></div></div>
-        </div><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Statistics</span></div><div style="font-size:.85rem;color:var(--text-secondary);line-height:2"><p>Sessions: <strong style="color:var(--text-primary)">${stats.totalSessions}</strong></p><p>Total Study Time: <strong style="color:var(--text-primary)">${this.formatMin(stats.totalMinutes)}</strong></p><p>Chapters Done: <strong style="color:var(--text-primary)">${stats.completedChapters}/${this.getTotalChapters()}</strong></p><p>Total Revisions: <strong style="color:var(--text-primary)">${stats.totalRevisions}</strong></p><p>Current Streak: <strong style="color:var(--text-primary)">${stats.streak} days</strong></p><p>Exams Logged: <strong style="color:var(--text-primary)">${this.state.examScores.length}</strong></p><p>Doubts: <strong style="color:var(--text-primary)">${this.state.doubts.length} (${this.state.doubts.filter(d=>d.status==='unresolved').length} unresolved)</strong></p><p>Notes: <strong style="color:var(--text-primary)">${(this.state.notes||[]).length}</strong></p><p>Resources: <strong style="color:var(--text-primary)">${(this.state.resources||[]).length}</strong></p><p>Level ${stats.level} (${p.xp} XP)</p></div></div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Data Management</span></div><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-secondary" onclick="App.exportData()" style="justify-content:center">Export Data (JSON)</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()" style="justify-content:center">Import Data</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)"><hr style="border-color:var(--border)"><button class="btn btn-danger" onclick="App.resetAll()" style="justify-content:center">Reset All Data</button></div></div>
+        <div class="card"><div class="card-header"><span class="card-title">Statistics</span></div><div style="font-size:.85rem;color:var(--text-secondary);line-height:2"><p>Sessions: <strong style="color:var(--text-primary)">${stats.totalSessions}</strong></p><p>Total Study Time: <strong style="color:var(--text-primary)">${this.formatMin(stats.totalMinutes)}</strong></p><p>Chapters Done: <strong style="color:var(--text-primary)">${stats.completedChapters}/${this.getTotalChapters()}</strong></p><p>Total Revisions: <strong style="color:var(--text-primary)">${stats.totalRevisions}</strong></p><p>Current Streak: <strong style="color:var(--text-primary)">${stats.streak} days</strong></p><p>Exams Logged: <strong style="color:var(--text-primary)">${this.state.examScores.length}</strong></p><p>Doubts: <strong style="color:var(--text-primary)">${this.state.doubts.length} (${this.state.doubts.filter(d=>d.status==='unresolved').length} unresolved)</strong></p><p>Notes: <strong style="color:var(--text-primary)">${(this.state.notes||[]).length}</strong></p><p>Resources: <strong style="color:var(--text-primary)">${(this.state.resources||[]).length}</strong></p><p>Level ${stats.level} (${p.xp} XP)</p></div></div></div><div><div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Data Management</span></div><div style="display:flex;flex-direction:column;gap:10px"><button class="btn btn-secondary" onclick="App.exportData()" style="justify-content:center">Export Data (JSON)</button><button class="btn btn-secondary" onclick="document.getElementById('import-file').click()" style="justify-content:center">Import Data</button><input type="file" id="import-file" accept=".json" style="display:none" onchange="App.importData(event)"><hr style="border-color:var(--border)"><button class="btn btn-danger" onclick="App.resetAll()" style="justify-content:center">Reset All Data</button></div></div>
         <div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>
         <div class="card"><div class="card-header"><span class="card-title">About BoardOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">BoardOS is your personal study OS. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p><hr style="border-color:var(--border);margin:12px 0"><button class="btn btn-secondary" onclick="App.navigate('rewards')" style="justify-content:center;width:100%;margin-bottom:8px">🏆 View Rewards & Badges</button><button class="btn btn-secondary" onclick="window.StudyOSTour&&window.StudyOSTour.replay();App.navigate('dashboard')" style="justify-content:center;width:100%">🗺️ Replay Onboarding Tour</button></div></div></div>`;
         // Inject Install App card after render
@@ -4459,17 +4540,16 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         const isIOS       = window._pwaIsIOS && window._pwaIsIOS();
         const hasPrompt   = !!window._pwaInstallPrompt;
         let card = '';
-        const cardStyleBase='margin-top:20px';
         if (isInstalled || window._pwaInstalled) {
-            card = `<div class="card" style="${cardStyleBase};border:1px solid rgba(16,185,129,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--success,#10b981)"><span style="font-size:1.4rem">✅</span><span>BoardOS is installed on your device. You&apos;re all set!</span></div></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(16,185,129,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><div style="display:flex;align-items:center;gap:10px;font-size:.85rem;color:var(--success,#10b981)"><span style="font-size:1.4rem">✅</span><span>BoardOS is installed on your device. You&apos;re all set!</span></div></div>`;
         } else if (isIOS) {
-            card = `<div class="card" style="${cardStyleBase};border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Add BoardOS to your home screen for instant access — no browser needed.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">📋 How to Install on iPhone / iPad</button><div id="pwa-ios-tip" style="display:none;margin-top:12px;background:var(--color-surface-hover,rgba(255,255,255,0.05));border-radius:10px;padding:14px;font-size:.8rem;color:var(--text-secondary);line-height:2.1"><p style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Follow these steps:</p><p>1. Tap the <strong style="color:var(--text-primary)">Share button ⎋</strong> at the bottom of Safari</p><p>2. Scroll down and tap <strong style="color:var(--text-primary)">"Add to Home Screen"</strong></p><p>3. Tap <strong style="color:var(--text-primary)">"Add"</strong> in the top right corner</p><p style="margin-top:8px;font-size:.74rem;color:var(--text-muted)">⚠️ Must be opened in Safari. Chrome on iPhone won&apos;t show this option.</p></div></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Add BoardOS to your home screen for instant access — no browser needed.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">📋 How to Install on iPhone / iPad</button><div id="pwa-ios-tip" style="display:none;margin-top:12px;background:var(--color-surface-hover,rgba(255,255,255,0.05));border-radius:10px;padding:14px;font-size:.8rem;color:var(--text-secondary);line-height:2.1"><p style="font-weight:600;color:var(--text-primary);margin-bottom:4px">Follow these steps:</p><p>1. Tap the <strong style="color:var(--text-primary)">Share button ⎋</strong> at the bottom of Safari</p><p>2. Scroll down and tap <strong style="color:var(--text-primary)">"Add to Home Screen"</strong></p><p>3. Tap <strong style="color:var(--text-primary)">"Add"</strong> in the top right corner</p><p style="margin-top:8px;font-size:.74rem;color:var(--text-muted)">⚠️ Must be opened in Safari. Chrome on iPhone won&apos;t show this option.</p></div></div>`;
         } else if (hasPrompt) {
-            card = `<div class="card" style="${cardStyleBase};border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Install BoardOS as an app for faster access, offline support, and a distraction-free study experience.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">⬇️ Install BoardOS</button><p style="font-size:.72rem;color:var(--text-muted);margin-top:8px;text-align:center">Works offline · No app store needed · Instant launch</p></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid rgba(99,102,241,0.3)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);margin-bottom:12px;line-height:1.6">Install BoardOS as an app for faster access, offline support, and a distraction-free study experience.</p><button class="btn btn-primary" onclick="window._pwaDoInstall()" style="width:100%;justify-content:center">⬇️ Install BoardOS</button><p style="font-size:.72rem;color:var(--text-muted);margin-top:8px;text-align:center">Works offline · No app store needed · Instant launch</p></div>`;
         } else {
-            card = `<div class="card" style="${cardStyleBase};border:1px solid var(--border)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8"><strong style="color:var(--text-primary)">Chrome / Edge:</strong> Click the <strong>⊕ install icon</strong> in the address bar.<br><strong style="color:var(--text-primary)">Android:</strong> Tap <strong>⋮ Menu → Add to Home Screen</strong>.<br><strong style="color:var(--text-primary)">iPhone (Safari):</strong> Tap <strong>Share ⎋ → Add to Home Screen</strong>.</p></div>`;
+            card = `<div class="card" style="margin-bottom:20px;border:1px solid var(--border)"><div class="card-header"><span class="card-title">Install App</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8"><strong style="color:var(--text-primary)">Chrome / Edge:</strong> Click the <strong>⊕ install icon</strong> in the address bar.<br><strong style="color:var(--text-primary)">Android:</strong> Tap <strong>⋮ Menu → Add to Home Screen</strong>.<br><strong style="color:var(--text-primary)">iPhone (Safari):</strong> Tap <strong>Share ⎋ → Add to Home Screen</strong>.</p></div>`;
         }
-        el.insertAdjacentHTML('beforeend', card);
+        el.insertAdjacentHTML('afterbegin', card);
     },
 
     // SEARCH
@@ -4539,7 +4619,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
 <div class="form-group">
   <label class="form-label">Subject</label>
   <select class="form-select" id="ch-subject">
-    ${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${s.icon} ${s.name}</option>`).join('')}
+    ${subs.map(s=>`<option value="${s.id}" ${s.id===pSub?'selected':''}>${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}
   </select>
 </div>
 <div class="form-group">
@@ -4595,13 +4675,14 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         this.save();this.closeModal('modal-chapter');this.render();this.toast(`📖 "${name}" added!`,'success');
     },
     saveSubject(){
-        const name=document.getElementById('new-subject-name').value.trim(),icon=document.getElementById('new-subject-icon').value.trim()||'📚',cc=document.querySelector('#color-pick .quick-chip.selected'),color=cc?cc.dataset.color:'#6366f1';
+        const name=document.getElementById('new-subject-name').value.trim(),cc=document.querySelector('#color-pick .quick-chip.selected'),color=cc?cc.dataset.color:'#6366f1';
         if(!name){this.toast('Enter subject name','warning');return}
-        const _ns={id:this.uid(),name,icon,color,chapters:[]};
+        const iconType=this.getIconType(name);
+        const _ns={id:this.uid(),name,iconType,color,chapters:[]};
         this.state.subjects.push(_ns);
         const _nsUid=window._supabaseUserId;
-        if(_nsUid){DB.subjects.create(_nsUid,{name,icon,color}).then(({data,error})=>{if(error){console.error('[DB] subjects.create:',error);return;}if(data&&data.id)_ns.id=data.id;});}
-        this.save();this.closeModal('modal-subject');this.render();this.toast(`📚 "${name}" added!`,'success');
+        if(_nsUid){DB.subjects.create(_nsUid,{name,icon_type:iconType,color}).then(({data,error})=>{if(error){console.error('[DB] subjects.create:',error);return;}if(data&&data.id)_ns.id=data.id;});}
+        this.save();this.closeModal('modal-subject');this.render();this.toast(`Subject "${name}" added!`,'success');
     },
     pickColor(el){document.querySelectorAll('#color-pick .quick-chip').forEach(c=>c.classList.remove('selected'));el.classList.add('selected')},
 
@@ -4655,9 +4736,10 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
             const subjects=parsed.subjects||[];
 
             for(const sub of subjects){
+                const importedIconType = sub.iconType || sub.icon_type || this.getIconType(sub.name);
                 const {data:sd,error:se}=await DB.subjects.create(uid,{
                     name:  sub.name,
-                    icon:  sub.icon,
+                    icon_type: importedIconType,
                     color: sub.color,
                 });
                 if(se||!sd||!sd.id){console.error('[import] subject create failed',se);continue;}
@@ -4958,7 +5040,7 @@ ${subjects.map(s=>{
     return `<div class="quiz-subject-card ${cardClass}">
     <div class="quiz-subject-body">
         <div class="quiz-subject-header">
-            <div class="quiz-subject-icon" style="--icon-bg:${s.color}22">${s.icon}</div>
+            <div class="quiz-subject-icon" style="--icon-bg:${s.color}22">${this.renderSubjectIcon(s,22)}</div>
             <div class="quiz-subject-info">
                 <div class="quiz-subject-name">${s.name}</div>
                 <div class="quiz-subject-meta">${completed.length} chapter${completed.length!==1?'s':''} ready</div>
@@ -5007,7 +5089,7 @@ ${subjects.map(s=>{
             // Show loading
             el.innerHTML=`<div class="quiz-generating">
                 <div class="qg-spinner"></div>
-                <p style="font-weight:600;margin-bottom:6px">Generating questions for ${sub.icon} ${sub.name}…</p>
+                <p style="font-weight:600;margin-bottom:6px">Generating questions for ${this.renderSubjectIcon(sub,14)} ${sub.name}…</p>
                 <p>AI is writing CBSE-style MCQs from your ${completed.length} completed chapters</p>
             </div>`;
 
@@ -5044,7 +5126,7 @@ ${subjects.map(s=>{
             mode:'quiz', // 'quiz' | 'review'
             subjectId,
             subjectName:sub.name,
-            subjectIcon:sub.icon,
+            subjectIcon:this.renderSubjectIcon(sub,16),
             questions:shuffled,
             current:0,
             answers:{},   // index-keyed: { [qIndex]: {selected, correct, isCorrect, chapterName, question} }
