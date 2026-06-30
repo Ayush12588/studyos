@@ -1925,8 +1925,20 @@ const App={
         const firstOfMonth=new Date(year,month,1);
         const daysInMonth=new Date(year,month+1,0).getDate();
         const startDow=firstOfMonth.getDay(); // 0=Sun
-        const todayStr=this.today();
+        // BUG FIX: this.today() uses toISOString() (UTC), which can be a full
+        // day behind local time for IST users (UTC+5:30) — e.g. 1am IST on
+        // the 30th is still "the 29th" in UTC. The calendar itself is built
+        // entirely in local time (toLocaleDateString('en-CA')), so "today"
+        // must be computed the same way or the wrong cell gets highlighted.
+        const todayStr=now.toLocaleDateString('en-CA');
         const lastFreezeDate=this.state.lastFreezeUsedDate;
+
+        // Minutes studied per date, for the hover tooltip.
+        const minutesByDate={};
+        (this.state.sessions||[]).forEach(s=>{
+            if(!s.date)return;
+            minutesByDate[s.date]=(minutesByDate[s.date]||0)+(s.timeSpent||0);
+        });
 
         const dow=['Su','Mo','Tu','We','Th','Fr','Sa'].map(d=>`<div class="streak-cal-dow">${d}</div>`).join('');
         const leadingBlanks=Array.from({length:startDow},()=>'<div class="streak-cal-day empty"></div>').join('');
@@ -1936,12 +1948,22 @@ const App={
             const dateObj=new Date(year,month,day);
             const dateStr=dateObj.toLocaleDateString('en-CA');
             let cls='streak-cal-day';
-            if(dateStr===lastFreezeDate)cls+=' frozen';
+            const isFrozen=dateStr===lastFreezeDate;
+            const isFuture=dateStr>todayStr;
+            if(isFrozen)cls+=' frozen';
             else if(studiedDates.has(dateStr))cls+=' studied';
-            else if(dateStr>todayStr)cls+=' future';
+            else if(isFuture)cls+=' future';
             else if(dateStr<todayStr)cls+=' missed';
             if(dateStr===todayStr)cls+=' today';
-            cells+=`<div class="${cls}">${day}</div>`;
+
+            // Tooltip label
+            let tip;
+            if(isFrozen)tip='Freeze used · streak protected';
+            else if(isFuture)tip='Upcoming';
+            else if(minutesByDate[dateStr])tip=this.formatMin(minutesByDate[dateStr])+' studied';
+            else tip='No study';
+
+            cells+=`<div class="${cls}" data-tip="${tip}">${day}</div>`;
         }
         return dow+leadingBlanks+cells;
     },
