@@ -1121,14 +1121,17 @@ a { color: inherit; text-decoration: none; }
 
 /* Week chart bars */
 .db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
-/* Goal reference line: sits GOAL_LINE_INSET px from the top of the strip.
-   Bar heights in JS are scaled against (strip height - GOAL_LINE_INSET), so a
-   bar at exactly 100% of the daily goal reaches precisely this line, and any
-   bar under goal stays strictly below it. Keep this value in sync with the
-   GOAL_LINE_INSET constant in app.js's renderWeekChart. */
+/* Goal reference line: .db-week-strip uses align-items:flex-end, so .db-week-strip
+   and .db-week-bar-wrap share the SAME BOTTOM EDGE (not the same top — that was
+   the earlier wrong assumption). Because the strip (72px) and the wrap (~54.5px)
+   are different total heights, a percentage value means different things in each
+   box even with a shared bottom origin — so this must be an absolute px distance
+   from that shared bottom edge, computed in JS from the bar-wrap's measured
+   height and the daily-goal bar height, not a CSS percentage of either box.
+   Set inline per-render as --goal-line-bottom-px (see renderWeekChart in app.js). */
 .db-week-goal-line {
     position: absolute;
-    top: 10px;
+    bottom: var(--goal-line-bottom-px, 45px);
     left: 0;
     right: 28px;
     border-top: 1.5px dashed #F97316;
