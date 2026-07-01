@@ -1598,6 +1598,22 @@ const App={
         this.toast('Check-in saved!','success');
     },
 
+    // Inline dashboard check-in — reads from the db-eod-* inputs (not the fixed banner).
+    // After saving, re-renders just the dashboard so the card flips to the "saved" view.
+    saveEodCheckinInline(){
+        const understood=document.getElementById('db-eod-understood')?.value.trim()||'';
+        const unclear=document.getElementById('db-eod-unclear')?.value.trim()||'';
+        if(!understood&&!unclear){this.toast('Add at least one entry','warning');return}
+        if(!this.state.checkins)this.state.checkins={};
+        this.state.checkins[this.today()]={understood,unclear,date:this.today(),createdAt:Date.now()};
+        const _ciUid=window._supabaseUserId;
+        if(_ciUid)DB.checkins.upsert(_ciUid,this.today(),{understood,unclear}).then(({error})=>{if(error)console.error('[DB] checkin upsert:',error);});
+        this.save();
+        this.toast('Check-in saved! ✅','success');
+        // Re-render dashboard so card switches to the read-only "saved" view
+        this.renderDashboard();
+    },
+
     toggleSidebar(){
         const s=document.getElementById('sidebar');
         if(s.classList.contains('open'))this.closeSidebar();
@@ -2412,6 +2428,67 @@ const App={
     getGreeting(){const h=new Date().getHours();return h<12?'morning':h<17?'afternoon':'evening'},
     getMotivation(){const m=["Every chapter brings you closer to success! 💪","Small daily progress = big results! 🚀","Consistency beats intensity! 🔥","Your future self will thank you! 📚","One chapter at a time! ✨","Believe in yourself! 🌟","Hard work pays off! 🏆","Stay focused, stay winning! 🎯"];return m[Math.floor(Math.random()*m.length)]},
 
+    // Context-aware greeting line — replaces the generic motivation quote.
+    // Priority: streak at risk > exam urgency > weak subject > behind pace > generic.
+    getSmartGreeting(){
+        const st=this.state.profile.streak||0;
+        const dte=this.getDaysToExam();
+        const lastStudy=this.state.profile.lastStudyDate;
+        const daysSince=lastStudy?this.daysBetween(lastStudy,this.today()):999;
+        const tm=this.getTodayMinutes();
+        const weakChapters=this.getAllChapters().filter(c=>c.weakFlag);
+        const remaining=this.getTotalChapters()-this.getCompletedCount();
+        const pred=this.getPredictedCompletion();
+
+        // Find the most at-risk subject by pace ratio
+        let atRiskSubject=null;
+        if(this.state.subjects.length>0&&dte!==null&&dte>0){
+            const tot=this.getTotalChapters(),comp=this.getCompletedCount();
+            const overallPct=tot>0?comp/tot:0;
+            const riskSubjs=this.state.subjects
+                .map(s=>{
+                    const dn=s.chapters.filter(c=>c.status==='completed'||c.status==='revised').length;
+                    const pct=s.chapters.length>0?dn/s.chapters.length:0;
+                    return{name:s.name,pct,gap:overallPct-pct,remaining:s.chapters.length-dn};
+                })
+                .filter(s=>s.remaining>0&&s.gap>0.2)
+                .sort((a,b)=>b.gap-a.gap);
+            if(riskSubjs.length>0)atRiskSubject=riskSubjs[0].name;
+        }
+
+        // Streak at risk (studied yesterday, haven't today, streak > 1)
+        if(st>1&&daysSince===1&&tm===0){
+            return`🔥 ${st}-day streak on the line — log a session today to keep it alive!`;
+        }
+        // Exam very close
+        if(dte!==null&&dte>0&&dte<=14){
+            return`⏰ ${dte} days to boards — every session counts now. You've got this!`;
+        }
+        // Behind pace on a specific subject
+        if(atRiskSubject){
+            return`📉 ${atRiskSubject} is falling behind — even one chapter today helps.`;
+        }
+        // Weak chapters flagged
+        if(weakChapters.length>0){
+            return`⚠️ ${weakChapters[0].name} needs a revisit — your confidence there was low.`;
+        }
+        // Behind overall pace
+        if(dte!==null&&dte>0&&remaining>0&&pred){
+            const needed=remaining/dte;
+            if(pred.rate>0&&pred.rate<needed*0.6){
+                return`🚨 Need ${needed.toFixed(1)} ch/day at your pace — push one extra chapter today.`;
+            }
+        }
+        // Already studied today — positive reinforcement
+        if(tm>0){
+            const generic=["Great momentum — keep it going! 🚀","Consistency is your superpower! 🔥","Every session compounds. Stay at it! 📚"];
+            return generic[new Date().getDay()%generic.length];
+        }
+        // Default
+        const fallback=["One session a day keeps the backlog away! 📖","Small steps, big results. Start today! ✨","Your future boards score is built right now! 🏆"];
+        return fallback[new Date().getDay()%fallback.length];
+    },
+
     getTomorrowPlan(){const plan=[];this.getOverdueChapters().forEach(c=>plan.push({...c,reason:'Overdue',priority:'overdue'}));this.getRevisionsDue().forEach(c=>plan.push({...c,reason:'Revision due',priority:'revised'}));const pending=this.getAllChapters().filter(c=>c.status==='not-started'||c.status==='in-progress');pending.filter(c=>c.difficulty==='hard').slice(0,2).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Hard topic',priority:'hard'})});pending.filter(c=>c.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,3).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Deadline approaching',priority:'medium'})});pending.slice(0,5).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Pending',priority:'easy'})});return plan},
 
     // HEATMAP DATA
@@ -2518,29 +2595,41 @@ const App={
         // getRevisionsDue() returns {daysSince, nextInterval, ...ch}
         // daysOverdue = daysSince - nextInterval (>0 means overdue)
         const rdSorted=rd.slice().sort((a,b)=>(b.daysSince-b.nextInterval)-(a.daysSince-a.nextInterval));
+        // P1-2 FIX: Show context "3 most urgent of N" so users know exactly what they're seeing.
+        // If all fit (≤3), no "and N more" footer. If more exist, footer links to full list.
+        const rdSortedFull=rd.slice().sort((a,b)=>(b.daysSince-b.nextInterval)-(a.daysSince-a.nextInterval));
+        const rdVisible=rdSortedFull.slice(0,3);
+        const rdHidden=rdSortedFull.length-rdVisible.length;
         const revisionsDueHTML=rd.length>0?`
         <div style="border:1.5px solid #F97316;border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:rgba(251,146,60,0.05)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
                 <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#F97316">🔁 Revisions Due</span>
-                <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:#F97316">See all (${rd.length}) →</button>
+                <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:#F97316">See all ${rd.length} →</button>
             </div>
-            ${rdSorted.slice(0,3).map(c=>{
+            ${rd.length>3?`<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">Showing 3 most urgent of ${rd.length} due</div>`:''}
+            ${rdVisible.map(c=>{
                 const daysOverdue=c.daysSince-c.nextInterval;
                 const subj=this.state.subjects.find(s=>s.id===c.subjectId);
-                return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(249,115,22,0.15);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
+                const urgencyColor=daysOverdue>=7?'#EF4444':daysOverdue>=3?'#F97316':'#FBBF24';
+                return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(249,115,22,0.12);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
                     <span style="font-size:1rem;flex-shrink:0">${subj?this.renderSubjectIcon(subj,16):'?'}</span>
                     <div style="flex:1;min-width:0">
                         <div style="font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
                         <div style="font-size:.72rem;color:var(--text-muted)">${c.subjectName||''}</div>
                     </div>
-                    <span style="font-size:.72rem;font-weight:700;color:${daysOverdue>=3?'#EF4444':'#F97316'};white-space:nowrap;flex-shrink:0">${daysOverdue}d overdue</span>
+                    <span style="font-size:.72rem;font-weight:700;color:${urgencyColor};white-space:nowrap;flex-shrink:0">${daysOverdue}d overdue</span>
                 </div>`;
             }).join('')}
+            ${rdHidden>0?`<div onclick="App.navigate('revisions')" style="text-align:center;padding:8px 0 2px;font-size:.72rem;color:#F97316;cursor:pointer;font-weight:600">+ ${rdHidden} more due → View all</div>`:''}
         </div>`:'';
 
         // ── SECTION 3: THREE STAT CARDS ───────────────────────────────────
-        // Stat 1 — time studied today vs daily goal
+        // Stat 1 — time studied today vs daily goal.
+        // P1-3 FIX: If today is 0m, show yesterday's time so the card isn't
+        // immediately demoralizing on page load. The sub-label clarifies it's yesterday.
         const goalLabel=this.formatMin(gm);
+        const yesterday=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0]})();
+        const yesterdayMin=this.state.sessions.filter(s=>s.date===yesterday).reduce((a,s)=>a+s.timeSpent,0);
 
         // Stat 2 — chapters done vs total + weekly gap
         // "chapters completed this week" = distinct chapterIds in sessions this week
@@ -2611,10 +2700,21 @@ const App={
         </div>
         <div class="db-stats" style="grid-template-columns:repeat(3,1fr);">
             <div class="db-stat db-stat-indigo">
-                <div class="db-stat-val">${this.formatMin(tm)}</div>
-                <div class="db-stat-lbl">Today${avgMin>0?' · avg '+this.formatMin(avgMin):''}</div>
-                <div class="db-stat-trend" style="color:var(--text-muted);font-size:.7rem">of ${goalLabel} goal</div>
-                <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--accent-light)':'var(--text-muted)'}">${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>
+                ${tm>0
+                    ?`<div class="db-stat-val">${this.formatMin(tm)}</div>
+                      <div class="db-stat-lbl">Today${avgMin>0?' · avg '+this.formatMin(avgMin):''}</div>
+                      <div class="db-stat-trend" style="color:var(--text-muted);font-size:.7rem">of ${goalLabel} goal</div>
+                      <div class="db-stat-trend" style="color:${tm>=avgMin&&avgMin>0?'var(--accent-light)':'var(--text-muted)'}">\n                      ${tm>=avgMin&&avgMin>0?'↑ Above avg':'—'}</div>`
+                    :yesterdayMin>0
+                        ?`<div class="db-stat-val" style="color:var(--text-secondary)">${this.formatMin(yesterdayMin)}</div>
+                          <div class="db-stat-lbl">Yesterday</div>
+                          <div class="db-stat-trend" style="color:var(--accent-light);font-size:.7rem">Goal today: ${goalLabel}</div>
+                          <div class="db-stat-trend" style="color:var(--text-muted)">Log a session to start →</div>`
+                        :`<div class="db-stat-val" style="color:var(--text-muted);font-size:1.5rem">—</div>
+                          <div class="db-stat-lbl">Today's goal</div>
+                          <div class="db-stat-trend" style="color:var(--accent-light);font-size:.7rem">${goalLabel} target</div>
+                          <div class="db-stat-trend" style="color:var(--text-muted)">Log your first session →</div>`
+                }
             </div>
             <div class="db-stat db-stat-green">
                 <div class="db-stat-val">${comp}<span style="font-size:.9rem;font-weight:400;color:var(--color-text-secondary)">/${tot}</span></div>
@@ -2638,23 +2738,33 @@ const App={
         // daily goal fills its wrap completely and its top edge lands exactly
         // at the goal line — by shared coordinate origin, not a hardcoded
         // pixel constant.
+        // P1-4 FIX: Bar chart shows actual time values above each bar.
+        // Goal line label now shows the real goal value e.g. "2h 0m goal".
+        // Bars that hit/exceed goal get a green value label.
+        const weekTotalMins=wd.sessions.reduce((a,s)=>a+s.timeSpent,0);
         const weekHTML=`<div class="db-week-card card">
             <div class="card-header" style="margin-bottom:14px">
                 <span class="card-title">This Week</span>
-                <span style="font-size:.78rem;color:var(--text-muted)">${wd.sessions.reduce((a,s)=>a+s.timeSpent,0)>0?this.formatMin(wd.sessions.reduce((a,s)=>a+s.timeSpent,0))+' total':''}</span>
+                <span style="font-size:.78rem;color:var(--text-muted)">${weekTotalMins>0?this.formatMin(weekTotalMins)+' total':''}</span>
             </div>
             <div class="db-week-strip" style="position:relative;">
                 <div class="db-week-goal-line">
-                    <span>Goal</span>
+                    <span>${this.formatMin(gm)} goal</span>
                 </div>
                 ${wd.days.map(d=>{
                     const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);
                     const isToday=d===this.today();
                     const height=mins>0?Math.max(20,Math.min(100,Math.round(mins/gm*100)))+'%':'4px';
                     const dayName=new Date(d+'T12:00').toLocaleDateString('en',{weekday:'short'});
+                    const metGoal=mins>=gm;
+                    // Show value label above bar: green if goal met, muted otherwise
+                    const valLabel=mins>0
+                        ?`<div class="db-week-val" style="font-size:.58rem;color:${metGoal?'var(--trend-green)':'var(--text-muted)'};font-weight:${metGoal?'700':'400'};margin-bottom:2px;text-align:center;line-height:1">${this.formatMin(mins)}</div>`
+                        :(isToday?`<div style="font-size:.58rem;color:var(--text-muted);margin-bottom:2px;text-align:center;line-height:1">—</div>`:'');
                     return`<div class="db-week-col">
+                        ${valLabel}
                         <div class="db-week-bar-wrap">
-                            <div class="db-week-bar ${isToday?'today':''} ${mins>0?'has-data':''}" style="height:${height}" title="${dayName}: ${this.formatMin(mins)}"></div>
+                            <div class="db-week-bar ${isToday?'today':''} ${mins>0?'has-data':''} ${metGoal?'goal-met':''}" style="height:${height}" title="${dayName}: ${this.formatMin(mins)}"></div>
                         </div>
                         <div class="db-week-day ${isToday?'today':''}">${dayName}</div>
                     </div>`;
@@ -2834,14 +2944,48 @@ const App={
         // ── SAVED INDICATOR ───────────────────────────────────────────────
         const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a href="#" onclick="App.exportData();return false;" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
 
+        // ── P1-1 FIX: EOD CHECK-IN — inline card, always visible on dashboard ────
+        // Previously: position:fixed bottom bar, only shown after 8PM via JS timer.
+        // Problem: users on full-page never saw it; no one was using it.
+        // Fix: render it as an inline card directly on the dashboard.
+        //   - If already saved today → show the saved entry (read-only, feel-good)
+        //   - If not yet saved → show the input form
+        //   - The old fixed banner in app.html stays for backwards compat but
+        //     the dashboard card is the primary UX now.
+        const todayCheckinEntry=this.state.checkins&&this.state.checkins[this.today()];
+        const eodCardHTML=todayCheckinEntry
+            ?`<div class="card" style="border-left:3px solid var(--color-brand);margin-bottom:0">
+                <div class="card-header" style="margin-bottom:10px">
+                    <span class="card-title" style="font-size:.82rem">✅ Today's Check-in</span>
+                    <span style="font-size:.7rem;color:var(--text-muted)">Saved</span>
+                </div>
+                ${todayCheckinEntry.understood?`<div style="font-size:.78rem;margin-bottom:6px"><span style="color:var(--text-muted);font-weight:600">Understood: </span><span style="color:var(--text-primary)">${todayCheckinEntry.understood}</span></div>`:''}
+                ${todayCheckinEntry.unclear?`<div style="font-size:.78rem"><span style="color:var(--text-muted);font-weight:600">Still unclear: </span><span style="color:var(--text-primary)">${todayCheckinEntry.unclear}</span></div>`:''}
+            </div>`
+            :`<div class="card" id="db-eod-inline" style="border-left:3px solid var(--color-brand);margin-bottom:0">
+                <div class="card-header" style="margin-bottom:10px">
+                    <span class="card-title" style="font-size:.82rem">📝 End of Day Check-in</span>
+                    <span style="font-size:.7rem;color:var(--text-muted)">2 quick questions</span>
+                </div>
+                <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px">
+                    <input type="text" id="db-eod-understood" class="form-input" placeholder="One thing you understood today..." style="font-size:.78rem;padding:7px 10px">
+                    <input type="text" id="db-eod-unclear" class="form-input" placeholder="One thing still unclear..." style="font-size:.78rem;padding:7px 10px">
+                </div>
+                <div style="display:flex;gap:8px;align-items:center">
+                    <button class="btn btn-primary btn-sm" onclick="App.saveEodCheckinInline()">Save check-in</button>
+                    <button class="btn btn-ghost btn-sm" onclick="document.getElementById('db-eod-inline').style.display='none';localStorage.setItem('eod_dismissed','${this.today()}')">Dismiss</button>
+                </div>
+            </div>`;
+
         // ── ASSEMBLE ──────────────────────────────────────────────────────
         // Order: freeze banner → greeting → S1 hero → S2 revisions due →
         //        S3 stat cards → backlog widget → coach nudge →
-        //        S4 week chart + heatmap + S5 subjects (main col) |
-        //        readiness + weak chapters (side col)
+        //        S4 week chart (main col) | readiness + eod check-in +
+        //        heatmap + subjects + weak chapters (side col)
+        // NOTE: heatmap + subjects moved to side col to reduce main col cognitive load.
         el.innerHTML=`
         ${freezeBannerHTML}
-        <p class="db-greeting-compact">Good ${this.getGreeting()}, ${this.state.profile.name} 👋 &nbsp;·&nbsp; ${this.getMotivation()} ✨</p>
+        <p class="db-greeting-compact">Good ${this.getGreeting()}, ${this.state.profile.name} 👋 &nbsp;·&nbsp; <span style="color:var(--text-secondary)">${this.getSmartGreeting()}</span></p>
         ${heroHTML}
         ${revisionsDueHTML}
         ${statsHTML}
@@ -2850,11 +2994,12 @@ const App={
         <div class="db-two-col">
             <div class="db-col-main">
                 ${weekHTML}
-                ${heatmapHTML}
                 ${subjectsHTML}
             </div>
             <div class="db-col-side">
                 ${readinessHTML}
+                ${eodCardHTML}
+                ${heatmapHTML}
                 ${weakHTML}
             </div>
         </div>
@@ -2874,7 +3019,7 @@ const App={
     // FIX 17: chapter-row "..." overflow menu — "Add exercise" coming in Sprint 4.
     renderSubjects(){
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
-        let h=`<div style="display:flex;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="App.navigate('notes')">Notes & Formulas</button><button class="btn btn-secondary btn-sm" onclick="App.openDoubtModal()">Add Doubt</button><button class="btn btn-primary btn-sm" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${this.renderSubjectIcon(s,14)} ${s.name}</div>`).join('')}</div>`;
+        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="App.navigate('notes')">📝 Notes & Formulas</button><button class="btn btn-primary btn-sm" onclick="App.openDoubtModal()">❓ Add Doubt</button></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${this.renderSubjectIcon(s,14)} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
         const fmtShort=this.fmtShort.bind(this);
 
