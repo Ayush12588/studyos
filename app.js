@@ -1653,7 +1653,11 @@ const App={
     },
 
     uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)},
-    today(){return new Date().toISOString().split('T')[0]},
+    // IMPORTANT: Must use local time, NOT toISOString() (UTC).
+    // toISOString() is UTC — for IST users (UTC+5:30) it returns yesterday's
+    // date until 5:30 AM local time, breaking session filtering and streaks.
+    // 'en-CA' locale gives YYYY-MM-DD format in local time, same as session.date.
+    today(){return new Date().toLocaleDateString('en-CA')},
     daysBetween(d1,d2){return Math.floor((new Date(d2)-new Date(d1))/864e5)},
     formatMin(m){const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}m`:`${min}m`},
     formatSec(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`},
@@ -2944,16 +2948,17 @@ const App={
         // ── SAVED INDICATOR ───────────────────────────────────────────────
         const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a href="#" onclick="App.exportData();return false;" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
 
-        // ── P1-1 FIX: EOD CHECK-IN — inline card, always visible on dashboard ────
-        // Previously: position:fixed bottom bar, only shown after 8PM via JS timer.
-        // Problem: users on full-page never saw it; no one was using it.
-        // Fix: render it as an inline card directly on the dashboard.
-        //   - If already saved today → show the saved entry (read-only, feel-good)
-        //   - If not yet saved → show the input form
-        //   - The old fixed banner in app.html stays for backwards compat but
-        //     the dashboard card is the primary UX now.
+        // ── EOD CHECK-IN — inline card on dashboard ─────────────────────────────
+        // Visibility rules:
+        //   1. Already saved today  → always show (read-only, positive reinforcement)
+        //   2. Not saved + hour≥17  → show input form (end of study day)
+        //   3. Not saved + hour<17  → render nothing (not relevant yet)
+        // The position:fixed bottom banner in app.html still covers non-dashboard tabs.
         const todayCheckinEntry=this.state.checkins&&this.state.checkins[this.today()];
-        const eodCardHTML=todayCheckinEntry
+        const currentHour=new Date().getHours();
+        const showEodCard=!!(todayCheckinEntry||(currentHour>=17));
+        const eodCardHTML=!showEodCard?''
+            :todayCheckinEntry
             ?`<div class="card" style="border-left:3px solid var(--color-brand);margin-bottom:0">
                 <div class="card-header" style="margin-bottom:10px">
                     <span class="card-title" style="font-size:.82rem">✅ Today's Check-in</span>
@@ -3019,7 +3024,7 @@ const App={
     // FIX 17: chapter-row "..." overflow menu — "Add exercise" coming in Sprint 4.
     renderSubjects(){
         const el=document.getElementById('page-subjects'),subs=this.state.subjects;
-        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;flex-wrap:wrap;gap:8px"><div style="display:flex;gap:12px"><button class="btn btn-secondary btn-sm" onclick="App.navigate('notes')">Notes & Formulas</button><button class="btn btn-secondary btn-sm" onclick="App.openDoubtModal()">Add Doubt</button></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${this.renderSubjectIcon(s,14)} ${s.name}</div>`).join('')}</div>`;
+        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><div style="display:flex;gap:8px"><button class="btn btn-primary btn-sm" onclick="App.navigate('notes')">📝 Notes & Formulas</button><button class="btn btn-primary btn-sm" onclick="App.openDoubtModal()">❓ Add Doubt</button></div><button class="btn btn-primary" onclick="App.openModal('modal-subject')">+ Subject</button></div><div class="subject-tabs"><div class="subject-tab ${this.state.selectedSubjectFilter==='all'?'active':''}" onclick="App.filterSubject('all')">All</div>${subs.map(s=>`<div class="subject-tab ${this.state.selectedSubjectFilter===s.id?'active':''}" onclick="App.filterSubject('${s.id}')">${this.renderSubjectIcon(s,14)} ${s.name}</div>`).join('')}</div>`;
         const flt=this.state.selectedSubjectFilter==='all'?subs:subs.filter(s=>s.id===this.state.selectedSubjectFilter);
         const fmtShort=this.fmtShort.bind(this);
 
