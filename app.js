@@ -2950,9 +2950,7 @@ const App={
             }
         }
 
-        // ── SAVED INDICATOR ───────────────────────────────────────────────
-        const savedHTML=`<div style="text-align:center;padding:8px;font-size:.7rem;color:var(--text-muted)">💾 Data saved locally · <a href="#" onclick="App.exportData();return false;" style="color:var(--accent-light);cursor:pointer;text-decoration:underline">Export backup</a></div>`;
-
+        
         // ── EOD CHECK-IN — inline card on dashboard ─────────────────────────────
         // Visibility rules:
         //   1. Already saved today  → always show (read-only, positive reinforcement)
