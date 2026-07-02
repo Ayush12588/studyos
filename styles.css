@@ -1120,7 +1120,7 @@ a { color: inherit; text-decoration: none; }
 .db-subj-cell-skeleton:hover { border-color: var(--color-border); background: var(--color-surface); }
 
 /* Week chart bars */
-.db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 88px; }
+.db-week-strip { display: flex; gap: 6px; align-items: flex-end; height: 72px; }
 /* Goal reference line: .db-week-col has NO justify-content set (defaults to
    flex-start), so .db-week-bar-wrap (first child) packs against the column's
    TOP, with .db-week-day (second child) below it. Verified via DevTools:

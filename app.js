@@ -1719,7 +1719,9 @@ const App={
     },
     getTodaySessions(){return this.state.sessions.filter(s=>s.date===this.today())},
     getTodayMinutes(){return this.getTodaySessions().reduce((a,s)=>a+s.timeSpent,0)},
-    getWeekSessions(){const n=new Date(),w=[];for(let i=6;i>=0;i--){const d=new Date(n);d.setDate(d.getDate()-i);w.push(d.toISOString().split('T')[0])}return{days:w,sessions:this.state.sessions.filter(s=>w.includes(s.date))}},
+    // Must use local date (en-CA = YYYY-MM-DD) — sessions are stored in local time.
+    // toISOString() is UTC and causes IST users (UTC+5:30) to get wrong dates.
+    getWeekSessions(){const n=new Date(),w=[];for(let i=6;i>=0;i--){const d=new Date(n);d.setDate(d.getDate()-i);w.push(d.toLocaleDateString('en-CA'))}return{days:w,sessions:this.state.sessions.filter(s=>w.includes(s.date))}},
     getCompletedCount(){return this.getAllChapters().filter(c=>c.status==='completed'||c.status==='revised').length},
     getTotalChapters(){return this.getAllChapters().length},
     getOverdueChapters(){const t=this.today();return this.getAllChapters().filter(c=>c.deadline&&c.deadline<t&&c.status!=='completed'&&c.status!=='revised')},
@@ -2632,7 +2634,7 @@ const App={
         // P1-3 FIX: If today is 0m, show yesterday's time so the card isn't
         // immediately demoralizing on page load. The sub-label clarifies it's yesterday.
         const goalLabel=this.formatMin(gm);
-        const yesterday=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toISOString().split('T')[0]})();
+        const yesterday=(()=>{const d=new Date();d.setDate(d.getDate()-1);return d.toLocaleDateString('en-CA')})();
         const yesterdayMin=this.state.sessions.filter(s=>s.date===yesterday).reduce((a,s)=>a+s.timeSpent,0);
 
         // Stat 2 — chapters done vs total + weekly gap
@@ -2743,13 +2745,21 @@ const App={
         // at the goal line — by shared coordinate origin, not a hardcoded
         // pixel constant.
         // P1-4 FIX: Bar chart shows actual time values above each bar.
-        // Goal line label now shows the real goal value e.g. "2h 0m goal".
-        // Bars that hit/exceed goal get a green value label.
+        // Bar chart: value labels live in a SEPARATE flex row above the strip.
+        // They must NOT be inside .db-week-col — doing so shortens .db-week-bar-wrap,
+        // which breaks the goal line (position:absolute top:0 = where a 100% bar ends).
         const weekTotalMins=wd.sessions.reduce((a,s)=>a+s.timeSpent,0);
         const weekHTML=`<div class="db-week-card card">
-            <div class="card-header" style="margin-bottom:14px">
+            <div class="card-header" style="margin-bottom:10px">
                 <span class="card-title">This Week</span>
                 <span style="font-size:.78rem;color:var(--text-muted)">${weekTotalMins>0?this.formatMin(weekTotalMins)+' total':''}</span>
+            </div>
+            <div style="display:flex;gap:6px;margin-bottom:3px;padding:0 0 0 0">
+                ${wd.days.map(d=>{
+                    const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);
+                    const metGoal=mins>=gm;
+                    return`<div style="flex:1;text-align:center;font-size:.55rem;font-weight:${metGoal?'700':'400'};color:${mins>0?(metGoal?'#22C55E':'var(--text-muted)'):'transparent'};line-height:1;min-height:10px">${mins>0?this.formatMin(mins):'&nbsp;'}</div>`;
+                }).join('')}
             </div>
             <div class="db-week-strip" style="position:relative;">
                 <div class="db-week-goal-line">
@@ -2758,15 +2768,10 @@ const App={
                 ${wd.days.map(d=>{
                     const mins=wd.sessions.filter(s=>s.date===d).reduce((a,s)=>a+s.timeSpent,0);
                     const isToday=d===this.today();
-                    const height=mins>0?Math.max(20,Math.min(100,Math.round(mins/gm*100)))+'%':'4px';
+                    const height=mins>0?Math.max(4,Math.min(100,Math.round(mins/gm*100)))+'%':'4px';
                     const dayName=new Date(d+'T12:00').toLocaleDateString('en',{weekday:'short'});
                     const metGoal=mins>=gm;
-                    // Show value label above bar: green if goal met, muted otherwise
-                    const valLabel=mins>0
-                        ?`<div class="db-week-val" style="font-size:.58rem;color:${metGoal?'var(--trend-green)':'var(--text-muted)'};font-weight:${metGoal?'700':'400'};margin-bottom:2px;text-align:center;line-height:1">${this.formatMin(mins)}</div>`
-                        :(isToday?`<div style="font-size:.58rem;color:var(--text-muted);margin-bottom:2px;text-align:center;line-height:1">—</div>`:'');
                     return`<div class="db-week-col">
-                        ${valLabel}
                         <div class="db-week-bar-wrap">
                             <div class="db-week-bar ${isToday?'today':''} ${mins>0?'has-data':''} ${metGoal?'goal-met':''}" style="height:${height}" title="${dayName}: ${this.formatMin(mins)}"></div>
                         </div>
