@@ -1,5 +1,5 @@
 /**
- * build.cjs — StudyOS build script
+ * build.cjs — BoardOS build script
  * Runs on every Vercel deploy via "npm run build"
  *
  * What it does:
@@ -7,7 +7,10 @@
  *      (eliminates the 8-request CDN waterfall that cost 1.2-2.1s)
  *   2. Minifies app.js, migrate.js, tour.js, analytics.js with Terser
  *   3. Minifies styles.css with CleanCSS
- *   4. Copies app.html, sw.js, manifest.json, icons unchanged
+ *   4. Auto-injects SW cache version derived from all asset hashes —
+ *      guarantees stale SW caches are purged on every deploy that
+ *      changes any asset. Never bump CACHE_NAME manually again.
+ *   5. Copies app.html, sw.js, manifest.json, icons unchanged
  *   All output goes to /dist — Vercel serves from there.
  */
 
@@ -90,8 +93,27 @@ async function build() {
   const minKB  = (cssResult.styles.length / 1024).toFixed(1);
   console.log(`  ✓ dist/${cssHashed} (${origKB} KB → ${minKB} KB)\n`);
 
-  // 4. Copy static files — HTML files get script/link srcs rewritten to hashed filenames
-  const staticFiles = ['index.html','app.html', 'auth.html', 'sw.js', 'manifest.json', 'favicon.ico', 'sitemap.xml', 'robots.txt'];
+  // 4. Auto-inject SW cache version derived from all asset hashes.
+  //    Every deploy that changes any asset produces a new CACHE_NAME,
+  //    which triggers the SW activate handler to purge all old caches.
+  //    Never bump CACHE_NAME in sw.js manually again.
+  console.log('Injecting SW cache version...');
+  const swVersion = hashContent(JSON.stringify(fileMap));
+  const swCacheName = `boardos-${swVersion}`;
+  let swSrc = fs.readFileSync('sw.js', 'utf8');
+  const swOriginal = swSrc;
+  swSrc = swSrc.replace(
+    /const CACHE_NAME = '[^']*'/,
+    `const CACHE_NAME = '${swCacheName}'`
+  );
+  if (swSrc === swOriginal) {
+    throw new Error('SW version injection failed — could not find CACHE_NAME pattern in sw.js');
+  }
+  fs.writeFileSync(path.join(OUT, 'sw.js'), swSrc);
+  console.log(`  ✓ dist/sw.js (CACHE_NAME → '${swCacheName}')\n`);
+
+  // 5. Copy static files — HTML files get script/link srcs rewritten to hashed filenames
+  const staticFiles = ['index.html', 'app.html', 'auth.html', 'manifest.json', 'favicon.ico', 'sitemap.xml', 'robots.txt'];
   for (const file of staticFiles) {
     if (!fs.existsSync(file)) continue;
     if (file.endsWith('.html')) {
