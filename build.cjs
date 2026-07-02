@@ -145,6 +145,15 @@ async function build() {
     console.log('  ✓ dist/features/ (copied)');
   }
 
+  // Copy assets folder if present (images, screenshots)
+  if (fs.existsSync('assets')) {
+    fs.mkdirSync(path.join(OUT, 'assets'), { recursive: true });
+    for (const f of fs.readdirSync('assets')) {
+      fs.copyFileSync(path.join('assets', f), path.join(OUT, 'assets', f));
+    }
+    console.log('  ✓ dist/assets/ (copied)');
+  }
+
   console.log('\nBuild complete ✓');
 }
 
