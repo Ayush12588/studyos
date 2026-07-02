@@ -3,757 +3,821 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Study Streaks for CBSE Students — Build Daily Study Habits That Actually Stick | StudyOS</title>
-  <meta name="description" content="Track your daily study streak and build consistent CBSE preparation habits with StudyOS. Visual streak counters, milestone rewards, and habit science designed for Class 9–12 students." />
-  <link rel="canonical" href="https://studyos-edu.vercel.app/features/study-streaks.html" />
+  <title>AI Study Coach for CBSE Students | BoardOS</title>
+  <meta name="description"
+    content="Get a personalised AI study coach built for CBSE students. BoardOS AI Coach analyses your weak topics, creates adaptive study plans, and answers doubts 24/7. Start free today." />
+  <link rel="canonical" href="https://boardos.in/features/ai-coach.html" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet" />
 
   <!-- Open Graph -->
-  <meta property="og:title" content="Study Streaks — Build Daily CBSE Study Habits | StudyOS" />
-  <meta property="og:description" content="Stay consistent every day. StudyOS Study Streaks make daily studying engaging. Built for CBSE Class 9–12 students." />
-  <meta property="og:url" content="https://studyos-edu.vercel.app/features/study-streaks.html" />
+  <meta property="og:title" content="AI Study Coach for CBSE Students | BoardOS" />
+  <meta property="og:description" content="Your personal AI tutor for CBSE — adaptive plans, doubt solving, and real-time feedback." />
+  <meta property="og:url" content="https://boardos.in/features/ai-coach.html" />
   <meta property="og:type" content="website" />
-  <meta property="og:image" content="https://studyos-edu.vercel.app/assets/og-study-streaks.png" />
 
-  <!-- FAQ Schema -->
+  <!-- Schema: FAQPage -->
   <script type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "FAQPage",
     "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "What is a study streak in StudyOS?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "A study streak is the number of consecutive days you've completed a study session in StudyOS. Each day you study, your streak grows. Missing a day resets the counter — which motivates you to show up every day."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What counts as a study session to maintain a streak?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Any meaningful study activity in StudyOS counts — reviewing formulas, completing notes, or logging a timed study block. You set the minimum daily goal, and we track whether you've hit it."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Do I get rewards for long study streaks?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes! StudyOS awards bonus XP and special badges at streak milestones — 7 days, 30 days, 60 days, and beyond. Your streak also contributes to your overall level in the Rewards & XP system."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "What happens if I miss a day?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Your streak resets to zero, but your total XP and progress are never lost. StudyOS shows your longest streak as a badge of honour, and you can start a new streak immediately."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How does a daily study streak help with CBSE board exam preparation?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Research shows that consistent daily practice is far more effective than cramming before exams. A 60-day streak before CBSE boards means 60 days of spaced repetition, steady revision, and compounding progress — the foundation of board exam success."
-        }
-      }
+      { "@type": "Question", "name": "What is the AI Study Coach in BoardOS?", "acceptedAnswer": { "@type": "Answer", "text": "The AI Study Coach is an intelligent tutoring assistant inside BoardOS. It analyses your syllabus progress, identifies weak chapters, suggests what to study next, and answers subject-specific doubts for CBSE Classes 9–12." } },
+      { "@type": "Question", "name": "Can the AI Coach help with CBSE board exam preparation?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. The AI Coach is trained on CBSE patterns and board question trends. It creates revision priorities based on your exam date and performance data." } },
+      { "@type": "Question", "name": "Is the AI Coach available 24/7?", "acceptedAnswer": { "@type": "Answer", "text": "Absolutely. The AI Coach is available round the clock inside the BoardOS app — even at midnight before an exam." } },
+      { "@type": "Question", "name": "Does the AI Coach replace a human tutor?", "acceptedAnswer": { "@type": "Answer", "text": "The AI Coach supplements human teaching by providing instant doubt resolution, personalised scheduling, and progress tracking." } },
+      { "@type": "Question", "name": "Which subjects does the AI Coach support?", "acceptedAnswer": { "@type": "Answer", "text": "BoardOS AI Coach supports all core CBSE subjects: Mathematics, Physics, Chemistry, Biology, English, Social Science, Accountancy, Economics, and more for Classes 9–12." } }
     ]
   }
   </script>
 
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "SoftwareApplication",
+    "name": "BoardOS AI Coach",
+    "applicationCategory": "EducationApplication",
+    "operatingSystem": "Web, iOS, Android",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "INR" },
+    "description": "Personalised AI study coach for CBSE students — adaptive plans, doubt solving, and 24/7 support."
+  }
+  </script>
+
   <style>
+    /* ── RESET & BASE ── */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --midnight:   #0D0F1A;
+      --ink:        #1A1D2E;
+      --indigo:     #5B4FFF;
+      --indigo-mid: #7B72FF;
+      --indigo-soft:#A99FFF;
+      --amber:      #F59E0B;
+      --amber-light:#FEF3C7;
+      --lavender:   #F0EEFF;
+      --surface:    #F7F8FF;
+      --border:     #E4E2F5;
+      --text:       #2D2F45;
+      --muted:      #6B6E8A;
+      --white:      #FFFFFF;
+    }
+
     html { scroll-behavior: smooth; }
+
     body {
-      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
-      color: #1a1a2e;
-      background: #ffffff;
+      font-family: 'Inter', system-ui, -apple-system, sans-serif;
+      color: var(--text);
+      background: var(--white);
       line-height: 1.7;
-    }
-    a { color: inherit; text-decoration: none; }
-    img { max-width: 100%; display: block; }
-
-    .container { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
-    .text-center { text-align: center; }
-
-    .badge {
-      display: inline-block;
-      background: #fff3e0;
-      color: #e65100;
-      font-size: 0.78rem;
-      font-weight: 700;
-      letter-spacing: 0.08em;
-      text-transform: uppercase;
-      padding: 4px 14px;
-      border-radius: 20px;
-      margin-bottom: 16px;
+      -webkit-font-smoothing: antialiased;
     }
 
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      padding: 14px 28px;
-      border-radius: 10px;
-      font-size: 1rem;
-      font-weight: 700;
-      cursor: pointer;
-      border: none;
-      transition: transform 0.15s, box-shadow 0.15s;
-      text-decoration: none;
+    /* ── TYPOGRAPHY SCALE ── */
+    .eyebrow {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em;
+      text-transform: uppercase; color: var(--indigo);
+      display: flex; align-items: center; gap: 0.5rem;
+      margin-bottom: 0.75rem;
     }
-    .btn:hover { transform: translateY(-2px); box-shadow: 0 8px 24px rgba(0,0,0,0.12); }
-    .btn-primary { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; }
-    .btn-secondary { background: #fff; color: #f97316; border: 2px solid #f97316; }
-    .btn-white { background: #fff; color: #f97316; }
+    .eyebrow::before {
+      content: ''; display: inline-block;
+      width: 20px; height: 2px;
+      background: var(--indigo); border-radius: 2px;
+    }
 
+    h2 {
+      font-size: clamp(1.7rem, 3.5vw, 2.6rem);
+      font-weight: 800; line-height: 1.15;
+      color: var(--ink); margin-bottom: 1rem;
+      letter-spacing: -0.02em;
+    }
+    .section-sub {
+      font-size: 1.05rem; color: var(--muted);
+      max-width: 560px; margin-bottom: 3rem;
+      line-height: 1.75;
+    }
+
+    /* ── NAV ── */
     nav {
-      position: sticky; top: 0; z-index: 100;
-      background: rgba(255,255,255,0.95);
-      backdrop-filter: blur(8px);
-      border-bottom: 1px solid #e8e8f0;
-      padding: 14px 0;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 0 5%; height: 64px;
+      background: rgba(255,255,255,0.85);
+      backdrop-filter: blur(16px) saturate(180%);
+      -webkit-backdrop-filter: blur(16px) saturate(180%);
+      border-bottom: 1px solid var(--border);
+      position: sticky; top: 0; z-index: 200;
     }
-    .nav-inner { display: flex; align-items: center; justify-content: space-between; }
     .nav-logo {
-      font-size: 1.4rem; font-weight: 800;
-      background: linear-gradient(135deg, #f97316, #ef4444);
-      -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-      text-decoration: none;
+      font-size: 1.35rem; font-weight: 900; color: var(--indigo);
+      text-decoration: none; letter-spacing: -0.03em;
     }
-    .nav-links { display: flex; gap: 28px; list-style: none; margin: 0; padding: 0; }
-    .nav-links a { font-size: 0.95rem; font-weight: 500; color: #4a4a6a; transition: color 0.15s; text-decoration: none; }
-    .nav-links a:hover, .nav-links a.active { color: #f97316; }
-    .nav-cta { display: flex; gap: 12px; align-items: center; }
+    .nav-logo span { color: var(--amber); }
+    .nav-links { display: flex; gap: 1.75rem; list-style: none; }
+    .nav-links a {
+      text-decoration: none; color: var(--muted);
+      font-size: 0.9rem; font-weight: 500;
+      transition: color 0.2s;
+    }
+    .nav-links a:hover,
+    .nav-links a[aria-current] { color: var(--indigo); }
+    .nav-cta {
+      background: var(--indigo); color: var(--white);
+      padding: 0.5rem 1.25rem; border-radius: 8px;
+      text-decoration: none; font-weight: 600; font-size: 0.88rem;
+      transition: background 0.2s, transform 0.15s;
+      white-space: nowrap;
+    }
+    .nav-cta:hover { background: #4a3eee; transform: translateY(-1px); }
 
-    /* ─── Hero ─── */
-    .hero {
-      background: linear-gradient(160deg, #fff7ed 0%, #ffedd5 50%, #fef3c7 100%);
-      padding: 96px 0 80px;
-      position: relative; overflow: hidden;
+    @media (max-width: 680px) {
+      .nav-links { display: none; }
     }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      background: var(--midnight);
+      overflow: hidden;
+      padding: 7rem 5% 6rem;
+      text-align: center;
+    }
+
+    /* Mesh gradient blobs */
     .hero::before {
       content: '';
-      position: absolute;
-      width: 500px; height: 500px;
-      background: radial-gradient(circle, rgba(249,115,22,0.1) 0%, transparent 70%);
-      top: -80px; right: -80px; border-radius: 50%;
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 70% 60% at 20% 50%, rgba(91,79,255,0.45) 0%, transparent 65%),
+        radial-gradient(ellipse 60% 50% at 80% 30%, rgba(123,114,255,0.3) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 40% at 60% 80%, rgba(245,158,11,0.15) 0%, transparent 60%);
+      pointer-events: none;
     }
-    .hero-content { max-width: 720px; }
+
+    /* Subtle dot grid */
+    .hero::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.07) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+
+    .hero-inner {
+      position: relative; z-index: 1;
+      max-width: 860px; margin: 0 auto;
+    }
+
+    .hero-badge {
+      display: inline-flex; align-items: center; gap: 0.5rem;
+      background: rgba(91,79,255,0.25);
+      border: 1px solid rgba(91,79,255,0.5);
+      color: var(--indigo-soft); padding: 0.35rem 1rem;
+      border-radius: 50px; font-size: 0.8rem; font-weight: 600;
+      margin-bottom: 1.5rem; letter-spacing: 0.04em;
+      backdrop-filter: blur(8px);
+    }
+
     .hero h1 {
-      font-size: clamp(2rem, 5vw, 3.2rem); font-weight: 900;
-      line-height: 1.15; margin-bottom: 20px; color: #1a1a2e;
+      font-size: clamp(2.2rem, 5.5vw, 3.8rem);
+      font-weight: 900; line-height: 1.1;
+      letter-spacing: -0.03em;
+      color: var(--white);
+      margin-bottom: 1.4rem;
     }
-    .hero h1 span { color: #f97316; }
-    .hero p { font-size: 1.15rem; color: #4a4a6a; margin-bottom: 36px; max-width: 580px; }
-    .hero-btns { display: flex; gap: 16px; flex-wrap: wrap; }
+    .hero h1 em {
+      font-style: normal;
+      background: linear-gradient(90deg, #A99FFF, #F59E0B);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
 
-    /* ─── Streak Visualiser ─── */
-    .streak-display {
-      display: flex; align-items: center; gap: 8px;
-      margin-top: 48px; flex-wrap: wrap;
+    .hero-sub {
+      font-size: 1.1rem; color: rgba(255,255,255,0.72);
+      max-width: 580px; margin: 0 auto 2.5rem;
+      line-height: 1.75;
     }
-    .streak-day {
-      width: 36px; height: 36px;
-      border-radius: 8px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1rem; font-weight: 700;
-      transition: transform 0.1s;
-    }
-    .streak-day.done { background: linear-gradient(135deg, #f97316, #ef4444); color: #fff; }
-    .streak-day.today { background: linear-gradient(135deg, #fbbf24, #f97316); color: #fff; box-shadow: 0 0 16px rgba(249,115,22,0.5); }
-    .streak-day.empty { background: #f3f4f6; color: #9ca3af; }
-    .streak-label { font-size: 0.85rem; color: #6b6b8a; margin-top: 8px; width: 100%; }
 
-    /* ─── Streak Counter ─── */
-    .streak-counter {
-      display: inline-flex; align-items: center; gap: 16px;
-      background: linear-gradient(135deg, #f97316, #ef4444);
-      color: #fff; border-radius: 20px; padding: 24px 36px;
-      margin: 48px 0; box-shadow: 0 16px 48px rgba(249,115,22,0.3);
+    .hero-ctas {
+      display: flex; gap: 0.85rem;
+      justify-content: center; flex-wrap: wrap;
+      margin-bottom: 4rem;
     }
-    .streak-counter .flame { font-size: 2.2rem; }
-    .streak-counter .count { font-size: 2rem; font-weight: 800; line-height: 1; }
-    .streak-counter .text { font-size: 1rem; font-weight: 600; opacity: 0.9; }
+    .btn-primary {
+      background: var(--indigo); color: var(--white);
+      padding: 0.9rem 2rem; border-radius: 10px;
+      font-weight: 700; font-size: 0.97rem;
+      text-decoration: none;
+      box-shadow: 0 0 0 1px rgba(91,79,255,0.4), 0 8px 30px rgba(91,79,255,0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: inline-flex; align-items: center; gap: 0.4rem;
+    }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 0 1px rgba(91,79,255,0.5), 0 14px 40px rgba(91,79,255,0.5);
+    }
+    .btn-ghost {
+      background: transparent; color: rgba(255,255,255,0.8);
+      padding: 0.9rem 2rem; border-radius: 10px;
+      border: 1px solid rgba(255,255,255,0.2);
+      font-weight: 600; font-size: 0.97rem;
+      text-decoration: none;
+      transition: border-color 0.2s, color 0.2s;
+      backdrop-filter: blur(8px);
+    }
+    .btn-ghost:hover { border-color: rgba(255,255,255,0.5); color: var(--white); }
 
-    .section-eyebrow {
-      font-size: 0.82rem; font-weight: 700; letter-spacing: 0.1em;
-      text-transform: uppercase; color: #f97316; margin-bottom: 12px;
+    /* ── STAT BAND ── */
+    .hero-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0; max-width: 700px; margin: 0 auto;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 16px; overflow: hidden;
+      backdrop-filter: blur(12px);
     }
-    h2 {
-      font-size: clamp(1.6rem, 4vw, 2.4rem); font-weight: 800;
-      line-height: 1.2; color: #1a1a2e; margin-bottom: 16px;
+    .stat {
+      padding: 1.5rem 1rem;
+      text-align: center;
+      border-right: 1px solid rgba(255,255,255,0.08);
     }
-    .section-subtitle { font-size: 1.05rem; color: #4a4a6a; max-width: 560px; margin-bottom: 48px; }
+    .stat:last-child { border-right: none; }
+    .stat-num {
+      font-size: 1.9rem; font-weight: 900;
+      color: var(--white); letter-spacing: -0.03em;
+      line-height: 1;
+    }
+    .stat-num .accent { color: var(--amber); }
+    .stat-label { font-size: 0.72rem; color: rgba(255,255,255,0.5); margin-top: 0.3rem; font-weight: 500; }
 
-    section { padding: 80px 0; }
-
-    .feature-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 28px; }
-    .feature-card {
-      background: #fafafa; border: 1px solid #e8e8f0;
-      border-radius: 16px; padding: 32px;
-      transition: border-color 0.2s, box-shadow 0.2s;
+    @media (max-width: 540px) {
+      .hero-stats { grid-template-columns: repeat(2, 1fr); }
+      .stat:nth-child(2) { border-right: none; }
+      .stat:nth-child(1),
+      .stat:nth-child(2) { border-bottom: 1px solid rgba(255,255,255,0.08); }
     }
-    .feature-card:hover { border-color: #fed7aa; box-shadow: 0 8px 32px rgba(249,115,22,0.08); }
-    .feature-icon {
-      width: 52px; height: 52px;
-      background: linear-gradient(135deg, #fff7ed, #ffedd5);
-      border-radius: 14px;
-      display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; margin-bottom: 20px;
-    }
-    .feature-card h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 10px; color: #1a1a2e; }
-    .feature-card p { font-size: 0.95rem; color: #4a4a6a; line-height: 1.6; }
 
-    /* ─── Screenshot ─── */
+    /* ── SCREENSHOT BAND ── */
+    .screenshot-band {
+      background: linear-gradient(to bottom, var(--midnight) 50%, var(--lavender) 50%);
+      padding: 0 5%;
+    }
     .screenshot-wrap {
-      background: linear-gradient(135deg, #431407, #7c2d12);
-      border-radius: 16px; padding: 32px;
-      display: flex; align-items: center; justify-content: center;
-      min-height: 320px; position: relative; overflow: hidden;
-      box-shadow: 0 24px 64px rgba(249,115,22,0.25);
+      max-width: 960px; margin: 0 auto;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 5rem 2rem;
+      text-align: center;
+      box-shadow: 0 40px 100px rgba(91,79,255,0.12);
+      position: relative; overflow: hidden;
     }
     .screenshot-wrap::before {
       content: '';
       position: absolute; inset: 0;
-      background:
-        repeating-linear-gradient(0deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px),
-        repeating-linear-gradient(90deg, transparent, transparent 39px, rgba(255,255,255,0.02) 39px, rgba(255,255,255,0.02) 40px);
+      background: linear-gradient(135deg, rgba(91,79,255,0.04) 0%, transparent 60%);
+      pointer-events: none;
     }
-    .screenshot-label { position: relative; text-align: center; color: rgba(255,255,255,0.6); }
-    .screenshot-label .icon { font-size: 3rem; margin-bottom: 12px; }
-    .screenshot-label p { font-size: 0.9rem; font-weight: 500; }
-    .screenshot-caption { text-align: center; font-size: 0.85rem; color: #6b6b8a; margin-top: 12px; font-style: italic; }
-
-    /* ─── Two Col ─── */
-    .two-col { display: grid; grid-template-columns: 1fr 1fr; gap: 64px; align-items: center; }
-    .two-col.reverse { direction: rtl; }
-    .two-col.reverse > * { direction: ltr; }
-    @media (max-width: 768px) {
-      .two-col { grid-template-columns: 1fr; gap: 40px; }
-      .two-col.reverse { direction: ltr; }
+    .screenshot-label {
+      color: var(--muted); font-size: 0.9rem;
+      display: flex; align-items: center; justify-content: center; gap: 0.5rem;
+    }
+    .screenshot-tag {
+      background: var(--lavender); color: var(--indigo);
+      font-size: 0.72rem; font-weight: 700; padding: 0.2rem 0.6rem;
+      border-radius: 4px; letter-spacing: 0.05em;
     }
 
-    .check-list { list-style: none; display: flex; flex-direction: column; gap: 14px; }
-    .check-list li { display: flex; gap: 12px; align-items: flex-start; font-size: 0.98rem; color: #2d2d4e; }
-    .check-list li::before {
-      content: '✓'; width: 22px; height: 22px;
-      background: #f97316; color: #fff; border-radius: 50%;
+    /* ── SECTIONS ── */
+    section { padding: 5.5rem 5%; }
+
+    /* ── FEATURES ── */
+    .features-section { background: var(--lavender); }
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(290px, 1fr));
+      gap: 1.5rem;
+    }
+    .feature-card {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 16px; padding: 2rem;
+      position: relative; overflow: hidden;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .feature-card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+      background: linear-gradient(90deg, var(--indigo), var(--amber));
+      opacity: 0; transition: opacity 0.2s;
+    }
+    .feature-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 16px 48px rgba(91,79,255,0.12);
+    }
+    .feature-card:hover::before { opacity: 1; }
+
+    .feature-icon {
+      width: 44px; height: 44px;
+      background: var(--lavender);
+      border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.7rem; font-weight: 800; flex-shrink: 0; margin-top: 2px;
+      font-size: 1.3rem; margin-bottom: 1rem;
     }
+    .feature-card h3 {
+      font-size: 1.05rem; font-weight: 700;
+      margin-bottom: 0.5rem; color: var(--ink);
+      letter-spacing: -0.01em;
+    }
+    .feature-card p { font-size: 0.92rem; color: var(--muted); line-height: 1.65; }
 
-    /* ─── Milestone Timeline ─── */
-    .milestone-track { position: relative; padding-left: 40px; }
-    .milestone-track::before {
-      content: ''; position: absolute; left: 14px; top: 0; bottom: 0;
-      width: 3px; background: linear-gradient(to bottom, #f97316, #ef4444, #a855f7);
+    /* ── HOW IT WORKS ── */
+    .how-section { background: var(--white); }
+    .steps-layout {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem 4rem;
+      max-width: 900px;
     }
-    .milestone {
-      position: relative; margin-bottom: 36px;
-      padding: 20px 24px; background: #fff;
-      border: 1px solid #e8e8f0; border-radius: 14px;
+    .step {
+      display: flex; gap: 1.25rem; align-items: flex-start;
     }
-    .milestone::before {
-      content: attr(data-day);
-      position: absolute; left: -40px; top: 50%; transform: translateY(-50%);
-      width: 28px; height: 28px;
-      background: linear-gradient(135deg, #f97316, #ef4444);
-      color: #fff; border-radius: 50%;
+    .step-num {
+      min-width: 40px; height: 40px;
+      background: linear-gradient(135deg, var(--indigo), var(--indigo-mid));
+      color: var(--white); border-radius: 12px;
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.6rem; font-weight: 800; text-align: center; line-height: 1.2;
+      font-weight: 800; font-size: 0.95rem; flex-shrink: 0;
+      box-shadow: 0 4px 16px rgba(91,79,255,0.3);
     }
-    .milestone h4 { font-size: 1rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
-    .milestone p { font-size: 0.88rem; color: #4a4a6a; }
-    .milestone .reward { display: inline-block; background: #fff7ed; color: #c2410c; font-size: 0.78rem; font-weight: 700; padding: 3px 10px; border-radius: 8px; margin-top: 8px; }
+    .step h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; color: var(--ink); }
+    .step p { font-size: 0.9rem; color: var(--muted); line-height: 1.65; }
 
-    /* ─── Science Box ─── */
-    .science-box {
-      background: linear-gradient(135deg, #1a1a2e, #2d1b69);
-      border-radius: 20px; padding: 48px;
-      color: #fff;
-    }
-    .science-box h2 { color: #fff; }
-    .science-box p { color: rgba(255,255,255,0.8); }
-    .science-stat-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 36px; }
-    .science-stat { text-align: center; }
-    .science-stat .num { font-size: 2.2rem; font-weight: 900; color: #fb923c; }
-    .science-stat .label { font-size: 0.85rem; color: rgba(255,255,255,0.7); }
     @media (max-width: 640px) {
-      .science-stat-grid { grid-template-columns: 1fr 1fr; }
-      .nav-links { display: none; }
+      .steps-layout { grid-template-columns: 1fr; }
     }
 
-    /* ─── FAQ ─── */
-    .faq-section { background: #fff7ed; }
-    .faq-list { display: flex; flex-direction: column; gap: 0; max-width: 760px; margin: 0 auto; }
-    .faq-item { border-bottom: 1px solid #fed7aa; padding: 24px 0; }
-    .faq-item:last-child { border-bottom: none; }
-    .faq-q { font-size: 1.05rem; font-weight: 700; color: #1a1a2e; margin-bottom: 10px; display: flex; gap: 12px; align-items: flex-start; }
-    .faq-q::before {
-      content: 'Q'; width: 28px; height: 28px;
-      background: linear-gradient(135deg, #f97316, #ef4444);
-      color: #fff; border-radius: 8px;
+    /* ── TESTIMONIALS ── */
+    .testimonial-section {
+      background: var(--midnight);
+      position: relative; overflow: hidden;
+    }
+    .testimonial-section::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 60% 80% at 0% 50%, rgba(91,79,255,0.2) 0%, transparent 60%),
+        radial-gradient(ellipse 40% 60% at 100% 50%, rgba(245,158,11,0.08) 0%, transparent 60%);
+      pointer-events: none;
+    }
+    .testimonial-section .eyebrow { color: var(--indigo-soft); justify-content: center; }
+    .testimonial-section .eyebrow::before { background: var(--indigo-soft); }
+    .testimonial-section h2 { color: var(--white); text-align: center; }
+    .testimonials-grid {
+      display: grid; grid-template-columns: repeat(auto-fit, minmax(270px, 1fr));
+      gap: 1.5rem; margin-top: 3rem; position: relative; z-index: 1;
+    }
+    .testimonial-card {
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.09);
+      border-radius: 16px; padding: 2rem;
+      position: relative;
+      transition: border-color 0.2s;
+    }
+    .testimonial-card:hover { border-color: rgba(91,79,255,0.4); }
+    .testimonial-stars { color: var(--amber); font-size: 0.85rem; margin-bottom: 0.85rem; letter-spacing: 0.05em; }
+    .testimonial-card blockquote {
+      font-size: 0.93rem; color: rgba(255,255,255,0.75);
+      line-height: 1.7; margin-bottom: 1.25rem; font-style: normal;
+    }
+    .testimonial-meta { display: flex; align-items: center; gap: 0.75rem; }
+    .testimonial-avatar {
+      width: 36px; height: 36px; border-radius: 50%;
+      background: linear-gradient(135deg, var(--indigo), var(--amber));
       display: flex; align-items: center; justify-content: center;
-      font-size: 0.8rem; font-weight: 800; flex-shrink: 0;
+      font-weight: 800; font-size: 0.8rem; color: var(--white);
+      flex-shrink: 0;
     }
-    .faq-a { font-size: 0.95rem; color: #4a4a6a; padding-left: 40px; }
+    .testimonial-author { font-weight: 700; color: var(--indigo-soft); font-size: 0.85rem; }
+    .testimonial-detail { font-size: 0.78rem; color: rgba(255,255,255,0.4); margin-top: 0.1rem; }
 
-    /* ─── CTA ─── */
-    .cta-band {
-      background: linear-gradient(135deg, #f97316, #ef4444);
-      padding: 80px 0; text-align: center;
+    /* ── FAQ ── */
+    .faq-section { background: var(--surface); }
+    .faq-grid {
+      max-width: 760px;
+      display: flex; flex-direction: column; gap: 0.75rem;
     }
-    .cta-band h2 { color: #fff; margin-bottom: 16px; }
-    .cta-band p { color: rgba(255,255,255,0.85); font-size: 1.05rem; margin-bottom: 36px; max-width: 560px; margin-left: auto; margin-right: auto; }
-    .cta-btns { display: flex; gap: 16px; justify-content: center; flex-wrap: wrap; }
+    .faq-item {
+      background: var(--white);
+      border: 1px solid var(--border);
+      border-radius: 14px; overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .faq-item:hover { border-color: var(--indigo-soft); }
+    .faq-q {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 1.25rem 1.5rem; cursor: pointer;
+      user-select: none; gap: 1rem;
+    }
+    .faq-q h3 {
+      font-size: 0.97rem; font-weight: 700; color: var(--ink);
+      flex: 1; margin: 0;
+    }
+    .faq-toggle {
+      width: 28px; height: 28px; border-radius: 50%;
+      background: var(--lavender); color: var(--indigo);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 1.1rem; line-height: 1; flex-shrink: 0;
+      transition: transform 0.25s, background 0.2s;
+      font-weight: 700;
+    }
+    .faq-item.open .faq-toggle {
+      transform: rotate(45deg);
+      background: var(--indigo); color: var(--white);
+    }
+    .faq-body {
+      max-height: 0; overflow: hidden;
+      transition: max-height 0.35s ease, padding 0.25s;
+      padding: 0 1.5rem;
+    }
+    .faq-body p { font-size: 0.92rem; color: var(--muted); padding-bottom: 1.25rem; line-height: 1.7; }
+    .faq-item.open .faq-body { max-height: 200px; }
 
-    .related-section { background: #fafafa; }
-    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 20px; }
+    /* ── CTA BANNER ── */
+    .cta-banner {
+      position: relative; overflow: hidden;
+      background: var(--midnight);
+      padding: 6rem 5%; text-align: center;
+    }
+    .cta-banner::before {
+      content: '';
+      position: absolute; inset: 0;
+      background:
+        radial-gradient(ellipse 80% 70% at 50% 50%, rgba(91,79,255,0.35) 0%, transparent 70%);
+      pointer-events: none;
+    }
+    .cta-banner::after {
+      content: '';
+      position: absolute; inset: 0;
+      background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+      background-size: 28px 28px;
+      pointer-events: none;
+    }
+    .cta-inner { position: relative; z-index: 1; max-width: 680px; margin: 0 auto; }
+    .cta-tag {
+      display: inline-block; background: rgba(245,158,11,0.15);
+      border: 1px solid rgba(245,158,11,0.4);
+      color: var(--amber); padding: 0.3rem 0.9rem;
+      border-radius: 50px; font-size: 0.78rem; font-weight: 700;
+      letter-spacing: 0.08em; text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+    .cta-banner h2 {
+      color: var(--white); font-size: clamp(1.8rem, 4vw, 3rem);
+      margin-bottom: 1rem;
+    }
+    .cta-banner p { color: rgba(255,255,255,0.65); font-size: 1.05rem; margin-bottom: 2.5rem; }
+    .cta-pair { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .btn-amber {
+      background: var(--amber); color: var(--midnight);
+      padding: 0.9rem 2rem; border-radius: 10px;
+      font-weight: 800; font-size: 0.97rem;
+      text-decoration: none;
+      box-shadow: 0 8px 30px rgba(245,158,11,0.35);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    .btn-amber:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(245,158,11,0.45);
+    }
+
+    /* ── RELATED ── */
+    .related-section { background: var(--lavender); padding: 4.5rem 5%; }
+    .related-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+      gap: 1rem; margin-top: 2.5rem;
+    }
     .related-card {
-      background: #fff; border: 1px solid #e8e8f0; border-radius: 14px;
-      padding: 28px; transition: border-color 0.2s, box-shadow 0.2s;
-      display: flex; flex-direction: column; gap: 12px;
+      background: var(--white); border: 1px solid var(--border);
+      border-radius: 12px; padding: 1.1rem 1.4rem;
+      text-decoration: none; color: var(--ink);
+      font-weight: 600; font-size: 0.9rem;
+      display: flex; align-items: center; gap: 0.7rem;
+      transition: border-color 0.2s, color 0.2s, transform 0.15s;
     }
-    .related-card:hover { border-color: #fed7aa; box-shadow: 0 8px 24px rgba(249,115,22,0.08); }
-    .related-card .rc-icon { font-size: 2rem; }
-    .related-card h3 { font-size: 1rem; font-weight: 700; color: #1a1a2e; }
-    .related-card p { font-size: 0.88rem; color: #6b6b8a; }
-    .related-card .rc-link { font-size: 0.88rem; font-weight: 700; color: #f97316; margin-top: auto; }
+    .related-icon { font-size: 1.1rem; }
+    .related-card:hover {
+      border-color: var(--indigo); color: var(--indigo);
+      transform: translateY(-2px);
+    }
 
-    footer { background: #1a1a2e; color: rgba(255,255,255,0.6); padding: 40px 0; text-align: center; font-size: 0.88rem; }
-    footer a { color: rgba(255,255,255,0.6); }
-    footer a:hover { color: #fff; }
+    /* ── FOOTER ── */
+    footer {
+      background: var(--midnight); color: rgba(255,255,255,0.4);
+      padding: 2.5rem 5%; text-align: center; font-size: 0.88rem;
+    }
+    footer a { color: var(--indigo-soft); text-decoration: none; }
+    footer a:hover { color: var(--white); }
+    .footer-links { display: flex; gap: 1.5rem; justify-content: center; margin-top: 0.75rem; flex-wrap: wrap; }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 600px) {
+      .hero { padding: 5rem 5% 4.5rem; }
+      section { padding: 4rem 5%; }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      * { transition: none !important; animation: none !important; }
+    }
   </style>
 </head>
 <body>
 
-  <!-- ═══ NAV ═══ -->
-  <nav aria-label="Main navigation">
-    <div class="container nav-inner">
-      <a href="/" class="nav-logo">StudyOS</a>
-      <ul class="nav-links">
-        <li><a href="/features/cbse-syllabus.html">Syllabus</a></li>
-        <li><a href="/features/study-streaks.html" class="active">Study Streaks</a></li>
-        <li><a href="/features/rewards-xp-system.html">Rewards & XP</a></li>
-        <li><a href="/pricing.html">Pricing</a></li>
-      </ul>
-      <div class="nav-cta">
-        <a href="/auth.html" class="btn btn-secondary" style="padding:10px 20px; font-size:0.9rem;">Log In</a>
-        <a href="/auth.html?action=signup" class="btn btn-primary" style="padding:10px 20px; font-size:0.9rem;">Start Free</a>
+<!-- NAV -->
+<nav>
+  <a href="/" class="nav-logo">Board<span>OS</span></a>
+  <ul class="nav-links">
+    <li><a href="/features/cbse-syllabus.html">Syllabus</a></li>
+    <li><a href="/features/ai-coach.html" aria-current="page">AI Coach</a></li>
+    <li><a href="/features/ai-quiz.html">AI Quiz</a></li>
+    <li><a href="/app.html">Dashboard</a></li>
+  </ul>
+  <a href="/auth.html" class="nav-cta">Start Free →</a>
+</nav>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-inner">
+    <div class="hero-badge">✦ AI-Powered · Built for CBSE</div>
+    <h1>Study Smarter.<br /><em>Not Harder.</em></h1>
+    <p class="hero-sub">
+      BoardOS AI Coach maps your weaknesses, builds your revision schedule, and
+      clears doubts 24/7 — purpose-built for Classes 9–12.
+    </p>
+    <div class="hero-ctas">
+      <a href="/auth.html" class="btn-primary">Get Your Free AI Coach →</a>
+      <a href="/app.html" class="btn-ghost">See the Dashboard</a>
+    </div>
+    <div class="hero-stats">
+      <div class="stat">
+        <div class="stat-num"><span class="accent">94</span>%</div>
+        <div class="stat-label">Grade improvement</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">24/7</div>
+        <div class="stat-label">Doubt resolution</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">15<span class="accent">+</span></div>
+        <div class="stat-label">CBSE subjects</div>
+      </div>
+      <div class="stat">
+        <div class="stat-num">3<span class="accent">×</span></div>
+        <div class="stat-label">Faster revision</div>
       </div>
     </div>
-  </nav>
+  </div>
+</section>
 
-  <!-- ═══ HERO ═══ -->
-  <header class="hero" aria-label="Hero section">
-    <div class="container">
-      <div class="hero-content">
-        <span class="badge">🔥 Study Streaks</span>
-        <h1>
-          One Day Builds a Habit.<br />
-          <span>60 Days Builds a Board Topper.</span>
-        </h1>
-        <p>
-          StudyOS Study Streaks turn daily studying into an active habit.
-          Watch your streak grow, hit milestones, and arrive at your CBSE board exams with
-          months of consistent preparation behind you.
-        </p>
-        <div class="hero-btns">
-          <a href="/auth.html?action=signup" class="btn btn-primary">
-            🔥 Start My Streak Today
-          </a>
-          <a href="/app.html" class="btn btn-secondary">
-            See How It Works →
-          </a>
-        </div>
+<!-- SCREENSHOT 1 -->
+<div class="screenshot-band">
+  <div class="screenshot-wrap">
+    <img src="/assets/ai-coach-dashboard.png" alt="CBSE Syllabus Tracker — Subject progress view inside BoardOS" />
+  </div>
+</div>
 
-        <!-- Visual Streak Demo -->
-        <div class="streak-display" role="img" aria-label="Example 21-day study streak visual">
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day done">✓</div>
-          <div class="streak-day today">🔥</div>
-          <div class="streak-day empty">?</div>
-          <div class="streak-day empty">?</div>
-          <div class="streak-day empty">?</div>
-          <div class="streak-day empty">?</div>
-          <div class="streak-day empty">?</div>
-          <div class="streak-day empty">?</div>
-          <p class="streak-label">Day 21 of your streak — keep going! 9 more days to your 30-day milestone. 🎯</p>
-        </div>
+<!-- FEATURES -->
+<section class="features-section">
+  <div class="eyebrow">What It Does</div>
+  <h2>An AI Tutor That Knows Your<br />CBSE Syllabus Inside Out</h2>
+  <p class="section-sub">
+    Not a generic chatbot. Purpose-built for CBSE Classes 9–12, connected to your
+    real progress, and adapting as you learn.
+  </p>
+  <div class="features-grid">
+    <div class="feature-card">
+      <div class="feature-icon">🧠</div>
+      <h3>Adaptive Study Plans</h3>
+      <p>Analyses completed topics, test scores, and your exam date to build a day-by-day schedule that hits your weakest areas first.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">💬</div>
+      <h3>24/7 Doubt Resolution</h3>
+      <p>Ask anything — from a Maths formula to a Chemistry reaction mechanism. Clear, step-by-step CBSE-aligned explanations, instantly.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📊</div>
+      <h3>Weak Topic Diagnosis</h3>
+      <p>After quizzes and sessions, the coach finds chapters where you lose marks and increases their weight in your revision schedule.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📅</div>
+      <h3>Exam-Ready Prioritisation</h3>
+      <p>As boards approach, the AI shifts focus to high-weightage chapters and past-paper patterns — maximum marks where it counts.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">🔁</div>
+      <h3>Spaced Repetition Triggers</h3>
+      <p>Revision reminders at scientifically-timed intervals ensure concepts you've learned don't fade before exam day.</p>
+    </div>
+    <div class="feature-card">
+      <div class="feature-icon">📝</div>
+      <h3>Chapter Summaries on Demand</h3>
+      <p>Quick recap of Genetics at 11 PM? The coach delivers crisp CBSE-format summaries with key points and formulas.</p>
+    </div>
+  </div>
+</section>
+
+<!-- HOW IT WORKS -->
+<section class="how-section">
+  <div class="eyebrow">How It Works</div>
+  <h2>From Sign-Up to Smarter Studying<br />in 4 Steps</h2>
+  <p class="section-sub">No setup friction. The AI does the heavy lifting so you can start studying in minutes.</p>
+  <div class="steps-layout">
+    <div class="step">
+      <div class="step-num">1</div>
+      <div>
+        <h3>Set Your Class, Stream & Exam Date</h3>
+        <p>Tell BoardOS your class, stream, and when boards begin. The AI Coach maps the full CBSE syllabus instantly.</p>
       </div>
     </div>
-  </header>
+    <div class="step">
+      <div class="step-num">2</div>
+      <div>
+        <h3>Complete a 3-Minute Baseline Quiz</h3>
+        <p>A short diagnostic across your subjects to identify where you stand — no guesswork, pure data.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">3</div>
+      <div>
+        <h3>Get Your Personalised Study Plan</h3>
+        <p>Within seconds, a daily schedule with topic priorities, time estimates, and revision slots — synced to real CBSE syllabus.</p>
+      </div>
+    </div>
+    <div class="step">
+      <div class="step-num">4</div>
+      <div>
+        <h3>Study, Ask, Improve — Every Day</h3>
+        <p>As you study, ask doubts in plain language. The coach learns your pace, updates your plan, keeps you on track until exam day.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <!-- ═══ STREAK COUNTER HERO VISUAL ═══ -->
-  <section style="padding: 64px 0; background: #fff;" aria-label="Streak counter visual section">
-    <div class="container">
-      <div class="two-col">
-        <div class="text-center">
-          <div class="streak-counter" style="display:inline-flex;">
-            <span class="flame">🔥</span>
-            <div>
-              <div class="count">47</div>
-              <div class="text">Day Streak</div>
-            </div>
-          </div>
-          <p style="color:#6b6b8a; font-size:0.9rem; margin-top:8px;">Example student streak counter — updated every day you study</p>
-        </div>
+<!-- SCREENSHOT 2 -->
+<div class="screenshot-band" style="background: linear-gradient(to bottom, var(--white) 50%, var(--midnight) 50%);">
+  <div class="screenshot-wrap">
+    <img src="/assets/ai-coach-dashboard.png" alt="AI Study Coach — Personalised coaching chat interface" style="max-width:900px;width:100%;border-radius:16px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.2);" />
+  </div>
+</div>
+
+<!-- TESTIMONIALS -->
+<section class="testimonial-section">
+  <div class="eyebrow" style="justify-content:center;">Student Stories</div>
+  <h2 style="color:var(--white);text-align:center;">Real CBSE Students.<br />Real Results.</h2>
+  <div class="testimonials-grid">
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <blockquote>"The AI Coach told me I was spending too much time on chapters I already knew. It shifted my schedule to Organic Chemistry and I went from 65% to 89% in pre-boards."</blockquote>
+      <div class="testimonial-meta">
+        <div class="testimonial-avatar">AR</div>
         <div>
-          <p class="section-eyebrow">Why Streaks Work</p>
-          <h2>The Science Behind Showing Up Every Day</h2>
-          <p style="color:#4a4a6a; margin-bottom:24px;">
-            Habit research shows that students who study for <strong>45 minutes daily</strong>
-            for 60 days outperform students who cram before exams.
-            StudyOS Study Streaks are built on this science.
-          </p>
-          <ul class="check-list">
-            <li>Consistency compounds — 60 days of 45 minutes beats 3 days of 6 hours</li>
-            <li>Visual progress makes you feel invested — you won't want to break the chain</li>
-            <li>Milestone rewards give you goals during long-term preparation</li>
-            <li>Streak data helps you identify your weakest study days and adjust them</li>
-          </ul>
+          <div class="testimonial-author">Ananya R.</div>
+          <div class="testimonial-detail">Class 12 Science · Delhi</div>
         </div>
       </div>
     </div>
-  </section>
-
-  <!-- ═══ SCREENSHOT 1 ═══ -->
-  <section style="padding: 0 0 64px; background: #fff;">
-    <div class="container">
-      <div class="screenshot-wrap" style="background:transparent;min-height:unset;">
-        <img src="/assets/daily-streak.png" alt="StudyOS Study Streak Dashboard — Current streak, calendar, freeze slots" style="max-width:520px;width:100%;border-radius:16px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);" />
-      </div>
-      <p class="screenshot-caption">Your streak dashboard — a view of your study consistency, milestones, and daily goal progress.</p>
-    </div>
-  </section>
-
-  <!-- ═══ FEATURES ═══ -->
-  <section style="background: #fafafa;" aria-labelledby="features-heading">
-    <div class="container">
-      <div class="text-center" style="margin-bottom: 56px;">
-        <p class="section-eyebrow">Feature Breakdown</p>
-        <h2 id="features-heading">Everything That Makes Your Study Streak Powerful</h2>
-        <p class="section-subtitle" style="margin: 0 auto 0;">
-          StudyOS Streaks aren't just a counter. They're a daily motivation system
-          designed around how CBSE students actually study.
-        </p>
-      </div>
-      <div class="feature-grid">
-
-        <div class="feature-card">
-          <div class="feature-icon">📅</div>
-          <h3>Daily Streak Counter</h3>
-          <p>
-            Your streak number is front and centre every time you open StudyOS.
-            It's situated right on your main view, keeping you accountable.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🗓️</div>
-          <h3>Calendar Heatmap</h3>
-          <p>
-            See a visual calendar of every day you've studied — similar to a contribution graph, but for your CBSE prep.
-            Filled squares display your consistent study history.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🎯</div>
-          <h3>Custom Daily Goals</h3>
-          <p>
-            Set a minimum daily study target that matches your schedule.
-            A 30-minute goal during school weeks, 90-minute during holidays.
-            StudyOS adapts to your life.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🏅</div>
-          <h3>Streak Milestones</h3>
-          <p>
-            Hit 7, 14, 30, 60, and 100 days to unlock special badges and bonus XP.
-            Each milestone is an achievement worth celebrating.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">⏰</div>
-          <h3>Smart Reminders</h3>
-          <p>
-            StudyOS can nudge you before your streak is about to break.
-            Set a reminder for your preferred study time and never miss a day by accident.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">📈</div>
-          <h3>Streak Analytics</h3>
-          <p>
-            See your average streak length, your longest streak ever, and which days of the week
-            you're most likely to skip. Data you can actually use to improve.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🛡️</div>
-          <h3>Streak Freeze</h3>
-          <p>
-            Earn a Streak Freeze from the Rewards shop to protect your streak on a day you can't study.
-            Because life happens, even during boards season.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">👥</div>
-          <h3>Friend Streak Leaderboard</h3>
-          <p>
-            Compare your streak with friends in StudyOS. A little friendly competition
-            is a strong motivator in education.
-          </p>
-        </div>
-
-        <div class="feature-card">
-          <div class="feature-icon">🔗</div>
-          <h3>Integrated with XP & Rewards</h3>
-          <p>
-            Every day your streak grows, you earn bonus XP in the <a href="/features/rewards-xp-system.html" style="color:#f97316;font-weight:600;">StudyOS Rewards system</a>.
-            Longer streaks = more XP per session.
-          </p>
-        </div>
-
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ MILESTONE TIMELINE ═══ -->
-  <section aria-labelledby="milestones-heading">
-    <div class="container">
-      <div class="two-col">
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <blockquote>"I used to wait days for my tutor to clarify doubts. Now I just type my question and get a perfect CBSE-style explanation in seconds. Game changer."</blockquote>
+      <div class="testimonial-meta">
+        <div class="testimonial-avatar">RM</div>
         <div>
-          <p class="section-eyebrow">Streak Milestones</p>
-          <h2 id="milestones-heading">Every Week Is Worth Fighting For</h2>
-          <p class="section-subtitle">
-            StudyOS provides milestone targets throughout your streak journey.
-            Each milestone unlocks rewards to keep you moving forward.
-          </p>
-          <div class="milestone-track">
-            <div class="milestone" data-day="7">
-              <h4>🔥 7-Day Streak — "Consistent Starter"</h4>
-              <p>One full week of daily studying. You've proved you can do this.</p>
-              <span class="reward">+150 Bonus XP · Starter Badge</span>
-            </div>
-            <div class="milestone" data-day="14">
-              <h4>⚡ 14-Day Streak — "Two-Week Warrior"</h4>
-              <p>Two weeks. Your study habit is starting to feel natural.</p>
-              <span class="reward">+300 Bonus XP · Warrior Badge</span>
-            </div>
-            <div class="milestone" data-day="30">
-              <h4>🌟 30-Day Streak — "Month Master"</h4>
-              <p>A full month of daily study. This is when revision progress compounds.</p>
-              <span class="reward">+750 Bonus XP · Gold Badge · Streak Freeze</span>
-            </div>
-            <div class="milestone" data-day="60">
-              <h4>🏆 60-Day Streak — "Board Prep Hero"</h4>
-              <p>60 consecutive days means you've built a genuine academic habit. Boards? You're ready.</p>
-              <span class="reward">+2000 Bonus XP · Legendary Badge · 3 Streak Freezes</span>
-            </div>
-            <div class="milestone" data-day="100">
-              <h4>👑 100-Day Streak — "StudyOS Legend"</h4>
-              <p>100 days of unbroken study. You are in the top tier of prepared students.</p>
-              <span class="reward">+5000 Bonus XP · Legend Badge · Lifetime Feature</span>
-            </div>
-          </div>
+          <div class="testimonial-author">Rohan M.</div>
+          <div class="testimonial-detail">Class 10 · Mumbai</div>
         </div>
+      </div>
+    </div>
+    <div class="testimonial-card">
+      <div class="testimonial-stars">★★★★★</div>
+      <blockquote>"The adaptive plan feature is insane. It knew I had more time on weekends and packed revision sessions smartly. I finished my full syllabus 3 weeks before boards."</blockquote>
+      <div class="testimonial-meta">
+        <div class="testimonial-avatar">PS</div>
         <div>
-          <div class="screenshot-wrap" style="min-height:unset;background:transparent;">
-            <img src="/assets/daily-streak.png" alt="StudyOS Streak Milestone Badges" style="max-width:100%;border-radius:16px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);" />
-          </div>
-          <p class="screenshot-caption">Each milestone badge is permanently displayed on your StudyOS profile.</p>
+          <div class="testimonial-author">Priya S.</div>
+          <div class="testimonial-detail">Class 12 Commerce · Bengaluru</div>
         </div>
       </div>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ═══ SCIENCE SECTION ═══ -->
-  <section style="background:#fafafa; padding:80px 0;" aria-labelledby="science-heading">
-    <div class="container">
-      <div class="science-box">
-        <p class="section-eyebrow" style="color:#fb923c;">Backed by Research</p>
-        <h2 id="science-heading" style="color:#fff;">Why Consistency Wins Every CBSE Board Exam</h2>
-        <p style="margin-bottom:0; max-width:640px;">
-          Spaced repetition and daily practice are proven learning sciences. Students who study consistently over months retain
-          information significantly better than students who try to cram. StudyOS Streaks
-          put this research to work for you automatically.
-        </p>
-        <div class="science-stat-grid">
-          <div class="science-stat">
-            <div class="num">3×</div>
-            <div class="label">Better retention vs. cramming (spaced repetition research)</div>
-          </div>
-          <div class="science-stat">
-            <div class="num">66</div>
-            <div class="label">Average days to form a study habit (UCL research)</div>
-          </div>
-          <div class="science-stat">
-            <div class="num">40%</div>
-            <div class="label">Higher exam scores for students with consistent daily study</div>
-          </div>
-        </div>
+<!-- FAQ -->
+<section class="faq-section">
+  <div class="eyebrow">FAQ</div>
+  <h2>AI Coach — Your Questions Answered</h2>
+  <div class="faq-grid">
+    <div class="faq-item open">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <h3>What is the AI Study Coach in BoardOS?</h3>
+        <div class="faq-toggle">+</div>
+      </div>
+      <div class="faq-body">
+        <p>The AI Study Coach is an intelligent tutoring assistant inside BoardOS. It analyses your syllabus progress, identifies weak chapters, suggests what to study next, and answers subject-specific doubts for CBSE Classes 9–12.</p>
       </div>
     </div>
-  </section>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <h3>Can the AI Coach help with CBSE board exam preparation?</h3>
+        <div class="faq-toggle">+</div>
+      </div>
+      <div class="faq-body">
+        <p>Yes. The AI Coach is trained on CBSE patterns and board question trends. It creates revision priorities based on your exam date and performance data, so you study what matters most.</p>
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <h3>Is the AI Coach available 24/7?</h3>
+        <div class="faq-toggle">+</div>
+      </div>
+      <div class="faq-body">
+        <p>Absolutely. The AI Coach is available round the clock inside the BoardOS app. Ask doubts, request a study plan, or get chapter summaries any time — even at midnight before an exam.</p>
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <h3>Does the AI Coach replace a human tutor?</h3>
+        <div class="faq-toggle">+</div>
+      </div>
+      <div class="faq-body">
+        <p>The AI Coach supplements human teaching by providing instant doubt resolution, personalised scheduling, and progress tracking. It works best alongside your school classes and coaching sessions.</p>
+      </div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q" onclick="toggleFaq(this)">
+        <h3>Which subjects does the AI Coach support?</h3>
+        <div class="faq-toggle">+</div>
+      </div>
+      <div class="faq-body">
+        <p>BoardOS AI Coach supports all core CBSE subjects: Mathematics, Physics, Chemistry, Biology, English, Social Science, Accountancy, Economics, and more for Classes 9–12.</p>
+      </div>
+    </div>
+  </div>
+</section>
 
-  <!-- ═══ SCREENSHOT 2 ═══ -->
-  <section style="padding: 80px 0;" aria-label="Calendar heatmap feature screenshot">
-    <div class="container">
-      <div class="two-col reverse">
-        <div>
-          <div class="screenshot-wrap" style="min-height:unset;background:transparent;">
-            <img src="/assets/daily-streak.png" alt="StudyOS Calendar Heatmap View" style="max-width:100%;border-radius:16px;display:block;margin:0 auto;box-shadow:0 8px 40px rgba(0,0,0,0.15);" />
-          </div>
-          <p class="screenshot-caption">Your study heatmap — every green square represents a day you invested in your goals.</p>
-        </div>
-        <div>
-          <p class="section-eyebrow">Calendar Heatmap</p>
-          <h2>See Your Entire Year of Study at a Glance</h2>
-          <p style="color:#4a4a6a; margin-bottom:24px;">
-            The StudyOS calendar heatmap shows every day of the school year — colour-coded
-            by how much you studied. It is a visual record of your hard work. When
-            you see a solid wall of green squares leading up to your board exams, you'll feel
-            prepared.
-          </p>
-          <ul class="check-list">
-            <li>Deep green = heavy study day, light green = light study day</li>
-            <li>Empty squares show exactly where your preparation has gaps</li>
-            <li>Filter by subject to see subject-specific consistency</li>
-            <li>Share your heatmap as a proof of preparation</li>
-          </ul>
-        </div>
-      </div>
+<!-- CTA BANNER -->
+<section class="cta-banner">
+  <div class="cta-inner">
+    <div class="cta-tag">Free to Start · No Credit Card</div>
+    <h2>Stop Studying Hard.<br />Start Studying Smart.</h2>
+    <p>Join CBSE students using BoardOS AI Coach to beat their exams.</p>
+    <div class="cta-pair">
+      <a href="/auth.html" class="btn-amber">Create Free Account →</a>
+      <a href="/app.html" class="btn-ghost">Explore Dashboard</a>
     </div>
-  </section>
+  </div>
+</section>
 
-  <!-- ═══ FAQ ═══ -->
-  <section class="faq-section" aria-labelledby="faq-heading">
-    <div class="container">
-      <div class="text-center" style="margin-bottom:48px;">
-        <p class="section-eyebrow">FAQ</p>
-        <h2 id="faq-heading">Questions About Study Streaks</h2>
-      </div>
-      <div class="faq-list">
-        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
-          <div class="faq-q" itemprop="name">What is a study streak in StudyOS?</div>
-          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
-            <span itemprop="text">A study streak is the number of consecutive days you've completed a study session in StudyOS. Each day you study, your streak grows. Missing a day resets the counter — which motivates you to show up every day.</span>
-          </div>
-        </div>
-        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
-          <div class="faq-q" itemprop="name">What counts as a study session to maintain a streak?</div>
-          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
-            <span itemprop="text">Any meaningful study activity in StudyOS counts — reviewing formulas, completing notes, or logging a timed study block. You set the minimum daily goal, and we track whether you've hit it.</span>
-          </div>
-        </div>
-        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
-          <div class="faq-q" itemprop="name">Do I get rewards for long study streaks?</div>
-          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
-            <span itemprop="text">Yes! StudyOS awards bonus XP and special badges at streak milestones — 7 days, 30 days, 60 days, and beyond. Your streak also contributes to your overall level in the Rewards & XP system.</span>
-          </div>
-        </div>
-        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
-          <div class="faq-q" itemprop="name">What happens if I miss a day?</div>
-          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
-            <span itemprop="text">Your streak resets to zero, but your total XP and progress are never lost. StudyOS shows your longest streak as a badge of honour, and you can start a new streak immediately.</span>
-          </div>
-        </div>
-        <div class="faq-item" itemscope itemtype="https://schema.org/Question">
-          <div class="faq-q" itemprop="name">How does a daily study streak help with CBSE board exam preparation?</div>
-          <div class="faq-a" itemscope itemtype="https://schema.org/Answer" itemprop="acceptedAnswer">
-            <span itemprop="text">Research shows that consistent daily practice is far more effective than cramming before exams. A 60-day streak before CBSE boards means 60 days of spaced repetition, steady revision, and compounding progress — the foundation of board exam success.</span>
-          </div>
-        </div>
-      </div>
-    </div>
-  </section>
+<!-- INTERNAL LINKS -->
+<section class="related-section">
+  <div class="eyebrow">Explore More</div>
+  <h2>Everything You Need to Ace Your CBSE Exams</h2>
+  <div class="related-grid">
+    <a href="/features/cbse-syllabus.html" class="related-card"><span class="related-icon">📋</span>Syllabus Tracker</a>
+    <a href="/features/session-logger.html" class="related-card"><span class="related-icon">⏱</span>Focus Timer</a>
+    <a href="/features/ai-quiz.html" class="related-card"><span class="related-icon">🧩</span>Quiz Generator</a>
+    <a href="/features/study-analytics.html" class="related-card"><span class="related-icon">📊</span>Analytics Dashboard</a>
+    <a href="/features/exam-countdown.html" class="related-card"><span class="related-icon">⏳</span>Exam Countdown</a>
+    <a href="/features/study-streaks.html" class="related-card"><span class="related-icon">🔥</span>Study Streaks</a>
+    <a href="/features/backlog-management.html" class="related-card"><span class="related-icon">📌</span>Backlog Manager</a>
+    <a href="/features/notes-formula-library.html" class="related-card"><span class="related-icon">📚</span>Notes & Formulas</a>
+  </div>
+</section>
 
-  <!-- ═══ RELATED FEATURES ═══ -->
-  <section class="related-section" aria-labelledby="related-heading">
-    <div class="container">
-      <div class="text-center" style="margin-bottom:40px;">
-        <p class="section-eyebrow">Explore StudyOS</p>
-        <h2 id="related-heading">Streaks Work Better With These</h2>
-      </div>
-      <div class="related-grid">
-        <a href="/features/notes-formula-library.html" class="related-card">
-          <span class="rc-icon">📚</span>
-          <h3>Notes & Formula Library</h3>
-          <p>Every study session counts more when you're revising from a smart, searchable formula library.</p>
-          <span class="rc-link">Explore Formula Library →</span>
-        </a>
-        <a href="/features/rewards-xp-system.html" class="related-card">
-          <span class="rc-icon">🏆</span>
-          <h3>Rewards & XP System</h3>
-          <p>Your study streak earns you bonus XP every single day. Longer streaks unlock higher XP multipliers and exclusive rewards.</p>
-          <span class="rc-link">Explore Rewards & XP →</span>
-        </a>
-      </div>
-    </div>
-  </section>
+<!-- FOOTER -->
+<footer>
+  <p>© 2026 BoardOS — Built for CBSE Students across India.</p>
+  <div class="footer-links">
+    <a href="/privacy">Privacy Policy</a>
+    <a href="/terms">Terms of Use</a>
+    <a href="/contact">Contact</a>
+  </div>
+</footer>
 
-  <!-- ═══ CTA ═══ -->
-  <section class="cta-band" aria-labelledby="cta-heading">
-    <div class="container">
-      <h2 id="cta-heading">Day 1 Is Today. When Will Day 100 Be?</h2>
-      <p>
-        Every student who hit a 60-day streak started exactly where you are now — at zero.
-        Your streak clock starts when you sign up.
-      </p>
-      <div class="cta-btns">
-        <a href="/auth.html?action=signup" class="btn btn-white">
-          🔥 Start My Streak — Free
-        </a>
-        <a href="/app.html" class="btn" style="background:rgba(255,255,255,0.15); color:#fff; border: 2px solid rgba(255,255,255,0.4);">
-          Preview the App →
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <!-- ═══ FOOTER ═══ -->
-  <footer>
-    <div class="container">
-      <p style="margin-bottom:12px;">
-        <a href="/features/notes-formula-library.html">Notes Library</a> ·
-        <a href="/features/study-streaks.html">Study Streaks</a> ·
-        <a href="/features/rewards-xp-system.html">Rewards & XP</a> ·
-        <a href="/auth.html">Sign Up</a> ·
-        <a href="/app.html">App</a>
-      </p>
-      <p>© 2026 StudyOS. Built for CBSE students who study smart, not just hard.</p>
-    </div>
-  </footer>
+<script>
+  function toggleFaq(trigger) {
+    const item = trigger.closest('.faq-item');
+    const isOpen = item.classList.contains('open');
+    // Close all
+    document.querySelectorAll('.faq-item.open').forEach(el => el.classList.remove('open'));
+    // Open this one if it wasn't open
+    if (!isOpen) item.classList.add('open');
+  }
+</script>
 
 </body>
 </html>
