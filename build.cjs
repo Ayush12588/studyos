@@ -113,7 +113,7 @@ async function build() {
   console.log(`  ✓ dist/sw.js (CACHE_NAME → '${swCacheName}')\n`);
 
   // 5. Copy static files — HTML files get script/link srcs rewritten to hashed filenames
-  const staticFiles = ['index.html', 'app.html', 'auth.html', 'manifest.json', 'favicon.ico', 'sitemap.xml', 'robots.txt'];
+ const staticFiles = ['index.html', 'app.html', 'auth.html', 'manifest.json', 'favicon.ico', 'favicon.svg', 'favicon-96x96.png', 'apple-touch-icon.png', 'sitemap.xml', 'robots.txt'];
   for (const file of staticFiles) {
     if (!fs.existsSync(file)) continue;
     if (file.endsWith('.html')) {
