@@ -1609,6 +1609,7 @@ const App={
         const _ciUid=window._supabaseUserId;
         if(_ciUid)DB.checkins.upsert(_ciUid,this.today(),{understood,unclear}).then(({error})=>{if(error)console.error('[DB] checkin upsert:',error);});
         this.save();
+        hapticsVibrate('light');
         this.toast('Check-in saved! ✅','success');
         // Re-render dashboard so card switches to the read-only "saved" view
         this.renderDashboard();
@@ -1838,7 +1839,7 @@ const App={
             if(this.state.streakFreezes<3){
                 this.state.streakFreezes=Math.min(3,this.state.streakFreezes+1);
                 this._syncFullProfile();
-                setTimeout(()=>this.toast(`🧊 Streak freeze earned! You now have ${this.state.streakFreezes} freeze${this.state.streakFreezes!==1?'s':''}.`,'info'),800);
+                setTimeout(()=>{hapticsVibrate('light');this.toast(`🧊 Streak freeze earned! You now have ${this.state.streakFreezes} freeze${this.state.streakFreezes!==1?'s':''}.`,'info')},800);
             }else{
                 this._syncFullProfile();
                 setTimeout(()=>this.toast(`🔥 Streak milestone! Max freezes reached.`,'info'),800);
@@ -1867,6 +1868,7 @@ const App={
         const MILESTONES=[3,7,14,21,30,50,100];
         if(MILESTONES.includes(newStreak)&&!MILESTONES.includes(prevStreak)){
             setTimeout(()=>{
+                hapticsVibrate('streak');
                 this.celebrate();
                 const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='↑';
                 document.getElementById('lu-text').textContent=`${newStreak}-day streak!`;
@@ -2055,11 +2057,11 @@ const App={
     _syncQuizData(subjectId){const _uid=window._supabaseUserId;if(!_uid||!subjectId)return;const qd=this.state.quizData&&this.state.quizData[subjectId];if(!qd)return;DB.quiz.upsert(_uid,subjectId,{data:JSON.stringify(qd)}).then(({error})=>{if(error)console.error('[DB] quiz upsert:',error);});},
     _syncExercises(subjectId,chapterId){const _uid=window._supabaseUserId;if(!_uid)return;const key=subjectId+'_'+chapterId;const exData=this.state.exercises[key]||[];this.state.subjects.forEach(s=>{if(s.id===subjectId){s.chapters.forEach(ch=>{if(ch.id===chapterId&&ch._dbId){DB.chapters.update(ch._dbId||ch.id,{exercises:JSON.stringify(exData)}).then(({error})=>{if(error)console.error('[DB] exercises update:',error);});}});}});const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);const sub=this.state.subjects.find(s=>s.id===subjectId);if(sub){const ch=sub.chapters.find(c=>c.id===chapterId);if(ch&&_isUUID(ch.id)){DB.chapters.update(ch.id,{exercises:JSON.stringify(exData)}).then(({error})=>{if(error)console.error('[DB] exercises update:',error);})}}},
     xpForLevel(l){return l*l*50},
-    showLevelUp(l){const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='↑';document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');this.celebrate()},
+    showLevelUp(l){const luIcon=document.querySelector('#level-up .lu-icon');if(luIcon)luIcon.textContent='↑';document.getElementById('lu-text').textContent=`Level ${l}!`;document.getElementById('lu-sub').textContent=`You've reached Level ${l}!`;document.getElementById('level-up').classList.add('show');hapticsVibrate('levelUp');this.celebrate()},
     updateSidebar(){const p=this.state.profile;const sbName=document.getElementById('sb-name'),sbLevel=document.getElementById('sb-level'),sbFill=document.getElementById('sb-xp-fill'),sbText=document.getElementById('sb-xp-text');if(!sbName||!sbLevel||!sbFill||!sbText)return;sbName.textContent=p.name;sbLevel.textContent=`LVL ${p.level}`;const c=this.xpForLevel(p.level-1),n=this.xpForLevel(p.level),pct=Math.min(100,((p.xp-c)/(n-c))*100);sbFill.style.transform=`scaleX(${Math.min(1,pct/100)})`;sbText.textContent=`${p.xp-c} / ${n-c} XP`},
     updateNavBadges(){const r=this.getRevisionsDue().length,o=this.getOverdueChapters().length,ud=this.state.doubts.filter(d=>d.status==='unresolved').length;const rb=document.getElementById('rev-badge'),ob=document.getElementById('overdue-badge'),db=document.getElementById('doubt-badge');if(rb){rb.style.display=r>0?'inline':'none';rb.textContent=r;}if(ob){ob.style.display=o>0?'inline':'none';ob.textContent=o;}if(db){db.style.display=ud>0?'inline':'none';db.textContent=ud;}const qDue=this.getQuizDueSubjects().length;const qb=document.getElementById('quiz-badge');if(qb){qb.style.display=qDue>0?'inline':'none';qb.textContent=qDue;}},
 
-    checkBadges(){const _priorBadges=new Set(this.state.earnedBadges);const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){const _bUid=window._supabaseUserId;if(_bUid&&this._badgesLoaded){const _newBadges=nb.filter(b=>!_priorBadges.has(b.id));_newBadges.forEach(b=>{DB.badges.add(_bUid,b.id).then(({error})=>{if(error&&!error.message?.includes('duplicate'))console.error('[DB] badge add:',error);});if(window.Notifications)Notifications.send('badge',`Badge unlocked: ${b.name}`,b.desc,'rewards');});}nb.forEach(b=>setTimeout(()=>this.toast(`Badge: ${b.name}!`,'success'),800))}},
+    checkBadges(){const _priorBadges=new Set(this.state.earnedBadges);const s=this.getStats(),nb=[];this.BADGES.forEach(b=>{if(this.state.earnedBadges.includes(b.id))return;let e=false;switch(b.id){case'first-step':e=s.totalSessions>=1;break;case'bookworm':e=s.totalMinutes>=600;break;case'marathon':e=s.maxDailyMinutes>=240;break;case'streak-3':e=s.streak>=3;break;case'streak-7':e=s.streak>=7;break;case'streak-14':e=s.streak>=14;break;case'streak-30':e=s.streak>=30;break;case'ch-1':e=s.completedChapters>=1;break;case'ch-10':e=s.completedChapters>=10;break;case'ch-25':e=s.completedChapters>=25;break;case'ch-50':e=s.completedChapters>=50;break;case'rev-1':e=s.totalRevisions>=1;break;case'rev-10':e=s.totalRevisions>=10;break;case'sub-complete':e=s.completedSubjects>=1;break;case'level-5':e=s.level>=5;break;case'level-10':e=s.level>=10;break;case'allround':e=s.subjectsStudiedToday>=this.state.subjects.length&&this.state.subjects.length>0;break;case'perfect-week':e=s.streak>=7;break;case'pomodoro-10':e=s.pomodoroCompleted>=10;break;case'scorer-90':e=this.state.examScores.some(x=>x.scored/x.total>=0.9);break;case'task-master':e=this.state.tasks.filter(t=>t.done).length>=50;break;case'doubt-clear':e=this.state.doubts.filter(d=>d.status==='understood').length>=10;break;case'note-taker':e=(this.state.notes||[]).length>=20;break;case'resource-king':e=(this.state.resources||[]).length>=15;break}if(e){nb.push(b);this.state.earnedBadges.push(b.id)}});if(nb.length>0){const _bUid=window._supabaseUserId;if(_bUid&&this._badgesLoaded){const _newBadges=nb.filter(b=>!_priorBadges.has(b.id));_newBadges.forEach(b=>{DB.badges.add(_bUid,b.id).then(({error})=>{if(error&&!error.message?.includes('duplicate'))console.error('[DB] badge add:',error);});if(window.Notifications)Notifications.send('badge',`Badge unlocked: ${b.name}`,b.desc,'rewards');});}nb.forEach(b=>setTimeout(()=>{hapticsVibrate('levelUp');this.toast(`Badge: ${b.name}!`,'success')},800))}},
 
     getStats(){
         const p=this.state.profile,ac=this.getAllChapters(),ts=this.getTodaySessions(),st=new Set(ts.map(s=>s.subjectId)),tr=ac.reduce((a,c)=>a+c.revisionCount,0),cs=this.state.subjects.filter(s=>s.chapters.length>0&&s.chapters.every(c=>c.status==='completed'||c.status==='revised')).length,sbd={};this.state.sessions.forEach(s=>{sbd[s.date]=(sbd[s.date]||0)+s.timeSpent});const md=Math.max(0,...Object.values(sbd));
@@ -2090,7 +2092,7 @@ const App={
         dc.challenges.forEach(ch=>{
             if(dc.completed.includes(ch.id))return;
             const orig=this.DAILY_CHALLENGES[ch.checkIdx];
-            if(orig&&orig.check(ctx)){dc.completed.push(ch.id);this.addXP(ch.xp,`Challenge: ${ch.text}`);this.toast(`Challenge done: ${ch.text}`,'success')}
+            if(orig&&orig.check(ctx)){dc.completed.push(ch.id);hapticsVibrate('success');this.addXP(ch.xp,`Challenge: ${ch.text}`);this.toast(`Challenge done: ${ch.text}`,'success')}
         });
         this._syncDailyChallenges();
     },
@@ -2349,6 +2351,7 @@ const App={
         this.render();
         this.updateSidebar();
         setTimeout(_patchSidebarExam,300);
+        hapticsVibrate('streak');
         this.celebrate();
         this.toast('Welcome, '+this.state.profile.name+'! 🚀','success');
         setTimeout(() => window.StudyOSTour && window.StudyOSTour.start(), 3000);
@@ -3113,18 +3116,18 @@ const App={
         if(ch.status==='completed'||ch.status==='revised'){ch.status='in-progress';ch.completionDate=null}
         else{
             ch.status='completed';ch.completionDate=this.today();
-            this.addXP(20,'Chapter completed');this.celebrate();
+            hapticsVibrate('success');this.addXP(20,'Chapter completed');this.celebrate();
             // Check if subject is now fully complete
             const sub=this.getSubjectById(sId);
             if(sub&&sub.chapters.every(c=>c.status==='completed'||c.status==='revised')){
-                setTimeout(()=>{this.celebrate();this.toast(`🏆 ${sub.name} complete! Amazing!`,'success')},800);
+                setTimeout(()=>{hapticsVibrate('levelUp');this.celebrate();this.toast(`🏆 ${sub.name} complete! Amazing!`,'success')},800);
             }
         }
         const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
         if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] chapters.update status:',error);});}
         this.save();this.render();
     },
-    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
+    quickRevision(sId,cId){const ch=this.getChapter(sId,cId);if(!ch)return;ch.revisionCount++;ch.revisionDates.push(this.today());ch.status='revised';if(!ch.completionDate)ch.completionDate=this.today();const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:'revised',revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate}).then(({error})=>{if(error)console.error('[DB] quickRevision chapters.update:',error);});}hapticsVibrate('success');this.addXP(15,'Revision done');this.recordStudyDay();this.save();this.render();this.toast(`🔄 Rev ${ch.revisionCount}: "${ch.name}"`,'success')},
     deleteChapter(sId,cId){const s=this.getSubjectById(sId);if(!s)return;const _dc=s.chapters.find(c=>c.id===cId);s.chapters=s.chapters.filter(c=>c.id!==cId);const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_dc&&_isUUID(_dc.id)){DB.chapters.delete(_dc.id).then(({error})=>{if(error)console.error('[DB] chapters.delete:',error);});}this.save();this.render()},
     _toggleSubMenu(sId,safeId){
         const menuEl=document.getElementById('submenu-'+safeId);
@@ -3426,12 +3429,12 @@ const App={
                 }).then(({error})=>{if(error)console.error('[DB] saveStudyLog chapters.update:',error);});
             }
         }
-        if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';this.addXP(15,'Revision');const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] saveStudyLog revision chapters.update:',error);});}}
+        if(type==='revision'&&ch){ch.revisionCount++;ch.revisionDates.push(this.today());if(ch.status==='completed')ch.status='revised';hapticsVibrate('success');this.addXP(15,'Revision');const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(ch.id)){DB.chapters.update(ch.id,{status:ch.status,revision_count:ch.revisionCount,revision_dates:ch.revisionDates,completion_date:ch.completionDate||null}).then(({error})=>{if(error)console.error('[DB] saveStudyLog revision chapters.update:',error);});}}
         // LOG VALIDATION — STEP 4: pass streakEligible so short sessions are neutral, not misses
         this.recordStudyDay(streakEligible);
         this.addXP(10,'Session logged');
-        const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){this.addXP(25,'Daily goal! 🎯');this.celebrate();this.showGoalHitBanner()}}
-        this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
+        const tm=this.getTodayMinutes();if(tm>=this.state.profile.dailyGoalMinutes){const pm=tm-time;if(pm<this.state.profile.dailyGoalMinutes){hapticsVibrate('streak');this.addXP(25,'Daily goal! 🎯');this.celebrate();this.showGoalHitBanner()}}
+        hapticsVibrate('success');this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
         this.dismissStreakReminder(false);
         if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
     },
@@ -3504,7 +3507,7 @@ const App={
     toggleTask(id){
         const t=this.state.tasks.find(x=>x.id===id);if(!t)return;
         t.done=!t.done;
-        if(t.done)this.addXP(5,'Task completed');
+        if(t.done){hapticsVibrate('light');this.addXP(5,'Task completed');}
         const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
         const _tuUid=window._supabaseUserId;
         if(_tuUid&&_isUUID(t.id)){
@@ -3642,7 +3645,7 @@ const App={
     updateDoubtStatus(id,status){
         const d=this.state.doubts.find(x=>x.id===id);if(!d)return;
         d.status=status;
-        if(status==='understood'){d.resolvedDate=this.today();this.addXP(10,'Doubt cleared! 🧠')}
+        if(status==='understood'){d.resolvedDate=this.today();hapticsVibrate('light');this.addXP(10,'Doubt cleared! 🧠')}
         const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
         if(_isUUID(d.id)){DB.doubts.update(d.id,{status}).then(({error})=>{if(error)console.error('[DB] doubts.update status:',error);});}
         this.save();this.render();
@@ -4242,10 +4245,12 @@ const App={
                 this.addXP(10,'Pomodoro done 🍅');
             }
 
+            hapticsVibrate('success');
             this.toast(`🍅 Pomodoro #${this.pomodoro.session} done!`,'success');
             this.pomodoro.mode='break';
             this.pomodoro.timeLeft=(this.pomodoro.session%set.sessionsBeforeLong===0?set.longBreakMin:set.breakMin)*60;
         }else{
+            hapticsVibrate('light');
             this.toast('Break over! Time to focus!','info');
             this.pomodoro.mode='work';
             this.pomodoro.session++;
@@ -4260,7 +4265,7 @@ const App={
     startStopwatchTimer(){if(this.swInterval)clearInterval(this.swInterval);this.swInterval=setInterval(()=>{if(this.state.stopwatch.running){this.state.stopwatch.elapsed=Math.floor((Date.now()-this.state.stopwatch.startTime)/1000);if(this.state.currentPage==='pomodoro')this.renderPomodoro()}},1000)},
     stopStopwatch(){
         clearInterval(this.swInterval);const sw=this.state.stopwatch;const mins=Math.max(1,Math.round(sw.elapsed/60));
-        if(sw.subjectId){const sub=this.getSubjectById(sw.subjectId);const _swSess={id:this.uid(),subjectId:sw.subjectId,chapterId:'',chapterName:'',subjectName:sub?sub.name:'Stopwatch',date:this.today(),timeSpent:mins,type:'learning',rating:4,notes:'Stopwatch session',createdAt:Date.now()};this.state.sessions.push(_swSess);const _swUid=window._supabaseUserId;if(_swUid){DB.sessions.create({user_id:_swUid,subject_id:sw.subjectId,chapter_id:null,time_spent:mins,date:this.today(),type:'learning',rating:4,notes:'Stopwatch session'}).then(({data,error})=>{if(error){console.error('[DB] stopwatch session:',error);return;}if(data&&data.id)_swSess.id=data.id;});}this.recordStudyDay();this.addXP(10,'Stopwatch session');this.toast(`⏱ ${this.formatMin(mins)} logged!`,'success')}
+        if(sw.subjectId){const sub=this.getSubjectById(sw.subjectId);const _swSess={id:this.uid(),subjectId:sw.subjectId,chapterId:'',chapterName:'',subjectName:sub?sub.name:'Stopwatch',date:this.today(),timeSpent:mins,type:'learning',rating:4,notes:'Stopwatch session',createdAt:Date.now()};this.state.sessions.push(_swSess);const _swUid=window._supabaseUserId;if(_swUid){DB.sessions.create({user_id:_swUid,subject_id:sw.subjectId,chapter_id:null,time_spent:mins,date:this.today(),type:'learning',rating:4,notes:'Stopwatch session'}).then(({data,error})=>{if(error){console.error('[DB] stopwatch session:',error);return;}if(data&&data.id)_swSess.id=data.id;});}hapticsVibrate('success');this.recordStudyDay();this.addXP(10,'Stopwatch session');this.toast(`⏱ ${this.formatMin(mins)} logged!`,'success')}
         this.state.stopwatch={running:false,elapsed:0,subjectId:'',chapterId:''};this.save();this.render();
     },
 
@@ -5591,6 +5596,7 @@ CRITICAL ACCURACY RULES:
         q.answered=true;
         const current=q.questions[q.current];
         const isCorrect=optIndex===current.correctIndex;
+        hapticsVibrate(isCorrect ? 'light' : 'error');
 
         // Store answer keyed by question index (not push — allows back-nav)
         q.answers[q.current]={
@@ -5718,6 +5724,7 @@ CRITICAL ACCURACY RULES:
         if(!q) return;
         clearInterval(q.timerInterval);
         q.active=false;
+        if(timedOut) hapticsVibrate('error');
 
         // answers is now an index-keyed sparse array — filter to only answered entries
         const answeredList=q.questions.map((_,i)=>q.answers[i]).filter(Boolean);
