@@ -58,7 +58,7 @@ export function buildReminderEmail({ name, stats, slot, appUrl }) {
 }
 
 function buildHeader(appUrl) {
-    const logoUrl = `${appUrl}/icon.png`; 
+    const logoUrl = `${appUrl}/icons/icon-192.png`; 
     return `
     <tr>
         <td style="padding: ${theme.spacing.lg} ${theme.spacing.lg} ${theme.spacing.sm}; border-bottom: 1px solid ${theme.colors.border};">
