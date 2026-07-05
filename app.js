@@ -2625,7 +2625,7 @@ const App={
         const revisionsDueHTML=rd.length>0?`
         <div style="border:1.5px solid #F97316;border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:rgba(251,146,60,0.05)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#F97316">🔁 Revisions Due</span>
+                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#F97316;display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></svg>Revisions Due</span>
                 <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:#F97316">See all ${rd.length} →</button>
             </div>
             ${rd.length>3?`<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">Showing 3 most urgent of ${rd.length} due</div>`:''}
