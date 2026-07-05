@@ -176,6 +176,45 @@ async function build() {
     console.log('  ✓ dist/assets/ (copied)');
   }
 
+  // 6. Verify every local script/link reference in the built HTML actually
+  //    resolves to a real file in dist/. This is a hard-fail safety net —
+  //    it exists because haptics.js was once referenced in app.html but
+  //    absent from both the jsFiles and staticFiles lists above, so it
+  //    never made it into dist/ and 404'd silently in production for
+  //    days before anyone noticed (no vibration feedback anywhere).
+  //    A missing local asset should fail the BUILD, not fail silently
+  //    in a user's browser months later.
+  console.log('Verifying all local asset references resolve...');
+  const distHtmlFiles = fs.readdirSync(OUT).filter(f => f.endsWith('.html'));
+  const missing = [];
+  for (const htmlFile of distHtmlFiles) {
+    const html = fs.readFileSync(path.join(OUT, htmlFile), 'utf8');
+    // Match src="..." / href="..." pointing at local .js/.css files, then
+    // filter out external/absolute URLs and data URIs by checking the
+    // actual prefix (not a character class — an earlier version of this
+    // regex used [^"http://], which doesn't negate the substring "http://"
+    // at all; it negates the individual characters " h t p : /, so any
+    // local filename starting with one of those letters — e.g. haptics.js —
+    // was silently skipped. That would have let this exact bug pass
+    // verification. Match broad, then explicitly filter externals.)
+    const refRegex = /(?:src|href)="([^"]+\.(?:js|css))"/g;
+    let m;
+    while ((m = refRegex.exec(html)) !== null) {
+      const ref = m[1];
+      if (/^(https?:)?\/\//.test(ref) || ref.startsWith('data:')) continue;
+      const refPath = path.join(OUT, ref);
+      if (!fs.existsSync(refPath)) {
+        missing.push(`${htmlFile} references "${ref}" but dist/${ref} does not exist`);
+      }
+    }
+  }
+  if (missing.length) {
+    console.error('\n✗ Build verification failed — missing local assets:');
+    missing.forEach(msg => console.error(`  - ${msg}`));
+    throw new Error(`${missing.length} referenced asset(s) missing from dist/. Fix the jsFiles/staticFiles lists in build.cjs.`);
+  }
+  console.log('  ✓ All local script/link references verified\n');
+
   console.log('\nBuild complete ✓');
 }
 
