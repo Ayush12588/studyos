@@ -46,6 +46,19 @@ document.addEventListener('DOMContentLoaded', () => {
     setTimeout(_patchSidebarExam, 500);
 });
 
+// ─── Fallback guard: hapticsVibrate ─────────────────────────────────────────
+// app.js calls hapticsVibrate(...) unguarded (no try/catch) at ~28 call
+// sites, several inline in save/render chains (e.g. saveStudyLog,
+// quickRevision, showLevelUp). haptics.js defines the real implementation
+// and should load before this file — but if it 404s, gets blocked, or its
+// <script> tag is ever removed, hapticsVibrate would be undefined and any
+// call to it throws ReferenceError, silently breaking whatever save/render
+// logic was chained after it. This stub only takes effect if the real one
+// never registered, so it costs nothing when haptics.js loads normally.
+if (typeof window.hapticsVibrate !== 'function') {
+    window.hapticsVibrate = function () {};
+}
+
 const App={
     state:{
         profile:{name:'Student',xp:0,level:1,streak:0,lastStudyDate:null,dailyGoalMinutes:120,maxDailyMinutes:0,examDate:'',targetScore:90,mood:'',moodHistory:[]},

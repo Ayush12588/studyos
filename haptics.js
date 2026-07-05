@@ -5,11 +5,15 @@
  * Supported: Android Chrome and most Android browsers.
  * Silent no-op on iOS Safari and desktop — never throws.
  *
- * Usage (ES module):
- *   import { vibrate } from './haptics.js';
- *   vibrate('success');
+ * Plain classic script (NOT an ES module) — loaded via a normal
+ * `<script src="haptics.js" defer></script>` tag, in document order
+ * alongside app.js. This is intentional: mixing type="module" with
+ * classic `defer` scripts does not give a spec-guaranteed execution
+ * order between the two queues, which previously caused
+ * window.hapticsVibrate to be undefined when app.js ran, silently
+ * breaking session logging, chapter completion, streaks, etc.
  *
- * Usage (non-module scripts via global):
+ * Usage:
  *   hapticsVibrate('success');
  *
  * Pattern array format: [on, off, on, off, ...] in milliseconds.
@@ -34,7 +38,7 @@ const PATTERNS = {
   error:    [70, 50, 70],
 };
 
-// ─── Exported API ────────────────────────────────────────────────────────────
+// ─── API ─────────────────────────────────────────────────────────────────────
 
 /**
  * vibrate(type)
@@ -45,7 +49,7 @@ const PATTERNS = {
  *
  * @param {'success'|'streak'|'levelUp'|'light'|'error'} type
  */
-export function vibrate(type = 'light') {
+function vibrate(type = 'light') {
   try {
     if (!navigator.vibrate) return; // iOS, desktop — silent skip
     navigator.vibrate(PATTERNS[type] ?? PATTERNS.light);
@@ -54,5 +58,5 @@ export function vibrate(type = 'light') {
   }
 }
 
-// Expose on a namespaced global for non-module scripts (app.js uses hapticsVibrate)
+// Global used directly by app.js (classic script, not a module export).
 window.hapticsVibrate = vibrate;
