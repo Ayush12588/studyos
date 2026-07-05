@@ -94,26 +94,46 @@ export default async function handler(req, res) {
     const strategy = REMINDER_STRATEGIES[slot];
 
     const dryRun = req.query.dryRun === 'true';
+    // testEmail restricts the run to a single real user matched by email.
+    // When set, this ALSO bypasses requiresMorningBaseline and the
+    // updateSnapshot write, so repeated test sends never mutate real
+    // scheduling state or pollute your own baseline tracking.
+    const testEmail = req.query.testEmail ? String(req.query.testEmail).toLowerCase().trim() : null;
+
     const today = todayISO();
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'https://boardos.in';
 
-    let sent = 0, skipped = 0, failed = 0;
+    let sent = 0, skipped = 0, failed = 0, wouldSend = 0;
     const failures = [];
     const dryRunDetails = [];
 
     try {
-        const { data: profiles, error: profileErr } = await supabaseAdmin
+        let profileQuery = supabaseAdmin
             .from('profiles')
             .select('user_id, name, email_notifications_enabled, last_reminder_sent_date, last_reminder_marks_at_risk')
             .eq('email_notifications_enabled', true);
 
+        const { data: profiles, error: profileErr } = await profileQuery;
         if (profileErr) throw profileErr;
 
         for (const profile of profiles) {
             try {
-                // Anti-Fatigue Guard: Ensure follow-ups only send if morning baseline was set
+                // If testEmail is set, resolve this profile's auth email FIRST
+                // and skip everyone else outright — cheapest possible filter,
+                // avoids wasted backlog_items queries for non-matching users.
+                let userEmail = null;
+                if (testEmail) {
+                    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
+                    if (userErr || !userData?.user?.email) continue;
+                    userEmail = userData.user.email;
+                    if (userEmail.toLowerCase() !== testEmail) continue;
+                }
+
+                // Anti-Fatigue Guard: Ensure follow-ups only send if morning baseline was set.
+                // Bypassed entirely for testEmail runs — you should be able to fire an
+                // "evening" test at 9am without first faking a morning send.
                 const alreadySentToday = profile.last_reminder_sent_date === today;
-                if (strategy.requiresMorningBaseline && !alreadySentToday) {
+                if (!testEmail && strategy.requiresMorningBaseline && !alreadySentToday) {
                     skipped++;
                     continue;
                 }
@@ -129,16 +149,22 @@ export default async function handler(req, res) {
                 const stats = computeStats(items);
                 const priorMarks = profile.last_reminder_marks_at_risk || 0;
 
-                // Evaluate condition via Strategy Engine
-                if (!strategy.shouldSend(stats, priorMarks)) {
+                // Evaluate condition via Strategy Engine.
+                // testEmail bypasses shouldSend too — when you're testing you want
+                // to see the email regardless of whether the "should we bother this
+                // user" heuristic would normally suppress it.
+                if (!testEmail && !strategy.shouldSend(stats, priorMarks)) {
                     skipped++;
                     continue;
                 }
 
-                const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
-                if (userErr || !userData?.user?.email) {
-                    skipped++;
-                    continue;
+                if (!userEmail) {
+                    const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
+                    if (userErr || !userData?.user?.email) {
+                        skipped++;
+                        continue;
+                    }
+                    userEmail = userData.user.email;
                 }
 
                 const subject = generateSubject({ marksAtRisk: stats.marksAtRisk, slot });
@@ -146,26 +172,29 @@ export default async function handler(req, res) {
                 if (dryRun) {
                     dryRunDetails.push({
                         user_id: profile.user_id,
-                        email: userData.user.email,
+                        email: userEmail,
                         subject,
                         total_active: stats.total,
                         marks_at_risk: stats.marksAtRisk
                     });
-                    sent++;
+                    wouldSend++;
+                    if (testEmail) break; // found our one match, no need to keep scanning
                     continue;
                 }
 
-                const html = buildReminderEmail({ 
-                    name: profile.name, 
-                    stats, 
+                const html = buildReminderEmail({
+                    name: profile.name,
+                    stats,
                     slot,
-                    appUrl 
+                    appUrl
                 });
 
-                await sendEmailViaResend(userData.user.email, subject, html);
+                await sendEmailViaResend(userEmail, subject, html);
 
-                // Only update the database state if the strategy dictates it (Morning)
-                if (strategy.updateSnapshot) {
+                // Only update the database state if the strategy dictates it (Morning),
+                // and NEVER when this is a testEmail run — a test send must not alter
+                // real scheduling/fatigue-guard state for that user.
+                if (!testEmail && strategy.updateSnapshot) {
                     await supabaseAdmin
                         .from('profiles')
                         .update({
@@ -176,16 +205,26 @@ export default async function handler(req, res) {
                 }
 
                 sent++;
+                if (testEmail) break; // one real user only, stop scanning the rest
             } catch (perUserErr) {
                 failed++;
                 failures.push({ user_id: profile.user_id, error: perUserErr.message });
             }
         }
 
+        if (testEmail && sent === 0 && wouldSend === 0 && failed === 0) {
+            return res.status(404).json({
+                error: `No enabled user found matching testEmail=${testEmail}`,
+                hint: 'Check that email_notifications_enabled=true on that profile and the auth email matches exactly.'
+            });
+        }
+
         return res.status(200).json({
             slot,
             dryRun,
+            testEmail: testEmail || null,
             sent,
+            wouldSend,
             skipped,
             failed,
             failures: failures.slice(0, 10),
