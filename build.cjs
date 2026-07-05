@@ -158,6 +158,20 @@ async function build() {
     console.log('  ✓ dist/api/ (copied)');
   }
 
+  // Copy emails folder if present (email templates and utilities)
+  if (fs.existsSync('emails')) {
+    fs.mkdirSync(path.join(OUT, 'emails'), { recursive: true });
+
+    for (const f of fs.readdirSync('emails')) {
+      fs.copyFileSync(
+        path.join('emails', f),
+        path.join(OUT, 'emails', f)
+      );
+    }
+
+    console.log('  ✓ dist/emails/ (copied)');
+  }
+
   // Copy features folder if present (SEO feature pages)
   if (fs.existsSync('features')) {
     fs.mkdirSync(path.join(OUT, 'features'), { recursive: true });
