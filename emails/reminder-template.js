@@ -183,15 +183,29 @@ function buildPriorityTasks(items) {
 
 function buildCTA(appUrl, slot) {
     let ctaText = "Continue Today's Study &rarr;";
-    if (slot === 'morning') ctaText = "Open Today's Study Plan &rarr;";
-    if (slot === 'evening') ctaText = "Clear One Topic &rarr;";
-    if (slot === 'night') ctaText = "Log Today's Session &rarr;";
+    if (slot === "morning") ctaText = "Start Today's Study &rarr;";
+    if (slot === "evening") ctaText = "Clear One Topic &rarr;";
+    if (slot === "night") ctaText = "Log Today's Session &rarr;";
 
     return `
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
+    <table role="presentation" border="0" cellpadding="0" cellspacing="0" align="center" style="margin:24px auto;">
         <tr>
-            <td align="center">
-                <a href="${appUrl}" style="display: inline-block; background-color: ${theme.colors.brand}; color: #ffffff; font-size: ${theme.typography.sizes.base}; font-weight: ${theme.typography.weights.medium}; text-decoration: none; padding: 14px 28px; border-radius: ${theme.layout.cardRadius}; text-align: center; width: 100%; max-width: 280px;">
+            <td align="center"
+                bgcolor="${theme.colors.brand}"
+                style="border-radius:${theme.layout.cardRadius};">
+                <a
+                    href="${appUrl}"
+                    style="
+                        display:block;
+                        padding:14px 24px;
+                        font-size:${theme.typography.sizes.base};
+                        font-weight:${theme.typography.weights.medium};
+                        color:#ffffff;
+                        text-decoration:none;
+                        border-radius:${theme.layout.cardRadius};
+                        white-space:nowrap;
+                        mso-padding-alt:14px 24px;
+                    ">
                     ${ctaText}
                 </a>
             </td>
