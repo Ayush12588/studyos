@@ -1586,6 +1586,10 @@ const App={
 
     // ── P1-1: End-of-day check-in ────────────────────────────
     checkEodCheckin(){
+        // The dashboard renders its own inline check-in card (see renderDashboard's
+        // eodCardHTML), so this fixed banner would double up with it. Only show
+        // the fixed banner on non-dashboard pages, where the inline card doesn't exist.
+        if(this.state.currentPage==='dashboard')return;
         const h=new Date().getHours();
         if(h<20)return;// only 8PM+
         const dismissedToday=localStorage.getItem('eod_dismissed')===this.today();
