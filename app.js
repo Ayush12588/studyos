@@ -1667,48 +1667,16 @@ const App={
     },
 
     uid(){return Date.now().toString(36)+Math.random().toString(36).substr(2,5)},
-
-    // ── OPTIMISTIC-ID RECONCILIATION ────────────────────────────────────
-    // Problem: every add*() pushes a local object with a temp id (uid()) and
-    // fires an async DB.x.create() that later swaps the temp id for the real
-    // Supabase UUID. If the user acts on that object (toggle/delete/edit)
-    // before the create() resolves, the old code checked _isUUID(id), saw
-    // the temp id, and silently skipped the DB write — the local mutation
-    // still happened and got saved, so the change looked successful but
-    // never reached the server. On next pull from Supabase the change is lost.
-    // Fix: register a pending promise per temp id at create-time. Any action
-    // against an id that isn't yet a UUID checks this map — if a create is
-    // in flight for that id, wait for it, then retry against the real id.
-    // If nothing is pending, the item is genuinely local/offline and no DB
-    // write is expected (unchanged behavior).
-    _pendingIds:{},
-    _isUUID(s){return!!(s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s))},
-    // Call right after pushing a locally-created object and firing DB.x.create().
-    // createPromise must resolve to {data,error} in the same shape DB.x.create() returns.
-    trackPendingId(tempId,createPromise){
-        const p=createPromise.then(({data,error})=>{
-            delete this._pendingIds[tempId];
-            if(error||!data||!data.id)return null;
-            return data.id;
-        }).catch(()=>{delete this._pendingIds[tempId];return null});
-        this._pendingIds[tempId]=p;
-        return p;
-    },
-    // Call before any DB write keyed on an object id that might still be a
-    // temp id. Resolves to the real UUID to write against, or null if no
-    // sync should happen (either genuinely offline-only, or the create failed).
-    async resolveId(id){
-        if(this._isUUID(id))return id;
-        const pending=this._pendingIds[id];
-        if(!pending)return null;
-        return await pending;
-    },
-
     // IMPORTANT: Must use local time, NOT toISOString() (UTC).
     // toISOString() is UTC — for IST users (UTC+5:30) it returns yesterday's
     // date until 5:30 AM local time, breaking session filtering and streaks.
     // 'en-CA' locale gives YYYY-MM-DD format in local time, same as session.date.
     today(){return new Date().toLocaleDateString('en-CA')},
+    // Canonical way to turn any Date object into a YYYY-MM-DD string that matches
+    // this.today() and session.date. NEVER use date.toISOString().split('T')[0]
+    // anywhere in this file — that's UTC and will silently desync from every
+    // date string produced by today(), which is local (en-CA). Use this instead.
+    localDateStr(date){return date.toLocaleDateString('en-CA')},
     daysBetween(d1,d2){return Math.floor((new Date(d2)-new Date(d1))/864e5)},
     formatMin(m){const h=Math.floor(m/60),min=m%60;return h>0?`${h}h ${min}m`:`${min}m`},
     formatSec(s){const m=Math.floor(s/60),sec=s%60;return`${String(m).padStart(2,'0')}:${String(sec).padStart(2,'0')}`},
@@ -1776,7 +1744,7 @@ const App={
     getCompletedCount(){return this.getAllChapters().filter(c=>c.status==='completed'||c.status==='revised').length},
     getTotalChapters(){return this.getAllChapters().length},
     getOverdueChapters(){const t=this.today();return this.getAllChapters().filter(c=>c.deadline&&c.deadline<t&&c.status!=='completed'&&c.status!=='revised')},
-    getRevisionsDue(){const t=new Date(this.today()+'T12:00'),r=[];this.getAllChapters().forEach(ch=>{if(ch.status==='completed'||ch.status==='revised'){const lastDate=(ch.revisionDates||[]).length>0?(ch.revisionDates||[])[((ch.revisionDates||[]).length-1)]:ch.completionDate;const lr=lastDate?new Date(lastDate+'T12:00'):null;if(lr){const ds=Math.floor((t-lr)/864e5),iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount,iv.length-1)];if(ds>=ni)r.push({...ch,daysSince:ds,nextInterval:ni})}}});return r},
+    getRevisionsDue(){const t=new Date(),r=[];this.getAllChapters().forEach(ch=>{if(ch.status==='completed'||ch.status==='revised'){const lr=(ch.revisionDates||[]).length>0?new Date((ch.revisionDates||[])[((ch.revisionDates||[]).length-1)]):(ch.completionDate?new Date(ch.completionDate):null);if(lr){const ds=Math.floor((t-lr)/864e5),iv=[1,3,7,14,30],ni=iv[Math.min(ch.revisionCount,iv.length-1)];if(ds>=ni)r.push({...ch,daysSince:ds,nextInterval:ni})}}});return r},
     // Per-chapter SRS due-date calc, reusing the same [1,3,7,14,30] table as getRevisionsDue.
     // Unlike getRevisionsDue (which only returns chapters that ARE due), this returns the
     // due date regardless of state, for display purposes (e.g. "Due Jun 20" vs "Overdue 2d").
@@ -1790,7 +1758,7 @@ const App={
         const dueDate=new Date(anchorDate);dueDate.setDate(dueDate.getDate()+ni);
         const today=new Date(this.today()+'T12:00');
         const daysUntil=Math.round((dueDate-today)/864e5);
-        return{dueDate:dueDate.toLocaleDateString('en-CA'),isDue:daysUntil<=0,daysUntil};
+        return{dueDate:this.localDateStr(dueDate),isDue:daysUntil<=0,daysUntil};
     },
 
     getReadinessScore(){
@@ -1847,7 +1815,7 @@ const App={
         const remaining=totalCh-compCh;
         const daysNeeded=Math.ceil(remaining/rate);
         const predDate=new Date();predDate.setDate(predDate.getDate()+daysNeeded);
-        return{date:predDate.toLocaleDateString('en-CA'),daysNeeded,rate:Math.round(rate*10)/10};
+        return{date:this.localDateStr(predDate),daysNeeded,rate:Math.round(rate*10)/10};
     },
 
     // STREAK
@@ -2136,7 +2104,7 @@ const App={
                 const raw=n.createdAt||n.created_at;
                 if(!raw)return false;
                 const d=new Date(raw);
-                return !isNaN(d.getTime())&&d.toLocaleDateString('en-CA')===this.today()
+                return !isNaN(d.getTime())&&this.localDateStr(d)===this.today()
             }).length
         };
         dc.challenges.forEach(ch=>{
@@ -2551,7 +2519,7 @@ const App={
     getTomorrowPlan(){const plan=[];this.getOverdueChapters().forEach(c=>plan.push({...c,reason:'Overdue',priority:'overdue'}));this.getRevisionsDue().forEach(c=>plan.push({...c,reason:'Revision due',priority:'revised'}));const pending=this.getAllChapters().filter(c=>c.status==='not-started'||c.status==='in-progress');pending.filter(c=>c.difficulty==='hard').slice(0,2).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Hard topic',priority:'hard'})});pending.filter(c=>c.deadline).sort((a,b)=>a.deadline.localeCompare(b.deadline)).slice(0,3).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Deadline approaching',priority:'medium'})});pending.slice(0,5).forEach(c=>{if(!plan.find(p=>p.id===c.id))plan.push({...c,reason:'Pending',priority:'easy'})});return plan},
 
     // HEATMAP DATA
-    getHeatmapData(){const data={};const now=new Date();for(let i=89;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);data[d.toLocaleDateString('en-CA')]=0}this.state.sessions.forEach(s=>{if(data[s.date]!==undefined)data[s.date]+=s.timeSpent});return data},
+    getHeatmapData(){const data={};const now=new Date();for(let i=89;i>=0;i--){const d=new Date(now);d.setDate(d.getDate()-i);data[this.localDateStr(d)]=0}this.state.sessions.forEach(s=>{if(data[s.date]!==undefined)data[s.date]+=s.timeSpent});return data},
 
     // DASHBOARD
     // ─────────────────────────────────────────────────────────────────────────
@@ -3095,7 +3063,7 @@ const App={
         });
 
         // FIX A: threshold date string for "studied within 7 days"
-        const sevenDaysAgo=(()=>{const d=new Date();d.setDate(d.getDate()-7);return d.toLocaleDateString('en-CA')})();
+        const sevenDaysAgo=(()=>{const d=new Date();d.setDate(d.getDate()-7);return this.localDateStr(d)})();
 
         if(subs.length===0){h+=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div></span><div class="empty-state-title">No subjects yet</div><div class="empty-state-desc">Load your entire CBSE Class ${this.state.profile.selectedClass||10} syllabus in one tap, or add subjects manually.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App._welcomeClass=App.state.profile.selectedClass||10;App._welcomeStream=App.state.profile.selectedStream||null;App.loadCBSEForClass()">Load CBSE Class ${this.state.profile.selectedClass||10} Syllabus</button><button class="btn btn-secondary" onclick="App.openModal('modal-subject')">+ Add Manually</button></div><div class="empty-state-hint"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:middle;margin-right:5px;flex-shrink:0"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>CBSE loads all 5 subjects with chapters pre-filled</div></div>`}
         else{flt.forEach(s=>{
@@ -3170,7 +3138,8 @@ const App={
             // Check if subject is now fully complete
             const sub=this.getSubjectById(sId);
             if(sub&&sub.chapters.every(c=>c.status==='completed'||c.status==='revised')){
-                setTimeout(()=>{hapticsVibrate('levelUp');this.celebrate();this.toast(`🏆 ${sub.name} complete! Amazing!`,'success')},800);
+                hapticsVibrate('levelUp'); // must fire synchronously within the click's gesture window — see setTimeout below
+                setTimeout(()=>{this.celebrate();this.toast(`🏆 ${sub.name} complete! Amazing!`,'success')},800);
             }
         }
         const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
@@ -3503,7 +3472,7 @@ const App={
         const el=document.getElementById('page-tasks');const today=this.today();
         let todayTasks=this.state.tasks.filter(t=>t.date===today);
         // Carry forward incomplete tasks from yesterday
-        const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);const yStr=yesterday.toLocaleDateString('en-CA');
+        const yesterday=new Date();yesterday.setDate(yesterday.getDate()-1);const yStr=this.localDateStr(yesterday);
         const carryForward=this.state.tasks.filter(t=>t.date===yStr&&!t.done);
         if(carryForward.length>0){
             carryForward.forEach(t=>{if(!todayTasks.find(x=>x.text===t.text)){this.state.tasks.push({id:this.uid(),text:'⏩ '+t.text,done:false,date:today,createdAt:Date.now()});todayTasks=this.state.tasks.filter(x=>x.date===today)}});
@@ -3544,21 +3513,9 @@ const App={
         this.state.tasks.push(_t);
         const _tUid=window._supabaseUserId;
         if(_tUid){
-            const _tempId=_t.id;
-            const _createP=DB.tasks.create({user_id:_tUid,text,done:false,date:this.today(),subject_id:subjectId,chapter_id:chapterId});
-            this.trackPendingId(_tempId,_createP).then(realId=>{
-                if(!realId)return;
-                // Relabel unconditionally so any later action (toggle/delete) that
-                // still references _tempId in a closure resolves correctly via
-                // resolveId's UUID fast-path once this runs. Find by identity
-                // (not by id, since id may already differ) to survive the task
-                // being toggled/edited while the create was in flight.
-                const _live=this.state.tasks.find(x=>x===_t);
-                if(_live)_live.id=realId;
-                this.save();
-            });
-            _createP.then(({data,error})=>{
-                if(error)console.error('[DB] tasks.create:',error);
+            DB.tasks.create({user_id:_tUid,text,done:false,date:this.today(),subject_id:subjectId,chapter_id:chapterId}).then(({data,error})=>{
+                if(error){console.error('[DB] tasks.create:',error);return;}
+                if(data&&data.id)_t.id=data.id;
             });
         }
         this.save();inp.value='';
@@ -3566,19 +3523,14 @@ const App={
         if(chSel)chSel.innerHTML='<option value="">Chapter (optional)</option>';
         this.renderTasks();this.toast('Task added','success')
     },
-    async toggleTask(id){
+    toggleTask(id){
         const t=this.state.tasks.find(x=>x.id===id);if(!t)return;
         t.done=!t.done;
         if(t.done){hapticsVibrate('light');this.addXP(5,'Task completed');}
-        this.save();this.renderTasks(); // reflect the tap immediately, don't block UI on the DB roundtrip
+        const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
         const _tuUid=window._supabaseUserId;
-        if(_tuUid){
-            const realId=await this.resolveId(id);
-            // Re-check: user may have toggled again while we awaited resolveId.
-            const _cur=this.state.tasks.find(x=>x.id===id||x.id===realId);
-            if(realId&&_cur){
-                DB.tasks.update(realId,{done:_cur.done}).then(({error})=>{if(error)console.error('[DB] tasks.update:',error);});
-            }
+        if(_tuUid&&_isUUID(t.id)){
+            DB.tasks.update(t.id,{done:t.done}).then(({error})=>{if(error)console.error('[DB] tasks.update:',error);});
         }
         // Task completion is a weaker signal than an actual logged session or
         // Pomodoro, so this writes a separate task_touched_date column instead
@@ -3593,12 +3545,7 @@ const App={
         }
         this.save();this.renderTasks();this.checkDailyChallenges()
     },
-    async deleteTask(id){
-        this.state.tasks=this.state.tasks.filter(t=>t.id!==id);
-        this.save();this.renderTasks();
-        const realId=await this.resolveId(id);
-        if(realId)DB.tasks.delete(realId).then(({error})=>{if(error)console.error('[DB] tasks.delete:',error);});
-    },
+    deleteTask(id){const _isUUID=s=>s&&/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);if(_isUUID(id)){DB.tasks.delete(id).then(({error})=>{if(error)console.error('[DB] tasks.delete:',error);});}this.state.tasks=this.state.tasks.filter(t=>t.id!==id);this.save();this.renderTasks()},
     autoGenerateTasks(){const tasks=[];const od=this.getOverdueChapters();od.slice(0,2).forEach(c=>tasks.push(`📌 Complete: ${c.subjectGlyph} ${c.name}`));const rd=this.getRevisionsDue();rd.slice(0,2).forEach(c=>tasks.push(`🔄 Revise: ${c.subjectGlyph} ${c.name}`));const pending=this.getAllChapters().filter(c=>c.status==='in-progress');pending.slice(0,2).forEach(c=>tasks.push(`📖 Continue: ${c.subjectGlyph} ${c.name}`));if(tasks.length===0)tasks.push('📚 Study for '+this.formatMin(this.state.profile.dailyGoalMinutes));const _agUid=window._supabaseUserId;tasks.forEach(t=>{if(!this.state.tasks.some(x=>x.text===t&&x.date===this.today())){const _at={id:this.uid(),text:t,done:false,date:this.today(),createdAt:Date.now()};this.state.tasks.push(_at);if(_agUid){DB.tasks.create({user_id:_agUid,text:t,done:false,date:this.today()}).then(({data,error})=>{if(error){console.error('[DB] auto tasks.create:',error);return;}if(data&&data.id)_at.id=data.id;});}}});this.save();this.renderTasks();this.toast('Tasks auto-generated! 🤖','success')},
 
     // --- END OF PART 1 --- (continued in Part 2)
@@ -3793,7 +3740,7 @@ const App={
         const plan=[];
         for(let i=0;i<days;i++){
             const d=new Date();d.setDate(d.getDate()+i);
-            const dateStr=d.toLocaleDateString('en-CA');
+            const dateStr=this.localDateStr(d);
             const dayLabel=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][d.getDay()];
             const isWeekend=d.getDay()===0||d.getDay()===6;
             const chapters=pool.splice(0,isWeekend?Math.min(3,chaptersPerDay+1):chaptersPerDay);
@@ -5231,7 +5178,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
             const interval=qd.interval||7;
             const next=new Date(qd.lastQuizDate+'T12:00');
             next.setDate(next.getDate()+interval);
-            return today>=next.toLocaleDateString('en-CA');
+            return today>=this.localDateStr(next);
         });
     },
 
@@ -5241,7 +5188,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         const interval=qd.interval||7;
         const next=new Date(qd.lastQuizDate+'T12:00');
         next.setDate(next.getDate()+interval);
-        return next.toLocaleDateString('en-CA');
+        return this.localDateStr(next);
     },
 
     setQuizInterval(subjectId, days){
