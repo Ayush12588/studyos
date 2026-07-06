@@ -1857,7 +1857,12 @@ const App={
             if(this.state.streakFreezes<3){
                 this.state.streakFreezes=Math.min(3,this.state.streakFreezes+1);
                 this._syncFullProfile();
-                setTimeout(()=>{hapticsVibrate('light');this.toast(`🧊 Streak freeze earned! You now have ${this.state.streakFreezes} freeze${this.state.streakFreezes!==1?'s':''}.`,'info')},800);
+                // NOTE: no hapticsVibrate here — updateStreak() runs unconditionally
+                // on every app boot (see call site + comment above), with no user
+                // gesture preceding it. navigator.vibrate() requires a prior tap;
+                // calling it here just triggers a blocked-by-browser console warning
+                // and never actually buzzes. The toast alone communicates this fine.
+                setTimeout(()=>{this.toast(`🧊 Streak freeze earned! You now have ${this.state.streakFreezes} freeze${this.state.streakFreezes!==1?'s':''}.`,'info')},800);
             }else{
                 this._syncFullProfile();
                 setTimeout(()=>this.toast(`🔥 Streak milestone! Max freezes reached.`,'info'),800);

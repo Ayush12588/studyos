@@ -47,11 +47,21 @@ const PATTERNS = {
  * Falls back to 'light' for unrecognised type strings.
  * Never throws.
  *
+ * Also silently no-ops if there's no live user-activation window (e.g. this
+ * was called from a setTimeout/promise .then() that outlived the original
+ * click, or from app-boot code with no click at all). navigator.vibrate()
+ * would be blocked by the browser in that case anyway — this just avoids
+ * the pointless call and its console warning. userActivation isn't
+ * supported in every browser; where it's absent (e.g. older Safari) this
+ * check is skipped rather than blocking the call, since the browser's own
+ * vibrate() gating is the real enforcement either way.
+ *
  * @param {'success'|'streak'|'levelUp'|'light'|'error'} type
  */
 function vibrate(type = 'light') {
   try {
     if (!navigator.vibrate) return; // iOS, desktop — silent skip
+    if (navigator.userActivation && !navigator.userActivation.isActive) return;
     navigator.vibrate(PATTERNS[type] ?? PATTERNS.light);
   } catch (e) {
     // Swallow — vibration is enhancement-only, never critical
