@@ -348,6 +348,162 @@ export const DB = {
     },
   },
 
+  // ── Circles ───────────────────────────────────────────────────────────────
+  //
+  // Study Circles — small private groups comparing streak/consistency.
+  //
+  // NOT cached (getMine / getLeaderboard). Both are "reflects right now"
+  // data — membership can change from actions elsewhere (someone else
+  // accepting an invite, a member leaving), and the leaderboard is a live
+  // comparison against other people, not just the caller's own record.
+  // Same reasoning as backlog/engagement above: staleness here reads as a
+  // bug, not a perf win.
+  //
+  // create() is NOT atomic. There is no Postgres function wrapping both
+  // inserts (circles + circle_members) in a single transaction — everything
+  // else in this file is a single supabase.from(...) call, and this stays
+  // consistent with that rather than introducing a new pattern. This means
+  // a network drop between the two inserts can leave an orphaned circle
+  // row with no members. We attempt a compensating delete on member-insert
+  // failure, but that delete can itself fail silently (network partition,
+  // etc). The correct long-term fix is a `create_circle_with_member(name,
+  // max_members, invite_code)` RPC that does both inserts in one statement
+  // — flagging that here rather than silently working around it forever.
+
+  circles: {
+    // Client-side invite code generator. Excludes 0/O/1/I to avoid
+    // ambiguous characters when a student is reading/typing the code
+    // out loud or off a screen.
+    _generateInviteCode() {
+      const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // no 0/O/1/I
+      let code = '';
+      for (let i = 0; i < 6; i++) {
+        code += alphabet[Math.floor(Math.random() * alphabet.length)];
+      }
+      return code;
+    },
+
+    // Creates a circle and adds the creator as its first member.
+    // Two sequential inserts, not a transaction — see module note above.
+    // If the member insert fails, we attempt to delete the just-created
+    // circle so the caller isn't left with a circle that has no members.
+    async create(name, maxMembers) {
+      const session = await requireAuth();
+      const userId = session.user.id;
+      const inviteCode = DB.circles._generateInviteCode();
+
+      const circleResult = await run(
+        supabase.from('circles')
+          .insert({
+            name,
+            invite_code: inviteCode,
+            max_members: maxMembers,
+            created_by: userId,
+            created_at: new Date().toISOString(),
+          })
+          .select()
+          .single()
+      );
+      if (circleResult.error) return circleResult;
+
+      const circle = circleResult.data;
+
+      const memberResult = await run(
+        supabase.from('circle_members')
+          .insert({
+            circle_id: circle.id,
+            user_id: userId,
+            joined_at: new Date().toISOString(),
+          })
+      );
+
+      if (memberResult.error) {
+        // Compensating delete — best effort only. If this also fails
+        // (e.g. network drop), the circle is orphaned with no members.
+        // Not silently swallowed: we log so it's visible in the console
+        // rather than disappearing entirely.
+        const cleanup = await run(supabase.from('circles').delete().eq('id', circle.id));
+        if (cleanup.error) {
+          console.error(
+            'DB.circles.create: member insert failed AND rollback delete failed — orphaned circle:',
+            circle.id, memberResult.error, cleanup.error
+          );
+        }
+        return memberResult;
+      }
+
+      return ok(circle);
+    },
+
+    // Validates the code via find_circle_by_code RPC before inserting,
+    // so "not found" and "full" get distinct, UI-friendly error messages
+    // instead of a raw Postgres constraint/trigger exception.
+    async joinByCode(code) {
+      const session = await requireAuth();
+      const userId = session.user.id;
+
+      const lookup = await run(supabase.rpc('find_circle_by_code', { p_code: code }));
+      if (lookup.error) return lookup;
+
+      const match = Array.isArray(lookup.data) ? lookup.data[0] : lookup.data;
+      if (!match) {
+        return err(new Error('No circle found with that invite code.'));
+      }
+      if (match.current_members >= match.max_members) {
+        return err(new Error('This circle is full.'));
+      }
+
+      return run(
+        supabase.from('circle_members')
+          .insert({
+            circle_id: match.id,
+            user_id: userId,
+            joined_at: new Date().toISOString(),
+          })
+          .select()
+          .single()
+      );
+    },
+
+    // All circles the current user belongs to, with a member count each.
+    // Small query — circles joined to circle_members via embedded select.
+    async getMine(userId) {
+      await requireAuth();
+      return run(
+        supabase.from('circle_members')
+          .select('circles(*, circle_members(count))')
+          .eq('user_id', userId)
+      );
+    },
+
+    // Thin wrapper around get_circle_leaderboard. The RPC itself enforces
+    // that the caller is a member of the circle (raises otherwise) — no
+    // extra guard needed here.
+    async getLeaderboard(circleId) {
+      await requireAuth();
+      return run(supabase.rpc('get_circle_leaderboard', { p_circle_id: circleId }));
+    },
+
+    // Removes the current user's own membership row. Does not delete the
+    // circle itself, even if this leaves it empty — no cascade behavior
+    // implied here.
+    async leave(circleId) {
+      const session = await requireAuth();
+      const userId = session.user.id;
+      return run(
+        supabase.from('circle_members')
+          .delete()
+          .eq('circle_id', circleId)
+          .eq('user_id', userId)
+      );
+    },
+
+    // Pure client-side helper — no DB call.
+    getInviteLink(inviteCode) {
+      return `https://boardos.in/circle/join?code=${inviteCode}`;
+    },
+  },
+
   // ── Sessions ──────────────────────────────────────────────────────────────
   //
   // .getAll()    → user navigates to Sessions / History tab.
