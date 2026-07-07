@@ -453,7 +453,7 @@ export const DB = {
         return err(new Error('This circle is full.'));
       }
 
-      return run(
+      const result = await run(
         supabase.from('circle_members')
           .insert({
             circle_id: match.id,
@@ -463,6 +463,15 @@ export const DB = {
           .select()
           .single()
       );
+
+      if (result.error && result.error.code === '23505') {
+        // 23505 = unique_violation on circle_members_pkey (circle_id, user_id).
+        // User is already a member — don't let the raw PK-violation text
+        // reach the UI unformatted.
+        return err(new Error('You are already in this circle.'));
+      }
+
+      return result;
     },
 
     // All circles the current user belongs to, with a member count each.
