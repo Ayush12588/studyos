@@ -1,202 +1,200 @@
 /**
- * StudyOS Onboarding Tour v2
+ * BoardOS Onboarding — v3
  *
- * WHEN it fires:
- *   - Only for brand-new users, right after they complete the welcome setup
- *   - Hook: App.completeWelcome() calls window.StudyOSTour.start() at the end
- *   - Never fires for returning users (localStorage flag: studyos_tour_v2_done)
+ * Three independent stages, all sharing one tooltip engine:
  *
- * HOW to activate:
- *   In app.js, at the end of completeWelcome(), add:
- *     setTimeout(() => window.StudyOSTour && window.StudyOSTour.start(), 3000);
+ *   STAGE 1 — Micro-tour (3 steps)
+ *     Fires once, ~3s after completeWelcome(). Orients the user to
+ *     sidebar / Quick Log / dashboard. Does NOT walk the nav tree —
+ *     that's what Stage 2 is for. Flag: bos_tour_micro_done
+ *
+ *   STAGE 2 — Contextual first-visit tips (1 step per page)
+ *     Fires the first time a user navigates to a given page, AFTER
+ *     that page has rendered. One page = one flag, so a user who
+ *     visits Subjects, Circles, Backlog etc. across many sessions
+ *     still only ever sees each tip once. Hook: App.navigate().
+ *     Flag: bos_tip_seen_<page>
+ *
+ *   STAGE 3 — Install prompt
+ *     Fires once, after the user's 2nd successful Quick Log — a much
+ *     higher-intent moment than "just finished welcome screen."
+ *     Hook: App.saveStudyLog(). Flag: bos_install_prompt_done
+ *
+ * HOW to activate (in app.js):
+ *   1. At the end of completeWelcome():
+ *        setTimeout(() => window.BoardOSTour && window.BoardOSTour.startMicroTour(), 3000);
+ *   2. At the end of navigate(), inside the _loadTabData(...).then() callback,
+ *      after this.renderPage(page):
+ *        window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
+ *   3. At the end of saveStudyLog(), after this.render():
+ *        window.BoardOSTour && window.BoardOSTour.notifySessionLogged();
+ *
+ * Replay (Settings page): window.BoardOSTour.replayMicroTour()
+ *   — resets and replays ONLY the Stage 1 micro-tour. Stage 2 tips are
+ *   inherently first-visit-only and are not meant to be replayed; if a
+ *   user wants a refresher on a specific page, that's the empty-state's
+ *   job, not the tour's.
  */
 
 (function () {
   'use strict';
 
-  const TOUR_KEY = 'studyos_tour_v2_done';
+  const KEY_MICRO   = 'bos_tour_micro_done';
+  const KEY_INSTALL = 'bos_install_prompt_done';
+  const KEY_LOG_COUNT = 'bos_quicklog_count';
+  const tipKey = (page) => `bos_tip_seen_${page}`;
+
   const isMobile = () => window.innerWidth < 768;
 
-  // ─── Tour Steps ───────────────────────────────────────────────────────────
-  // Mobile-first: first step on mobile tells user to open sidebar
-  // position: top | bottom | left | right | center
+  // ─── STAGE 1: Micro-tour steps ────────────────────────────────────────────
+  // Deliberately short. Anchors only to elements stable across nav refactors.
 
-  const STEPS_DESKTOP = [
+  const MICRO_STEPS = [
     {
-      target: '#sidebar',
-      position: 'right',
-      title: 'Your Navigation Hub',
-      body: 'Everything you need lives here — Subjects, Study Log, AI Coach, Focus Timer, and more. Let\'s walk through the key ones.',
-    },
-    {
-      target: '[data-page="dashboard"].nav-item',
-      position: 'right',
-      title: 'Dashboard',
-      body: 'Your daily command center. See your streak, study time, chapters done, and what to study next — all at a glance.',
-    },
-    {
-      target: '[data-page="subjects"].nav-item',
-      position: 'right',
-      title: 'Subjects & Chapters',
-      body: 'All your CBSE chapters, organized by subject. Tap a chapter to mark it done, log a revision, or add notes.',
-    },
-    {
-      target: '[data-page="log"].nav-item',
-      position: 'right',
-      title: 'Study Log',
-      body: 'Every session you log shows up here. It\'s your personal study history — useful for reviewing how consistent you\'ve been.',
-    },
-    {
-      target: '[data-page="coach"].nav-item',
-      position: 'right',
-      title: 'AI Study Coach',
-      body: 'Stuck on a concept? Your AI Coach gives instant, personalized explanations for any CBSE topic — available 24/7.',
-    },
-    {
-      target: '[data-page="pomodoro"].nav-item',
-      position: 'right',
-      title: 'Focus Timer',
-      body: 'A Pomodoro-style timer to help you study in focused bursts with short breaks. Great for deep work sessions.',
-    },
-    {
-      target: '#nav-group-track-header',
-      position: 'right',
-      title: 'Track Section',
-      body: 'Expand this to access Daily Tasks, Revision Tracker, Exam Scores, Doubt Tracker, and your Study Plan. These keep your preparation sharp.',
-    },
-    {
-      target: '#nav-group-more > div:first-child, [data-page="weekly"].nav-item',
-      position: 'right',
-      title: 'More Section — Analytics, Rewards & Settings',
-      body: 'Click "More" in the sidebar to find Analytics (your weekly/monthly stats), Notes, Resources, Rewards (XP & badges), and Settings.',
-      beforeShow: () => {
-        // Auto-expand the More group so items are visible
-        const group = document.getElementById('nav-group-more');
-        if (group && !group.classList.contains('open')) {
-          App && App.toggleNavGroup && App.toggleNavGroup('more');
-        }
-      },
-    },
-    {
-      target: '[data-page="rewards"].nav-item',
-      position: 'right',
-      title: 'Rewards & XP',
-      body: 'Earn XP for every session you log. Level up, unlock badges, and track your progress. StudyOS makes consistency rewarding.',
+      target: isMobile() ? '#menu-toggle' : '#sidebar',
+      position: isMobile() ? 'bottom' : 'right',
+      title: 'Everything lives here',
+      body: isMobile()
+        ? 'Tap the menu icon any time to open Subjects, Circles, Backlog, and everything else.'
+        : 'Subjects, Circles, Backlog, AI Coach — it\'s all one tap away in here.',
     },
     {
       target: '.topbar-quicklog',
-      position: 'bottom',
-      title: 'Quick Log — Your Most-Used Button',
-      body: 'Just finished a study session? Hit Quick Log to record it in seconds. This is how your streak stays alive and your progress gets tracked.',
-    },
-    {
-      target: '#topbar-exam-pill',
-      position: 'bottom',
-      fallback: '.topbar-actions',
-      title: 'Exam Countdown',
-      body: 'Shows exactly how many days you have until your board exams. Every day that ticks down is one less day to prepare — use them well.',
+      position: isMobile() ? 'bottom' : 'bottom',
+      title: 'The one button that matters most',
+      body: 'Every time you study, log it here. This is what builds your streak and keeps your progress accurate.',
     },
     {
       target: null,
       position: 'center',
-      title: '📲 Install StudyOS on Your Device',
-      body: `<strong>On Chrome / Edge (Desktop):</strong> Look for the install icon <strong>⊕</strong> in the address bar (top right). Click it → "Install".<br><br><strong>On Android (Chrome):</strong> Tap the <strong>⋮ three-dot menu</strong> → "Add to Home Screen" → Install.<br><br><strong>On iPhone / iPad (Safari):</strong> Tap the <strong>Share button</strong> (rectangle with arrow) → "Add to Home Screen".<br><br>Once installed, StudyOS opens like a native app — no browser needed, works offline too.`,
+      title: 'Your dashboard, every day',
+      body: 'This is your daily command center — streak, what\'s next, and how you\'re tracking. Check it whenever you sit down to study.',
     },
   ];
 
-  const STEPS_MOBILE = [
-    {
-      target: null,
-      position: 'center',
-      title: 'Welcome to StudyOS! 👋',
-      body: 'Let\'s take a quick tour so you know your way around. This will only take a minute.',
-    },
-    {
-      target: '#menu-toggle',
+  // ─── STAGE 2: Contextual first-visit tips ─────────────────────────────────
+  // One line each. Only written where the empty-state copy doesn't already
+  // carry the explanation on its own (Backlog is the clearest case — "study
+  // debt" is a term unique to this app). Pages with self-explanatory empty
+  // states still get an entry per "full coverage," but kept minimal so they
+  // don't turn into a second tour.
+
+  const PAGE_TIPS = {
+    subjects: {
+      target: '[data-page="subjects"].nav-item, .subject-card',
+      fallback: '#content',
       position: 'bottom',
-      title: 'Open the Sidebar',
-      body: 'Tap the ☰ menu icon here to open the navigation sidebar. All the main sections of StudyOS live there.',
-      beforeShow: () => {
-        // Make sure sidebar is closed first so the hint makes sense
-        const backdrop = document.getElementById('sidebar-backdrop');
-        if (backdrop && backdrop.style.display !== 'none') {
-          App && App.closeSidebar && App.closeSidebar();
-        }
-      },
-    },
-    {
-      target: '#menu-toggle',
-      position: 'bottom',
-      title: 'Inside the Sidebar',
-      body: 'You\'ll find: Dashboard, Subjects, Study Log, AI Coach, Focus Timer, Daily Tasks, Revisions, Exam Scores, Doubts, and more.',
-      beforeShow: () => {
-        // Open sidebar so user can see it
-        App && App.toggleSidebar && App.toggleSidebar();
-      },
-    },
-    {
-      target: '[data-page="subjects"].nav-item',
-      position: 'right',
       title: 'Subjects & Chapters',
-      body: 'All your CBSE chapters, by subject. Mark chapters done, log revisions, and track your syllabus completion.',
+      body: 'Tap any chapter to mark it done, log a revision, or add notes.',
     },
-    {
+    tasks: {
+      target: '[data-page="tasks"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'Daily Tasks',
+      body: 'Small, specific to-dos for today — separate from your full syllabus.',
+    },
+    backlog: {
+      target: '[data-page="backlog"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'What is Backlog?',
+      body: 'Chapters that are falling behind schedule land here — think of it as study debt you can pay down.',
+    },
+    revisions: {
+      target: '[data-page="revisions"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'Revisions',
+      body: 'Spaced-repetition reminders for chapters you\'ve already studied, timed so they don\'t fade.',
+    },
+    quiz: {
+      target: '[data-page="quiz"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'Quiz',
+      body: 'Quick active-recall questions from your own chapters — a faster check than re-reading notes.',
+    },
+    coach: {
       target: '[data-page="coach"].nav-item',
-      position: 'right',
-      title: 'AI Study Coach',
-      body: 'Ask anything — get instant explanations for any CBSE topic. Available 24/7, completely personalized to you.',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'AI Coach',
+      body: 'Stuck on a concept? Ask here for an instant, CBSE-specific explanation.',
     },
-    {
-      target: '#nav-group-track-header',
-      position: 'right',
-      title: 'Track Section',
-      body: 'Tap "Track" to expand Daily Tasks, Revisions, Exam Scores, Doubts, and Planning. These keep your preparation on point.',
-    },
-    {
+    circles: {
       target: null,
       position: 'center',
-      title: 'More Section — Analytics & Rewards',
-      body: 'In the sidebar, scroll down and tap <strong>"More"</strong> to find:<br><br>📊 <strong>Analytics</strong> — weekly & monthly study stats<br>🏆 <strong>Rewards</strong> — XP, levels, and badges<br>⚙️ <strong>Settings</strong> — customize your workspace',
-      beforeShow: () => {
-        App && App.closeSidebar && App.closeSidebar();
-      },
+      title: 'Study Circles',
+      body: 'Form a small group, track chapters and streaks together — nobody studies better alone.',
     },
-    {
-      target: '.mob-log-btn',
-      position: 'top',
-      title: 'Log a Session',
-      body: 'This center button is your Quick Log. After any study session, tap it to record your time. That\'s how your streak grows.',
+    weekly: {
+      target: '[data-page="weekly"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'Analytics',
+      body: 'Your weekly and monthly trends — time studied, pacing, and where you\'re falling behind.',
     },
-    {
+    exams: {
+      target: '[data-page="exams"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'Exam Scores',
+      body: 'Log past test scores here to track improvement subject by subject.',
+    },
+    rewards: {
+      target: '[data-page="rewards"].nav-item',
+      fallback: '#content',
+      position: 'bottom',
+      title: 'Rewards & XP',
+      body: 'Every session earns XP. Level up and unlock badges as you stay consistent.',
+    },
+    notes: {
       target: null,
       position: 'center',
-      title: '📲 Install StudyOS on Your Phone',
-      body: `<strong>On Android (Chrome):</strong><br>Tap the <strong>⋮ three-dot menu</strong> in the top-right of Chrome → tap <strong>"Add to Home Screen"</strong> → Install.<br><br><strong>On iPhone (Safari):</strong><br>Tap the <strong>Share button</strong> (rectangle with ↑ arrow at the bottom) → tap <strong>"Add to Home Screen"</strong>.<br><br>StudyOS will work like a real app on your phone — launches instantly, works offline!`,
+      title: 'Notes',
+      body: 'A place for quick notes and formulas, organized by subject.',
     },
-  ];
+    resources: {
+      target: null,
+      position: 'center',
+      title: 'Resources',
+      body: 'Save useful links — reference material, videos, anything worth revisiting.',
+    },
+    settings: {
+      target: null,
+      position: 'center',
+      title: 'Settings',
+      body: 'Update your exam date, daily goal, and preferences here any time.',
+    },
+  };
+  // Note: 'dashboard' has no Stage-2 tip — it's covered by the Stage-1 micro-tour.
+  // 'log' (Study Log) has no Stage-2 tip — its own empty state already explains it,
+  // and it's reached almost exclusively via Quick Log, not cold navigation.
 
-  // ─── State ────────────────────────────────────────────────────────────────
-  let steps = [];
-  let currentStep = 0;
+  // ─── Shared state ─────────────────────────────────────────────────────────
   let tooltipEl = null;
   let arrowEl = null;
   let highlightedEl = null;
+  let activeQueue = [];   // steps currently being shown (micro-tour only; page tips are single-step)
+  let activeIndex = 0;
+  let onQueueDone = null;
 
-  // ─── Styles ───────────────────────────────────────────────────────────────
+  // ─── Styles (unchanged engine, renamed ids to avoid collision w/ any cached old CSS) ──
   function injectStyles() {
-    if (document.getElementById('sos-tour-styles')) return;
+    if (document.getElementById('bos-tour-styles')) return;
     const s = document.createElement('style');
-    s.id = 'sos-tour-styles';
+    s.id = 'bos-tour-styles';
     s.textContent = `
-      #sos-tooltip {
+      #bos-tooltip {
         position: fixed;
         z-index: 99999;
-        width: 310px;
+        width: 300px;
         max-width: calc(100vw - 24px);
         background: var(--color-surface, #1c1c2e);
         border: 1px solid rgba(245,158,11,0.25);
         border-radius: 14px;
-        padding: 18px 18px 14px;
+        padding: 16px 16px 12px;
         box-shadow: 0 12px 40px rgba(0,0,0,0.55), 0 2px 8px rgba(0,0,0,0.3), inset 0 1px 0 rgba(255,255,255,0.05);
         font-family: var(--font-body, 'Inter', sans-serif);
         opacity: 0;
@@ -204,172 +202,116 @@
         transition: opacity 0.2s ease, transform 0.2s ease;
         pointer-events: all;
       }
-      #sos-tooltip.sos-show {
-        opacity: 1;
-        transform: translateY(0);
-      }
-      #sos-tooltip.sos-center {
-        left: 50% !important;
-        top: 50% !important;
+      #bos-tooltip.bos-show { opacity: 1; transform: translateY(0); }
+      #bos-tooltip.bos-center {
+        left: 50% !important; top: 50% !important;
         transform: translate(-50%, -46%) !important;
       }
-      #sos-tooltip.sos-center.sos-show {
-        transform: translate(-50%, -50%) !important;
-      }
-      #sos-arrow {
-        position: fixed;
-        z-index: 99998;
-        width: 10px;
-        height: 10px;
+      #bos-tooltip.bos-center.bos-show { transform: translate(-50%, -50%) !important; }
+      #bos-arrow {
+        position: fixed; z-index: 99998;
+        width: 10px; height: 10px;
         background: var(--color-surface, #1c1c2e);
         border: 1px solid rgba(245,158,11,0.25);
         pointer-events: none;
         opacity: 0;
         transition: opacity 0.2s ease;
       }
-      #sos-arrow.sos-show { opacity: 1; }
-      .sos-eyebrow {
-        font-size: 0.67rem;
-        font-weight: 700;
-        letter-spacing: 0.09em;
-        text-transform: uppercase;
-        color: var(--color-warning, #f59e0b);
+      #bos-arrow.bos-show { opacity: 1; }
+      .bos-eyebrow {
+        font-size: 0.65rem; font-weight: 700; letter-spacing: 0.09em;
+        text-transform: uppercase; color: var(--color-warning, #f59e0b);
         margin-bottom: 5px;
       }
-      .sos-title {
-        font-size: 0.92rem;
-        font-weight: 700;
+      .bos-title {
+        font-size: 0.9rem; font-weight: 700;
         color: var(--color-text, #f1f5f9);
-        margin: 0 0 7px;
-        line-height: 1.3;
+        margin: 0 0 6px; line-height: 1.3;
       }
-      .sos-body {
-        font-size: 0.8rem;
+      .bos-body {
+        font-size: 0.79rem;
         color: var(--color-text-secondary, #94a3b8);
-        line-height: 1.6;
-        margin: 0 0 14px;
+        line-height: 1.55;
+        margin: 0 0 12px;
       }
-      .sos-body strong { color: var(--color-text, #f1f5f9); }
-      .sos-footer {
-        display: flex;
-        align-items: center;
-        justify-content: space-between;
-        gap: 8px;
-      }
-      .sos-dots {
-        display: flex;
-        gap: 4px;
-        align-items: center;
-        flex-shrink: 0;
-      }
-      .sos-dot {
-        width: 5px; height: 5px;
-        border-radius: 50%;
-        background: rgba(255,255,255,0.15);
-        transition: all 0.2s;
-        flex-shrink: 0;
-      }
-      .sos-dot.on {
-        background: var(--color-warning, #f59e0b);
-        width: 16px;
-        border-radius: 3px;
-      }
-      .sos-btns { display: flex; gap: 6px; }
-      .sos-btn {
+      .bos-body strong { color: var(--color-text, #f1f5f9); }
+      .bos-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+      .bos-dots { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
+      .bos-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all 0.2s; flex-shrink: 0; }
+      .bos-dot.on { background: var(--color-warning, #f59e0b); width: 16px; border-radius: 3px; }
+      .bos-btns { display: flex; gap: 6px; }
+      .bos-btn {
         font-family: var(--font-body, 'Inter', sans-serif);
-        font-size: 0.76rem;
-        font-weight: 600;
-        padding: 6px 13px;
-        border-radius: 8px;
-        border: none;
-        cursor: pointer;
-        line-height: 1;
+        font-size: 0.75rem; font-weight: 600;
+        padding: 6px 12px; border-radius: 8px; border: none;
+        cursor: pointer; line-height: 1;
         transition: opacity 0.15s, transform 0.1s;
       }
-      .sos-btn:active { transform: scale(0.95); }
-      .sos-skip {
-        background: transparent;
-        color: var(--color-text-secondary, #64748b);
-        padding: 6px 2px;
+      .bos-btn:active { transform: scale(0.95); }
+      .bos-skip { background: transparent; color: var(--color-text-secondary, #64748b); padding: 6px 2px; }
+      .bos-skip:hover { color: var(--color-text, #f1f5f9); }
+      .bos-next { background: var(--color-warning, #f59e0b); color: #000; }
+      .bos-next:hover { opacity: 0.88; }
+      .bos-back {
+        background: transparent; color: var(--color-text-secondary, #64748b);
+        border: 1px solid rgba(255,255,255,0.1); padding: 6px 10px;
       }
-      .sos-skip:hover { color: var(--color-text, #f1f5f9); }
-      .sos-next {
-        background: var(--color-warning, #f59e0b);
-        color: #000;
-      }
-      .sos-next:hover { opacity: 0.88; }
-      .sos-back {
-        background: transparent;
-        color: var(--color-text-secondary, #64748b);
-        border: 1px solid rgba(255,255,255,0.1);
-        padding: 6px 11px;
-      }
-      .sos-back:hover { color: var(--color-text, #f1f5f9); border-color: rgba(255,255,255,0.2); }
-      .sos-ring {
+      .bos-back:hover { color: var(--color-text, #f1f5f9); border-color: rgba(255,255,255,0.2); }
+      .bos-ring {
         outline: 2px solid var(--color-warning, #f59e0b) !important;
         outline-offset: 4px !important;
-        border-radius: 8px;
-        position: relative;
-        z-index: 9999;
+        border-radius: 8px; position: relative; z-index: 9999;
       }
+      /* Stage 3 install card gets a slightly wider tooltip */
+      #bos-tooltip.bos-install { width: 320px; }
     `;
     document.head.appendChild(s);
   }
 
-  // ─── Build DOM ────────────────────────────────────────────────────────────
   function buildDOM() {
+    if (tooltipEl) return; // already built
     tooltipEl = document.createElement('div');
-    tooltipEl.id = 'sos-tooltip';
+    tooltipEl.id = 'bos-tooltip';
     tooltipEl.setAttribute('role', 'dialog');
 
     arrowEl = document.createElement('div');
-    arrowEl.id = 'sos-arrow';
+    arrowEl.id = 'bos-arrow';
 
     document.body.appendChild(arrowEl);
     document.body.appendChild(tooltipEl);
   }
 
-  // ─── Render ───────────────────────────────────────────────────────────────
-  function render(index) {
-    const step = steps[index];
-    const total = steps.length;
-    const isLast = index === total - 1;
-
-    const dots = steps.map((_, i) =>
-      `<span class="sos-dot ${i === index ? 'on' : ''}"></span>`
-    ).join('');
-
-    tooltipEl.innerHTML = `
-      <div class="sos-eyebrow">Step ${index + 1} of ${total}</div>
-      <div class="sos-title">${step.title}</div>
-      <div class="sos-body">${step.body}</div>
-      <div class="sos-footer">
-        <div class="sos-dots">${dots}</div>
-        <div class="sos-btns">
-          <button class="sos-btn sos-skip" id="sos-skip-btn">Skip</button>
-          ${index > 0 ? '<button class="sos-btn sos-back" id="sos-back-btn">← Back</button>' : ''}
-          <button class="sos-btn sos-next" id="sos-next-btn">
-            ${isLast ? 'Done 🎉' : 'Next →'}
-          </button>
-        </div>
-      </div>
-    `;
-
-    document.getElementById('sos-next-btn').onclick = advance;
-    document.getElementById('sos-skip-btn').onclick = end;
-    if (index > 0) document.getElementById('sos-back-btn').onclick = back;
+  function teardownDOM() {
+    tooltipEl && tooltipEl.remove();
+    arrowEl && arrowEl.remove();
+    tooltipEl = null;
+    arrowEl = null;
+    if (highlightedEl) {
+      highlightedEl.classList.remove('bos-ring');
+      highlightedEl = null;
+    }
   }
 
-  // ─── Position ─────────────────────────────────────────────────────────────
+  function clamp(val, min, max) { return Math.max(min, Math.min(val, max)); }
+
+  function setArrow(left, top, borderCss) {
+    arrowEl.style.cssText = `
+      position:fixed; z-index:99998; width:10px; height:10px;
+      background:var(--color-surface,#1c1c2e);
+      border:1px solid rgba(245,158,11,0.25);
+      pointer-events:none; left:${left}px; top:${top}px; ${borderCss};
+    `;
+  }
+
   function position(step) {
-    tooltipEl.classList.remove('sos-center');
+    tooltipEl.classList.remove('bos-center');
     arrowEl.style.display = 'block';
 
     let target = step.target ? document.querySelector(step.target) : null;
     if (!target && step.fallback) target = document.querySelector(step.fallback);
 
     if (!target || step.position === 'center') {
-      tooltipEl.classList.add('sos-center');
+      tooltipEl.classList.add('bos-center');
       tooltipEl.style.left = '';
       tooltipEl.style.top = '';
       arrowEl.style.display = 'none';
@@ -378,14 +320,12 @@
 
     const GAP = 12;
     const rect = target.getBoundingClientRect();
-    const tw = tooltipEl.offsetWidth || 310;
-    const th = tooltipEl.offsetHeight || 180;
+    const tw = tooltipEl.offsetWidth || 300;
+    const th = tooltipEl.offsetHeight || 160;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
 
     let top, left;
-
-    // On mobile, prefer bottom/top over right/left to avoid sidebar overlap
     let pos = step.position;
     if (isMobile() && (pos === 'right' || pos === 'left')) pos = 'bottom';
 
@@ -418,111 +358,200 @@
     return target;
   }
 
-  function setArrow(left, top, borderCss) {
-    arrowEl.style.cssText = `
-      position:fixed; z-index:99998;
-      width:10px; height:10px;
-      background:var(--color-surface,#1c1c2e);
-      border:1px solid rgba(245,158,11,0.25);
-      pointer-events:none;
-      left:${left}px; top:${top}px;
-      ${borderCss};
+  // ─── Render a single-step popup (used by Stage 2 + Stage 3) ───────────────
+  function renderSingle(step, onDismiss) {
+    tooltipEl.innerHTML = `
+      <div class="bos-title">${step.title}</div>
+      <div class="bos-body">${step.body}</div>
+      <div class="bos-footer" style="justify-content:flex-end">
+        <div class="bos-btns">
+          <button class="bos-btn bos-next" id="bos-ok-btn">${step.okLabel || 'Got it'}</button>
+        </div>
+      </div>
     `;
+    document.getElementById('bos-ok-btn').onclick = () => {
+      hide(onDismiss);
+    };
   }
 
-  function clamp(val, min, max) {
-    return Math.max(min, Math.min(val, max));
+  // ─── Render a queue-step popup (used by Stage 1 micro-tour) ───────────────
+  function renderQueued(index) {
+    const step = activeQueue[index];
+    const total = activeQueue.length;
+    const isLast = index === total - 1;
+
+    const dots = activeQueue.map((_, i) =>
+      `<span class="bos-dot ${i === index ? 'on' : ''}"></span>`
+    ).join('');
+
+    tooltipEl.innerHTML = `
+      <div class="bos-eyebrow">Step ${index + 1} of ${total}</div>
+      <div class="bos-title">${step.title}</div>
+      <div class="bos-body">${step.body}</div>
+      <div class="bos-footer">
+        <div class="bos-dots">${dots}</div>
+        <div class="bos-btns">
+          <button class="bos-btn bos-skip" id="bos-skip-btn">Skip</button>
+          ${index > 0 ? '<button class="bos-btn bos-back" id="bos-back-btn">← Back</button>' : ''}
+          <button class="bos-btn bos-next" id="bos-next-btn">${isLast ? 'Done 🎉' : 'Next →'}</button>
+        </div>
+      </div>
+    `;
+
+    document.getElementById('bos-next-btn').onclick = () => advanceQueue();
+    document.getElementById('bos-skip-btn').onclick = () => hide(onQueueDone);
+    if (index > 0) document.getElementById('bos-back-btn').onclick = () => backQueue();
   }
 
-  // ─── Show step ────────────────────────────────────────────────────────────
-  function showStep(index) {
-    // Clear previous highlight
-    if (highlightedEl) {
-      highlightedEl.classList.remove('sos-ring');
-      highlightedEl = null;
-    }
+  function showQueuedStep(index) {
+    if (highlightedEl) { highlightedEl.classList.remove('bos-ring'); highlightedEl = null; }
+    tooltipEl.classList.remove('bos-show');
+    arrowEl.classList.remove('bos-show');
 
-    // Hide for transition
-    tooltipEl.classList.remove('sos-show');
-    arrowEl.classList.remove('sos-show');
+    const step = activeQueue[index];
+    if (step.beforeShow) { try { step.beforeShow(); } catch (e) {} }
 
-    const step = steps[index];
+    renderQueued(index);
 
-    // Run any pre-show hook (e.g. expand nav group)
-    if (step.beforeShow) {
-      try { step.beforeShow(); } catch(e) {}
-    }
-
-    render(index);
-
-    // Double rAF: wait for layout + paint
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
         const target = position(step);
         if (target) {
           highlightedEl = target;
-          target.classList.add('sos-ring');
-          // Scroll element into view if needed
+          target.classList.add('bos-ring');
           target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
         }
-        tooltipEl.classList.add('sos-show');
-        arrowEl.classList.add('sos-show');
+        tooltipEl.classList.add('bos-show');
+        arrowEl.classList.add('bos-show');
       });
     });
   }
 
-  // ─── Advance / Back / End ─────────────────────────────────────────────────
-  function advance() {
-    currentStep++;
-    if (currentStep >= steps.length) {
-      end();
-    } else {
-      showStep(currentStep);
-    }
+  function advanceQueue() {
+    activeIndex++;
+    if (activeIndex >= activeQueue.length) { hide(onQueueDone); }
+    else { showQueuedStep(activeIndex); }
   }
 
-  function back() {
-    if (currentStep > 0) {
-      currentStep--;
-      showStep(currentStep);
-    }
+  function backQueue() {
+    if (activeIndex > 0) { activeIndex--; showQueuedStep(activeIndex); }
   }
 
-  function end() {
-    tooltipEl.classList.remove('sos-show');
-    arrowEl.classList.remove('sos-show');
-
+  function hide(cb) {
+    if (!tooltipEl) { cb && cb(); return; }
+    tooltipEl.classList.remove('bos-show');
+    arrowEl.classList.remove('bos-show');
     setTimeout(() => {
-      if (tooltipEl) { tooltipEl.remove(); tooltipEl = null; }
-      if (arrowEl)   { arrowEl.remove();   arrowEl   = null; }
-      if (highlightedEl) {
-        highlightedEl.classList.remove('sos-ring');
-        highlightedEl = null;
-      }
+      teardownDOM();
+      cb && cb();
     }, 220);
-
-    localStorage.setItem(TOUR_KEY, '1');
   }
 
-  // ─── Public API ───────────────────────────────────────────────────────────
-  function start() {
-    if (localStorage.getItem(TOUR_KEY)) return; // Already seen — never show again
+  // ─── Show a single popup step (Stage 2 / Stage 3), anchored or centered ───
+  function showSingleStep(step, onDismiss) {
+    injectStyles();
+    buildDOM();
+    renderSingle(step, onDismiss);
 
-    steps = isMobile() ? STEPS_MOBILE : STEPS_DESKTOP;
-    currentStep = 0;
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const target = position(step);
+        if (target) {
+          highlightedEl = target;
+          target.classList.add('bos-ring');
+          target.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+        }
+        tooltipEl.classList.add('bos-show');
+        arrowEl.classList.add('bos-show');
+      });
+    });
+  }
+
+  // ─── STAGE 1 public entry ──────────────────────────────────────────────────
+  function startMicroTour() {
+    if (localStorage.getItem(KEY_MICRO)) return;
 
     injectStyles();
     buildDOM();
-    showStep(0);
+    activeQueue = MICRO_STEPS;
+    activeIndex = 0;
+    onQueueDone = () => localStorage.setItem(KEY_MICRO, '1');
+    showQueuedStep(0);
   }
 
-  window.StudyOSTour = {
-    start,
-    reset: () => localStorage.removeItem(TOUR_KEY),   // dev/testing helper
-    replay: () => {                                     // for Settings page button
-      localStorage.removeItem(TOUR_KEY);
-      start();
+  function replayMicroTour() {
+    localStorage.removeItem(KEY_MICRO);
+    startMicroTour();
+  }
+
+  // ─── STAGE 2 public entry ──────────────────────────────────────────────────
+  // Call after a page has rendered (i.e. inside navigate()'s render callback).
+  // Silently no-ops if: no tip defined for this page, already seen, or the
+  // micro-tour hasn't finished yet (avoid stacking two tour UIs).
+  function maybeShowPageTip(page) {
+    if (!localStorage.getItem(KEY_MICRO)) return; // let Stage 1 finish first
+    const step = PAGE_TIPS[page];
+    if (!step) return;
+    if (localStorage.getItem(tipKey(page))) return;
+    if (tooltipEl) return; // something already showing (e.g. micro-tour mid-flight)
+
+    // Small delay so it doesn't fight the page's own render/paint.
+    setTimeout(() => {
+      if (tooltipEl) return; // re-check race
+      showSingleStep(step, () => localStorage.setItem(tipKey(page), '1'));
+    }, 500);
+  }
+
+  // ─── STAGE 3 public entry ──────────────────────────────────────────────────
+  // Call after every successful Quick Log save. Fires the install prompt
+  // exactly once, right after the 2nd logged session.
+  function notifySessionLogged() {
+    if (localStorage.getItem(KEY_INSTALL)) return;
+
+    const count = (parseInt(localStorage.getItem(KEY_LOG_COUNT) || '0', 10)) + 1;
+    localStorage.setItem(KEY_LOG_COUNT, String(count));
+    if (count < 2) return;
+    if (tooltipEl) return; // don't interrupt an active tip
+
+    localStorage.setItem(KEY_INSTALL, '1');
+
+    const installBody = isMobile()
+      ? '<strong>Android (Chrome):</strong> Tap ⋮ → "Add to Home Screen".<br><br><strong>iPhone (Safari):</strong> Tap Share → "Add to Home Screen".<br><br>Opens instantly, works offline.'
+      : '<strong>Chrome / Edge:</strong> Click the install icon ⊕ in the address bar → "Install".<br><br>Opens like a native app, works offline.';
+
+    setTimeout(() => {
+      injectStyles();
+      buildDOM();
+      tooltipEl.classList.add('bos-install');
+      showSingleStep({
+        target: null,
+        position: 'center',
+        title: '📲 Install BoardOS',
+        body: `You're 2 sessions in — install it so it's one tap away next time.<br><br>${installBody}`,
+        okLabel: 'Got it',
+      }, null);
+    }, 800);
+  }
+
+  // ─── Public API ─────────────────────────────────────────────────────────────
+  window.BoardOSTour = {
+    startMicroTour,
+    replayMicroTour,
+    maybeShowPageTip,
+    notifySessionLogged,
+    // dev/testing helpers
+    resetAll: () => {
+      Object.keys(localStorage)
+        .filter(k => k.startsWith('bos_tour_') || k.startsWith('bos_tip_seen_') || k.startsWith('bos_install_') || k.startsWith('bos_quicklog_'))
+        .forEach(k => localStorage.removeItem(k));
     },
+  };
+
+  // Back-compat alias in case anything still references the old global name
+  window.StudyOSTour = {
+    start: startMicroTour,
+    reset: () => localStorage.removeItem(KEY_MICRO),
+    replay: replayMicroTour,
   };
 
 })();

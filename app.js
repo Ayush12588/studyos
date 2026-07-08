@@ -2428,7 +2428,7 @@ const App={
         hapticsVibrate('streak');
         this.celebrate();
         this.toast('Welcome, '+this.state.profile.name+'! 🚀','success');
-        setTimeout(() => window.StudyOSTour && window.StudyOSTour.start(), 3000);
+        setTimeout(() => window.BoardOSTour && window.BoardOSTour.startMicroTour(), 3000);
     },
 
     // NAV
@@ -2451,9 +2451,11 @@ const App={
         // so subsequent navigations to the same tab have zero async overhead.
         this._loadTabData(page).then(() => {
             this.renderPage(page);
+            window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         }).catch(() => {
             // Data fetch failed — render anyway with whatever state we have
             this.renderPage(page);
+            window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         });
 
         this.closeSidebar();document.getElementById('content').scrollTop=0;
@@ -3692,6 +3694,7 @@ const App={
         hapticsVibrate('success');this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
         this.dismissStreakReminder(false);
         if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+        window.BoardOSTour && window.BoardOSTour.notifySessionLogged();
     },
 
     renderLog(){
@@ -4973,7 +4976,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         // ── Tier 4: Reference, low-stakes ──
         const shortcutsCard=`<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>`;
 
-        const aboutCard=`<div class="card"><div class="card-header"><span class="card-title">About BoardOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">BoardOS is your personal study OS. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p><hr style="border-color:var(--border);margin:12px 0"><button class="btn btn-secondary" onclick="App.navigate('rewards')" style="justify-content:center;width:100%;margin-bottom:8px">🏆 View Rewards & Badges</button><button class="btn btn-secondary" onclick="window.StudyOSTour&&window.StudyOSTour.replay();App.navigate('dashboard')" style="justify-content:center;width:100%">🗺️ Replay Onboarding Tour</button></div>`;
+        const aboutCard=`<div class="card"><div class="card-header"><span class="card-title">About BoardOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">BoardOS is your personal study OS. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p><hr style="border-color:var(--border);margin:12px 0"><button class="btn btn-secondary" onclick="App.navigate('rewards')" style="justify-content:center;width:100%;margin-bottom:8px">🏆 View Rewards & Badges</button><button class="btn btn-secondary" onclick="window.BoardOSTour&&window.BoardOSTour.replayMicroTour();App.navigate('dashboard')" style="justify-content:center;width:100%">🗺️ Replay Onboarding Tour</button></div>`;
 
         // ── Tier 5: Danger Zone — isolated, full width, never adjacent to a safe action ──
         const dangerZone=`<div class="card" style="margin-top:24px;background:var(--color-danger-bg);border:1px solid var(--color-danger-border)"><div class="card-header"><span class="card-title" style="color:var(--text-danger)">Danger Zone</span></div><div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="max-width:480px"><p style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px">Reset all data</p><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">Permanently deletes every subject, session, score, note and setting. This cannot be undone — export a backup first if you want to keep anything.</p></div><button class="btn btn-danger" onclick="App.resetAll()" style="flex-shrink:0">Reset All Data</button></div></div>`;
