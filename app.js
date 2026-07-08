@@ -2428,7 +2428,7 @@ const App={
         hapticsVibrate('streak');
         this.celebrate();
         this.toast('Welcome, '+this.state.profile.name+'! 🚀','success');
-        setTimeout(() => window.BoardOSTour && window.BoardOSTour.startMicroTour(), 3000);
+        setTimeout(() => window.StudyOSTour && window.StudyOSTour.start(), 3000);
     },
 
     // NAV
@@ -2451,11 +2451,9 @@ const App={
         // so subsequent navigations to the same tab have zero async overhead.
         this._loadTabData(page).then(() => {
             this.renderPage(page);
-            window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         }).catch(() => {
             // Data fetch failed — render anyway with whatever state we have
             this.renderPage(page);
-            window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         });
 
         this.closeSidebar();document.getElementById('content').scrollTop=0;
@@ -2563,6 +2561,31 @@ const App={
         this.render();
     },
 
+    // Toggles the ⋮ dropdown on the circle detail page. Called with no
+    // args to force-close (from menu item clicks after their own action
+    // fires) or with the click event to open/close on the trigger button.
+    // Click-outside-to-close uses a one-shot capturing listener registered
+    // only while open, so we don't leak a permanent document listener for
+    // a menu that's rarely opened.
+    toggleCircleMenu(evt){
+        if(evt)evt.stopPropagation();
+        const dd=document.getElementById('circle-menu-dropdown');
+        if(!dd)return;
+        const opening = dd.style.display==='none' || !dd.style.display;
+        dd.style.display = opening ? 'block' : 'none';
+        if(opening){
+            const closeOnOutsideClick=(e)=>{
+                if(!dd.contains(e.target)){
+                    dd.style.display='none';
+                    document.removeEventListener('click',closeOnOutsideClick,true);
+                }
+            };
+            // Defer registration one tick so the click that opened the menu
+            // (which is still bubbling/capturing) doesn't immediately close it.
+            setTimeout(()=>document.addEventListener('click',closeOnOutsideClick,true),0);
+        }
+    },
+
     _renderCircleDetail(el){
         const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
         const circle=circles.find(c=>c.id===this._openCircleId);
@@ -2572,9 +2595,33 @@ const App={
             return;
         }
 
-        let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="btn btn-secondary btn-sm" onclick="App.closeCircleDetail()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button><h2 style="font-size:1.1rem">${circle.name}</h2></div>`;
+        let h=`<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:16px"><div style="display:flex;align-items:center;gap:10px"><button class="btn btn-secondary btn-sm" onclick="App.closeCircleDetail()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button><h2 style="font-size:1.1rem">${circle.name}</h2></div>`;
 
-        h+=`<div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:2px">Invite code</p><p style="font-size:1.1rem;font-weight:700;letter-spacing:2px">${circle.invite_code}</p></div><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.copyCircleInvite('${circle.invite_code}')">Copy Link</button><button class="btn btn-secondary btn-sm" onclick="App.leaveCircleConfirm('${circle.id}','${circle.name.replace(/'/g,"\\'")}')" style="color:var(--text-danger)">Leave</button></div></div>`;
+        // Three-dot menu: invite code, copy link, and leave all live here now —
+        // moved off the main card per product decision to reduce visual noise
+        // for an action set most users touch once (at join time) or rarely
+        // (leaving). Click-outside-to-close is wired via a one-shot document
+        // listener added at open time (see toggleCircleMenu), not CSS
+        // :focus-within, so it also closes on scroll/tap-elsewhere on mobile.
+        h+=`<div class="circle-menu-wrap" style="position:relative">
+            <button class="btn btn-secondary btn-sm" onclick="App.toggleCircleMenu(event)" aria-label="Circle options" style="padding:6px 10px">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="5" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="12" cy="19" r="1"/></svg>
+            </button>
+            <div id="circle-menu-dropdown" class="circle-menu-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card,#fff);border:1px solid var(--border-color,rgba(0,0,0,.08));border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:200px;z-index:50;overflow:hidden">
+                <div style="padding:10px 14px;border-bottom:1px solid var(--border-color,rgba(0,0,0,.06))">
+                    <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:2px">Invite code</p>
+                    <p style="font-size:1rem;font-weight:700;letter-spacing:2px">${circle.invite_code}</p>
+                </div>
+                <button class="circle-menu-item" onclick="App.copyCircleInvite('${circle.invite_code}');App.toggleCircleMenu()" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                    Copy Invite Link
+                </button>
+                <button class="circle-menu-item" onclick="App.toggleCircleMenu();App.leaveCircleConfirm('${circle.id}','${circle.name.replace(/'/g,"\\'")}')" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;font-size:.85rem;cursor:pointer;color:var(--text-danger);display:flex;align-items:center;gap:8px">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+                    Leave Circle
+                </button>
+            </div>
+        </div></div>`;
 
         if(this._openCircleLeaderboard===null){
             h+=`<div class="card" style="text-align:center;padding:32px 20px;color:var(--text-muted)">Loading leaderboard…</div>`;
@@ -2601,7 +2648,7 @@ const App={
                 // sorted list presented neutrally, not a competition standing.
                 // is_caller drives only the subtle background tint + "(you)"
                 // label below, nothing else.
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_confirmed_done||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
@@ -3694,7 +3741,6 @@ const App={
         hapticsVibrate('success');this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
         this.dismissStreakReminder(false);
         if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
-        window.BoardOSTour && window.BoardOSTour.notifySessionLogged();
     },
 
     renderLog(){
@@ -4976,7 +5022,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         // ── Tier 4: Reference, low-stakes ──
         const shortcutsCard=`<div class="card" style="margin-bottom:20px"><div class="card-header"><span class="card-title">Keyboard Shortcuts</span></div><div style="font-size:.82rem;color:var(--text-secondary);line-height:2.2"><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+L</kbd> Quick Log</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+P</kbd> Focus Timer</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Ctrl+K</kbd> Search</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">1-9</kbd> Navigate pages (with Alt)</p><p><kbd style="background:var(--bg-card);padding:2px 8px;border-radius:4px;border:1px solid var(--border);font-family:monospace">Esc</kbd> Close modals</p></div></div>`;
 
-        const aboutCard=`<div class="card"><div class="card-header"><span class="card-title">About BoardOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">BoardOS is your personal study OS. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p><hr style="border-color:var(--border);margin:12px 0"><button class="btn btn-secondary" onclick="App.navigate('rewards')" style="justify-content:center;width:100%;margin-bottom:8px">🏆 View Rewards & Badges</button><button class="btn btn-secondary" onclick="window.BoardOSTour&&window.BoardOSTour.replayMicroTour();App.navigate('dashboard')" style="justify-content:center;width:100%">🗺️ Replay Onboarding Tour</button></div>`;
+        const aboutCard=`<div class="card"><div class="card-header"><span class="card-title">About BoardOS</span></div><p style="font-size:.82rem;color:var(--text-secondary);line-height:1.8">BoardOS is your personal study OS. Track subjects, chapters, revisions, exams, doubts, and more — all in one place.</p><p style="font-size:.75rem;color:var(--text-muted);margin-top:8px">All data is stored locally in your browser. Export regularly to avoid data loss!</p><hr style="border-color:var(--border);margin:12px 0"><button class="btn btn-secondary" onclick="App.navigate('rewards')" style="justify-content:center;width:100%;margin-bottom:8px">🏆 View Rewards & Badges</button><button class="btn btn-secondary" onclick="window.StudyOSTour&&window.StudyOSTour.replay();App.navigate('dashboard')" style="justify-content:center;width:100%">🗺️ Replay Onboarding Tour</button></div>`;
 
         // ── Tier 5: Danger Zone — isolated, full width, never adjacent to a safe action ──
         const dangerZone=`<div class="card" style="margin-top:24px;background:var(--color-danger-bg);border:1px solid var(--color-danger-border)"><div class="card-header"><span class="card-title" style="color:var(--text-danger)">Danger Zone</span></div><div style="display:flex;align-items:center;justify-content:space-between;gap:16px;flex-wrap:wrap"><div style="max-width:480px"><p style="font-size:.85rem;font-weight:600;color:var(--text-primary);margin-bottom:4px">Reset all data</p><p style="font-size:.78rem;color:var(--text-secondary);line-height:1.6">Permanently deletes every subject, session, score, note and setting. This cannot be undone — export a backup first if you want to keep anything.</p></div><button class="btn btn-danger" onclick="App.resetAll()" style="flex-shrink:0">Reset All Data</button></div></div>`;
