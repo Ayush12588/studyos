@@ -75,8 +75,13 @@ const App={
         lastFreezeUsedDate:null,
         pendingFreezeNotice:false,
         // QUIZ
-        quizData:{} // { [subjectId]: { questions:[], generatedAt, lastScore, lastQuizDate, interval, history:[] } }
+        quizData:{}, // { [subjectId]: { questions:[], generatedAt, lastScore, lastQuizDate, interval, history:[] } }
+        // CIRCLES — populated by _loadTabData('circles'), re-fetched every visit (not session-cached)
+        circles:[]
     },
+    // Transient, non-persisted: which circle's leaderboard is currently open in detail view
+    _openCircleId:null,
+    _openCircleLeaderboard:null,
     pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null,focusSubjectId:null,focusChapterId:null},
     swInterval:null,
 
@@ -1457,6 +1462,20 @@ const App={
                 this._loadedTabs.add('quiz');
             } catch(e){ warn('quiz', e); }
         }
+
+        // ── circles (study groups + streak/leaderboard data) ─────────────────
+        // Intentionally NOT guarded by _loadedTabs — unlike subjects/doubts/etc,
+        // circle membership and each member's streak/leaderboard standing can
+        // change from OTHER users' actions (not just this user's), so a
+        // once-per-session cache would show stale data on repeat visits.
+        // Re-fetches on every navigation to this tab instead.
+        if (tab === 'circles') {
+            try {
+                const { data: circles, error } = await DB.circles.getMine(userId);
+                if (error) throw error;
+                if (circles) this.state.circles = circles;
+            } catch(e){ warn('circles', e); }
+        }
     },
 
     // ── localStorage: UI state + local-only state ────────────────────────────
@@ -2396,7 +2415,7 @@ const App={
         const pe=document.getElementById('page-'+page);if(pe)pe.classList.add('active');
         document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.page===page));
         document.querySelectorAll('.mob-nav-item').forEach((n,i)=>{const pages=['dashboard','subjects','','tasks','rewards'];n.classList.toggle('active',pages[i]===page)});
-        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog'};
+        const titles={dashboard:'Dashboard',subjects:'Subjects',log:'Study Log',tasks:'Daily Tasks',revisions:'Revisions',exams:'Exam Scores',doubts:'Doubts',weekly:'Analytics',pomodoro:'Focus Timer',notes:'Notes',resources:'Resources',coach:'AI Coach',rewards:'Rewards',settings:'Settings',quiz:'Quiz',backlog:'Backlog',circles:'Study Circles'};
         document.getElementById('page-title').textContent=titles[page]||page;this.updatePageSubtitle();
 
         // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
@@ -2425,6 +2444,7 @@ const App={
             exams:'Score history',
             rewards:'XP & badges',settings:'Preferences',
             backlog:'Study debt tracker',
+            circles:'Study with friends',
         };
         document.getElementById('page-subtitle').textContent=subtitles[page]||dateStr;
     },
@@ -2450,7 +2470,175 @@ const App={
             }else{ep.style.display='none'}
         }
     },
-    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage()};if(r[p])r[p]()},
+    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage(),circles:()=>this.renderCircles()};if(r[p])r[p]()},
+    renderCircles(){
+        const el=document.getElementById('page-circles');
+        if(!el)return;
+        const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
+
+        if(this._openCircleId){
+            this._renderCircleDetail(el);
+            return;
+        }
+
+        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.openModal('modal-circle-join')">Join with Code</button><button class="btn btn-primary" onclick="App.openModal('modal-circle-create')">+ New Circle</button></div></div>`;
+
+        if(circles.length===0){
+            h+=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></span><div class="empty-state-title">No circles yet</div><div class="empty-state-desc">Study with a small group of friends. Track streaks and chapters together — nobody studies better alone.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App.openModal('modal-circle-create')">Start a Circle</button><button class="btn btn-secondary" onclick="App.openModal('modal-circle-join')">Join with Code</button></div></div>`;
+            el.innerHTML=h;
+            return;
+        }
+
+        h+=`<div class="grid grid-2" style="gap:14px">`;
+        circles.forEach(c=>{
+            const memberCount=(c.circle_members&&c.circle_members[0]&&c.circle_members[0].count)||1;
+            h+=`<div class="card" style="cursor:pointer" onclick="App.openCircle('${c.id}')"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><h3 style="font-size:1.05rem;margin-bottom:4px">${c.name}</h3><p style="font-size:.78rem;color:var(--text-muted)">${memberCount} member${memberCount===1?'':'s'}</p></div><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div></div>`;
+        });
+        h+=`</div>`;
+        el.innerHTML=h;
+    },
+
+    async openCircle(circleId){
+        this._openCircleId=circleId;
+        this._openCircleLeaderboard=null;
+        this.render();
+        try{
+            const {data,error}=await DB.circles.getLeaderboard(circleId);
+            if(error)throw error;
+            this._openCircleLeaderboard=data||[];
+        }catch(e){
+            warn('circles-leaderboard',e);
+            this.toast('Could not load leaderboard','error');
+            this._openCircleId=null;
+        }
+        this.render();
+    },
+
+    closeCircleDetail(){
+        this._openCircleId=null;
+        this._openCircleLeaderboard=null;
+        this.render();
+    },
+
+    _renderCircleDetail(el){
+        const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
+        const circle=circles.find(c=>c.id===this._openCircleId);
+        if(!circle){
+            this._openCircleId=null;
+            this.renderCircles();
+            return;
+        }
+
+        let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="btn btn-secondary btn-sm" onclick="App.closeCircleDetail()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button><h2 style="font-size:1.1rem">${circle.name}</h2></div>`;
+
+        h+=`<div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:2px">Invite code</p><p style="font-size:1.1rem;font-weight:700;letter-spacing:2px">${circle.invite_code}</p></div><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.copyCircleInvite('${circle.invite_code}')">Copy Link</button><button class="btn btn-secondary btn-sm" onclick="App.leaveCircleConfirm('${circle.id}','${circle.name.replace(/'/g,"\\'")}')" style="color:var(--text-danger)">Leave</button></div></div>`;
+
+        if(this._openCircleLeaderboard===null){
+            h+=`<div class="card" style="text-align:center;padding:32px 20px;color:var(--text-muted)">Loading leaderboard…</div>`;
+            el.innerHTML=h;
+            return;
+        }
+
+        const rows=this._openCircleLeaderboard;
+        // Composite score: 50% chapters completed, 30% streak, 20% active days this week.
+        // Chapters/streak are open-ended, so they're normalized against the circle's own max
+        // before weighting — otherwise one runaway member's raw chapter count would make
+        // everyone else's streak or activity irrelevant to the score.
+        const maxChapters=Math.max(1,...rows.map(r=>r.chapters_completed||0));
+        const maxStreak=Math.max(1,...rows.map(r=>r.streak||0));
+        const scored=rows.map(r=>{
+            const chScore=((r.chapters_completed||0)/maxChapters)*50;
+            const stScore=((r.streak||0)/maxStreak)*30;
+            const actScore=((r.active_days_this_week||0)/7)*20;
+            return {...r,_score:chScore+stScore+actScore};
+        }).sort((a,b)=>b._score-a._score);
+
+        h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
+        if(rows.length===0){
+            h+=`<p style="color:var(--text-muted);font-size:.85rem;padding:8px 0">No members yet.</p>`;
+        }else{
+            scored.forEach((r,i)=>{
+                const rank=i+1;
+                const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':null;
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="font-size:.9rem;font-weight:700;min-width:22px;color:var(--text-muted)">${medal||rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+            });
+        }
+        h+=`</div>`;
+        el.innerHTML=h;
+    },
+
+    copyCircleInvite(inviteCode){
+        const link=DB.circles.getInviteLink(inviteCode);
+        if(navigator.clipboard&&navigator.clipboard.writeText){
+            navigator.clipboard.writeText(link).then(()=>{
+                this.toast('Invite link copied!','success');
+            }).catch(()=>{
+                this.toast(`Invite code: ${inviteCode}`,'success');
+            });
+        }else{
+            this.toast(`Invite code: ${inviteCode}`,'success');
+        }
+    },
+
+    async createCircleSubmit(){
+        const nameInput=document.getElementById('circle-create-name');
+        const name=(nameInput&&nameInput.value||'').trim();
+        if(!name){this.toast('Enter a circle name','warning');return;}
+        if(name.length>40){this.toast('Name is too long','warning');return;}
+
+        const {data,error}=await DB.circles.create(name,10);
+        if(error){
+            console.error('[DB] circles.create:',error);
+            this.toast('Could not create circle','error');
+            return;
+        }
+
+        this.closeModal('modal-circle-create');
+        if(nameInput)nameInput.value='';
+        this.toast(`Circle "${name}" created!`,'success');
+        this._loadedTabs&&this._loadedTabs.delete&&this._loadedTabs.delete('circles');
+        await this._loadTabData('circles');
+        this.render();
+    },
+
+    async joinCircleSubmit(){
+        const codeInput=document.getElementById('circle-join-code');
+        const code=(codeInput&&codeInput.value||'').trim().toUpperCase();
+        if(!code){this.toast('Enter an invite code','warning');return;}
+
+        const {data,error}=await DB.circles.joinByCode(code);
+        if(error){
+            this.toast(error.message||'Could not join circle','error');
+            return;
+        }
+
+        this.closeModal('modal-circle-join');
+        if(codeInput)codeInput.value='';
+        this.toast('Joined circle!','success');
+        this._loadedTabs&&this._loadedTabs.delete&&this._loadedTabs.delete('circles');
+        await this._loadTabData('circles');
+        this.render();
+    },
+
+    leaveCircleConfirm(circleId,circleName){
+        if(!confirm(`Leave "${circleName}"? You can rejoin later with an invite code.`))return;
+        this.leaveCircle(circleId);
+    },
+
+    async leaveCircle(circleId){
+        const {error}=await DB.circles.leave(circleId);
+        if(error){
+            console.error('[DB] circles.leave:',error);
+            this.toast('Could not leave circle','error');
+            return;
+        }
+        this.toast('Left circle','success');
+        this._openCircleId=null;
+        this._openCircleLeaderboard=null;
+        this._loadedTabs&&this._loadedTabs.delete&&this._loadedTabs.delete('circles');
+        await this._loadTabData('circles');
+        this.render();
+    },
     render(){
         const page = this.state.currentPage;
         document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));

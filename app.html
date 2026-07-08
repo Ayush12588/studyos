@@ -244,6 +244,10 @@
                     <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span>
                     <span class="nav-label">AI Coach</span>
                 </div>
+                <div class="nav-item" data-page="circles" onclick="App.navigate('circles')">
+                    <span class="nav-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></span>
+                    <span class="nav-label">Circles</span>
+                </div>
             </div>
 
             <!-- REVIEW: occasional; always expanded -->
@@ -358,6 +362,9 @@
             <div class="page" id="page-settings"></div>
             <div class="page" id="page-quiz"></div>
             <div class="page" id="page-backlog"></div>
+            <div class="page" id="page-circles"></div>
+<div class="modal-overlay" id="modal-circle-create"><div class="modal"><div class="modal-header"><h2>New Circle</h2><button class="modal-close" onclick="App.closeModal('modal-circle-create')" aria-label="Close">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Circle Name</label><input type="text" id="circle-create-name" class="form-input" placeholder="e.g., Physics Squad" maxlength="40"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-circle-create')">Cancel</button><button class="btn btn-primary" onclick="App.createCircleSubmit()">Create Circle</button></div></div></div>
+<div class="modal-overlay" id="modal-circle-join"><div class="modal"><div class="modal-header"><h2>Join a Circle</h2><button class="modal-close" onclick="App.closeModal('modal-circle-join')" aria-label="Close">×</button></div><div class="modal-body"><div class="form-group"><label class="form-label">Invite Code</label><input type="text" id="circle-join-code" class="form-input" placeholder="e.g., 7X9KQZ" maxlength="6" style="text-transform:uppercase;letter-spacing:2px"></div></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-circle-join')">Cancel</button><button class="btn btn-primary" onclick="App.joinCircleSubmit()">Join</button></div></div></div>
         </div>
     </main>
 </div>

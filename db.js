@@ -493,9 +493,13 @@ export const DB = {
       return run(supabase.rpc('get_circle_leaderboard', { p_circle_id: circleId }));
     },
 
-    // Removes the current user's own membership row. Does not delete the
-    // circle itself, even if this leaves it empty — no cascade behavior
-    // implied here.
+    // Removes the current user's own membership row. Does NOT delete the
+    // circle itself, even if this leaves it empty — deliberately separate
+    // from delete() below. "Leaving" and "destroying the group" are
+    // different actions for the user; conflating them means the last
+    // member's "leave" silently nukes the circle for a UI that never
+    // warned them it would. An empty circle just sits there until its
+    // creator explicitly deletes it, or a future cleanup job reaps it.
     async leave(circleId) {
       const session = await requireAuth();
       const userId = session.user.id;
@@ -504,6 +508,38 @@ export const DB = {
           .delete()
           .eq('circle_id', circleId)
           .eq('user_id', userId)
+      );
+    },
+
+    // Permanently deletes a circle. Creator-only — enforced here in JS by
+    // checking created_by before attempting the delete, AND relying on
+    // circles_created_by_fkey / RLS to reject it server-side regardless
+    // (never trust a client-side check alone as the only guard).
+    //
+    // circle_members_circle_id_fkey is ON DELETE CASCADE, so every
+    // membership row for this circle is removed automatically by Postgres
+    // the instant this delete executes — no separate cleanup call needed,
+    // and no way to undo it once it commits.
+    async delete(circleId) {
+      const session = await requireAuth();
+      const userId = session.user.id;
+
+      const circle = await run(
+        supabase.from('circles')
+          .select('id, created_by')
+          .eq('id', circleId)
+          .single()
+      );
+      if (circle.error) return circle;
+
+      if (circle.data.created_by !== userId) {
+        return err(new Error('Only the creator can delete this circle.'));
+      }
+
+      return run(
+        supabase.from('circles')
+          .delete()
+          .eq('id', circleId)
       );
     },
 
