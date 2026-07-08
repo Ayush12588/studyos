@@ -2515,9 +2515,15 @@ const App={
             if (codeInput) codeInput.value = code;
         }
 
-        // state.circles is a flat array from DB.circles.getMine():
-        // { id, name, invite_code, max_members, member_count }
-        const circles=this.state.circles||[];
+        // DB.circles.getMine() returns circle_members rows with an embedded
+        // circles(*, circle_members(count)) join:
+        //   [{ circles: { id, name, invite_code, max_members, circle_members: [{count}] } }]
+        // NOT a flat {id, name, member_count} array — confirmed against the
+        // actual db.js query. (A prior edit here wrongly assumed a flat
+        // shape based on a spec description that didn't match the real
+        // Supabase call — that regression is what caused circle names to
+        // render as "undefined".)
+        const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
 
         if(this._openCircleId){
             this._renderCircleDetail(el);
@@ -2538,7 +2544,7 @@ const App={
         let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px"><h2 style="font-size:1.1rem">Your Circles</h2><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.openModal('modal-circle-join')">Join with Code</button><button class="btn btn-primary btn-sm" onclick="App.openModal('modal-circle-create')">+ New Circle</button></div></div>`;
 
         circles.forEach(c=>{
-            const memberCount=c.member_count||1;
+            const memberCount=(c.circle_members&&c.circle_members[0]&&c.circle_members[0].count)||1;
             const maxMembers=c.max_members||10;
             // NOTE: c.name is interpolated raw (no HTML escaping) — consistent
             // with how the rest of this app renders user-entered strings
@@ -2560,7 +2566,13 @@ const App={
             if(error)throw error;
             this._openCircleLeaderboard=data||[];
         }catch(e){
-            warn('circles-leaderboard',e);
+            // `warn` here previously referenced the local const defined
+            // inside _loadTabData/bootstrap — it doesn't exist in this
+            // method's scope, so every failed leaderboard fetch threw a
+            // second, uncaught ReferenceError on top of the original error,
+            // masking whatever DB.circles.getLeaderboard actually failed
+            // with (e.g. the RPC's real Postgres error).
+            console.error('[StudyOS] openCircle — leaderboard fetch failed:',e);
             this.toast('Could not load leaderboard','error');
             this._openCircleId=null;
         }
@@ -2574,7 +2586,7 @@ const App={
     },
 
     _renderCircleDetail(el){
-        const circles=this.state.circles||[];
+        const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
         const circle=circles.find(c=>c.id===this._openCircleId);
         if(!circle){
             this._openCircleId=null;
