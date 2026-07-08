@@ -2540,27 +2540,25 @@ const App={
         }
 
         const rows=this._openCircleLeaderboard;
-        // Composite score: 50% chapters completed, 30% streak, 20% active days this week.
-        // Chapters/streak are open-ended, so they're normalized against the circle's own max
-        // before weighting — otherwise one runaway member's raw chapter count would make
-        // everyone else's streak or activity irrelevant to the score.
-        const maxChapters=Math.max(1,...rows.map(r=>r.chapters_completed||0));
-        const maxStreak=Math.max(1,...rows.map(r=>r.streak||0));
-        const scored=rows.map(r=>{
-            const chScore=((r.chapters_completed||0)/maxChapters)*50;
-            const stScore=((r.streak||0)/maxStreak)*30;
-            const actScore=((r.active_days_this_week||0)/7)*20;
-            return {...r,_score:chScore+stScore+actScore};
-        }).sort((a,b)=>b._score-a._score);
+        // Sort by streak descending — this is the deliberate product decision,
+        // not a placeholder. Do NOT replace with a composite/weighted score
+        // blending chapters/hours back in — that re-creates the exact
+        // rush-to-mark-done incentive this app's backlog/SRS system is built
+        // to fight. Streak already has freeze protection (earned at a 7-day
+        // streak) covering the "one bad day shouldn't tank you" case, so no
+        // separate compensating formula is needed on top of it.
+        const scored=[...rows].sort((a,b)=>(b.streak||0)-(a.streak||0));
 
         h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
         if(rows.length===0){
             h+=`<p style="color:var(--text-muted);font-size:.85rem;padding:8px 0">No members yet.</p>`;
         }else{
-            scored.forEach((r,i)=>{
-                const rank=i+1;
-                const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':null;
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="font-size:.9rem;font-weight:700;min-width:22px;color:var(--text-muted)">${medal||rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+            scored.forEach((r)=>{
+                // No rank badge — no "#1/#2/#3", no medal emoji. This is a
+                // sorted list presented neutrally, not a competition standing.
+                // is_caller drives only the subtle background tint + "(you)"
+                // label below, nothing else.
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_confirmed_done||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
