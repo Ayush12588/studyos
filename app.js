@@ -903,6 +903,18 @@ const App={
     ],
 
     async init(){
+        // ── Deep link: /circle/join?code=XXXXXX ──────────────────────────────
+        // Must run BEFORE the auth check below, because if there's no
+        // session we're about to redirect to /index.html and lose the
+        // current URL (and its ?code= param) entirely. Stash it in
+        // sessionStorage so it survives the login round-trip; _pendingCircleCode
+        // is read again further down, after a session is confirmed.
+        if (window.location.pathname === '/circle/join') {
+            const params = new URLSearchParams(window.location.search);
+            const code = params.get('code');
+            if (code) sessionStorage.setItem('_pendingCircleCode', code);
+        }
+
         // ── Step 1: Let Supabase resolve any OAuth hash tokens ──────────────
         await new Promise((resolve) => {
             const { data: { subscription } } = window.supabase.auth.onAuthStateChange((event, session) => {
@@ -923,8 +935,24 @@ const App={
         // ── Step 2: Load UI-only state from localStorage (theme, page, etc.) ──
         this.load();
 
-        // Always start on dashboard on refresh
+        // Always start on dashboard on refresh — UNLESS a circle join is
+        // pending (either from this exact page load, or stashed before an
+        // auth redirect on a previous load). Check sessionStorage, not just
+        // the URL, since the URL that originally carried ?code= may already
+        // be gone by the time we get here (post-login redirect lands on a
+        // different path).
         this.state.currentPage = 'dashboard';
+        const pendingCircleCode = sessionStorage.getItem('_pendingCircleCode');
+        if (pendingCircleCode) {
+            this.state.currentPage = 'circles';
+            this._pendingCircleJoinCode = pendingCircleCode;
+            sessionStorage.removeItem('_pendingCircleCode');
+            // render() (called later in init, not navigate()) does NOT fetch
+            // tab data on its own — only navigate() pairs fetch+render. Since
+            // we're bypassing navigate() here, fetch explicitly so the
+            // circles list isn't empty behind the auto-opened join modal.
+            this._loadTabData('circles');
+        }
 
         // ── Step 3: Ensure state field defaults (fields with no Supabase home) ──
         if(!this.state.pomodoroSettings)this.state.pomodoroSettings={workMin:25,breakMin:5,longBreakMin:15,sessionsBeforeLong:4};
@@ -2474,6 +2502,19 @@ const App={
     renderCircles(){
         const el=document.getElementById('page-circles');
         if(!el)return;
+
+        // Deep link: if we arrived here via /circle/join?code=XXXXXX (captured
+        // in init(), possibly surviving a login redirect via sessionStorage),
+        // auto-open the join modal pre-filled with that code. Consume it once
+        // so it doesn't reopen on every subsequent visit to this page.
+        if (this._pendingCircleJoinCode) {
+            const code = this._pendingCircleJoinCode;
+            this._pendingCircleJoinCode = null;
+            this.openModal('modal-circle-join');
+            const codeInput = document.getElementById('circle-join-code');
+            if (codeInput) codeInput.value = code;
+        }
+
         const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
 
         if(this._openCircleId){
@@ -2540,25 +2581,27 @@ const App={
         }
 
         const rows=this._openCircleLeaderboard;
-        // Sort by streak descending — this is the deliberate product decision,
-        // not a placeholder. Do NOT replace with a composite/weighted score
-        // blending chapters/hours back in — that re-creates the exact
-        // rush-to-mark-done incentive this app's backlog/SRS system is built
-        // to fight. Streak already has freeze protection (earned at a 7-day
-        // streak) covering the "one bad day shouldn't tank you" case, so no
-        // separate compensating formula is needed on top of it.
-        const scored=[...rows].sort((a,b)=>(b.streak||0)-(a.streak||0));
+        // Composite score: 50% chapters completed, 30% streak, 20% active days this week.
+        // Chapters/streak are open-ended, so they're normalized against the circle's own max
+        // before weighting — otherwise one runaway member's raw chapter count would make
+        // everyone else's streak or activity irrelevant to the score.
+        const maxChapters=Math.max(1,...rows.map(r=>r.chapters_completed||0));
+        const maxStreak=Math.max(1,...rows.map(r=>r.streak||0));
+        const scored=rows.map(r=>{
+            const chScore=((r.chapters_completed||0)/maxChapters)*50;
+            const stScore=((r.streak||0)/maxStreak)*30;
+            const actScore=((r.active_days_this_week||0)/7)*20;
+            return {...r,_score:chScore+stScore+actScore};
+        }).sort((a,b)=>b._score-a._score);
 
         h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
         if(rows.length===0){
             h+=`<p style="color:var(--text-muted);font-size:.85rem;padding:8px 0">No members yet.</p>`;
         }else{
-            scored.forEach((r)=>{
-                // No rank badge — no "#1/#2/#3", no medal emoji. This is a
-                // sorted list presented neutrally, not a competition standing.
-                // is_caller drives only the subtle background tint + "(you)"
-                // label below, nothing else.
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_confirmed_done||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+            scored.forEach((r,i)=>{
+                const rank=i+1;
+                const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':null;
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="font-size:.9rem;font-weight:700;min-width:22px;color:var(--text-muted)">${medal||rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
