@@ -6,7 +6,7 @@
   "rewrites": [
     {
       "source": "/circle/join",
-      "destination": "/app.html"
+      "destination": "/app"
     }
   ],
   "headers": [
