@@ -3,6 +3,12 @@
   "buildCommand": "npm run build",
   "outputDirectory": "dist",
   "cleanUrls": true,
+  "rewrites": [
+    {
+      "source": "/circle/join",
+      "destination": "/app.html"
+    }
+  ],
   "headers": [
     {
       "source": "/assets/(.*)",
