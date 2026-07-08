@@ -2515,27 +2515,39 @@ const App={
             if (codeInput) codeInput.value = code;
         }
 
-        const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
+        // state.circles is a flat array from DB.circles.getMine():
+        // { id, name, invite_code, max_members, member_count }
+        const circles=this.state.circles||[];
 
         if(this._openCircleId){
             this._renderCircleDetail(el);
             return;
         }
 
-        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:18px;gap:8px;flex-wrap:wrap"><div></div><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.openModal('modal-circle-join')">Join with Code</button><button class="btn btn-primary" onclick="App.openModal('modal-circle-create')">+ New Circle</button></div></div>`;
-
+        // Empty state — matches the exact pattern used by Subjects/Doubts/etc:
+        // 72px tinted icon square, .empty-state-title, .empty-state-desc, buttons.
         if(circles.length===0){
-            h+=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></span><div class="empty-state-title">No circles yet</div><div class="empty-state-desc">Study with a small group of friends. Track streaks and chapters together — nobody studies better alone.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App.openModal('modal-circle-create')">Start a Circle</button><button class="btn btn-secondary" onclick="App.openModal('modal-circle-join')">Join with Code</button></div></div>`;
+            let h=`<div class="empty-state"><span class="empty-state-icon"><div style="width:72px;height:72px;border-radius:16px;background:rgba(99,102,241,0.1);display:flex;align-items:center;justify-content:center;margin:0 auto 4px"><svg xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="1.75" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div></span><div class="empty-state-title">Study with friends, not alone.</div><div class="empty-state-desc">Track streaks together. No pressure, just accountability.</div><div style="display:flex;gap:var(--sp-2);justify-content:center;flex-wrap:wrap"><button class="btn btn-primary" onclick="App.openModal('modal-circle-create')">Create a Circle</button><button class="btn btn-secondary" onclick="App.openModal('modal-circle-join')">Join with a Code</button></div></div>`;
             el.innerHTML=h;
             return;
         }
 
-        h+=`<div class="grid grid-2" style="gap:14px">`;
+        // Circle list — card list per circle, "+" affordance styled the same
+        // way Subjects lets you add another subject (small persistent action
+        // next to the header, not buried in the empty state only).
+        let h=`<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;gap:8px"><h2 style="font-size:1.1rem">Your Circles</h2><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.openModal('modal-circle-join')">Join with Code</button><button class="btn btn-primary btn-sm" onclick="App.openModal('modal-circle-create')">+ New Circle</button></div></div>`;
+
         circles.forEach(c=>{
-            const memberCount=(c.circle_members&&c.circle_members[0]&&c.circle_members[0].count)||1;
-            h+=`<div class="card" style="cursor:pointer" onclick="App.openCircle('${c.id}')"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:10px"><div><h3 style="font-size:1.05rem;margin-bottom:4px">${c.name}</h3><p style="font-size:.78rem;color:var(--text-muted)">${memberCount} member${memberCount===1?'':'s'}</p></div><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div></div>`;
+            const memberCount=c.member_count||1;
+            const maxMembers=c.max_members||10;
+            // NOTE: c.name is interpolated raw (no HTML escaping) — consistent
+            // with how the rest of this app renders user-entered strings
+            // (subject names, doubt text, etc. all do the same). Pre-existing
+            // app-wide gap, not specific to circles; worth a dedicated
+            // sanitization pass across the whole file rather than a one-off
+            // fix here that gives false confidence.
+            h+=`<div class="card" style="cursor:pointer;margin-bottom:10px" onclick="App.openCircle('${c.id}')"><div style="display:flex;justify-content:space-between;align-items:center;gap:10px"><div><h3 style="font-size:1.05rem;margin-bottom:4px">${c.name}</h3><p style="font-size:.78rem;color:var(--text-muted)">${memberCount} of ${maxMembers} members</p></div><svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--text-muted)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><polyline points="9 18 15 12 9 6"/></svg></div></div>`;
         });
-        h+=`</div>`;
         el.innerHTML=h;
     },
 
@@ -2562,7 +2574,7 @@ const App={
     },
 
     _renderCircleDetail(el){
-        const circles=(this.state.circles||[]).map(row=>row.circles).filter(Boolean);
+        const circles=this.state.circles||[];
         const circle=circles.find(c=>c.id===this._openCircleId);
         if(!circle){
             this._openCircleId=null;
@@ -2572,7 +2584,7 @@ const App={
 
         let h=`<div style="display:flex;align-items:center;gap:10px;margin-bottom:16px"><button class="btn btn-secondary btn-sm" onclick="App.closeCircleDetail()"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"/></svg> Back</button><h2 style="font-size:1.1rem">${circle.name}</h2></div>`;
 
-        h+=`<div class="card" style="margin-bottom:16px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap"><div><p style="font-size:.72rem;color:var(--text-muted);margin-bottom:2px">Invite code</p><p style="font-size:1.1rem;font-weight:700;letter-spacing:2px">${circle.invite_code}</p></div><div style="display:flex;gap:8px"><button class="btn btn-secondary btn-sm" onclick="App.copyCircleInvite('${circle.invite_code}')">Copy Link</button><button class="btn btn-secondary btn-sm" onclick="App.leaveCircleConfirm('${circle.id}','${circle.name.replace(/'/g,"\\'")}')" style="color:var(--text-danger)">Leave</button></div></div>`;
+        h+=`<div class="card" style="margin-bottom:16px;display:flex;justify-content:flex-end;gap:8px;flex-wrap:wrap"><button class="btn btn-secondary btn-sm" onclick="App.copyCircleInvite('${circle.invite_code}')"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px;margin-right:4px"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>Invite friends</button><button class="btn btn-secondary btn-sm" onclick="App.leaveCircleConfirm('${circle.id}','${circle.name.replace(/'/g,"\\'")}')" style="color:var(--text-danger)">Leave Circle</button></div>`;
 
         if(this._openCircleLeaderboard===null){
             h+=`<div class="card" style="text-align:center;padding:32px 20px;color:var(--text-muted)">Loading leaderboard…</div>`;
@@ -2581,27 +2593,36 @@ const App={
         }
 
         const rows=this._openCircleLeaderboard;
-        // Composite score: 50% chapters completed, 30% streak, 20% active days this week.
-        // Chapters/streak are open-ended, so they're normalized against the circle's own max
-        // before weighting — otherwise one runaway member's raw chapter count would make
-        // everyone else's streak or activity irrelevant to the score.
-        const maxChapters=Math.max(1,...rows.map(r=>r.chapters_completed||0));
-        const maxStreak=Math.max(1,...rows.map(r=>r.streak||0));
-        const scored=rows.map(r=>{
-            const chScore=((r.chapters_completed||0)/maxChapters)*50;
-            const stScore=((r.streak||0)/maxStreak)*30;
-            const actScore=((r.active_days_this_week||0)/7)*20;
-            return {...r,_score:chScore+stScore+actScore};
-        }).sort((a,b)=>b._score-a._score);
+
+        // Sort by streak descending only. INTENTIONAL — do not change this to
+        // a weighted/composite score using hours or raw chapter counts. A
+        // previous version of this page did exactly that (50/30/20 split
+        // across chapters/streak/active-days) and it was wrong: streak is
+        // the one metric that can't be gamed by cramming, which is the whole
+        // point of this feature (accountability, not a leaderboard grind).
+        const sorted=[...rows].sort((a,b)=>(b.streak||0)-(a.streak||0));
 
         h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
         if(rows.length===0){
             h+=`<p style="color:var(--text-muted);font-size:.85rem;padding:8px 0">No members yet.</p>`;
         }else{
-            scored.forEach((r,i)=>{
-                const rank=i+1;
-                const medal=rank===1?'🥇':rank===2?'🥈':rank===3?'🥉':null;
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="font-size:.9rem;font-weight:700;min-width:22px;color:var(--text-muted)">${medal||rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+            sorted.forEach(r=>{
+                // 7-dot active-days row — filled dot = active day this week.
+                // Deliberately a dot row, not the dashboard's magnitude bar
+                // chart: this is a binary "did they show up" signal, not a
+                // minutes-studied metric, so a bar chart would misrepresent
+                // it as a quantity comparison.
+                const activeDays=r.active_days_this_week||0;
+                const dots=Array.from({length:7},(_,i)=>
+                    `<span style="display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;background:${i<activeDays?'#22C55E':'var(--border-color, rgba(148,163,184,0.25))'}"></span>`
+                ).join('');
+
+                // No rank badges/medals — neutral sorted list. Current user's
+                // row gets a subtle tint via is_caller, no "you're behind"
+                // framing, no numeric rank shown anywhere.
+                const rowStyle=r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':'';
+
+                h+=`<div class="rev-item" style="${rowStyle}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><div style="display:flex;align-items:center;gap:8px;margin-top:3px"><span>${dots}</span><span style="font-size:.72rem;color:var(--text-muted)">${r.chapters_confirmed_done||0} chapters confirmed</span></div></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
