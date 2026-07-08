@@ -1,6 +1,14 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
+    <!-- Forces all relative URLs (styles.css, script src="app.js", etc.) below
+         to resolve against the site root, regardless of what path actually
+         served this file. Needed because app.html is now also served at
+         /circle/join (via vercel.json rewrite for invite-link deep links),
+         and without this, relative asset paths would resolve one directory
+         level too deep and 404. Do NOT remove without re-testing the
+         /circle/join route. -->
+    <base href="/">
     <meta name="google-site-verification" content="E2XzG5seIX3NfWYxNcHpemGFRYWV9caq3J84nVzP1lk" />
     <!-- PRIMARY SEO -->
     <title>BoardOS — Free CBSE Study App for Class 9, 10, 11, 12</title>
