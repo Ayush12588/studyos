@@ -2624,9 +2624,9 @@ const App={
             <div id="circle-menu-dropdown" class="circle-menu-dropdown" style="display:none;position:absolute;top:calc(100% + 6px);right:0;background:var(--bg-card,#fff);border:1px solid var(--border-color,rgba(0,0,0,.08));border-radius:10px;box-shadow:0 8px 24px rgba(0,0,0,.12);min-width:200px;z-index:50;overflow:hidden">
                 <div style="padding:10px 14px;border-bottom:1px solid var(--border-color,rgba(0,0,0,.06))">
                     <p style="font-size:.68rem;color:var(--text-muted);margin-bottom:2px">Invite code</p>
-                    <p style="font-size:1rem;font-weight:700;letter-spacing:2px">${circle.invite_code}</p>
+                    <p style="font-size:1rem;font-weight:700;letter-spacing:2px;color:var(--text-primary)">${circle.invite_code}</p>
                 </div>
-                <button class="circle-menu-item" onclick="App.copyCircleInvite('${circle.invite_code}');App.toggleCircleMenu()" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:8px">
+                <button class="circle-menu-item" onclick="App.copyCircleInvite('${circle.invite_code}');App.toggleCircleMenu()" style="width:100%;text-align:left;padding:10px 14px;background:none;border:none;font-size:.85rem;cursor:pointer;display:flex;align-items:center;gap:8px;color:var(--text-primary)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
                     Copy Invite Link
                 </button>
