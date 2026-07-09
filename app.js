@@ -2564,7 +2564,7 @@ const App={
             if(error)throw error;
             this._openCircleLeaderboard=data||[];
         }catch(e){
-            warn('circles-leaderboard',e);
+            console.warn('[circles-leaderboard]',e);
             this.toast('Could not load leaderboard','error');
             this._openCircleId=null;
             this.render();
@@ -2588,7 +2588,7 @@ const App={
             }
             this.render();
         }catch(e){
-            warn('circles-overtakes',e);
+            console.warn('[circles-overtakes]',e);
             // Deliberately silent to the user — this is a bonus signal, not
             // core leaderboard data. Logged for debugging only.
         }
