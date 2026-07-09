@@ -946,6 +946,11 @@ const App={
         if (pendingCircleCode) {
             this.state.currentPage = 'circles';
             this._pendingCircleJoinCode = pendingCircleCode;
+            // Kept separately from _pendingCircleJoinCode (which renderCircles()
+            // nulls out after consuming) specifically so completeWelcome() can
+            // still tell a join was pending even if renderCircles() already
+            // fired once behind the onboarding overlay for a brand-new user.
+            this._pendingCircleJoinCodeRaw = pendingCircleCode;
             sessionStorage.removeItem('_pendingCircleCode');
             // render() (called later in init, not navigate()) does NOT fetch
             // tab data on its own — only navigate() pairs fetch+render. Since
@@ -2422,6 +2427,15 @@ const App={
         // Sync full profile to Supabase
         this._syncFullProfile();
         document.getElementById('welcome-overlay').classList.add('hidden');
+        // If a circle join was pending, renderCircles() may have already run
+        // once (and consumed _pendingCircleJoinCode) while this overlay was
+        // covering the whole screen — meaning the join modal opened, but
+        // invisibly, and nobody saw it. Re-arm it here so the render() call
+        // below actually shows it now that the overlay is gone.
+        if (this._pendingCircleJoinCodeRaw) {
+            this._pendingCircleJoinCode = this._pendingCircleJoinCodeRaw;
+            this._pendingCircleJoinCodeRaw = null;
+        }
         this.render();
         this.updateSidebar();
         setTimeout(_patchSidebarExam,300);
@@ -2640,20 +2654,20 @@ const App={
         const scored=[...rows].sort((a,b)=>
             (b.streak||0)-(a.streak||0) ||
             (b.active_days_this_week||0)-(a.active_days_this_week||0) ||
-            (b.chapters_completed||0)-(a.chapters_completed||0)
+            (b.chapters_confirmed_done||0)-(a.chapters_confirmed_done||0)
         );
 
         h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
         if(rows.length===0){
             h+=`<p style="color:var(--text-muted);font-size:.85rem;padding:8px 0">No members yet.</p>`;
         }else{
-            // Rank badge reintroduced by explicit product decision (previously
-            // omitted on purpose — see prior comment history). is_caller still
-            // only drives the subtle background tint + "(you)" label, nothing
-            // about rank calculation.
+            // Plain numeric rank, no gold/silver/bronze styling — explicit
+            // product decision: show "1, 2, 3" so users can see standing,
+            // without dressing the top 3 up as a podium. is_caller still
+            // only drives the subtle background tint + "(you)" label.
             scored.forEach((r,i)=>{
                 const rank=i+1;
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:${rank===1?'rgba(234,179,8,0.15);color:#b45309':rank===2?'rgba(148,163,184,0.2);color:#64748b':rank===3?'rgba(217,119,6,0.15);color:#92400e':'var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted)'};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_confirmed_done||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
