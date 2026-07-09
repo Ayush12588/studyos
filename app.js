@@ -2654,7 +2654,7 @@ const App={
         const scored=[...rows].sort((a,b)=>
             (b.streak||0)-(a.streak||0) ||
             (b.active_days_this_week||0)-(a.active_days_this_week||0) ||
-            (b.chapters_confirmed_done||0)-(a.chapters_confirmed_done||0)
+            (b.chapters_completed||0)-(a.chapters_completed||0)
         );
 
         h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
@@ -2667,7 +2667,7 @@ const App={
             // only drives the subtle background tint + "(you)" label.
             scored.forEach((r,i)=>{
                 const rank=i+1;
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_confirmed_done||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
