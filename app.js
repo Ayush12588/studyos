@@ -82,6 +82,7 @@ const App={
     // Transient, non-persisted: which circle's leaderboard is currently open in detail view
     _openCircleId:null,
     _openCircleLeaderboard:null,
+    _openCircleOvertakes:[],
     pomodoro:{running:false,mode:'work',timeLeft:1500,session:1,interval:null,focusSubjectId:null,focusChapterId:null},
     swInterval:null,
 
@@ -2556,6 +2557,7 @@ const App={
     async openCircle(circleId){
         this._openCircleId=circleId;
         this._openCircleLeaderboard=null;
+        this._openCircleOvertakes=[];
         this.render();
         try{
             const {data,error}=await DB.circles.getLeaderboard(circleId);
@@ -2565,13 +2567,37 @@ const App={
             warn('circles-leaderboard',e);
             this.toast('Could not load leaderboard','error');
             this._openCircleId=null;
+            this.render();
+            return;
         }
         this.render();
+
+        // Overtakes are a non-critical addition — fetched AFTER the main
+        // leaderboard has already rendered, and a failure here is only
+        // logged, never shown as an error toast or allowed to block the
+        // leaderboard the user actually came for.
+        try{
+            const {data,error}=await DB.circles.getRecentOvertakes(circleId);
+            if(error)throw error;
+            this._openCircleOvertakes=data||[];
+            const myOvertakes=this._openCircleOvertakes.filter(o=>o.overtaken_user_id===window._supabaseUserId);
+            if(myOvertakes.length>0&&window.Notifications){
+                myOvertakes.forEach(o=>{
+                    Notifications.send('circle-overtake',`${o.overtaker_name} passed you!`,`${o.overtaker_name} moved ahead of you in the leaderboard. Time to catch up.`,'circles');
+                });
+            }
+            this.render();
+        }catch(e){
+            warn('circles-overtakes',e);
+            // Deliberately silent to the user — this is a bonus signal, not
+            // core leaderboard data. Logged for debugging only.
+        }
     },
 
     closeCircleDetail(){
         this._openCircleId=null;
         this._openCircleLeaderboard=null;
+        this._openCircleOvertakes=[];
         this.render();
     },
 
@@ -2657,7 +2683,7 @@ const App={
             (b.chapters_completed||0)-(a.chapters_completed||0)
         );
 
-        h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'}</span></div>`;
+        h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'} • this week</span></div>`;
         if(rows.length===0){
             h+=`<p style="color:var(--text-muted);font-size:.85rem;padding:8px 0">No members yet.</p>`;
         }else{
@@ -2667,7 +2693,30 @@ const App={
             // only drives the subtle background tint + "(you)" label.
             scored.forEach((r,i)=>{
                 const rank=i+1;
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}</h4><p>${r.chapters_completed||0} chapters • ${r.active_days_this_week||0}/7 active days this week</p></div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+
+                // Rank-change arrow: rank_change is (yesterday's rank - today's
+                // rank) as computed server-side, so POSITIVE means improved
+                // (moved to a better/lower rank number), matching the arrow
+                // direction a user intuitively expects (up arrow = good).
+                // 0 or missing (first day, no snapshot yet) shows nothing —
+                // deliberately not showing a fake "no change" indicator on
+                // day one, since there's no real prior state to compare to.
+                let rankChangeHtml='';
+                if(typeof r.rank_change==='number'&&r.rank_change!==0){
+                    const improved=r.rank_change<0; // stored as current-yesterday; negative = moved up
+                    const delta=Math.abs(r.rank_change);
+                    rankChangeHtml=`<span style="font-size:.68rem;font-weight:700;color:${improved?'var(--text-success,#16a34a)':'var(--text-danger)'};display:inline-flex;align-items:center;gap:1px;margin-left:4px" aria-label="${improved?'Moved up':'Moved down'} ${delta} rank${delta===1?'':'s'}">${improved?'▲':'▼'}${delta}</span>`;
+                }
+
+                // Closest-rival gap: only shown for anyone NOT already rank 1
+                // (nobody to chase above them). This is the "concrete target"
+                // mechanic — turns an abstract list into one person to beat.
+                let gapHtml='';
+                if(rank>1&&typeof r.gap_to_next_rank==='number'&&r.gap_to_next_rank>0){
+                    gapHtml=`<p style="font-size:.72rem;color:var(--accent-light);font-weight:600;margin-top:2px">${r.gap_to_next_rank} streak day${r.gap_to_next_rank===1?'':'s'} behind rank ${rank-1}</p>`;
+                }
+
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}${rankChangeHtml}</h4><p>${r.chapters_this_week??r.chapters_completed??0} chapters this week • ${r.active_days_this_week||0}/7 active days</p>${gapHtml}</div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;

@@ -493,6 +493,17 @@ export const DB = {
       return run(supabase.rpc('get_circle_leaderboard', { p_circle_id: circleId }));
     },
 
+    // Returns overtake events between the last two daily snapshots (see
+    // circles_snapshot_schema.sql). Called when a circle's leaderboard is
+    // opened, so a user sees "X passed you" the next time they check in —
+    // NOT pushed proactively; there's currently no server->client push path
+    // for a user who isn't in the app. Flagged as a real gap, not silently
+    // assumed to work like a push notification.
+    async getRecentOvertakes(circleId) {
+      await requireAuth();
+      return run(supabase.rpc('get_recent_overtakes', { p_circle_id: circleId }));
+    },
+
     // Removes the current user's own membership row. Does NOT delete the
     // circle itself, even if this leaves it empty — deliberately separate
     // from delete() below. "Leaving" and "destroying the group" are
