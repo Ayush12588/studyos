@@ -47,28 +47,57 @@
   const isMobile = () => window.innerWidth < 768;
 
   // ─── STAGE 1: Micro-tour steps ────────────────────────────────────────────
-  // Deliberately short. Anchors only to elements stable across nav refactors.
+  // Action-tour, not a literacy-tour: every step points at ONE real dashboard
+  // widget and names the specific motion you make with it. No "here's the
+  // sidebar" step — the dashboard itself has enough nameable, stable anchors
+  // (.db-hero, .topbar-quicklog, .db-stats, streak card) to teach by pointing
+  // at real UI instead of talking about it abstractly.
+  //
+  // NOTE on the "+ Chapter" topbar button: it isn't wired in app.js (it must
+  // live in app.html's topbar markup, which wasn't available when this was
+  // written). I've targeted a best-guess selector with a documented fallback
+  // — see step 4 below. Verify the real id/class and swap it in before ship.
 
   const MICRO_STEPS = [
     {
-      target: isMobile() ? '#menu-toggle' : '#sidebar',
-      position: isMobile() ? 'bottom' : 'right',
-      title: 'Everything lives here',
-      body: isMobile()
-        ? 'Tap the menu icon any time to open Subjects, Circles, Backlog, and everything else.'
-        : 'Subjects, Circles, Backlog, AI Coach — it\'s all one tap away in here.',
-    },
-    {
       target: '.topbar-quicklog',
-      position: isMobile() ? 'bottom' : 'bottom',
-      title: 'The one button that matters most',
-      body: 'Every time you study, log it here. This is what builds your streak and keeps your progress accurate.',
+      position: 'bottom',
+      title: 'Start here: Quick Log',
+      body: 'Finished studying? Tap this to log the session — subject, chapter, time. This is what builds your streak.',
     },
     {
-      target: null,
-      position: 'center',
-      title: 'Your dashboard, every day',
-      body: 'This is your daily command center — streak, what\'s next, and how you\'re tracking. Check it whenever you sit down to study.',
+      target: '.db-hero',
+      position: 'bottom',
+      title: 'Your next move, decided for you',
+      body: 'This card always shows what to study next. Tap <strong>Log Session</strong> when you finish it, or <strong>Skip →</strong> if you\'d rather do something else.',
+    },
+    {
+      // Revisions Due panel has no stable class — it's a conditionally-rendered
+      // inline-styled div (see renderDashboard(), SECTION 2), and its border
+      // color (#F97316) is NOT unique — the active-streak card uses the same
+      // color, so a style-attribute selector would ambiguously match either.
+      // Targeting structurally instead: it's the sibling immediately after
+      // .db-hero, and ONLY renders when rd.length > 0 (see revisionsDueHTML
+      // in renderDashboard()). Falls back to .db-stats when nothing's due,
+      // so the tour never points at empty space either way.
+      target: '.db-hero ~ div:has(button[onclick*="revisions"])',
+      fallback: '.db-stats',
+      position: 'top',
+      title: 'Revisions pile up if ignored',
+      body: 'Chapters you studied before resurface here on a schedule. Tap any one to clear it — that\'s what "overdue" means.',
+    },
+    {
+      target: '#topbar-add-chapter, .topbar-add-chapter, [onclick*="AddChapter"]',
+      fallback: '.topbar-quicklog',
+      position: 'bottom',
+      title: 'Adding new material',
+      body: 'Starting a new chapter that isn\'t in your syllabus yet? Add it here — it\'ll show up under the right subject.',
+    },
+    {
+      target: '.db-stats',
+      position: 'top',
+      title: 'Your streak lives here',
+      body: 'One logged session a day keeps it alive. Miss a day and it resets — unless you\'ve earned a freeze.',
     },
   ];
 
