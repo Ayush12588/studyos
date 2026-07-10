@@ -2689,12 +2689,14 @@ const App={
         }else{
             // Plain numeric rank, no gold/silver/bronze styling — explicit
             // product decision: show "1, 2, 3" so users can see standing,
-            // without dressing the top 3 up as a podium. is_caller still
-            // only drives the subtle background tint + "(you)" label.
-            // Rank 1 DOES get extra visual weight (border) — separate
-            // decision from the podium-icon one: distinguishing "the person
-            // to catch" from the rest of a flat list, without turning it
-            // into gold/silver/bronze medal iconography.
+            // without dressing the top 3 up as a podium.
+            // Rank 1: colored LEFT BORDER accent (matches .db-stat-indigo/
+            // -green/-orange convention already used on the dashboard —
+            // NOT a full box border, which felt bolted-on/generic here).
+            // Ranks 2+: no circle/container at all, just a large bold
+            // numeral in --text-muted, same weight class as db-stat-val —
+            // quieter than a badge, keeps visual attention on rank 1 and
+            // on the numbers that actually matter (minutes, streak).
             scored.forEach((r,i)=>{
                 const rank=i+1;
                 const isTop=rank===1;
@@ -2710,7 +2712,7 @@ const App={
                 if(typeof r.rank_change==='number'&&r.rank_change!==0){
                     const improved=r.rank_change<0; // stored as current-yesterday; negative = moved up
                     const delta=Math.abs(r.rank_change);
-                    rankChangeHtml=`<span style="font-size:.68rem;font-weight:700;color:${improved?'var(--text-success,#16a34a)':'var(--text-danger)'};display:inline-flex;align-items:center;gap:1px;margin-left:4px" aria-label="${improved?'Moved up':'Moved down'} ${delta} rank${delta===1?'':'s'}">${improved?'▲':'▼'}${delta}</span>`;
+                    rankChangeHtml=`<span style="font-size:.68rem;font-weight:700;color:${improved?'var(--text-success)':'var(--text-danger)'};display:inline-flex;align-items:center;gap:1px;margin-left:4px" aria-label="${improved?'Moved up':'Moved down'} ${delta} rank${delta===1?'':'s'}">${improved?'▲':'▼'}${delta}</span>`;
                 }
 
                 // Closest-rival gap: MINUTES behind the next higher rank
@@ -2720,28 +2722,50 @@ const App={
                 // are all the same distance behind the SAME person above
                 // them, not behind each other. Must look up that person's
                 // actual rank from the sorted list, not assume rank-1.
+                // Styled as a tinted info pill (--color-focus-bg/--info),
+                // matching the paceTag recipe used elsewhere in the app,
+                // instead of plain colored text.
                 let gapHtml='';
                 if(rank>1&&typeof r.gap_to_next_rank==='number'&&r.gap_to_next_rank>0){
-                    const nextRankRow=scored.find(other=>(other.weekly_minutes||0)>(r.weekly_minutes||0));
-                    const nextRankNum=nextRankRow?scored.filter(o=>(o.weekly_minutes||0)>(r.weekly_minutes||0)).length:rank-1;
-                    gapHtml=`<p style="font-size:.72rem;color:var(--accent-light);font-weight:600;margin-top:2px">${this.formatMin(r.gap_to_next_rank)} behind rank ${nextRankNum}</p>`;
+                    const nextRankNum=scored.filter(o=>(o.weekly_minutes||0)>(r.weekly_minutes||0)).length;
+                    gapHtml=`<span style="display:inline-block;font-size:.68rem;font-weight:700;padding:2px 8px;border-radius:6px;background:var(--color-focus-bg);color:var(--info);margin-top:4px">${this.formatMin(r.gap_to_next_rank)} behind rank ${nextRankNum}</span>`;
                 }
 
                 // 7-day mini sparkline: r.daily_minutes is a Mon->Sun jsonb
                 // array of integers already deserialized to a JS array by
                 // Supabase. Rendered as 7 thin bars, tallest bar in the set
                 // defines 100% height so the shape is always relative to
-                // that person's own week, not a fixed absolute scale —
-                // otherwise a light week would render as 7 near-invisible
-                // slivers instead of a readable pattern.
+                // that person's own week, not a fixed absolute scale.
+                // FIX: an all-zero week previously rendered 7 tiny near-
+                // invisible slivers that visually blurred into a stray
+                // dashed-line artifact on screen. Now an all-zero week
+                // renders NOTHING (replaced by a plain muted caption)
+                // instead of a barely-visible broken-looking bar row.
                 const dm=Array.isArray(r.daily_minutes)?r.daily_minutes:[0,0,0,0,0,0,0];
-                const maxDay=Math.max(1,...dm);
-                const sparkHtml=`<div style="display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:4px" aria-hidden="true">${dm.map(mins=>{
-                    const barH=Math.max(2,Math.round((mins/maxDay)*18));
-                    return`<div style="width:5px;height:${barH}px;border-radius:2px;background:${mins>0?'var(--accent-light)':'var(--bg-subtle,rgba(0,0,0,0.08))'};opacity:${mins>0?'0.9':'0.5'}"></div>`;
-                }).join('')}</div>`;
+                const maxDay=Math.max(0,...dm);
+                const sparkHtml=maxDay===0
+                    ? `<p style="font-size:.68rem;color:var(--text-muted);margin-top:6px">No study time logged yet this week</p>`
+                    : `<div style="display:flex;align-items:flex-end;gap:3px;height:18px;margin-top:6px" aria-hidden="true">${dm.map(mins=>{
+                        const barH=Math.max(3,Math.round((mins/maxDay)*18));
+                        return`<div style="width:6px;height:${barH}px;border-radius:2px;background:${mins>0?'var(--accent-light)':'var(--border)'}"></div>`;
+                    }).join('')}</div>`;
 
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px;':''}${isTop?'border:1.5px solid var(--accent-light);border-radius:10px;':''}padding:10px 12px"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:${isTop?'28px':'24px'};height:${isTop?'28px':'24px'};border-radius:50%;background:${isTop?'var(--accent-light)':'var(--bg-subtle,rgba(0,0,0,0.05))'};color:${isTop?'#fff':'var(--text-muted)'};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div style="flex:1;min-width:0"><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}${rankChangeHtml}</h4><p style="font-size:${isTop?'.92rem':'.85rem'};font-weight:${isTop?'700':'600'};color:var(--text-primary)">${this.formatMin(r.weekly_minutes||0)} this week</p><p style="font-size:.72rem;color:var(--text-muted)">${r.chapters_completed||0} chapters completed • ${r.active_days_this_week||0}/7 active days</p>${gapHtml}${sparkHtml}</div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0" title="${r.streak||0} day streak">🔥 ${r.streak||0}</span></div>`;
+                // Streak badge: rebuilt as a tinted pill using the SAME
+                // recipe as paceTag/.tag-* elsewhere (tinted bg + solid
+                // text from one semantic color pair) instead of the
+                // generic .tag class, which is meant for chapter-status
+                // labels, not streaks. --color-streak-bg/--color-streak
+                // already exist in the design system for exactly this.
+                const streakBadge=`<span style="flex-shrink:0;display:inline-flex;align-items:center;gap:3px;font-size:.72rem;font-weight:700;padding:4px 9px;border-radius:var(--radius-xs);background:${r.streak>0?'var(--color-streak-bg)':'var(--color-surface)'};color:${r.streak>0?'var(--color-streak,#F97316)':'var(--text-muted)'};border:1px solid ${r.streak>0?'rgba(249,115,22,0.2)':'var(--border)'}" title="${r.streak||0} day streak">🔥 ${r.streak||0}</span>`;
+
+                // Rank marker: rank 1 = solid filled circle (40px, matching
+                // .stat-icon sizing convention); ranks 2+ = plain bold
+                // numeral, no shape, --text-muted — see comment above.
+                const rankMarker=isTop
+                    ? `<span style="flex-shrink:0;width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.95rem;font-weight:700">${rank}</span>`
+                    : `<span style="flex-shrink:0;width:36px;text-align:center;font-size:1.1rem;font-weight:700;color:var(--text-muted)">${rank}</span>`;
+
+                h+=`<div style="display:flex;align-items:flex-start;gap:12px;padding:14px 16px;margin-bottom:8px;border-radius:var(--radius-sm);background:var(--color-surface);border:1px solid var(--color-border);${isTop?'border-left:3px solid var(--accent);':''}${r.is_caller?'background:var(--color-surface-hover);':''}">${rankMarker}<div style="flex:1;min-width:0"><h4 style="font-size:.85rem;font-weight:600;color:var(--text-primary)">${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}${rankChangeHtml}</h4><p style="font-size:${isTop?'1.15rem':'.95rem'};font-weight:700;color:var(--text-primary);line-height:1.3;margin-top:2px">${this.formatMin(r.weekly_minutes||0)}<span style="font-size:.68rem;font-weight:500;color:var(--text-muted)"> this week</span></p><p style="font-size:.72rem;color:var(--text-muted);margin-top:2px">${r.chapters_completed||0} chapters completed • ${r.active_days_this_week||0}/7 active days</p>${gapHtml}${sparkHtml}</div>${streakBadge}</div>`;
             });
         }
         h+=`</div>`;
