@@ -85,7 +85,7 @@
       "schedule": "30 12 * * *"
     },
     {
-      "path": "/api/cron/circle-snapshot",
+      "path": "/api/circle-snapshot",
       "schedule": "30 18 * * *"
     }
   ]
