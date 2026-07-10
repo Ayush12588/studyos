@@ -2713,16 +2713,18 @@ const App={
                     rankChangeHtml=`<span style="font-size:.68rem;font-weight:700;color:${improved?'var(--text-success,#16a34a)':'var(--text-danger)'};display:inline-flex;align-items:center;gap:1px;margin-left:4px" aria-label="${improved?'Moved up':'Moved down'} ${delta} rank${delta===1?'':'s'}">${improved?'▲':'▼'}${delta}</span>`;
                 }
 
-                // Closest-rival gap: now MINUTES behind next rank, not streak
-                // days — matches the new primary metric. Only shown for
-                // anyone NOT already rank 1 (nobody to chase above them).
-                // This is the "concrete target" mechanic — turns an abstract
-                // list into one person to beat, and unlike a streak-day gap
-                // (which implies waiting a full day), a minutes gap is
-                // closeable right now by opening the app and studying.
+                // Closest-rival gap: MINUTES behind the next higher rank
+                // tier. NOTE: "next higher rank" is NOT necessarily
+                // rank-1 — if multiple people are tied at the same
+                // weekly_minutes value, they all share one rank number and
+                // are all the same distance behind the SAME person above
+                // them, not behind each other. Must look up that person's
+                // actual rank from the sorted list, not assume rank-1.
                 let gapHtml='';
                 if(rank>1&&typeof r.gap_to_next_rank==='number'&&r.gap_to_next_rank>0){
-                    gapHtml=`<p style="font-size:.72rem;color:var(--accent-light);font-weight:600;margin-top:2px">${this.formatMin(r.gap_to_next_rank)} behind rank ${rank-1}</p>`;
+                    const nextRankRow=scored.find(other=>(other.weekly_minutes||0)>(r.weekly_minutes||0));
+                    const nextRankNum=nextRankRow?scored.filter(o=>(o.weekly_minutes||0)>(r.weekly_minutes||0)).length:rank-1;
+                    gapHtml=`<p style="font-size:.72rem;color:var(--accent-light);font-weight:600;margin-top:2px">${this.formatMin(r.gap_to_next_rank)} behind rank ${nextRankNum}</p>`;
                 }
 
                 // 7-day mini sparkline: r.daily_minutes is a Mon->Sun jsonb
