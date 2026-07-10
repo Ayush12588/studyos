@@ -1,4 +1,4 @@
-const CACHE_NAME = 'boardos-v9'; // bumped: NETWORK_FIRST now covers extension-less paths after cleanUrls
+const CACHE_NAME = 'boardos-v10'; // bumped: fixed Supabase/API requests being re-piped through fetch(event.request), which could break CORS Origin negotiation
 
 const EXTERNAL_ASSETS = [
   'https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap',
@@ -50,12 +50,25 @@ self.addEventListener('fetch', event => {
     return; // not calling event.respondWith() lets the browser handle it natively
   }
 
-  // Network-only: API routes, Supabase, non-GET requests
+  // Supabase and API routes: let the browser handle these entirely
+  // untouched — do NOT re-pipe through fetch(event.request). Passing the
+  // original Request object back through fetch() inside a Service Worker
+  // can alter how the browser negotiates the Origin header on cross-origin
+  // requests, which is what caused Supabase's CORS check to fail here even
+  // though the same request works fine outside SW interception. Matches
+  // the THIRD_PARTY_IGNORE pattern above: no respondWith() call at all.
   if (
     url.pathname.startsWith('/api/') ||
-    url.hostname.includes('supabase.co') ||
-    event.request.method !== 'GET'
+    url.hostname.includes('supabase.co')
   ) {
+    return;
+  }
+
+  // Non-GET requests to our own origin (not covered by the case above):
+  // still explicitly pass through via respondWith, since some browsers
+  // won't correctly fall back to network-handling for a fetch event with
+  // no respondWith() call at all on same-origin non-GET requests.
+  if (event.request.method !== 'GET') {
     event.respondWith(fetch(event.request));
     return;
   }
