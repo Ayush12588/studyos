@@ -2670,17 +2670,17 @@ const App={
         }
 
         const rows=this._openCircleLeaderboard;
-        // Rank by streak, then active days this week, then chapters completed —
-        // mirrors the RPC's own tiebreak chain (order by streak desc,
-        // active_days_this_week desc, user_id) so the rank shown here always
-        // matches what the backend considers "first." Ties on streak still
-        // resolve to a real rank via the secondary/tertiary keys rather than
-        // leaving multiple users bunched at #1, which is what caused the
-        // "why is there no ranking" confusion when everyone was at streak 0.
+        // Rank by weekly_minutes, then streak as tiebreaker — mirrors the
+        // RPC's own tiebreak chain (order by weekly_minutes desc, streak
+        // desc, user_id) so the rank shown here always matches what the
+        // backend considers "first." Previously sorted by streak first,
+        // which is why 3+ members tied at streak 0 all bunched at the same
+        // apparent rank while a 6-chapter week went invisible to ranking
+        // entirely — weekly_minutes as primary key fixes both: it rarely
+        // ties, and it directly reflects actual study effort this week.
         const scored=[...rows].sort((a,b)=>
-            (b.streak||0)-(a.streak||0) ||
-            (b.active_days_this_week||0)-(a.active_days_this_week||0) ||
-            (b.chapters_completed||0)-(a.chapters_completed||0)
+            (b.weekly_minutes||0)-(a.weekly_minutes||0) ||
+            (b.streak||0)-(a.streak||0)
         );
 
         h+=`<div class="card"><div class="card-header"><span class="card-title">Leaderboard</span><span class="card-subtitle">${rows.length} member${rows.length===1?'':'s'} • this week</span></div>`;
@@ -2691,8 +2691,13 @@ const App={
             // product decision: show "1, 2, 3" so users can see standing,
             // without dressing the top 3 up as a podium. is_caller still
             // only drives the subtle background tint + "(you)" label.
+            // Rank 1 DOES get extra visual weight (border) — separate
+            // decision from the podium-icon one: distinguishing "the person
+            // to catch" from the rest of a flat list, without turning it
+            // into gold/silver/bronze medal iconography.
             scored.forEach((r,i)=>{
                 const rank=i+1;
+                const isTop=rank===1;
 
                 // Rank-change arrow: rank_change is (yesterday's rank - today's
                 // rank) as computed server-side, so POSITIVE means improved
@@ -2708,15 +2713,33 @@ const App={
                     rankChangeHtml=`<span style="font-size:.68rem;font-weight:700;color:${improved?'var(--text-success,#16a34a)':'var(--text-danger)'};display:inline-flex;align-items:center;gap:1px;margin-left:4px" aria-label="${improved?'Moved up':'Moved down'} ${delta} rank${delta===1?'':'s'}">${improved?'▲':'▼'}${delta}</span>`;
                 }
 
-                // Closest-rival gap: only shown for anyone NOT already rank 1
-                // (nobody to chase above them). This is the "concrete target"
-                // mechanic — turns an abstract list into one person to beat.
+                // Closest-rival gap: now MINUTES behind next rank, not streak
+                // days — matches the new primary metric. Only shown for
+                // anyone NOT already rank 1 (nobody to chase above them).
+                // This is the "concrete target" mechanic — turns an abstract
+                // list into one person to beat, and unlike a streak-day gap
+                // (which implies waiting a full day), a minutes gap is
+                // closeable right now by opening the app and studying.
                 let gapHtml='';
                 if(rank>1&&typeof r.gap_to_next_rank==='number'&&r.gap_to_next_rank>0){
-                    gapHtml=`<p style="font-size:.72rem;color:var(--accent-light);font-weight:600;margin-top:2px">${r.gap_to_next_rank} streak day${r.gap_to_next_rank===1?'':'s'} behind rank ${rank-1}</p>`;
+                    gapHtml=`<p style="font-size:.72rem;color:var(--accent-light);font-weight:600;margin-top:2px">${this.formatMin(r.gap_to_next_rank)} behind rank ${rank-1}</p>`;
                 }
 
-                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px':''}"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:24px;height:24px;border-radius:50%;background:var(--bg-subtle,rgba(0,0,0,0.05));color:var(--text-muted);display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}${rankChangeHtml}</h4><p>${r.chapters_this_week??r.chapters_completed??0} chapters this week • ${r.active_days_this_week||0}/7 active days</p>${gapHtml}</div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0">🔥 ${r.streak||0}</span></div>`;
+                // 7-day mini sparkline: r.daily_minutes is a Mon->Sun jsonb
+                // array of integers already deserialized to a JS array by
+                // Supabase. Rendered as 7 thin bars, tallest bar in the set
+                // defines 100% height so the shape is always relative to
+                // that person's own week, not a fixed absolute scale —
+                // otherwise a light week would render as 7 near-invisible
+                // slivers instead of a readable pattern.
+                const dm=Array.isArray(r.daily_minutes)?r.daily_minutes:[0,0,0,0,0,0,0];
+                const maxDay=Math.max(1,...dm);
+                const sparkHtml=`<div style="display:flex;align-items:flex-end;gap:2px;height:20px;margin-top:4px" aria-hidden="true">${dm.map(mins=>{
+                    const barH=Math.max(2,Math.round((mins/maxDay)*18));
+                    return`<div style="width:5px;height:${barH}px;border-radius:2px;background:${mins>0?'var(--accent-light)':'var(--bg-subtle,rgba(0,0,0,0.08))'};opacity:${mins>0?'0.9':'0.5'}"></div>`;
+                }).join('')}</div>`;
+
+                h+=`<div class="rev-item" style="${r.is_caller?'background:rgba(99,102,241,0.06);border-radius:8px;':''}${isTop?'border:1.5px solid var(--accent-light);border-radius:10px;':''}padding:10px 12px"><div class="rev-info" style="display:flex;align-items:center;gap:10px"><span style="flex-shrink:0;width:${isTop?'28px':'24px'};height:${isTop?'28px':'24px'};border-radius:50%;background:${isTop?'var(--accent-light)':'var(--bg-subtle,rgba(0,0,0,0.05))'};color:${isTop?'#fff':'var(--text-muted)'};display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700">${rank}</span><div style="flex:1;min-width:0"><h4>${r.name}${r.is_caller?' <span style="font-size:.7rem;color:var(--accent-light);font-weight:600">(you)</span>':''}${rankChangeHtml}</h4><p style="font-size:${isTop?'.92rem':'.85rem'};font-weight:${isTop?'700':'600'};color:var(--text-primary)">${this.formatMin(r.weekly_minutes||0)} this week</p><p style="font-size:.72rem;color:var(--text-muted)">${r.chapters_completed||0} chapters completed • ${r.active_days_this_week||0}/7 active days</p>${gapHtml}${sparkHtml}</div></div><span class="tag ${r.streak>0?'tag-revised':''}" style="flex-shrink:0" title="${r.streak||0} day streak">🔥 ${r.streak||0}</span></div>`;
             });
         }
         h+=`</div>`;
