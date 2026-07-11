@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         // Only candidates: opted in, never sent, signed up at least WINBACK_DAYS ago
         let query = supabaseAdmin
             .from('profiles')
-            .select('user_id, name, notify_winback, winback_sent_at, created_at')
+            .select('user_id, name, notify_winback, winback_sent_at, created_at, last_study_date')
             .eq('notify_winback', true)
             .is('winback_sent_at', null)
             .lte('created_at', cutoff);
@@ -109,11 +109,19 @@ export default async function handler(req, res) {
                 if (chErr) throw chErr;
 
                 const touchedChapters = (chapters || []).filter(c => c.status !== TOUCHED_STATUSES_EXCLUDE);
-                const hasActivity = touchedChapters.length > 0;
+                const hasActivity = touchedChapters.length > 0 || Boolean(profile.last_study_date);
 
-                // Most recent activity timestamp across the three date fields
+                // Most recent activity timestamp across chapter-level date fields
+                // AND profiles.last_study_date. This matters: logging a daily
+                // session (streak tracking) updates last_study_date directly and
+                // does NOT touch any chapters row — confirmed via production bug
+                // where a user studying daily (streak: 2, last_study_date:
+                // yesterday) was misclassified as "lapsed" because every chapter
+                // date field was 10 days stale. last_study_date is the more
+                // authoritative signal for "did they use the app," not a fallback.
                 const activityDates = (chapters || [])
                     .flatMap(c => [c.last_studied_date, c.task_touched_date, c.completion_date])
+                    .concat(profile.last_study_date ? [profile.last_study_date] : [])
                     .filter(Boolean)
                     .sort()
                     .reverse();
