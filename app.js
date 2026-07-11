@@ -3107,10 +3107,10 @@ const App={
         const rdVisible=rdSortedFull.slice(0,3);
         const rdHidden=rdSortedFull.length-rdVisible.length;
         const revisionsDueHTML=rd.length>0?`
-        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:var(--color-surface)">
+        <div style="border:1.5px solid var(--accent);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:var(--color-surface)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></svg>Ready to Revise</span>
-                <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:var(--accent-light)">See all ${rd.length} →</button>
+                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent-light);display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></svg>Ready to Revise</span>
+                <span onclick="App.navigate('revisions')" style="cursor:pointer;font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--accent);color:#fff" title="View all revisions">${rd.length} →</span>
             </div>
             ${rd.length>3?`<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">Showing 3 most helpful of ${rd.length}</div>`:''}
             ${rdVisible.map(c=>{
@@ -3122,7 +3122,7 @@ const App={
                         <div style="font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
                         <div style="font-size:.72rem;color:var(--text-muted)">${c.subjectName||''}</div>
                     </div>
-                    <span style="font-size:.72rem;font-weight:600;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${daysOverdue}d since last look</span>
+                    <span style="font-size:.72rem;font-weight:600;color:var(--accent-light);white-space:nowrap;flex-shrink:0">${daysOverdue}d since last look</span>
                 </div>`;
             }).join('')}
             ${rdHidden>0?`<div onclick="App.navigate('revisions')" style="text-align:center;padding:8px 0 2px;font-size:.72rem;color:var(--accent-light);cursor:pointer;font-weight:600">+ ${rdHidden} more → View all</div>`:''}
@@ -5072,7 +5072,7 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
         suggestions.push('How do I stay consistent?');
         el.innerHTML=`
 <div class="coach-stat-strip">
-    <div class="coach-stat-item"><div class="coach-stat-val">${sp}%</div><div class="coach-stat-lbl">Done</div></div>
+    <div class="coach-stat-item"><div class="coach-stat-val">${sp}%</div><div class="coach-stat-lbl">Syllabus Covered</div></div>
     <div class="coach-stat-item"><div class="coach-stat-val ${od.length>0?'danger':''}">${od.length}</div><div class="coach-stat-lbl">Overdue</div></div>
     <div class="coach-stat-item"><div class="coach-stat-val">${totalRevisions}</div><div class="coach-stat-lbl">Revisions</div></div>
     <div class="coach-stat-item"><div class="coach-stat-val ${goalPct>=100?'success':''}">${goalPct}%</div><div class="coach-stat-lbl">Goal</div></div>
