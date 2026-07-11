@@ -20,6 +20,7 @@
  */
 
 import { createClient } from '@supabase/supabase-js';
+import { buildAnnouncementEmail } from '../emails/announcement-template.js';
 
 const supabaseAdmin = createClient(
     process.env.SUPABASE_URL,
@@ -30,28 +31,11 @@ const supabaseAdmin = createClient(
 const ANNOUNCEMENT = {
     subject: 'New on BoardOS: Circles are here',
     heading: 'Study with your friends now',
-    body: `We just shipped Circles — small friend groups where you can see
-    each other's progress and climb a shared leaderboard together.`,
-    ctaText: 'Try Circles',
-    ctaPath: '/circles'
+    body: `We just shipped Circles — small friend groups where you can see each other's progress and climb a shared leaderboard together.`,
+    ctaText: 'Try Circles'
+    // No ctaPath: Circles has no direct deep link, CTA goes to appUrl root.
 };
 // -------------------------------
-
-function buildAnnouncementHtml({ name, appUrl }) {
-    return `
-    <div style="font-family: -apple-system, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-      <p>Hi ${name || 'there'},</p>
-      <h2 style="margin: 16px 0 8px;">${ANNOUNCEMENT.heading}</h2>
-      <p style="color: #444; line-height: 1.5;">${ANNOUNCEMENT.body}</p>
-      <a href="${appUrl}${ANNOUNCEMENT.ctaPath}"
-         style="display:inline-block; margin-top:16px; padding:10px 20px; background:#4F46E5; color:#fff; text-decoration:none; border-radius:6px;">
-        ${ANNOUNCEMENT.ctaText}
-      </a>
-      <p style="margin-top:24px; font-size:12px; color:#999;">
-        You're getting this because you have feature updates enabled on BoardOS.
-      </p>
-    </div>`;
-}
 
 async function sendEmailViaResend(to, subject, html) {
     const res = await fetch('https://api.resend.com/emails', {
@@ -106,7 +90,7 @@ export default async function handler(req, res) {
 
                 if (testEmail && userEmail.toLowerCase() !== testEmail) continue;
 
-                const html = buildAnnouncementHtml({ name: profile.name, appUrl });
+                const html = buildAnnouncementEmail({ name: profile.name, announcement: ANNOUNCEMENT, appUrl });
 
                 if (dryRun) {
                     dryRunDetails.push({ user_id: profile.user_id, email: userEmail, subject: ANNOUNCEMENT.subject });
