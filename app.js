@@ -3009,10 +3009,10 @@ const App={
             if(riskSubjs.length>0)atRiskSubject=riskSubjs[0].name;
         }
 
-        // Streak at risk (studied yesterday, haven't today, streak > 1)
-        if(st>1&&daysSince===1&&tm===0){
-            return`🔥 ${st}-day streak on the line — log a session today to keep it alive!`;
-        }
+        // NOTE: previously showed "🔥 Nd streak on the line" here, but that
+        // duplicated the streak badge already inside the primary-action hero
+        // right below the greeting — same anxiety-stacking pattern as the
+        // old dashboard body. Removed; falls through to next-priority message.
         // Exam very close
         if(dte!==null&&dte>0&&dte<=14){
             return`⏰ ${dte} days to boards — every session counts now. You've got this!`;
@@ -3241,11 +3241,6 @@ const App={
         }
 
         // Streak freeze display
-        const sf=this.state.streakFreezes||0;
-        const freezeSlotsHTML=[0,1,2].map(i=>`<span style="font-size:1rem;opacity:${i<sf?'1':'0.25'}">🧊</span>`).join('');
-        const freezeLabelHTML=sf===0
-            ?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:4px">no freezes — earn one at a 7-day streak</div>`
-            :`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:4px">streak freeze${sf!==1?'s':''}</div>`;
         const freezeBannerHTML=this.state.pendingFreezeNotice
             ?`<div id="freeze-notice-banner" style="background:var(--color-focus-bg);border:1px solid var(--color-focus);border-radius:var(--radius-sm);padding:12px 16px;font-size:.82rem;display:flex;align-items:center;gap:10px;margin-bottom:12px">
                 <span style="flex-shrink:0;font-size:1.1rem">🧊</span>
@@ -3253,15 +3248,13 @@ const App={
                 <button onclick="App.dismissFreezeNotice()" style="background:none;border:none;cursor:pointer;color:var(--color-text-secondary);font-size:1.1rem;padding:2px 6px;flex-shrink:0;line-height:1" title="Dismiss">×</button>
             </div>`
             :'';
-        // Streak is now surfaced as a small inline badge inside the hero
-        // (see primary-action hero above) rather than its own bordered card —
-        // this row just keeps the freeze-slot indicator, since that carries
-        // real state info the hero badge doesn't show.
+        // The freeze-slot row (🧊🧊🧊 "no freezes — earn one at 7 days") used
+        // to render permanently here regardless of state — that's the second
+        // always-on element being flagged. Freezes are still fully visible:
+        // via freezeBannerHTML right after one's actually used, and in the
+        // Streak modal's own "Freeze Slots" section (unchanged) for anyone
+        // who wants to check their count on demand.
         const statsHTML=`
-        ${freezeSlotsHTML?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:4px 2px">
-            <div style="display:flex;align-items:center;gap:4px">${freezeSlotsHTML}</div>
-            ${freezeLabelHTML}
-        </div>`:''}
         <div class="db-stats" style="grid-template-columns:repeat(3,1fr);">
             <div class="db-stat db-stat-indigo">
                 ${tm>0
@@ -3555,12 +3548,12 @@ const App={
             </div>`;
 
         // ── ASSEMBLE ──────────────────────────────────────────────────────
-        // Order: freeze banner → greeting → unified primary-action hero
-        //        (streak now inline badge within it) → "view all revisions"
-        //        link (only if more are waiting) → freeze-slot row + 3 stat
-        //        cards → backlog widget → coach nudge → week chart + subjects
-        //        (main col) | readiness (de-emphasized) + eod check-in +
-        //        heatmap + weak chapters (side col)
+        // Order: freeze banner (only when a freeze was just used) → greeting
+        //        → unified primary-action hero (streak inline badge within
+        //        it) → "view all revisions" link (only if more are waiting)
+        //        → 3 stat cards → backlog widget → coach nudge → week chart
+        //        + subjects (main col) | readiness (de-emphasized) + eod
+        //        check-in + heatmap + weak chapters (side col)
         el.innerHTML=`
         ${freezeBannerHTML}
         <p class="db-greeting-compact">Good ${this.getGreeting()}, ${this.state.profile.name} 👋 &nbsp;·&nbsp; <span style="color:var(--text-secondary)">${this.getSmartGreeting()}</span></p>
