@@ -2068,12 +2068,27 @@ const App={
             return `<div class="streak-session-row"><span class="streak-session-date">${dLabel}</span><span class="streak-session-main">${chapterName} · ${subjectLabel}</span><span class="streak-session-dur">${this.formatMin(s.timeSpent||0)}</span></div>`;
         }).join('');
 
-        body.innerHTML=`
-            <div class="streak-stats-row">
+        // ── Zero-state header/stats reframe ──────────────────────────────
+        // At streak=0, "Current: 0" sitting cold next to "Best: 10" reads as
+        // a scoreboard of failure, not an invitation. Swap the header icon/
+        // title and replace the first stat card with a single explainer
+        // line instead — Best Streak + Consistency stay, since that history
+        // is still genuinely useful context even with no streak running.
+        const modalIcon=document.getElementById('streak-modal-icon');
+        const modalTitle=document.getElementById('streak-modal-title');
+        if(modalIcon)modalIcon.textContent=currentStreak>0?'🔥':'🕯️';
+        if(modalTitle)modalTitle.textContent=currentStreak>0?'Streak':'Start your streak';
+
+        const statsRowHTML=currentStreak>0
+            ?`<div class="streak-stats-row">
                 <div class="streak-stat-card"><div class="streak-stat-val">${currentStreak}</div><div class="streak-stat-label">Current Streak</div></div>
                 <div class="streak-stat-card"><div class="streak-stat-val">${bestStreak}</div><div class="streak-stat-label">Best Streak</div></div>
                 <div class="streak-stat-card"><div class="streak-stat-val">${consistency}%</div><div class="streak-stat-label">Consistency</div></div>
-            </div>
+            </div>`
+            :`<p class="streak-zero-hint">Log a session today to begin — any subject, any length. Every day you study in a row grows your streak.${bestStreak>0?` Your best run so far is <strong style="color:var(--text-primary)">${bestStreak} day${bestStreak!==1?'s':''}</strong>.`:''}</p>`;
+
+        body.innerHTML=`
+            ${statsRowHTML}
             <div class="streak-section">
                 <div class="streak-section-title">Freeze Slots</div>
                 <div class="streak-freeze-row">${freezeSlots.map(f=>`<div class="streak-freeze-slot ${f?'filled':''}">${f?'🧊':''}</div>`).join('')}</div>
@@ -2585,12 +2600,18 @@ const App={
 
     updateTopbarPills(){
         // ── Streak pill ──
+        // Always visible now — a hidden pill at streak=0 meant new users and
+        // anyone who'd just lost a streak had no way to discover the Streak
+        // modal (calendar, freezes, best streak) at all. Zero state uses a
+        // muted "dormant, tap to start" treatment instead of disappearing.
         const streak=this.state.profile.streak||0;
         const sp=document.getElementById('topbar-streak-pill');
         const sv=document.getElementById('topbar-streak-val');
         if(sp&&sv){
-            if(streak>0){sp.style.display='inline-flex';sv.textContent=streak}
-            else{sp.style.display='none'}
+            sp.style.display='inline-flex';
+            sv.textContent=streak>0?streak:'';
+            sp.classList.toggle('is-zero',streak===0);
+            sp.setAttribute('aria-label',streak>0?`${streak} day study streak`:'No active streak — tap to start');
         }
         // ── Exam countdown pill ──
         const dte=this.getDaysToExam();

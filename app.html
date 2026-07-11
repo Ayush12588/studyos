@@ -324,10 +324,13 @@
                     <input type="text" class="form-input" placeholder="Search..." style="width:160px;padding:7px 12px 7px 30px;font-size:.8rem" oninput="App.handleSearch(this.value)" onfocus="App.showSearch=true" onblur="setTimeout(()=>App.showSearch=false,200)">
                     <div id="search-dropdown" style="position:absolute;top:100%;left:0;right:0;background:var(--color-surface);border:1px solid var(--color-border);border-radius:var(--radius-sm);margin-top:4px;display:none;z-index:60;max-height:240px;overflow-y:auto"></div>
                 </div>
-                <!-- Streak pill: hidden if streak === 0 -->
-                <span class="topbar-pill topbar-streak-pill" id="topbar-streak-pill" style="display:none;cursor:pointer" aria-label="Study streak" onclick="App.openStreakModal()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
-                    <span id="topbar-streak-val">0</span>
+                <!-- Streak pill: always visible. Zero state shows a muted candle icon
+                     ("tap to start") instead of disappearing, so the Streak modal
+                     (calendar, freezes, best streak) stays reachable at all times. -->
+                <span class="topbar-pill topbar-streak-pill is-zero" id="topbar-streak-pill" style="cursor:pointer" aria-label="No active streak — tap to start" onclick="App.openStreakModal()">
+                    <svg class="streak-pill-icon-lit" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>
+                    <svg class="streak-pill-icon-unlit" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v2"/><path d="M9 21h6"/><path d="M9 8a3 3 0 0 1 6 0c0 2-1.5 2.5-1.5 5H10.5c0-2.5-1.5-3-1.5-5Z"/><path d="M10.5 13v8M13.5 13v8"/></svg>
+                    <span id="topbar-streak-val"></span>
                 </span>
                 <!-- Exam countdown pill: hidden if no exam date set -->
                 <span class="topbar-pill topbar-exam-pill" id="topbar-exam-pill" style="display:none;cursor:pointer" aria-label="Days to exam" onclick="App.openReadinessModal()">
@@ -420,7 +423,7 @@
 
 <div class="modal-overlay" id="modal-note-edit"><div class="modal"><div class="modal-header"><h2>Add Note</h2><button class="modal-close" onclick="App.closeModal('modal-note-edit')" aria-label="Close">×</button></div><div class="modal-body" id="note-edit-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-note-edit')">Cancel</button><button class="btn btn-primary" onclick="App.saveNoteFromModal()">Save Note</button></div></div></div>
 
-<div class="modal-overlay" id="modal-streak"><div class="modal" style="max-width:400px"><div class="modal-header"><h2>🔥 Streak</h2><button class="modal-close" onclick="App.closeModal('modal-streak')" aria-label="Close">×</button></div><div class="modal-body" id="streak-modal-body"></div></div></div>
+<div class="modal-overlay" id="modal-streak"><div class="modal" style="max-width:400px"><div class="modal-header"><h2><span id="streak-modal-icon">🔥</span> <span id="streak-modal-title">Streak</span></h2><button class="modal-close" onclick="App.closeModal('modal-streak')" aria-label="Close">×</button></div><div class="modal-body" id="streak-modal-body"></div></div></div>
 <div class="modal-overlay" id="modal-readiness"><div class="modal" style="max-width:400px"><div class="modal-header"><h2>📅 Board Countdown</h2><button class="modal-close" onclick="App.closeModal('modal-readiness')" aria-label="Close">×</button></div><div class="modal-body" id="readiness-modal-body"></div></div></div>
 
 <!-- Lightbox -->
