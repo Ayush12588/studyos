@@ -47,20 +47,26 @@ function computeStats(chapters) {
     const soon = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
     const urgent = pending.filter(c => c.deadline && new Date(c.deadline) <= soon);
 
-    // "Up Next" list for the email body: urgent chapters first (by nearest deadline),
-    // then remaining pending chapters with no deadline, so the list is never empty
-    // just because a user hasn't set deadlines (most chapters won't have one).
+    // Single focus chapter, not a list. A chapter takes roughly a week to
+    // complete properly — showing 5 "options" implies a burn-down checklist
+    // and invites in-progress-hopping. Priority order:
+    //   1. Urgent (deadline within 2 days), nearest deadline first
+    //   2. In-progress (resuming unfinished work compounds better than
+    //      starting something new)
+    //   3. Oldest not-started chapter (by created_at), so the pick is
+    //      consistent day to day rather than arbitrary
     const urgentSorted = [...urgent].sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
-    const urgentIds = new Set(urgentSorted.map(c => c.id));
-    const restPending = pending.filter(c => !urgentIds.has(c.id));
-    const topItems = [...urgentSorted, ...restPending]
-        .slice(0, 5)
-        .map(c => ({
-            subject: c.subjects?.name || 'General',
-            name: c.name,
-            deadline: c.deadline,
-            isUrgent: urgentIds.has(c.id)
-        }));
+    const inProgressSorted = [...inProgress].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+    const notStartedSorted = [...notStarted].sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
+
+    const focusSource = urgentSorted[0] || inProgressSorted[0] || notStartedSorted[0] || null;
+    const focusChapter = focusSource ? {
+        subject: focusSource.subjects?.name || 'General',
+        name: focusSource.name,
+        deadline: focusSource.deadline,
+        isUrgent: urgentSorted.length > 0 && focusSource.id === urgentSorted[0].id,
+        status: focusSource.status
+    } : null;
 
     return {
         pendingCount: pending.length,
@@ -69,7 +75,7 @@ function computeStats(chapters) {
         completedCount: completed.length,
         revisedCount: revised.length,
         urgentCount: urgent.length,
-        topItems
+        focusChapter
     };
 }
 
@@ -169,7 +175,7 @@ export default async function handler(req, res) {
 
                 const { data: chapters, error: chErr } = await supabaseAdmin
                     .from('chapters')
-                    .select('id, name, status, deadline, subjects(name)')
+                    .select('id, name, status, deadline, created_at, subjects(name)')
                     .eq('user_id', profile.user_id);
 
                 if (chErr) throw chErr;

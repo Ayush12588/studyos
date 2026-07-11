@@ -11,10 +11,6 @@ import { escapeHtml } from './email-utils.js';
 export function buildReminderEmail({ name, stats, slot, appUrl }) {
     const greeting = name ? `Hi ${escapeHtml(name)},` : 'Hi there,';
 
-    // stats.topItems is already sorted (urgent-by-deadline first, then
-    // remaining pending) and capped at 5 by computeStats — no re-sort here.
-    const topItems = stats.topItems || [];
-
     return `
     <!DOCTYPE html>
     <html lang="en">
@@ -37,7 +33,7 @@ export function buildReminderEmail({ name, stats, slot, appUrl }) {
                             <td style="padding: ${theme.spacing.xl} ${theme.spacing.lg};">
                                 ${buildGreeting(greeting, slot)}
                                 ${buildDashboardStats(stats)}
-                                ${buildPriorityTasks(topItems)}
+                                ${buildFocusChapter(stats.focusChapter)}
                                 ${buildCTA(appUrl, slot)}
                             </td>
                         </tr>
@@ -136,52 +132,36 @@ function buildDashboardStats(stats) {
     </table>`;
 }
 
-function buildPriorityTasks(items) {
-    if (items.length === 0) return '';
+function buildFocusChapter(focusChapter) {
+    if (!focusChapter) return '';
 
-    const listHtml = items.map((item, index) => {
-        const isLast = index === items.length - 1;
-        const borderStyle = isLast ? '' : `border-bottom: 1px solid ${theme.colors.border};`;
+    const statusLabel = focusChapter.status === 'in-progress' ? 'Continue' : 'Start';
 
-        const urgentBadge = item.isUrgent
-            ? `<span style="background-color: ${theme.colors.dangerBg}; color: ${theme.colors.dangerText}; font-size: 11px; font-weight: ${theme.typography.weights.bold}; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Due Soon</span>`
-            : '';
+    const urgentBadge = focusChapter.isUrgent
+        ? `<span style="background-color: ${theme.colors.dangerBg}; color: ${theme.colors.dangerText}; font-size: 11px; font-weight: ${theme.typography.weights.bold}; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Due Soon</span>`
+        : '';
 
-        const deadlineBadge = item.deadline
-            ? `<span style="display: inline-block; background-color: ${theme.colors.neutralBg}; border: 1px solid ${theme.colors.border}; color: ${theme.colors.textPrimary}; font-size: ${theme.typography.sizes.sm}; font-weight: ${theme.typography.weights.medium}; padding: 4px 8px; border-radius: 6px;">${formatDeadline(item.deadline)}</span>`
-            : '';
-
-        return `
-        <tr>
-            <td style="padding: ${theme.spacing.md} 0; ${borderStyle}">
-                <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation">
-                    <tr>
-                        <td valign="middle">
-                            <div style="margin-bottom: 4px;">
-                                <span style="font-size: ${theme.typography.sizes.base}; font-weight: ${theme.typography.weights.medium}; color: ${theme.colors.textPrimary};">
-                                    ${escapeHtml(item.name)}
-                                </span>
-                            </div>
-                            <div style="font-size: ${theme.typography.sizes.sm}; color: ${theme.colors.textSecondary};">
-                                ${escapeHtml(item.subject)}
-                                ${urgentBadge}
-                            </div>
-                        </td>
-                        <td align="right" valign="middle" width="90">
-                            ${deadlineBadge}
-                        </td>
-                    </tr>
-                </table>
-            </td>
-        </tr>`;
-    }).join('');
+    const deadlineLine = focusChapter.deadline
+        ? `<p style="margin: 8px 0 0 0; font-size: ${theme.typography.sizes.sm}; color: ${theme.colors.textMuted};">Deadline: ${formatDeadline(focusChapter.deadline)}</p>`
+        : '';
 
     return `
-    <h2 style="margin: 0 0 ${theme.spacing.sm} 0; font-size: ${theme.typography.sizes.base}; font-weight: ${theme.typography.weights.bold}; color: ${theme.colors.textPrimary};">
-        Up Next
+    <h2 style="margin: 0 0 4px 0; font-size: ${theme.typography.sizes.sm}; font-weight: ${theme.typography.weights.medium}; color: ${theme.colors.textMuted}; text-transform: uppercase; letter-spacing: 0.05em;">
+        ${statusLabel} today
     </h2>
-    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: ${theme.spacing.xl};">
-        ${listHtml}
+    <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="background-color: ${theme.colors.neutralBg}; border: 1px solid ${theme.colors.neutralBorder}; border-radius: ${theme.layout.cardRadius}; margin-bottom: ${theme.spacing.xl};">
+        <tr>
+            <td style="padding: ${theme.spacing.md};">
+                <span style="font-size: ${theme.typography.sizes.lg}; font-weight: ${theme.typography.weights.bold}; color: ${theme.colors.textPrimary};">
+                    ${escapeHtml(focusChapter.name)}
+                </span>
+                ${urgentBadge}
+                <p style="margin: 4px 0 0 0; font-size: ${theme.typography.sizes.sm}; color: ${theme.colors.textSecondary};">
+                    ${escapeHtml(focusChapter.subject)}
+                </p>
+                ${deadlineLine}
+            </td>
+        </tr>
     </table>`;
 }
 
