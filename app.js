@@ -1818,16 +1818,42 @@ const App={
         return{dueDate:this.localDateStr(dueDate),isDue:daysUntil<=0,daysUntil};
     },
 
+    // Returns true while the user is still in their first two weeks — used to
+    // soften readiness scoring/copy so a diligent new user doesn't see a red
+    // "behind pace" warning before they've had a fair chance to build a streak
+    // or sit an exam. profile.createdAt doesn't exist in this schema, so we
+    // derive "new" from _firstSessionDate (falls back to "new" when unknown,
+    // since a user with zero sessions is definitionally in week one).
+    isNewUser(){
+        const first=this._firstSessionDate||(this.state.sessions.length>0?this.state.sessions[0].date:null);
+        if(!first)return true;
+        return this.daysBetween(first,this.today())<14;
+    },
     getReadinessScore(){
         const total=this.getTotalChapters();if(!total)return 0;
-        const comp=this.getCompletedCount()/total*40;
+        const hasExamScores=this.state.examScores.length>0;
+        const isNew=this.isNewUser();
+        // Base weights. When exam-score history is unavailable (either no
+        // scores logged yet, or user is inside the 14-day grace period), drop
+        // the score component entirely and re-normalize the rest to sum to
+        // 100 instead of letting it sit at a structural ~0, which otherwise
+        // caps everyone's score at ~85% of the true ceiling in week one.
+        const dropScore=!hasExamScores||isNew;
+        const weights=dropScore
+            ?{comp:47,rev:24,streak:18,score:0} // 40/20/15 renormalized over 85
+            :{comp:40,rev:20,streak:15,score:15};
+        const comp=this.getCompletedCount()/total*weights.comp;
         const revCh=this.getAllChapters().filter(c=>c.revisionCount>0).length;
-        const rev=total>0?(revCh/total)*20:0;
-        const streak=Math.min(this.state.profile.streak/14,1)*15;
-        const avgScore=this.state.examScores.length>0?this.state.examScores.reduce((a,e)=>a+(e.scored/e.total*100),0)/this.state.examScores.length:0;
-        const score=avgScore/100*15;
+        const rev=total>0?(revCh/total)*weights.rev:0;
+        const streak=Math.min(this.state.profile.streak/14,1)*weights.streak;
+        const avgScore=hasExamScores?this.state.examScores.reduce((a,e)=>a+(e.scored/e.total*100),0)/this.state.examScores.length:0;
+        const score=dropScore?0:(avgScore/100*weights.score);
         const unresolvedDoubts=this.state.doubts.filter(d=>d.status==='unresolved').length;
-        const doubtPenalty=Math.min(unresolvedDoubts*2,10);
+        // Scale the doubt penalty proportionally when weights were renormalized,
+        // so it stays a ~10%-of-ceiling deduction either way, not a flat 10pt
+        // hit that lands harder on a smaller max.
+        const doubtPenaltyCap=dropScore?Math.round(10*(89/100)):10;
+        const doubtPenalty=Math.min(unresolvedDoubts*2,doubtPenaltyCap);
         return Math.min(100,Math.max(0,Math.round(comp+rev+streak+score-doubtPenalty)));
     },
     getDaysToExam(){if(!this.state.profile.examDate)return null;return this.daysBetween(this.today(),this.state.profile.examDate)},
@@ -3057,20 +3083,71 @@ const App={
             ?(()=>{const r=parseInt(heroSubjectColor.slice(1,3),16),g=parseInt(heroSubjectColor.slice(3,5),16),b=parseInt(heroSubjectColor.slice(5,7),16);return`rgba(${r},${g},${b},0.15)`})()
             :'rgba(99,102,241,0.15)';
 
-        // ── SECTION 1: STUDY NOW HERO ──────────────────────────────────────
-        const heroHTML=heroChapter
-            ?`<div class="db-hero" onclick="App.openChapterDetail('${heroChapter.subjectId}','${heroChapter.id}')">
+        // ── UNIFIED PRIMARY ACTION (replaces old Study-Now hero + separate
+        //    Revisions Due box). One ranked "next action" instead of two
+        //    competing urgency blocks. Ranking (first match wins):
+        //      1. Revisions due — most overdue chapter, with count folded in
+        //      2. Overdue chapters — most urgent overdue chapter
+        //      3. getTomorrowPlan()[0] — existing fallback behavior
+        //      4. "All caught up" celebration state
+        // getRevisionsDue() returns {daysSince, nextInterval, ...ch};
+        // daysOverdue = daysSince - nextInterval (>0 means overdue).
+        const rdSortedFull=rd.slice().sort((a,b)=>(b.daysSince-b.nextInterval)-(a.daysSince-a.nextInterval));
+        const getPrimaryAction=()=>{
+            if(rdSortedFull.length>0){
+                const c=rdSortedFull[0];
+                const daysOverdue=c.daysSince-c.nextInterval;
+                const more=rdSortedFull.length-1;
+                return{
+                    kind:'revision',
+                    chapter:c,
+                    label:'↻ REVISION DUE',
+                    sub:`${daysOverdue}d overdue${more>0?` · ${more} more revision${more!==1?'s':''} waiting`:''}`,
+                };
+            }
+            if(od.length>0){
+                const c=od.slice().sort((a,b)=>(a.deadline||'').localeCompare(b.deadline||''))[0];
+                return{
+                    kind:'overdue',
+                    chapter:c,
+                    label:'⚠ OVERDUE',
+                    sub:c.deadline?`Was due ${c.deadline}`:'Past its deadline',
+                };
+            }
+            if(heroChapter){
+                return{
+                    kind:'plan',
+                    chapter:heroChapter,
+                    label:'▶ STUDY NOW',
+                    sub:paceMsg,
+                };
+            }
+            return null;
+        };
+        const primary=getPrimaryAction();
+        const primarySubjectColor=primary&&primary.chapter.subjectId
+            ?(()=>{const s=this.state.subjects.find(x=>x.id===primary.chapter.subjectId);return s?s.color:'#6F72FD'})()
+            :heroSubjectColor;
+        const primarySubjectColorRgba=primarySubjectColor.startsWith('#')
+            ?(()=>{const r=parseInt(primarySubjectColor.slice(1,3),16),g=parseInt(primarySubjectColor.slice(3,5),16),b=parseInt(primarySubjectColor.slice(5,7),16);return`rgba(${r},${g},${b},0.15)`})()
+            :'rgba(99,102,241,0.15)';
+        const heroHTML=primary
+            ?`<div class="db-hero" onclick="App.openChapterDetail('${primary.chapter.subjectId}','${primary.chapter.id}')">
                 <div class="db-hero-left">
-                    <div class="db-hero-label">▶ STUDY NOW</div>
-                    <div class="db-hero-title">${heroChapter.name}</div>
-                    <div class="db-hero-subject-tag" style="background:${heroSubjectColorRgba};color:${heroSubjectColor}">
-                        ${heroChapter.subjectIcon} ${heroChapter.subjectName}
+                    <div class="db-hero-label">${primary.label}</div>
+                    <div class="db-hero-title">${primary.chapter.name}</div>
+                    <div class="db-hero-subject-tag" style="background:${primarySubjectColorRgba};color:${primarySubjectColor}">
+                        ${primary.chapter.subjectIcon||''} ${primary.chapter.subjectName||''}
                     </div>
-                    ${paceMsg?`<div style="font-size:.75rem;margin-top:8px;font-style:italic;color:${paceColor}">${paceMsg}</div>`:''}
+                    ${primary.sub?`<div style="font-size:.75rem;margin-top:8px;font-style:italic;color:${primary.kind==='plan'?paceColor:'var(--accent-light)'}">${primary.sub}</div>`:''}
+                    <div style="display:flex;align-items:center;gap:6px;margin-top:10px">
+                        <span style="font-size:1rem;line-height:1">${st>0?'🔥':'🕯️'}</span>
+                        <span style="font-size:.72rem;font-weight:600;color:${st>0?'#F97316':'var(--text-muted)'}">${st>0?`${st} day streak`:'Start today'}</span>
+                    </div>
                     <div style="display:flex;gap:8px;margin-top:16px;flex-wrap:wrap">
                         <button class="btn btn-primary" onclick="event.stopPropagation();App.openQuickLog()" style="font-size:.8rem;padding:8px 16px;border-radius:12px">Log Session</button>
                         <button class="btn btn-secondary" onclick="event.stopPropagation();App.navigate('pomodoro')" style="font-size:.8rem;padding:8px 16px;border-radius:12px">Focus Timer</button>
-                        <button class="btn btn-ghost" onclick="event.stopPropagation();App.skipHeroChapter('${heroChapter.id}')" style="font-size:.8rem;padding:8px 14px;border-radius:12px;color:var(--text-muted)" title="Show next recommendation">Skip →</button>
+                        <button class="btn btn-ghost" onclick="event.stopPropagation();App.skipHeroChapter('${primary.chapter.id}')" style="font-size:.8rem;padding:8px 14px;border-radius:12px;color:var(--text-muted)" title="Show next recommendation">Skip →</button>
                     </div>
                 </div>
                 <div class="db-hero-ring">
@@ -3096,37 +3173,12 @@ const App={
                 </div>
                 <div style="font-size:4rem;position:relative;z-index:1"></div>
             </div>`;
-
-        // ── SECTION 2: REVISIONS DUE TODAY ────────────────────────────────
-        // getRevisionsDue() returns {daysSince, nextInterval, ...ch}
-        // daysOverdue = daysSince - nextInterval (>0 means overdue)
-        const rdSorted=rd.slice().sort((a,b)=>(b.daysSince-b.nextInterval)-(a.daysSince-a.nextInterval));
-        // P1-2 FIX: Show context "3 most urgent of N" so users know exactly what they're seeing.
-        // If all fit (≤3), no "and N more" footer. If more exist, footer links to full list.
-        const rdSortedFull=rd.slice().sort((a,b)=>(b.daysSince-b.nextInterval)-(a.daysSince-a.nextInterval));
-        const rdVisible=rdSortedFull.slice(0,3);
-        const rdHidden=rdSortedFull.length-rdVisible.length;
-        const revisionsDueHTML=rd.length>0?`
-        <div style="border:1.5px solid var(--accent);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:var(--color-surface)">
-            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--accent-light);display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="var(--accent-light)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></svg>Ready to Revise</span>
-                <span onclick="App.navigate('revisions')" style="cursor:pointer;font-size:.68rem;font-weight:700;padding:2px 9px;border-radius:999px;background:var(--accent);color:#fff" title="View all revisions">${rd.length} →</span>
-            </div>
-            ${rd.length>3?`<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">Showing 3 most helpful of ${rd.length}</div>`:''}
-            ${rdVisible.map(c=>{
-                const daysOverdue=c.daysSince-c.nextInterval;
-                const subj=this.state.subjects.find(s=>s.id===c.subjectId);
-                return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
-                    <span style="font-size:1rem;flex-shrink:0">${subj?this.renderSubjectIcon(subj,16):'?'}</span>
-                    <div style="flex:1;min-width:0">
-                        <div style="font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
-                        <div style="font-size:.72rem;color:var(--text-muted)">${c.subjectName||''}</div>
-                    </div>
-                    <span style="font-size:.72rem;font-weight:600;color:var(--accent-light);white-space:nowrap;flex-shrink:0">${daysOverdue}d since last look</span>
-                </div>`;
-            }).join('')}
-            ${rdHidden>0?`<div onclick="App.navigate('revisions')" style="text-align:center;padding:8px 0 2px;font-size:.72rem;color:var(--accent-light);cursor:pointer;font-weight:600">+ ${rdHidden} more → View all</div>`:''}
-        </div>`:'';
+        // "See all revisions" link — shown under the hero only when there are
+        // MORE revisions due beyond the one already surfaced in the hero, so
+        // the full list (Revisions page) stays reachable without a second box.
+        const revisionsSeeAllHTML=rdSortedFull.length>1
+            ?`<div onclick="App.navigate('revisions')" style="text-align:center;padding:4px 0 16px;font-size:.72rem;color:var(--accent-light);cursor:pointer;font-weight:600">View all ${rdSortedFull.length} revisions due →</div>`
+            :'';
 
         // ── SECTION 3: THREE STAT CARDS ───────────────────────────────────
         // Stat 1 — time studied today vs daily goal.
@@ -3180,29 +3232,15 @@ const App={
                 <button onclick="App.dismissFreezeNotice()" style="background:none;border:none;cursor:pointer;color:var(--color-text-secondary);font-size:1.1rem;padding:2px 6px;flex-shrink:0;line-height:1" title="Dismiss">×</button>
             </div>`
             :'';
-        const streakHeroStyle=st>0
-            ?`background:rgba(249,115,22,0.10);border:1.5px solid #F97316;`
-            :`background:var(--color-surface);border:1.5px solid var(--color-border);`;
-        const streakSubline=st>0?`🔥 ${st} day streak — keep it alive`:`Start your streak today — any session counts`;
-        const streakSubColor=st>0?`#F97316`:`var(--color-text-secondary)`;
-
+        // Streak is now surfaced as a small inline badge inside the hero
+        // (see primary-action hero above) rather than its own bordered card —
+        // this row just keeps the freeze-slot indicator, since that carries
+        // real state info the hero badge doesn't show.
         const statsHTML=`
-        <div style="${streakHeroStyle}border-radius:var(--radius);padding:20px 24px;margin-bottom:12px;display:flex;align-items:center;justify-content:space-between;gap:16px;cursor:default;">
-            <div style="display:flex;align-items:center;gap:16px;flex:1;min-width:0;">
-                <span style="font-size:2.2rem;line-height:1;flex-shrink:0">${st>0?'🔥':'🕯️'}</span>
-                <div>
-                    <div style="font-family:var(--font-mono);font-size:2.75rem;font-weight:700;line-height:1;color:${st>0?'#F97316':'var(--color-text-primary)'};">${st}<span style="font-size:1.1rem;font-weight:500;color:var(--color-text-secondary);margin-left:4px">day${st!==1?'s':''}</span></div>
-                    <div style="font-size:.78rem;color:${streakSubColor};margin-top:5px;font-weight:${st>0?'600':'400'}">${streakSubline}</div>
-                    ${st===0?`<div style="font-size:.7rem;color:var(--color-text-secondary);margin-top:3px">Log a session below to begin</div>`:''}
-                    <div style="margin-top:8px;display:flex;align-items:center;gap:4px">${freezeSlotsHTML}</div>
-                    ${freezeLabelHTML}
-                </div>
-            </div>
-            <div style="text-align:right;flex-shrink:0">
-                <div style="font-size:.62rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--color-text-secondary);font-weight:700;margin-bottom:2px">Streak</div>
-                ${st>0?`<div style="font-size:.72rem;color:#F97316;font-weight:600">Best: keep going!</div>`:`<button class="btn btn-primary btn-sm" onclick="App.openQuickLog()" style="font-size:.72rem;padding:5px 12px;margin-top:4px">Log now</button>`}
-            </div>
-        </div>
+        ${freezeSlotsHTML?`<div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;padding:4px 2px">
+            <div style="display:flex;align-items:center;gap:4px">${freezeSlotsHTML}</div>
+            ${freezeLabelHTML}
+        </div>`:''}
         <div class="db-stats" style="grid-template-columns:repeat(3,1fr);">
             <div class="db-stat db-stat-indigo">
                 ${tm>0
@@ -3384,19 +3422,31 @@ const App={
         </div>`;
 
         // ── BOARD READINESS ───────────────────────────────────────────────
+        // Grace-period de-emphasis: a diligent new user (<14 days in, no exam
+        // scores yet) shouldn't see a red/amber "behind pace" ring or copy —
+        // getReadinessScore() already re-normalizes the score itself for this
+        // window; here we also soften the ring color and message so the two
+        // don't contradict each other (e.g. a still-reddish ring next to a
+        // Coach nudge that says "no pressure").
+        const readinessIsNew=this.isNewUser();
+        const readinessRingColor=readinessIsNew?'var(--accent)':(rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)');
+        const readinessTextColor=readinessIsNew?'var(--text-secondary)':(rs>=70?'var(--text-success)':rs>=40?'var(--text-warning)':'var(--text-danger)');
+        const readinessCopy=readinessIsNew
+            ?'Just getting started — keep logging sessions 🌱'
+            :(rs>=70?'Looking strong! Keep revising 💪':rs>=40?'Good progress, push harder 🚀':'Plenty of time — let\'s build momentum 🌱');
         const readinessHTML=dte!==null&&dte>0?`<div class="card" style="display:flex;align-items:center;gap:20px">
             <div class="readiness-ring" style="flex-shrink:0">
                 <svg width="80" height="80" viewBox="0 0 80 80">
                     <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(128,128,128,0.1)" stroke-width="6"/>
-                    <circle cx="40" cy="40" r="34" fill="none" stroke="${rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)'}" stroke-width="6"
+                    <circle cx="40" cy="40" r="34" fill="none" stroke="${readinessRingColor}" stroke-width="6"
                         stroke-dasharray="${2*Math.PI*34}" stroke-dashoffset="${2*Math.PI*34*(1-rs/100)}"
                         stroke-linecap="round" style="transform:rotate(-90deg);transform-origin:center;transition:stroke-dashoffset 1s ease"/>
                 </svg>
-                <div class="readiness-value" style="font-size:1.1rem;color:${rs>=70?'var(--text-success)':rs>=40?'var(--text-warning)':'var(--text-danger)'}">${rs}%</div>
+                <div class="readiness-value" style="font-size:1.1rem;color:${readinessTextColor}">${rs}%</div>
             </div>
             <div style="flex:1">
                 <div style="font-weight:700;font-size:.95rem;margin-bottom:4px">Board Readiness</div>
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">${dte} days to exam · ${rs>=70?'Looking strong! Keep revising 💪':rs>=40?'Good progress, push harder 🚀':'Plenty of time — let\'s build momentum 🌱'}</div>
+                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">${dte} days to exam · ${readinessCopy}</div>
                 ${pred?`<div style="font-size:.72rem;color:var(--text-muted)">📈 Predicted finish: ${pred.date} at ${pred.rate} ch/day</div>`:''}
             </div>
         </div>`:'';
@@ -3484,16 +3534,17 @@ const App={
             </div>`;
 
         // ── ASSEMBLE ──────────────────────────────────────────────────────
-        // Order: freeze banner → greeting → S1 hero → S2 revisions due →
-        //        S3 stat cards → backlog widget → coach nudge →
-        //        S4 week chart (main col) | readiness + eod check-in +
-        //        heatmap + subjects + weak chapters (side col)
-        // NOTE: heatmap + subjects moved to side col to reduce main col cognitive load.
+        // Order: freeze banner → greeting → unified primary-action hero
+        //        (streak now inline badge within it) → "view all revisions"
+        //        link (only if more are waiting) → freeze-slot row + 3 stat
+        //        cards → backlog widget → coach nudge → week chart + subjects
+        //        (main col) | readiness (de-emphasized) + eod check-in +
+        //        heatmap + weak chapters (side col)
         el.innerHTML=`
         ${freezeBannerHTML}
         <p class="db-greeting-compact">Good ${this.getGreeting()}, ${this.state.profile.name} 👋 &nbsp;·&nbsp; <span style="color:var(--text-secondary)">${this.getSmartGreeting()}</span></p>
         ${heroHTML}
-        ${revisionsDueHTML}
+        ${revisionsSeeAllHTML}
         ${statsHTML}
         <div id="backlog-dashboard-widget">${window.Backlog ? Backlog.renderDashboardWidget() : ''}</div>
         ${coachNudge}
