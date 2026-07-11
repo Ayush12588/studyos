@@ -85,6 +85,14 @@
       "schedule": "30 12 * * *"
     },
     {
+      "path": "/api/send-reminders?slot=night",
+      "schedule": "00 16 * * *"
+    },
+    {
+      "path": "/api/send-winback",
+      "schedule": "45 1 * * *"
+    },
+    {
       "path": "/api/circle-snapshot",
       "schedule": "30 18 * * *"
     }
