@@ -4058,6 +4058,12 @@ const App={
         el.innerHTML=h;
     },
     openDoubtModal(){
+        // Navigate to the Doubts page first so whatever the user was doing
+        // (e.g. browsing Subjects) lands them on the full doubts list —
+        // unresolved/asked/understood + stats — with the add form layered
+        // on top. Doubts has no permanent nav tab; this is its only entry
+        // point besides search, by design.
+        if(this.state.currentPage!=='doubts')this.navigate('doubts');
         const subs=this.state.subjects;
         document.getElementById('doubt-form-body').innerHTML=`<div class="form-group"><label class="form-label">Doubt / Topic</label><input type="text" id="doubt-text" class="form-input" placeholder="e.g., I don't understand trigonometric identities proof"></div><div class="form-row"><div class="form-group"><label class="form-label">Subject</label><select class="form-select" id="doubt-subject"><option value="">Select</option>${subs.map(s=>`<option value="${s.id}">${this.getSubjectGlyph(s)} ${s.name}</option>`).join('')}</select></div><div class="form-group"><label class="form-label">Chapter (optional)</label><input type="text" id="doubt-chapter" class="form-input" placeholder="e.g., Trigonometry"></div></div><div class="form-group"><label class="form-label">Priority</label><div class="quick-log"><div class="quick-chip selected" data-priority="must-clear" onclick="App.pickDoubtPriority(this)">🔴 Must Clear Before Exam</div><div class="quick-chip" data-priority="nice-to-know" onclick="App.pickDoubtPriority(this)">🟡 Nice to Know</div></div></div>`;
         this.openModal('modal-doubt');
@@ -4073,7 +4079,10 @@ const App={
         this.state.doubts.push(_nd);
         const _duUid=window._supabaseUserId;
         if(_duUid){DB.doubts.create({user_id:_duUid,subject_id:sId||null,text,status:'unresolved'}).then(({data,error})=>{if(error){console.error('[DB] doubts.create:',error);return;}if(data&&data.id)_nd.id=data.id;});}
-        this.save();this.closeModal('modal-doubt');this.render();this.toast('❓ Doubt added','success');
+        this.save();this.closeModal('modal-doubt');this.render();
+        // Already on the Doubts page (navigated there on open), so the new
+        // doubt is immediately visible in the list — no further redirect needed.
+        this.toast('❓ Doubt added','success');
     },
     updateDoubtStatus(id,status){
         const d=this.state.doubts.find(x=>x.id===id);if(!d)return;
@@ -5551,13 +5560,23 @@ Answer only what the student asks. If they ask for a quiz, generate 3 CBSE-style
     },
 
     // TOAST
-    toast(msg,type='info'){
+    toast(msg,type='info',opts){
+        // opts: { actionLabel, onAction } — optional. Adds a tappable action
+        // to the toast (e.g. "View" link) without changing the ~30 existing
+        // plain toast(msg,type) call sites, which stay untouched.
         const c=document.getElementById('toast-container');
         const icons={success:'✅',warning:'⚠️',error:'❌',info:'ℹ️',xp:'⚡'};
         const t=document.createElement('div');
         t.className=`toast toast-${type}`;
-        t.innerHTML=`<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>`;
+        const actionHtml=opts&&opts.actionLabel
+            ?`<button class="toast-action" type="button">${opts.actionLabel}</button>`
+            :'';
+        t.innerHTML=`<span class="toast-icon">${icons[type]||'ℹ️'}</span><span>${msg}</span>${actionHtml}`;
         c.appendChild(t);
+        if(opts&&opts.onAction){
+            const btn=t.querySelector('.toast-action');
+            if(btn)btn.addEventListener('click',()=>{opts.onAction();t.classList.add('toast-out');setTimeout(()=>t.remove(),300);});
+        }
         setTimeout(()=>{t.classList.add('toast-out');setTimeout(()=>t.remove(),300)},3500);
     },
 
