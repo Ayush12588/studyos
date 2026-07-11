@@ -51,6 +51,18 @@ function daysAgo(n) {
     return d.toISOString();
 }
 
+// Rejects null/empty, single short lowercase tokens with no vowels/spacing
+// pattern of a real name (e.g. "vvwhn"), and anything that looks like an
+// email-address fragment. Not exhaustive — just filters the obvious junk.
+function isPlausibleName(name) {
+    if (!name || typeof name !== 'string') return false;
+    const trimmed = name.trim();
+    if (trimmed.length < 2) return false;
+    if (/[@._]/.test(trimmed)) return false; // looks like an email/username fragment
+    if (!/[aeiouAEIOU]/.test(trimmed)) return false; // no vowel at all — likely not a name
+    return true;
+}
+
 export default async function handler(req, res) {
     const authHeader = req.headers.authorization;
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -128,9 +140,15 @@ export default async function handler(req, res) {
                     userEmail = userData.user.email;
                 }
 
+                // Guard against low-quality name data (email fragments, single
+                // lowercase tokens like "vvwhn") getting printed straight into
+                // the subject line. Not a perfect name validator — just enough
+                // to catch the obvious junk seen in a real dry-run audit.
+                const displayName = isPlausibleName(profile.name) ? profile.name : 'Hey';
+
                 const subject = segment === 'lapsed'
-                    ? `${profile.name || 'Hey'}, your progress is still here`
-                    : `${profile.name || 'Hey'}, here's what BoardOS actually does`;
+                    ? `${displayName}, your progress is still here`
+                    : `${displayName}, here's what BoardOS actually does`;
 
                 if (dryRun) {
                     dryRunDetails.push({
@@ -146,7 +164,7 @@ export default async function handler(req, res) {
                 }
 
                 const html = buildWinbackEmail({
-                    name: profile.name,
+                    name: displayName === 'Hey' ? null : displayName,
                     segment,
                     chaptersTouched: touchedChapters.length,
                     appUrl
