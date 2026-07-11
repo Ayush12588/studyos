@@ -330,7 +330,7 @@
                     <span id="topbar-streak-val">0</span>
                 </span>
                 <!-- Exam countdown pill: hidden if no exam date set -->
-                <span class="topbar-pill topbar-exam-pill" id="topbar-exam-pill" style="display:none" aria-label="Days to exam">
+                <span class="topbar-pill topbar-exam-pill" id="topbar-exam-pill" style="display:none;cursor:pointer" aria-label="Days to exam" onclick="App.openReadinessModal()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
                     <span id="topbar-exam-val">0</span>d
                 </span>
@@ -421,6 +421,7 @@
 <div class="modal-overlay" id="modal-note-edit"><div class="modal"><div class="modal-header"><h2>Add Note</h2><button class="modal-close" onclick="App.closeModal('modal-note-edit')" aria-label="Close">×</button></div><div class="modal-body" id="note-edit-body"></div><div class="modal-footer"><button class="btn btn-secondary" onclick="App.closeModal('modal-note-edit')">Cancel</button><button class="btn btn-primary" onclick="App.saveNoteFromModal()">Save Note</button></div></div></div>
 
 <div class="modal-overlay" id="modal-streak"><div class="modal" style="max-width:400px"><div class="modal-header"><h2>🔥 Streak</h2><button class="modal-close" onclick="App.closeModal('modal-streak')" aria-label="Close">×</button></div><div class="modal-body" id="streak-modal-body"></div></div></div>
+<div class="modal-overlay" id="modal-readiness"><div class="modal" style="max-width:400px"><div class="modal-header"><h2>📅 Board Countdown</h2><button class="modal-close" onclick="App.closeModal('modal-readiness')" aria-label="Close">×</button></div><div class="modal-body" id="readiness-modal-body"></div></div></div>
 
 <!-- Lightbox -->
 <div id="lb-overlay" onclick="if(event.target===this)App.closeLightbox()">

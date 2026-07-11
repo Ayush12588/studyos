@@ -2064,6 +2064,71 @@ const App={
         `;
     },
 
+    // ── BOARD COUNTDOWN MODAL — opened from the topbar "Xd" exam pill ──────
+    // Deliberately does NOT duplicate the dashboard's Board Readiness card;
+    // it answers a different question ("what does this countdown *mean* for
+    // my plan?") by putting the predicted-finish-vs-exam-date comparison front
+    // and center instead of as a footnote. Reuses existing getters — no new
+    // scoring/prediction logic lives here, presentation only.
+    openReadinessModal(){
+        this.openModal('modal-readiness');
+        this.renderReadinessModal();
+    },
+    renderReadinessModal(){
+        const body=document.getElementById('readiness-modal-body');
+        if(!body)return;
+        const dte=this.getDaysToExam();
+        const examDate=this.state.profile.examDate;
+
+        if(dte===null||!examDate){
+            body.innerHTML=`<div class="streak-empty-hint">No board exam date set yet.</div>
+                <button class="btn btn-primary" style="width:100%;margin-top:14px" onclick="App.closeModal('modal-readiness');App.navigate('settings')">Set Exam Date →</button>`;
+            return;
+        }
+
+        const rs=this.getReadinessScore();
+        const pred=this.getPredictedCompletion();
+        const comp=this.getCompletedCount(),tot=this.getTotalChapters();
+        const examDateLabel=new Date(examDate+'T12:00').toLocaleDateString('en-US',{weekday:'long',month:'long',day:'numeric',year:'numeric'});
+
+        // ── Pace verdict: compares predicted finish date against the exam date ──
+        // This is the one genuinely new insight this modal surfaces — the
+        // dashboard's readiness card mentions predicted finish as a small
+        // footnote line; here it's the headline.
+        let paceVerdictHTML='';
+        if(pred){
+            const predDate=new Date(pred.date+'T12:00');
+            const examDateObj=new Date(examDate+'T12:00');
+            const spareDays=Math.round((examDateObj-predDate)/86400000);
+            if(spareDays>=0){
+                paceVerdictHTML=`<div class="streak-section-title">Pace Check</div>
+                    <p style="font-size:.85rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0">At your current pace of <strong style="color:var(--text-primary)">${pred.rate} ch/day</strong>, you're on track to finish around <strong style="color:var(--text-success)">${pred.date}</strong> — about ${spareDays} day${spareDays!==1?'s':''} to spare before your exam. 🌱</p>`;
+            }else{
+                paceVerdictHTML=`<div class="streak-section-title">Pace Check</div>
+                    <p style="font-size:.85rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0">At your current pace of <strong style="color:var(--text-primary)">${pred.rate} ch/day</strong>, you're projected to finish around <strong style="color:var(--text-primary)">${pred.date}</strong> — ${Math.abs(spareDays)} day${Math.abs(spareDays)!==1?'s':''} after your exam. A small pace increase now will close that gap.</p>`;
+            }
+        }else{
+            paceVerdictHTML=`<div class="streak-section-title">Pace Check</div>
+                <p style="font-size:.85rem;color:var(--text-secondary);line-height:1.6;margin-bottom:0">Log a few sessions to unlock a pace prediction for your exam.</p>`;
+        }
+
+        body.innerHTML=`
+            <div class="streak-stats-row">
+                <div class="streak-stat-card"><div class="streak-stat-val">${dte}</div><div class="streak-stat-label">Days Left</div></div>
+                <div class="streak-stat-card"><div class="streak-stat-val">${rs}%</div><div class="streak-stat-label">Readiness</div></div>
+                <div class="streak-stat-card"><div class="streak-stat-val">${comp}<span style="font-size:.75rem;font-weight:400;color:var(--text-muted)">/${tot}</span></div><div class="streak-stat-label">Chapters Done</div></div>
+            </div>
+            <div class="streak-section">
+                <div class="streak-section-title">Exam Date</div>
+                <p style="font-size:.85rem;color:var(--text-primary);font-weight:600;margin-bottom:0">${examDateLabel}</p>
+            </div>
+            <div class="streak-section">
+                ${paceVerdictHTML}
+            </div>
+            <button class="btn btn-secondary" style="width:100%" onclick="App.closeModal('modal-readiness');App.navigate('settings')">Change Exam Date →</button>
+        `;
+    },
+
     // Longest run of consecutive studied dates, ending at today if the
     // current streak is active (keeps best >= current, which is always true).
     _calcBestStreak(studiedDates,currentStreak){
@@ -3042,26 +3107,25 @@ const App={
         const rdVisible=rdSortedFull.slice(0,3);
         const rdHidden=rdSortedFull.length-rdVisible.length;
         const revisionsDueHTML=rd.length>0?`
-        <div style="border:1.5px solid #F97316;border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:rgba(251,146,60,0.05)">
+        <div style="border:1px solid var(--border);border-radius:var(--radius);padding:16px 20px;margin-bottom:16px;background:var(--color-surface)">
             <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
-                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#F97316;display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#F97316" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></svg>Revisions Due</span>
-                <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:#F97316">See all ${rd.length} →</button>
+                <span style="font-size:.78rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--text-secondary);display:inline-flex;align-items:center;gap:6px"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="flex-shrink:0"><path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M8 16H3v5"/></svg>Ready to Revise</span>
+                <button class="btn btn-ghost btn-sm" onclick="App.navigate('revisions')" style="font-size:.72rem;color:var(--accent-light)">See all ${rd.length} →</button>
             </div>
-            ${rd.length>3?`<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">Showing 3 most urgent of ${rd.length} due</div>`:''}
+            ${rd.length>3?`<div style="font-size:.7rem;color:var(--text-muted);margin-bottom:10px;font-style:italic">Showing 3 most helpful of ${rd.length}</div>`:''}
             ${rdVisible.map(c=>{
                 const daysOverdue=c.daysSince-c.nextInterval;
                 const subj=this.state.subjects.find(s=>s.id===c.subjectId);
-                const urgencyColor=daysOverdue>=7?'#EF4444':daysOverdue>=3?'#F97316':'#FBBF24';
-                return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(249,115,22,0.12);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
+                return`<div onclick="App.openChapterDetail('${c.subjectId}','${c.id}')" style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--border);cursor:pointer;transition:opacity .15s" onmouseenter="this.style.opacity='.75'" onmouseleave="this.style.opacity='1'">
                     <span style="font-size:1rem;flex-shrink:0">${subj?this.renderSubjectIcon(subj,16):'?'}</span>
                     <div style="flex:1;min-width:0">
                         <div style="font-size:.83rem;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${c.name}</div>
                         <div style="font-size:.72rem;color:var(--text-muted)">${c.subjectName||''}</div>
                     </div>
-                    <span style="font-size:.72rem;font-weight:700;color:${urgencyColor};white-space:nowrap;flex-shrink:0">${daysOverdue}d overdue</span>
+                    <span style="font-size:.72rem;font-weight:600;color:var(--text-muted);white-space:nowrap;flex-shrink:0">${daysOverdue}d since last look</span>
                 </div>`;
             }).join('')}
-            ${rdHidden>0?`<div onclick="App.navigate('revisions')" style="text-align:center;padding:8px 0 2px;font-size:.72rem;color:#F97316;cursor:pointer;font-weight:600">+ ${rdHidden} more due → View all</div>`:''}
+            ${rdHidden>0?`<div onclick="App.navigate('revisions')" style="text-align:center;padding:8px 0 2px;font-size:.72rem;color:var(--accent-light);cursor:pointer;font-weight:600">+ ${rdHidden} more → View all</div>`:''}
         </div>`:'';
 
         // ── SECTION 3: THREE STAT CARDS ───────────────────────────────────
@@ -3246,15 +3310,15 @@ const App={
                     if(subjPct>=overallPct*0.9){
                         paceTag='On track';paceTagColor='var(--text-success)';paceTagBg='rgba(34,197,94,0.12)';
                     }else if(subjPct>=overallPct*0.6){
-                        paceTag='Behind';paceTagColor='#D97706';paceTagBg='rgba(245,158,11,0.12)';
+                        paceTag='Needs focus';paceTagColor='var(--text-secondary)';paceTagBg='var(--color-surface-2, rgba(148,163,184,0.12))';
                     }else{
-                        paceTag='At risk';paceTagColor='var(--text-danger)';paceTagBg='rgba(239,68,68,0.12)';
+                        paceTag='Prioritize next';paceTagColor='var(--text-secondary)';paceTagBg='var(--color-surface-2, rgba(148,163,184,0.12))';
                     }
                 }else{
                     // No exam date — fall back to completion %
                     if(pc>=66){paceTag='On track';paceTagColor='var(--text-success)';paceTagBg='rgba(34,197,94,0.12)';}
-                    else if(pc>=33){paceTag='Behind';paceTagColor='#D97706';paceTagBg='rgba(245,158,11,0.12)';}
-                    else{paceTag='At risk';paceTagColor='var(--text-danger)';paceTagBg='rgba(239,68,68,0.12)';}
+                    else if(pc>=33){paceTag='Needs focus';paceTagColor='var(--text-secondary)';paceTagBg='var(--color-surface-2, rgba(148,163,184,0.12))';}
+                    else{paceTag='Prioritize next';paceTagColor='var(--text-secondary)';paceTagBg='var(--color-surface-2, rgba(148,163,184,0.12))';}
                 }
                 return`<div class="db-subj-cell" onclick="App.navigate('subjects')">
                     <div class="db-subj-cell-top">
@@ -3332,7 +3396,7 @@ const App={
             </div>
             <div style="flex:1">
                 <div style="font-weight:700;font-size:.95rem;margin-bottom:4px">Board Readiness</div>
-                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">${dte} days to exam · ${rs>=70?'Looking strong! Keep revising 💪':rs>=40?'Good progress, push harder 🚀':'Need to pick up the pace ⚠️'}</div>
+                <div style="font-size:.75rem;color:var(--text-muted);margin-bottom:8px">${dte} days to exam · ${rs>=70?'Looking strong! Keep revising 💪':rs>=40?'Good progress, push harder 🚀':'Plenty of time — let\'s build momentum 🌱'}</div>
                 ${pred?`<div style="font-size:.72rem;color:var(--text-muted)">📈 Predicted finish: ${pred.date} at ${pred.rate} ch/day</div>`:''}
             </div>
         </div>`:'';
