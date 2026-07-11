@@ -1,28 +1,28 @@
 /**
  * emails/email-utils.js
  * Reusable logic for processing data for emails.
+ *
+ * REWRITE NOTE (2026-07-10): Subject generation now keys off pendingCount /
+ * urgentCount (chapter counts) instead of marksAtRisk, since the reminder
+ * pipeline now reads from `chapters` rather than `backlog_items`, which has
+ * no marks/priority data. TYPE_LABELS and formatTypeLines removed — they
+ * were for backlog_items.type values (lecture_pending, revision_pending,
+ * etc.) which don't exist on chapters.
  */
-
-export const TYPE_LABELS = {
-    lecture_pending: 'Lecture',
-    revision_pending: 'Revision',
-    questions_pending: 'Questions',
-    chapter_unstarted: 'Not Started',
-};
 
 // 1. Morning: Focus on planning and clarity
 const MORNING_SUBJECTS = [
     "Your daily study overview",
-    "Target: {marks} board marks on the agenda today",
-    "Here are your priority topics for today",
+    "{pending} topics on the agenda today",
+    "Here are your priority chapters for today",
     "Your BoardOS daily focus list"
 ];
 
 // 2. Evening: Focus on small actions and breaking friction
 const EVENING_SUBJECTS = [
-    "Just one topic to move forward",
+    "Just one chapter to move forward",
     "A small step tonight makes tomorrow easier",
-    "Clear one topic off your desk tonight",
+    "Clear one chapter off your desk tonight",
     "Evening check-in: protect your momentum"
 ];
 
@@ -41,24 +41,22 @@ export function escapeHtml(str) {
     }[c]));
 }
 
-export function generateSubject({ marksAtRisk, slot }) {
+export function generateSubject({ pendingCount, urgentCount, slot }) {
+    // Urgent (deadline within 2 days) overrides the rotating copy entirely —
+    // this is the one case where specificity beats variety.
+    if (urgentCount > 0) {
+        return urgentCount === 1
+            ? '1 chapter deadline is close — take a look'
+            : `${urgentCount} chapter deadlines are close — take a look`;
+    }
+
     let list = MORNING_SUBJECTS;
     if (slot === 'evening') list = EVENING_SUBJECTS;
     if (slot === 'night') list = NIGHT_SUBJECTS;
-    
+
     // Rotate subjects based on the day of the month to prevent banner blindness
     const dayOfMonth = new Date().getDate();
     const index = dayOfMonth % list.length;
-    
-    return list[index].replace('{marks}', marksAtRisk);
-}
 
-export function formatTypeLines(byType) {
-    const parts = [];
-    if (byType.lecture_pending) parts.push(`${byType.lecture_pending} Lectures`);
-    if (byType.revision_pending) parts.push(`${byType.revision_pending} Revisions`);
-    if (byType.questions_pending) parts.push(`${byType.questions_pending} Question Sets`);
-    if (byType.chapter_unstarted) parts.push(`${byType.chapter_unstarted} Unstarted Chapters`);
-    
-    return parts.join(' • ') || 'Various pending items';
+    return list[index].replace('{pending}', pendingCount);
 }

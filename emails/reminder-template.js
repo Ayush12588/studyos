@@ -6,18 +6,14 @@
  */
 
 import { theme } from './email-theme.js';
-import { escapeHtml, TYPE_LABELS } from './email-utils.js';
+import { escapeHtml } from './email-utils.js';
 
 export function buildReminderEmail({ name, stats, slot, appUrl }) {
     const greeting = name ? `Hi ${escapeHtml(name)},` : 'Hi there,';
-    
-    const topItems = [...stats.active]
-        .sort((a, b) => {
-            if (a.priority === 'high' && b.priority !== 'high') return -1;
-            if (b.priority === 'high' && a.priority !== 'high') return 1;
-            return (b.board_marks || 0) - (a.board_marks || 0);
-        })
-        .slice(0, 5);
+
+    // stats.topItems is already sorted (urgent-by-deadline first, then
+    // remaining pending) and capped at 5 by computeStats — no re-sort here.
+    const topItems = stats.topItems || [];
 
     return `
     <!DOCTYPE html>
@@ -106,24 +102,34 @@ function buildGreeting(greeting, slot) {
 }
 
 function buildDashboardStats(stats) {
+    // Left card flips to "Urgent" (amber/red framing) when deadlines are close,
+    // otherwise shows "Completed" as positive reinforcement rather than a
+    // second pending-style number sitting next to the first.
+    const hasUrgent = stats.urgentCount > 0;
+    const leftLabel = hasUrgent ? 'Deadlines Close' : 'Completed';
+    const leftValue = hasUrgent ? stats.urgentCount : stats.completedCount;
+    const leftBg = hasUrgent ? theme.colors.highlightBg : theme.colors.neutralBg;
+    const leftBorder = hasUrgent ? theme.colors.highlightBorder : theme.colors.neutralBorder;
+    const leftText = hasUrgent ? theme.colors.highlightText : theme.colors.textPrimary;
+
     return `
     <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: ${theme.spacing.xl};">
         <tr>
-            <td width="48%" valign="top" style="background-color: ${theme.colors.highlightBg}; border: 1px solid ${theme.colors.highlightBorder}; border-radius: ${theme.layout.cardRadius}; padding: ${theme.spacing.md};">
-                <p style="margin: 0 0 4px 0; font-size: ${theme.typography.sizes.sm}; color: ${theme.colors.highlightText}; font-weight: ${theme.typography.weights.medium}; text-transform: uppercase; letter-spacing: 0.05em;">
-                    Marks in Focus
+            <td width="48%" valign="top" style="background-color: ${leftBg}; border: 1px solid ${leftBorder}; border-radius: ${theme.layout.cardRadius}; padding: ${theme.spacing.md};">
+                <p style="margin: 0 0 4px 0; font-size: ${theme.typography.sizes.sm}; color: ${leftText}; font-weight: ${theme.typography.weights.medium}; text-transform: uppercase; letter-spacing: 0.05em;">
+                    ${leftLabel}
                 </p>
-                <p style="margin: 0; font-size: 28px; font-weight: ${theme.typography.weights.bold}; color: ${theme.colors.highlightText};">
-                    ${stats.marksAtRisk}
+                <p style="margin: 0; font-size: 28px; font-weight: ${theme.typography.weights.bold}; color: ${leftText};">
+                    ${leftValue}
                 </p>
             </td>
             <td width="4%"></td>
             <td width="48%" valign="top" style="background-color: ${theme.colors.neutralBg}; border: 1px solid ${theme.colors.neutralBorder}; border-radius: ${theme.layout.cardRadius}; padding: ${theme.spacing.md};">
                 <p style="margin: 0 0 4px 0; font-size: ${theme.typography.sizes.sm}; color: ${theme.colors.textSecondary}; font-weight: ${theme.typography.weights.medium}; text-transform: uppercase; letter-spacing: 0.05em;">
-                    Pending Topics
+                    Pending Chapters
                 </p>
                 <p style="margin: 0; font-size: 28px; font-weight: ${theme.typography.weights.bold}; color: ${theme.colors.textPrimary};">
-                    ${stats.total}
+                    ${stats.pendingCount}
                 </p>
             </td>
         </tr>
@@ -136,13 +142,13 @@ function buildPriorityTasks(items) {
     const listHtml = items.map((item, index) => {
         const isLast = index === items.length - 1;
         const borderStyle = isLast ? '' : `border-bottom: 1px solid ${theme.colors.border};`;
-        
-        const priorityBadge = item.priority === 'high' 
-            ? `<span style="background-color: ${theme.colors.dangerBg}; color: ${theme.colors.dangerText}; font-size: 11px; font-weight: ${theme.typography.weights.bold}; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em;">High Priority</span>` 
+
+        const urgentBadge = item.isUrgent
+            ? `<span style="background-color: ${theme.colors.dangerBg}; color: ${theme.colors.dangerText}; font-size: 11px; font-weight: ${theme.typography.weights.bold}; padding: 2px 6px; border-radius: 4px; margin-left: 6px; text-transform: uppercase; letter-spacing: 0.05em;">Due Soon</span>`
             : '';
 
-        const marksBadge = item.board_marks 
-            ? `<span style="display: inline-block; background-color: ${theme.colors.neutralBg}; border: 1px solid ${theme.colors.border}; color: ${theme.colors.textPrimary}; font-size: ${theme.typography.sizes.sm}; font-weight: ${theme.typography.weights.medium}; padding: 4px 8px; border-radius: 6px;">${item.board_marks}M</span>`
+        const deadlineBadge = item.deadline
+            ? `<span style="display: inline-block; background-color: ${theme.colors.neutralBg}; border: 1px solid ${theme.colors.border}; color: ${theme.colors.textPrimary}; font-size: ${theme.typography.sizes.sm}; font-weight: ${theme.typography.weights.medium}; padding: 4px 8px; border-radius: 6px;">${formatDeadline(item.deadline)}</span>`
             : '';
 
         return `
@@ -153,18 +159,16 @@ function buildPriorityTasks(items) {
                         <td valign="middle">
                             <div style="margin-bottom: 4px;">
                                 <span style="font-size: ${theme.typography.sizes.base}; font-weight: ${theme.typography.weights.medium}; color: ${theme.colors.textPrimary};">
-                                    ${escapeHtml(item.chapter)}
+                                    ${escapeHtml(item.name)}
                                 </span>
                             </div>
                             <div style="font-size: ${theme.typography.sizes.sm}; color: ${theme.colors.textSecondary};">
-                                ${escapeHtml(item.subject)} 
-                                <span style="color: ${theme.colors.textMuted}; margin: 0 4px;">•</span> 
-                                ${TYPE_LABELS[item.type] || 'Pending'}
-                                ${priorityBadge}
+                                ${escapeHtml(item.subject)}
+                                ${urgentBadge}
                             </div>
                         </td>
-                        <td align="right" valign="middle" width="60">
-                            ${marksBadge}
+                        <td align="right" valign="middle" width="90">
+                            ${deadlineBadge}
                         </td>
                     </tr>
                 </table>
@@ -179,6 +183,11 @@ function buildPriorityTasks(items) {
     <table width="100%" border="0" cellpadding="0" cellspacing="0" role="presentation" style="margin-bottom: ${theme.spacing.xl};">
         ${listHtml}
     </table>`;
+}
+
+function formatDeadline(dateStr) {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
 }
 
 function buildCTA(appUrl, slot) {

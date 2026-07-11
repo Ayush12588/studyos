@@ -1,8 +1,19 @@
 /**
  * api/send-reminders.js
  * Vercel Cron endpoint for sending daily study reminders.
- * Implements a scalable Strategy Pattern to handle different notification types
- * without risking notification fatigue.
+ *
+ * REWRITE NOTE (2026-07-10): Previously read from `backlog_items`, which
+ * requires a manual "add to backlog" action most users never take (confirmed:
+ * only ~1/4 of engaged users had any backlog_items rows, including several
+ * active-within-days users with zero). Now reads directly from `chapters`,
+ * the table every user actually interacts with. Marks-at-risk / priority
+ * framing is dropped since `chapters` has no board_marks or priority column —
+ * see conversation notes for future work on deriving marks-at-risk from
+ * subject weightage if that data becomes available.
+ *
+ * Status values on chapters use HYPHENS: 'not-started', 'in-progress',
+ * 'completed', 'revised'. The old version used underscores and matched
+ * nothing — this was a silent bug, not just a source-table problem.
  */
 
 import { createClient } from '@supabase/supabase-js';
@@ -14,8 +25,8 @@ const supabaseAdmin = createClient(
     process.env.SUPABASE_SERVICE_ROLE_KEY
 );
 
-const ACTIVE_STATUSES = ['not_started', 'in_progress', 'done_shaky'];
-const MARKS_AT_RISK_STATUSES = ['not_started', 'done_shaky'];
+// Real values confirmed via Supabase audit, 2026-07-10.
+const PENDING_STATUSES = ['not-started', 'in-progress'];
 
 function todayISO() {
     const now = new Date();
@@ -24,40 +35,61 @@ function todayISO() {
     return ist.toISOString().slice(0, 10);
 }
 
-function computeStats(items) {
-    const active = items.filter(i => ACTIVE_STATUSES.includes(i.status));
+function computeStats(chapters) {
+    const pending = chapters.filter(c => PENDING_STATUSES.includes(c.status));
+    const notStarted = chapters.filter(c => c.status === 'not-started');
+    const inProgress = chapters.filter(c => c.status === 'in-progress');
+    const completed = chapters.filter(c => c.status === 'completed');
+    const revised = chapters.filter(c => c.status === 'revised');
 
-    const marksAtRisk = active
-        .filter(i => MARKS_AT_RISK_STATUSES.includes(i.status))
-        .reduce((sum, i) => sum + (i.board_marks || 0), 0);
+    // Deadline-aware: pending chapters whose deadline has passed or is within 2 days.
+    const now = new Date();
+    const soon = new Date(now.getTime() + 2 * 24 * 60 * 60 * 1000);
+    const urgent = pending.filter(c => c.deadline && new Date(c.deadline) <= soon);
 
-    const highPriorityCount = active.filter(i => i.priority === 'high').length;
+    // "Up Next" list for the email body: urgent chapters first (by nearest deadline),
+    // then remaining pending chapters with no deadline, so the list is never empty
+    // just because a user hasn't set deadlines (most chapters won't have one).
+    const urgentSorted = [...urgent].sort((a, b) => new Date(a.deadline) - new Date(b.deadline));
+    const urgentIds = new Set(urgentSorted.map(c => c.id));
+    const restPending = pending.filter(c => !urgentIds.has(c.id));
+    const topItems = [...urgentSorted, ...restPending]
+        .slice(0, 5)
+        .map(c => ({
+            subject: c.subjects?.name || 'General',
+            name: c.name,
+            deadline: c.deadline,
+            isUrgent: urgentIds.has(c.id)
+        }));
 
-    const byType = {};
-    active.forEach(i => {
-        byType[i.type] = (byType[i.type] || 0) + 1;
-    });
-
-    return { active, total: active.length, marksAtRisk, highPriorityCount, byType };
+    return {
+        pendingCount: pending.length,
+        notStartedCount: notStarted.length,
+        inProgressCount: inProgress.length,
+        completedCount: completed.length,
+        revisedCount: revised.length,
+        urgentCount: urgent.length,
+        topItems
+    };
 }
 
 // STRATEGY ENGINE: Easily scale to future reminder types (streaks, weekly reports)
 const REMINDER_STRATEGIES = {
     morning: {
-        // Send if they have anything on their plate.
-        shouldSend: (stats) => stats.total > 0,
+        // Send if they have anything pending at all.
+        shouldSend: (stats) => stats.pendingCount > 0,
         requiresMorningBaseline: false,
-        updateSnapshot: true // Establishes the 'priorMarks' baseline for the rest of the day
+        updateSnapshot: true // Establishes the 'priorCompletedCount' baseline for the rest of the day
     },
     evening: {
-        // Send ONLY if no progress was made today (marks at risk didn't decrease)
-        shouldSend: (stats, priorMarks) => stats.total > 0 && stats.marksAtRisk >= priorMarks,
+        // Send ONLY if no chapters were completed today (completedCount didn't increase)
+        shouldSend: (stats, priorCompleted) => stats.pendingCount > 0 && stats.completedCount <= priorCompleted,
         requiresMorningBaseline: true, // Prevents fatigue: Don't send if they never got the morning plan
         updateSnapshot: false
     },
     night: {
         // Same logical condition as evening, but visually framed as a logging reminder
-        shouldSend: (stats, priorMarks) => stats.total > 0 && stats.marksAtRisk >= priorMarks,
+        shouldSend: (stats, priorCompleted) => stats.pendingCount > 0 && stats.completedCount <= priorCompleted,
         requiresMorningBaseline: true,
         updateSnapshot: false
     }
@@ -110,17 +142,14 @@ export default async function handler(req, res) {
     try {
         let profileQuery = supabaseAdmin
             .from('profiles')
-            .select('user_id, name, email_notifications_enabled, last_reminder_sent_date, last_reminder_marks_at_risk')
-            .eq('email_notifications_enabled', true);
+            .select('user_id, name, notify_reminders, last_reminder_sent_date, last_reminder_completed_count')
+            .eq('notify_reminders', true);
 
         const { data: profiles, error: profileErr } = await profileQuery;
         if (profileErr) throw profileErr;
 
         for (const profile of profiles) {
             try {
-                // If testEmail is set, resolve this profile's auth email FIRST
-                // and skip everyone else outright — cheapest possible filter,
-                // avoids wasted backlog_items queries for non-matching users.
                 let userEmail = null;
                 if (testEmail) {
                     const { data: userData, error: userErr } = await supabaseAdmin.auth.admin.getUserById(profile.user_id);
@@ -138,22 +167,21 @@ export default async function handler(req, res) {
                     continue;
                 }
 
-                const { data: items, error: itemErr } = await supabaseAdmin
-                    .from('backlog_items')
-                    .select('id, subject, chapter, type, status, priority, board_marks, due_date, created_at')
-                    .eq('user_id', profile.user_id)
-                    .in('status', ACTIVE_STATUSES);
+                const { data: chapters, error: chErr } = await supabaseAdmin
+                    .from('chapters')
+                    .select('id, name, status, deadline, subjects(name)')
+                    .eq('user_id', profile.user_id);
 
-                if (itemErr) throw itemErr;
+                if (chErr) throw chErr;
 
-                const stats = computeStats(items);
-                const priorMarks = profile.last_reminder_marks_at_risk || 0;
+                const stats = computeStats(chapters || []);
+                const priorCompleted = profile.last_reminder_completed_count || 0;
 
                 // Evaluate condition via Strategy Engine.
                 // testEmail bypasses shouldSend too — when you're testing you want
                 // to see the email regardless of whether the "should we bother this
                 // user" heuristic would normally suppress it.
-                if (!testEmail && !strategy.shouldSend(stats, priorMarks)) {
+                if (!testEmail && !strategy.shouldSend(stats, priorCompleted)) {
                     skipped++;
                     continue;
                 }
@@ -167,15 +195,16 @@ export default async function handler(req, res) {
                     userEmail = userData.user.email;
                 }
 
-                const subject = generateSubject({ marksAtRisk: stats.marksAtRisk, slot });
+                const subject = generateSubject({ pendingCount: stats.pendingCount, urgentCount: stats.urgentCount, slot });
 
                 if (dryRun) {
                     dryRunDetails.push({
                         user_id: profile.user_id,
                         email: userEmail,
                         subject,
-                        total_active: stats.total,
-                        marks_at_risk: stats.marksAtRisk
+                        pending: stats.pendingCount,
+                        urgent: stats.urgentCount,
+                        completed: stats.completedCount
                     });
                     wouldSend++;
                     if (testEmail) break; // found our one match, no need to keep scanning
@@ -199,7 +228,7 @@ export default async function handler(req, res) {
                         .from('profiles')
                         .update({
                             last_reminder_sent_date: today,
-                            last_reminder_marks_at_risk: stats.marksAtRisk
+                            last_reminder_completed_count: stats.completedCount
                         })
                         .eq('user_id', profile.user_id);
                 }
@@ -215,7 +244,7 @@ export default async function handler(req, res) {
         if (testEmail && sent === 0 && wouldSend === 0 && failed === 0) {
             return res.status(404).json({
                 error: `No enabled user found matching testEmail=${testEmail}`,
-                hint: 'Check that email_notifications_enabled=true on that profile and the auth email matches exactly.'
+                hint: 'Check that notify_reminders=true on that profile and the auth email matches exactly.'
             });
         }
 
