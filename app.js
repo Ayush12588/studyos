@@ -2736,18 +2736,30 @@ const App={
                 // Supabase. Rendered as 7 thin bars, tallest bar in the set
                 // defines 100% height so the shape is always relative to
                 // that person's own week, not a fixed absolute scale.
-                // FIX: an all-zero week previously rendered 7 tiny near-
-                // invisible slivers that visually blurred into a stray
-                // dashed-line artifact on screen. Now an all-zero week
-                // renders NOTHING (replaced by a plain muted caption)
-                // instead of a barely-visible broken-looking bar row.
+                // FIX #1 (dashed-line artifact): an all-zero week now
+                // renders a plain muted caption instead of 7 near-invisible
+                // slivers that visually blurred together.
+                // FIX #2 (this pass): on a week with SOME activity, the
+                // zero-minute days were still rendering as 3px slivers in
+                // a low-contrast border color — effectively invisible next
+                // to an 18px bar, so the "shape of the week" a sparkline is
+                // supposed to convey was unreadable (only 2-3 of 7 bars
+                // were actually perceptible). Raised min height to 4px AND
+                // switched zero-day color to --text-muted (has real
+                // contrast against the card background, unlike --border
+                // which is designed to be subtle by definition — using a
+                // "subtle" token for something that needs to stay visible
+                // was the actual root cause). Container width is now
+                // EXPLICIT (7 * 6px bars + 6 * 3px gaps = 60px) instead of
+                // implicit flex sizing, removing any ambiguity about
+                // whether bars could be getting clipped by a parent.
                 const dm=Array.isArray(r.daily_minutes)?r.daily_minutes:[0,0,0,0,0,0,0];
                 const maxDay=Math.max(0,...dm);
                 const sparkHtml=maxDay===0
                     ? `<p style="font-size:.68rem;color:var(--text-muted);margin-top:6px">No study time logged yet this week</p>`
-                    : `<div style="display:flex;align-items:flex-end;gap:3px;height:18px;margin-top:6px" aria-hidden="true">${dm.map(mins=>{
-                        const barH=Math.max(3,Math.round((mins/maxDay)*18));
-                        return`<div style="width:6px;height:${barH}px;border-radius:2px;background:${mins>0?'var(--accent-light)':'var(--border)'}"></div>`;
+                    : `<div style="display:flex;align-items:flex-end;gap:3px;height:18px;width:60px;margin-top:6px;flex-shrink:0" aria-hidden="true">${dm.map(mins=>{
+                        const barH=Math.max(4,Math.round((mins/maxDay)*18));
+                        return`<div style="width:6px;flex-shrink:0;height:${barH}px;border-radius:2px;background:${mins>0?'var(--accent-light)':'var(--text-muted)'};opacity:${mins>0?'1':'0.35'}"></div>`;
                     }).join('')}</div>`;
 
                 // Streak badge: rebuilt as a tinted pill using the SAME
