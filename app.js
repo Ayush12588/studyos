@@ -1585,24 +1585,6 @@ const App={
         setTimeout(()=>b.classList.remove('show'),3500);
     },
 
-    // ── PRIORITY 6: FAB controls ─────────────────────────
-    toggleFab(){
-        const menu=document.getElementById('fab-menu');
-        const backdrop=document.getElementById('fab-backdrop');
-        const btn=document.getElementById('fab-btn');
-        const isOpen=menu.classList.contains('open');
-        menu.classList.toggle('open',!isOpen);
-        backdrop.classList.toggle('open',!isOpen);
-        btn.textContent=isOpen?'＋':'✕';
-        btn.style.transform=isOpen?'':'rotate(45deg)';
-    },
-    closeFab(){
-        document.getElementById('fab-menu').classList.remove('open');
-        document.getElementById('fab-backdrop').classList.remove('open');
-        const btn=document.getElementById('fab-btn');
-        btn.textContent='＋';btn.style.transform='';
-    },
-
     // ── PRIORITY 7: Streak reminder ──────────────────────
     checkStreakReminder(){
         const h=new Date().getHours();
@@ -1969,6 +1951,12 @@ const App={
         if(l&&this.daysBetween(l,t)===1)this.state.profile.streak++;
         else this.state.profile.streak=1;
         this._syncFullProfile();
+        // Topbar streak pill reads this.state.profile.streak directly and only
+        // otherwise refreshes on init / the 60s interval — without this call
+        // the pill's number/icon-state can go stale for up to a minute right
+        // after logging a session (e.g. showing the old zero-state outline
+        // icon next to the new streak count).
+        this.updateTopbarPills();
         // ── Streak milestone celebration ──
         const newStreak=this.state.profile.streak;
         const MILESTONES=[3,7,14,21,30,50,100];
@@ -2604,14 +2592,23 @@ const App={
         // anyone who'd just lost a streak had no way to discover the Streak
         // modal (calendar, freezes, best streak) at all. Zero state uses a
         // muted "dormant, tap to start" treatment instead of disappearing.
+        // Frozen state: a freeze auto-rescued today's streak (see
+        // updateStreak() — sets lastFreezeUsedDate=today when it fires).
+        // Mirrors Duolingo's "streak saved" flame — filled + ice cap,
+        // distinct from the plain zero/active states.
         const streak=this.state.profile.streak||0;
+        const isFrozenToday=this.state.lastFreezeUsedDate===this.today();
         const sp=document.getElementById('topbar-streak-pill');
         const sv=document.getElementById('topbar-streak-val');
         if(sp&&sv){
             sp.style.display='inline-flex';
             sv.textContent=streak>0?streak:'';
             sp.classList.toggle('is-zero',streak===0);
-            sp.setAttribute('aria-label',streak>0?`${streak} day study streak`:'No active streak — tap to start');
+            sp.classList.toggle('is-frozen',isFrozenToday&&streak>0);
+            sp.setAttribute('aria-label',
+                isFrozenToday&&streak>0?`${streak} day streak — saved by a freeze today`:
+                streak>0?`${streak} day study streak`:
+                'No active streak — tap to start');
         }
         // ── Exam countdown pill ──
         const dte=this.getDaysToExam();
@@ -3124,6 +3121,7 @@ const App={
                     chapter:c,
                     label:'↻ REVISION DUE',
                     sub:`${daysOverdue}d overdue${more>0?` · ${more} more revision${more!==1?'s':''} waiting`:''}`,
+                    daysOverdue,
                 };
             }
             if(od.length>0){
@@ -3171,7 +3169,7 @@ const App={
                         <button class="btn btn-ghost" onclick="event.stopPropagation();App.skipHeroChapter('${primary.chapter.id}')" style="font-size:.8rem;padding:8px 14px;border-radius:12px;color:var(--text-muted)" title="Show next recommendation">Skip →</button>
                     </div>
                 </div>
-                <div class="db-hero-ring">
+                ${primary.kind==='plan'?`<div class="db-hero-ring">
                     <svg width="120" height="120" viewBox="0 0 120 120">
                         <circle cx="60" cy="60" r="52" fill="none" stroke="rgba(255,255,255,0.1)" stroke-width="7"/>
                         <circle cx="60" cy="60" r="52" fill="none" stroke="${ringColor}" stroke-width="7"
@@ -3182,7 +3180,13 @@ const App={
                     </svg>
                     <div class="db-hero-ring-val" style="color:${ringColor}">${gp}%</div>
                     <div class="db-hero-ring-lbl">of goal</div>
-                </div>
+                </div>`:primary.kind==='revision'?`<div class="db-hero-ring">
+                    <div class="db-hero-ring-val" style="font-size:1.7rem;color:#FBBF24">${primary.daysOverdue}d</div>
+                    <div class="db-hero-ring-lbl">overdue</div>
+                </div>`:primary.kind==='overdue'?`<div class="db-hero-ring">
+                    <div class="db-hero-ring-val" style="font-size:1.7rem;color:#F87171">${od.length}</div>
+                    <div class="db-hero-ring-lbl">${od.length===1?'chapter':'chapters'} overdue</div>
+                </div>`:''}
             </div>`
             :`<div class="db-hero db-hero-empty db-hero-celebration">
                 <div class="db-hero-left">
@@ -3443,8 +3447,14 @@ const App={
         // don't contradict each other (e.g. a still-reddish ring next to a
         // Coach nudge that says "no pressure").
         const readinessIsNew=this.isNewUser();
-        const readinessRingColor=readinessIsNew?'var(--accent)':(rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)');
-        const readinessTextColor=readinessIsNew?'var(--text-secondary)':(rs>=70?'var(--text-success)':rs>=40?'var(--text-warning)':'var(--text-danger)');
+        // Ample runway (>60 days) means a low score isn't yet an emergency —
+        // cap severity at 'warning' so the ring doesn't flash red while the
+        // copy right next to it is saying "plenty of time, no pressure."
+        // Red is reserved for genuinely time-pressured situations.
+        const readinessAmpleTime=dte===null||dte>60;
+        const readinessIsNewOrAmple=readinessIsNew||(readinessAmpleTime&&rs<40);
+        const readinessRingColor=readinessIsNewOrAmple?'var(--accent)':(rs>=70?'var(--success)':rs>=40?'var(--warning)':'var(--danger)');
+        const readinessTextColor=readinessIsNewOrAmple?'var(--text-secondary)':(rs>=70?'var(--text-success)':rs>=40?'var(--text-warning)':'var(--text-danger)');
         const readinessCopy=readinessIsNew
             ?'Just getting started — keep logging sessions 🌱'
             :(rs>=70?'Looking strong! Keep revising 💪':rs>=40?'Good progress, push harder 🚀':'Plenty of time — let\'s build momentum 🌱');
@@ -3569,11 +3579,11 @@ const App={
             </div>
             <div class="db-col-side">
                 ${readinessHTML}
-                ${eodCardHTML}
                 ${heatmapHTML}
                 ${weakHTML}
             </div>
-        </div>`;
+        </div>
+        ${eodCardHTML}`;
 
         }catch(err){
             console.error('Dashboard render error:',err);
