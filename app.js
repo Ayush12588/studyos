@@ -1055,7 +1055,7 @@ const App={
                 }
                 // Run the one-time difficulty migration after subjects are in memory.
                 // Uses requestIdleCallback so it never blocks rendering.
-                const runMigration = () => { this._migrateCBSEDifficulty(); this._migrateSubjectIconType(); };
+                const runMigration = () => { this._migrateCBSEDifficulty(); this._migrateSubjectIconType(); this._syncSyllabusWithCBSE(); };
                 if (window.requestIdleCallback) {
                     requestIdleCallback(runMigration, { timeout: 5000 });
                 } else {
@@ -2410,6 +2410,144 @@ const App={
         console.log(`[Migration] difficulty_v1 complete — ${updatedCount}/${updatePromises.length} chapters updated`);
 
         // Re-render the current page so difficulty tags update without a reload
+        this.save();
+        this.render();
+    },
+
+    // ── STANDING SYLLABUS SYNC ───────────────────────────────────────────
+    // Runs on EVERY app load, for EVERY class/stream/subject — not a
+    // one-time migration behind a version key. This is the general
+    // replacement for one-off _migrateClassXSubjectChapters functions.
+    //
+    // What it does automatically, forever, with zero code changes required
+    // when you edit CBSE_DATA:
+    //   - Any chapter present in CBSE_DATA but missing from a user's
+    //     subject gets inserted at its canonical position. This is what
+    //     makes future syllabus additions reach existing users on their
+    //     next load with no migration to write.
+    //
+    // What still requires one line from you, every time, in
+    // SYLLABUS_RENAME_MAP below:
+    //   - Renaming a chapter. A name-based diff cannot distinguish "this
+    //     chapter was renamed" from "one chapter was deleted and an
+    //     unrelated one was added" — fuzzy-matching that guess is how you
+    //     accidentally wipe a student's progress on the wrong chapter.
+    //     Explicit old→new mapping is the only safe way to do this.
+    //
+    // What this deliberately never does:
+    //   - Delete chapters. If you remove something from CBSE_DATA, existing
+    //     users keep their row (with its full session/revision/notes
+    //     history) until you decide to handle that removal manually. Silent
+    //     cascade-deletes on syllabus edits are not a tradeoff worth taking.
+    get SYLLABUS_RENAME_MAP(){
+        // Key: `${class}|${subject name lowercase}|${old chapter name lowercase}`
+        // Value: new chapter name (exact CBSE_DATA text)
+        return new Map([
+            ['10|english|nelson mandela', 'Nelson Mandela: Long Walk to Freedom'],
+            ['10|english|anne frank diary', 'From the Diary of Anne Frank'],
+        ]);
+    },
+
+    _canonicalSubjectsForProfile(){
+        const cls = this.state.profile.selectedClass;
+        const data = this.CBSE_DATA[cls];
+        if(!data) return [];
+        // Classes 11/12 are stream-keyed objects; 9/10 are flat arrays.
+        if(Array.isArray(data)) return data;
+        return data[this.state.profile.selectedStream] || [];
+    },
+
+    async _syncSyllabusWithCBSE(){
+        const canonicalSubjects = this._canonicalSubjectsForProfile();
+        if(!canonicalSubjects.length) return;
+
+        const cls = this.state.profile.selectedClass;
+        const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
+        const _uid = window._supabaseUserId;
+        const updatePromises = [];
+        let totalRenamed = 0, totalAdded = 0;
+
+        for(const canonicalSub of canonicalSubjects){
+            const subKey = canonicalSub.name.trim().toLowerCase();
+            const sub = this.state.subjects.find(s => s.name.trim().toLowerCase() === subKey);
+            if(!sub || !canonicalSub.chapters || !canonicalSub.chapters.length) continue;
+
+            // 1) Apply any known renames in place — preserves status,
+            //    revisionCount, revisionDates, notes, exercises.
+            sub.chapters.forEach(ch => {
+                const mapKey = `${cls}|${subKey}|${ch.name.trim().toLowerCase()}`;
+                const newName = this.SYLLABUS_RENAME_MAP.get(mapKey);
+                if(newName && ch.name !== newName){
+                    ch.name = newName;
+                    totalRenamed++;
+                    if(_isUUID(ch.id)){
+                        updatePromises.push(
+                            DB.chapters.update(ch.id, { name: newName }).then(({error}) => {
+                                if(error) console.error(`[SyllabusSync] rename failed for "${newName}":`, error);
+                            })
+                        );
+                    }
+                }
+            });
+
+            // 2) Insert any canonical chapter this user doesn't have yet.
+            const existingNames = new Set(sub.chapters.map(c => c.name.trim().toLowerCase()));
+            const newChapters = [];
+            canonicalSub.chapters.forEach(chDef => {
+                const key = chDef.name.trim().toLowerCase();
+                if(existingNames.has(key)) return;
+                newChapters.push({
+                    id: this.uid(), name: chDef.name, status: 'not-started', deadline: '',
+                    completionDate: null, revisionCount: 0, revisionDates: [],
+                    difficulty: chDef.difficulty, notes: '', exercises: [], createdAt: Date.now(),
+                });
+            });
+            if(!newChapters.length) continue;
+            totalAdded += newChapters.length;
+
+            // Slot new chapters into their canonical position instead of
+            // dumping them at the bottom. Chapters the user added manually
+            // (not found in canonical at all) sort to the end untouched.
+            newChapters.forEach(ch => sub.chapters.push(ch));
+            const canonicalIndex = name => canonicalSub.chapters.findIndex(c => c.name.trim().toLowerCase() === name.trim().toLowerCase());
+            sub.chapters.sort((a, b) => {
+                const ai = canonicalIndex(a.name), bi = canonicalIndex(b.name);
+                if(ai === -1 && bi === -1) return 0;
+                if(ai === -1) return 1;
+                if(bi === -1) return -1;
+                return ai - bi;
+            });
+
+            // 3) Persist: create the new rows, then refresh order_index for
+            //    the whole subject so stored sort order matches the layout.
+            if(_uid){
+                newChapters.forEach(ch => {
+                    const orderIndex = sub.chapters.indexOf(ch);
+                    updatePromises.push(
+                        DB.chapters.create({
+                            user_id: _uid, subject_id: sub.id, name: ch.name, status: 'not-started',
+                            difficulty: ch.difficulty, revision_count: 0, order_index: orderIndex,
+                        }).then(({data, error}) => {
+                            if(error){ console.error(`[SyllabusSync] create failed for "${ch.name}":`, error); return; }
+                            if(data && data.id) ch.id = data.id;
+                        })
+                    );
+                });
+                sub.chapters.forEach((ch, i) => {
+                    if(!_isUUID(ch.id)) return; // new chapters: order_index already set in the create() call above
+                    updatePromises.push(
+                        DB.chapters.update(ch.id, { order_index: i }).then(({error}) => {
+                            if(error) console.error(`[SyllabusSync] order_index failed for "${ch.name}":`, error);
+                        })
+                    );
+                });
+            }
+        }
+
+        if(totalRenamed === 0 && totalAdded === 0) return; // nothing changed — skip save/render entirely
+
+        await Promise.allSettled(updatePromises);
+        console.log(`[SyllabusSync] complete — ${totalRenamed} renamed, ${totalAdded} added`);
         this.save();
         this.render();
     },
