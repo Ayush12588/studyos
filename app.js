@@ -2395,32 +2395,54 @@ const App={
     // one-time migration behind a version key. This is the general
     // replacement for one-off _migrateClassXSubjectChapters functions.
     //
-    // What it does automatically, forever, with zero code changes required
-    // when you edit CBSE_DATA:
-    //   - Any chapter present in CBSE_DATA but missing from a user's
-    //     subject gets inserted at its canonical position. This is what
-    //     makes future syllabus additions reach existing users on their
-    //     next load with no migration to write.
+    // Two reconciliation modes, chosen per subject:
     //
-    // What still requires one line from you, every time, in
-    // SYLLABUS_RENAME_MAP below:
-    //   - Renaming a chapter. A name-based diff cannot distinguish "this
-    //     chapter was renamed" from "one chapter was deleted and an
-    //     unrelated one was added" — fuzzy-matching that guess is how you
-    //     accidentally wipe a student's progress on the wrong chapter.
-    //     Explicit old→new mapping is the only safe way to do this.
+    // ADDITIVE (default) — for ordinary syllabus edits: a chapter added, a
+    // chapter or two renamed. Safe to run silently on every load forever:
+    //   - Chapters in CBSE_DATA but missing from the user get inserted at
+    //     their canonical position. Zero code needed per future edit.
+    //   - Renames need one line in SYLLABUS_RENAME_MAP below, because a
+    //     name-based diff can't tell "renamed" apart from "deleted + an
+    //     unrelated chapter added" — guessing that wrong is how you
+    //     silently wipe or misattribute a student's progress.
+    //   - Never deletes. If a chapter disappears from CBSE_DATA and isn't
+    //     in the rename map, the user just keeps the old row untouched
+    //     until you decide what to do with it.
     //
-    // What this deliberately never does:
-    //   - Delete chapters. If you remove something from CBSE_DATA, existing
-    //     users keep their row (with its full session/revision/notes
-    //     history) until you decide to handle that removal manually. Silent
-    //     cascade-deletes on syllabus edits are not a tradeoff worth taking.
+    // REPLACE (opt-in via SYLLABUS_REPLACE_SET) — for a genuine curriculum
+    // overhaul, e.g. NCERT reissuing a subject with a different chapter
+    // count/structure, not a like-for-like rename:
+    //   - The user's chapter list for that subject is hard-reconciled to
+    //     exactly match canonical: anything canonical doesn't have is
+    //     deleted (progress and all), anything canonical has that they're
+    //     missing is added. This intentionally destroys old progress —
+    //     only mark a subject this way when that's the accepted tradeoff
+    //     (e.g. negligible affected users, or the old content is verified
+    //     as no longer relevant). Remove the entry once it's rolled out so
+    //     the subject falls back to the safe additive path.
     get SYLLABUS_RENAME_MAP(){
         // Key: `${class}|${subject name lowercase}|${old chapter name lowercase}`
         // Value: new chapter name (exact CBSE_DATA text)
         return new Map([
             ['10|english|nelson mandela', 'Nelson Mandela: Long Walk to Freedom'],
             ['10|english|anne frank diary', 'From the Diary of Anne Frank'],
+        ]);
+    },
+
+    get SYLLABUS_REPLACE_SET(){
+        // Key: `${class}|${subject name lowercase}`
+        // Presence in this set means "hard-reconcile, don't diff/preserve."
+        // 2026-07: NCERT's revised Class 9 books, part 1 of 2. Remove each
+        // subject's entry once part 2 lands and this round has settled —
+        // after that, ordinary chapter-level edits should go back through
+        // the additive path (add chapters / SYLLABUS_RENAME_MAP) instead
+        // of staying in hard-replace mode indefinitely.
+        return new Set([
+            '9|mathematics',
+            '9|science',
+            '9|english',
+            '9|social science',
+            '9|hindi',
         ]);
     },
 
@@ -2441,12 +2463,37 @@ const App={
         const _isUUID = s => s && /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(s);
         const _uid = window._supabaseUserId;
         const updatePromises = [];
-        let totalRenamed = 0, totalAdded = 0;
+        let totalRenamed = 0, totalAdded = 0, totalDeleted = 0;
 
         for(const canonicalSub of canonicalSubjects){
             const subKey = canonicalSub.name.trim().toLowerCase();
             const sub = this.state.subjects.find(s => s.name.trim().toLowerCase() === subKey);
             if(!sub || !canonicalSub.chapters || !canonicalSub.chapters.length) continue;
+
+            // ── REPLACE MODE ──────────────────────────────────────────
+            // Skip the additive rename/insert logic entirely for subjects
+            // marked for hard-reconciliation — delete anything canonical
+            // doesn't have, then fall through to the normal "insert what's
+            // missing" step below to add the new chapters.
+            if(this.SYLLABUS_REPLACE_SET.has(`${cls}|${subKey}`)){
+                const canonicalNames = new Set(canonicalSub.chapters.map(c => c.name.trim().toLowerCase()));
+                const toRemove = sub.chapters.filter(c => !canonicalNames.has(c.name.trim().toLowerCase()));
+                if(toRemove.length){
+                    sub.chapters = sub.chapters.filter(c => canonicalNames.has(c.name.trim().toLowerCase()));
+                    totalDeleted += toRemove.length;
+                    toRemove.forEach(ch => {
+                        if(_isUUID(ch.id)){
+                            updatePromises.push(
+                                DB.chapters.delete(ch.id).then(({error}) => {
+                                    if(error) console.error(`[SyllabusSync] replace-mode delete failed for "${ch.name}":`, error);
+                                })
+                            );
+                        }
+                    });
+                }
+                // Fall through — the insert-missing step further down
+                // still runs, so this arm doesn't `continue`.
+            } else {
 
             // 1) Apply any known renames in place — preserves status,
             //    revisionCount, revisionDates, notes, exercises.
@@ -2466,7 +2513,11 @@ const App={
                 }
             });
 
+            } // end additive-mode else
+
             // 2) Insert any canonical chapter this user doesn't have yet.
+            //    Runs for BOTH modes — replace-mode already deleted the
+            //    stale rows above, this fills in whatever's still missing.
             const existingNames = new Set(sub.chapters.map(c => c.name.trim().toLowerCase()));
             const newChapters = [];
             canonicalSub.chapters.forEach(chDef => {
@@ -2520,10 +2571,10 @@ const App={
             }
         }
 
-        if(totalRenamed === 0 && totalAdded === 0) return; // nothing changed — skip save/render entirely
+        if(totalRenamed === 0 && totalAdded === 0 && totalDeleted === 0) return; // nothing changed — skip save/render entirely
 
         await Promise.allSettled(updatePromises);
-        console.log(`[SyllabusSync] complete — ${totalRenamed} renamed, ${totalAdded} added`);
+        console.log(`[SyllabusSync] complete — ${totalRenamed} renamed, ${totalAdded} added, ${totalDeleted} deleted`);
         this.save();
         this.render();
     },
