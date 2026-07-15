@@ -158,17 +158,24 @@ const App={
             {name:'Believe in Yourself',difficulty:'medium'}
         ]},
         {name:'Social Science',icon:'🌍',color:'#06b6d4',chapters:[
+            // Part 1 — verified against cbseacademic.nic.in SocialScience_SecP1IX_2026-27.pdf
             {name:'Understanding Social Science',difficulty:'easy'},
             {name:'Shaping of the Earth\'s Surface',difficulty:'medium'},
             {name:'Atmosphere and Climate',difficulty:'medium'},
-            {name:'Early Humans and Beginning of Civilization',difficulty:'medium'},
+            {name:'Early Humans and Beginning of Civilisation',difficulty:'medium'},
             {name:'State and Society up to 1000 CE',difficulty:'medium'},
             {name:'Democracy',difficulty:'easy'},
-            {name:'Election',difficulty:'easy'},
-            {name:'Building Blocks in Economy',difficulty:'easy'},
-            {name:'The Problem of Choice',difficulty:'medium'},
-            {name:'The Price Puzzle',difficulty:'medium'},
-            {name:'What Drives the Market',difficulty:'medium'}
+            {name:'Elections',difficulty:'medium'},
+            {name:'Building Blocks in Economics',difficulty:'medium'},
+            {name:'The Price Puzzle: What Drives the Market',difficulty:'medium'},
+            // Part 2 — same source, second theme table
+            {name:'Oceans and Life',difficulty:'medium'},
+            {name:'Life on Earth',difficulty:'medium'},
+            {name:'Resistance and Resilience (1000 CE–1700 CE)',difficulty:'medium'},
+            {name:'India and the World-I (1900 BCE–1200 CE)',difficulty:'medium'},
+            {name:'Authority',difficulty:'medium'},
+            {name:'From Ideas to Startups',difficulty:'medium'},
+            {name:'Smart Ways to Manage Your Finances',difficulty:'medium'}
         ]},
         {name:'Hindi',icon:'📜',color:'#ef4444',chapters:[
             {name:'दो बैलों की कथा',difficulty:'medium'},
