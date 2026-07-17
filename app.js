@@ -254,8 +254,7 @@ const App={
             {name:'How to Tell Wild Animals (Poem)',difficulty:'medium'},
             {name:'From the Diary of Anne Frank',difficulty:'medium'},
             {name:'The Ball Poem (Poem)',difficulty:'medium'},
-            {name:'The Hundred Dresses – I',difficulty:'medium'},
-            {name:'The Hundred Dresses – II',difficulty:'medium'},
+            // The Hundred Dresses I & II removed — deleted from CBSE 2026-27 syllabus
             {name:'Amanda! (Poem)',difficulty:'medium'},
             {name:'Glimpses of India',difficulty:'medium'},
             {name:'The Trees (Poem)',difficulty:'medium'},
@@ -329,7 +328,7 @@ const App={
     // ── CLASS 11 PCM ─────────────────────────────────────────────────────
     CLASS11_PCM_DATA:[
         {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:[
-            {name:'Physical World',difficulty:'easy'},
+            // 'Physical World' removed — excluded from CBSE 2026-27 Class 11 Physics
             {name:'Units and Measurements',difficulty:'easy'},
             {name:'Motion in a Straight Line',difficulty:'medium'},
             {name:'Motion in a Plane',difficulty:'hard'},
@@ -420,7 +419,7 @@ const App={
     // ── CLASS 11 PCB ─────────────────────────────────────────────────────
     CLASS11_PCB_DATA:[
         {name:'Physics',icon:'⚛️',color:'#8b5cf6',chapters:[
-            {name:'Physical World',difficulty:'easy'},
+            // 'Physical World' removed — excluded from CBSE 2026-27 Class 11 Physics
             {name:'Units and Measurements',difficulty:'easy'},
             {name:'Motion in a Straight Line',difficulty:'medium'},
             {name:'Motion in a Plane',difficulty:'hard'},
@@ -525,11 +524,11 @@ const App={
             {name:'Bank Reconciliation Statement',difficulty:'hard'},
             {name:'Trial Balance and Rectification of Errors',difficulty:'hard'},
             {name:'Depreciation, Provisions and Reserves',difficulty:'hard'},
-            {name:'Bill of Exchange',difficulty:'hard'},
+            // 'Bill of Exchange' removed — excluded from CBSE 2026-27 Class 11 Accountancy
             {name:'Financial Statements I',difficulty:'medium'},
             {name:'Financial Statements II',difficulty:'hard'},
-            {name:'Accounts from Incomplete Records',difficulty:'hard'},
-            {name:'Applications of Computers in Accounting',difficulty:'easy'},
+            // 'Accounts from Incomplete Records' removed — excluded from CBSE 2026-27
+            // 'Applications of Computers in Accounting' removed — excluded from CBSE 2026-27
             {name:'Computerised Accounting System',difficulty:'medium'}
         ]},
         {name:'Business Studies',icon:'🏢',color:'#0ea5e9',chapters:[
@@ -555,16 +554,16 @@ const App={
             {name:'Correlation',difficulty:'hard'},
             {name:'Index Numbers',difficulty:'hard'},
             {name:'Use of Statistical Tools',difficulty:'medium'},
-            {name:'Indian Economy on the Eve of Independence',difficulty:'easy'},
-            {name:'Indian Economy 1950–1990',difficulty:'easy'},
-            {name:'Liberalisation, Privatisation and Globalisation: An Appraisal',difficulty:'medium'},
-            {name:'Poverty',difficulty:'easy'},
-            {name:'Human Capital Formation in India',difficulty:'easy'},
-            {name:'Rural Development',difficulty:'easy'},
-            {name:'Employment: Growth, Informalisation and Other Issues',difficulty:'medium'},
-            {name:'Infrastructure',difficulty:'easy'},
-            {name:'Environment and Sustainable Development',difficulty:'easy'},
-            {name:'Comparative Development Experiences of India and Its Neighbours',difficulty:'medium'}
+            // 'Indian Economic Development' unit (Eve of Independence, 1950-1990,
+            // LPG, Poverty, Human Capital, Rural Development, Employment,
+            // Infrastructure, Environment, Comparative Development) removed —
+            // replaced by 'Introductory Microeconomics' in CBSE 2026-27
+            {name:'Introduction to Microeconomics',difficulty:'easy'},
+            {name:'Theory of Consumer Behaviour',difficulty:'hard'},
+            {name:'Production and Costs',difficulty:'hard'},
+            {name:'The Theory of the Firm under Perfect Competition',difficulty:'hard'},
+            {name:'Market Equilibrium',difficulty:'medium'},
+            {name:'Non-competitive Markets',difficulty:'medium'}
         ]},
         {name:'English',icon:'📝',color:'#f59e0b',chapters:[
             {name:'The Portrait of a Lady',difficulty:'medium'},
@@ -624,8 +623,8 @@ const App={
             {name:'Dual Nature of Radiation and Matter',difficulty:'medium'},
             {name:'Atoms',difficulty:'medium'},
             {name:'Nuclei',difficulty:'medium'},
-            {name:'Semiconductor Electronics',difficulty:'hard'},
-            {name:'Communication Systems',difficulty:'easy'}
+            {name:'Semiconductor Electronics',difficulty:'hard'}
+            // 'Communication Systems' removed — excluded from CBSE 2026-27 Class 12 Physics
         ]},
         {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:[
             {name:'The Solid State',difficulty:'hard'},
@@ -678,9 +677,9 @@ const App={
             {name:'The Tiger King',difficulty:'medium'},
             {name:'Journey to the End of the Earth',difficulty:'medium'},
             {name:'The Enemy',difficulty:'medium'},
-            {name:'Should Wizard Hit Mommy',difficulty:'medium'},
+            // 'Should Wizard Hit Mommy' removed — excluded from CBSE 2026-27 Vistas
             {name:'On the Face of It',difficulty:'medium'},
-            {name:'Evans Tries an O-level',difficulty:'medium'},
+            // 'Evans Tries an O-level' removed — excluded from CBSE 2026-27 Vistas
             {name:'Memories of Childhood',difficulty:'medium'}
         ]},
         {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:[
@@ -713,8 +712,8 @@ const App={
             {name:'Dual Nature of Radiation and Matter',difficulty:'medium'},
             {name:'Atoms',difficulty:'medium'},
             {name:'Nuclei',difficulty:'medium'},
-            {name:'Semiconductor Electronics',difficulty:'hard'},
-            {name:'Communication Systems',difficulty:'easy'}
+            {name:'Semiconductor Electronics',difficulty:'hard'}
+            // 'Communication Systems' removed — excluded from CBSE 2026-27 Class 12 Physics
         ]},
         {name:'Chemistry',icon:'🧪',color:'#10b981',chapters:[
             {name:'The Solid State',difficulty:'hard'},
@@ -735,7 +734,7 @@ const App={
             {name:'Chemistry in Everyday Life',difficulty:'easy'}
         ]},
         {name:'Biology',icon:'🌿',color:'#22c55e',chapters:[
-            {name:'Reproduction in Organisms',difficulty:'easy'},
+            // 'Reproduction in Organisms' removed — excluded from CBSE 2026-27 Class 12 Biology
             {name:'Sexual Reproduction in Flowering Plants',difficulty:'medium'},
             {name:'Human Reproduction',difficulty:'medium'},
             {name:'Reproductive Health',difficulty:'easy'},
@@ -743,14 +742,14 @@ const App={
             {name:'Molecular Basis of Inheritance',difficulty:'hard'},
             {name:'Evolution',difficulty:'medium'},
             {name:'Human Health and Disease',difficulty:'medium'},
-            {name:'Strategies for Enhancement in Food Production',difficulty:'easy'},
+            // 'Strategies for Enhancement in Food Production' removed — excluded from CBSE 2026-27
             {name:'Microbes in Human Welfare',difficulty:'easy'},
             {name:'Biotechnology: Principles and Processes',difficulty:'hard'},
             {name:'Biotechnology and its Applications',difficulty:'medium'},
             {name:'Organisms and Populations',difficulty:'medium'},
             {name:'Ecosystem',difficulty:'medium'},
-            {name:'Biodiversity and Conservation',difficulty:'easy'},
-            {name:'Environmental Issues',difficulty:'easy'}
+            {name:'Biodiversity and Conservation',difficulty:'easy'}
+            // 'Environmental Issues' removed — excluded from CBSE 2026-27 Class 12 Biology
         ]},
         {name:'English',icon:'📝',color:'#f59e0b',chapters:[
             {name:'The Last Lesson',difficulty:'medium'},
@@ -770,9 +769,9 @@ const App={
             {name:'The Tiger King',difficulty:'medium'},
             {name:'Journey to the End of the Earth',difficulty:'medium'},
             {name:'The Enemy',difficulty:'medium'},
-            {name:'Should Wizard Hit Mommy',difficulty:'medium'},
+            // 'Should Wizard Hit Mommy' removed — excluded from CBSE 2026-27 Vistas
             {name:'On the Face of It',difficulty:'medium'},
-            {name:'Evans Tries an O-level',difficulty:'medium'},
+            // 'Evans Tries an O-level' removed — excluded from CBSE 2026-27 Vistas
             {name:'Memories of Childhood',difficulty:'medium'}
         ]},
         {name:'Physical Education',icon:'🏃',color:'#84cc16',chapters:[
@@ -830,11 +829,11 @@ const App={
             {name:'Indian Economy on the Eve of Independence',difficulty:'easy'},
             {name:'Indian Economy 1950–1990',difficulty:'easy'},
             {name:'Liberalisation, Privatisation and Globalisation',difficulty:'medium'},
-            {name:'Poverty',difficulty:'easy'},
+            // 'Poverty' removed — excluded from CBSE 2026-27 Class 12 Economics
             {name:'Human Capital Formation in India',difficulty:'easy'},
             {name:'Rural Development',difficulty:'easy'},
             {name:'Employment: Growth, Informalisation and Other Issues',difficulty:'medium'},
-            {name:'Infrastructure',difficulty:'easy'},
+            // 'Infrastructure' removed — excluded from CBSE 2026-27 Class 12 Economics
             {name:'Environment and Sustainable Development',difficulty:'easy'}
         ]},
         {name:'English',icon:'📝',color:'#f59e0b',chapters:[
@@ -855,9 +854,9 @@ const App={
             {name:'The Tiger King',difficulty:'medium'},
             {name:'Journey to the End of the Earth',difficulty:'medium'},
             {name:'The Enemy',difficulty:'medium'},
-            {name:'Should Wizard Hit Mommy',difficulty:'medium'},
+            // 'Should Wizard Hit Mommy' removed — excluded from CBSE 2026-27 Vistas
             {name:'On the Face of It',difficulty:'medium'},
-            {name:'Evans Tries an O-level',difficulty:'medium'},
+            // 'Evans Tries an O-level' removed — excluded from CBSE 2026-27 Vistas
             {name:'Memories of Childhood',difficulty:'medium'}
         ]},
         {name:'Mathematics',icon:'📐',color:'#6366f1',chapters:[
