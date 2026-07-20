@@ -86,13 +86,11 @@
       title: 'Revisions pile up if ignored',
       body: 'Chapters you studied before resurface here on a schedule. Tap any one to clear it — that\'s what "overdue" means.',
     },
-    {
-      target: '#topbar-add-chapter, .topbar-add-chapter, [onclick*="AddChapter"]',
-      fallback: '.topbar-quicklog',
-      position: 'bottom',
-      title: 'Adding new material',
-      body: 'Starting a new chapter that isn\'t in your syllabus yet? Add it here — it\'ll show up under the right subject.',
-    },
+    // NOTE: a 4th step targeting a topbar "+ Chapter" button was removed —
+    // verified against app.html that no such topbar button exists. Adding a
+    // new chapter only happens per-subject, inside the Subjects page (the
+    // "+" button on each subject card). That page already gets its own
+    // Stage-2 tip explaining chapters, so nothing lost coverage.
     {
       target: '.db-stats',
       position: 'top',
