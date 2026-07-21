@@ -46,6 +46,23 @@
 
   const isMobile = () => window.innerWidth < 768;
 
+  // A querySelector match can exist in the DOM while being completely
+  // invisible to the user — most commonly a sidebar .nav-item sitting
+  // inside a closed/off-canvas mobile sidebar (display:none, or shifted
+  // out of the viewport via transform). getBoundingClientRect() doesn't
+  // throw in either case — it just returns a zero-size or out-of-viewport
+  // rect — so a naive "does the element exist" check isn't enough; we
+  // also have to check that it actually occupies visible space.
+  function isVisible(el) {
+    const r = el.getBoundingClientRect();
+    if (r.width === 0 || r.height === 0) return false;
+    if (r.bottom < 0 || r.right < 0) return false;
+    if (r.top > window.innerHeight || r.left > window.innerWidth) return false;
+    const style = getComputedStyle(el);
+    if (style.display === 'none' || style.visibility === 'hidden') return false;
+    return true;
+  }
+
   // ─── STAGE 1: Micro-tour steps ────────────────────────────────────────────
   // Action-tour, not a literacy-tour: every step points at ONE real dashboard
   // widget and names the specific motion you make with it. No "here's the
@@ -335,7 +352,11 @@
     arrowEl.style.display = 'block';
 
     let target = step.target ? document.querySelector(step.target) : null;
-    if (!target && step.fallback) target = document.querySelector(step.fallback);
+    if (target && !isVisible(target)) target = null; // in DOM but hidden/off-canvas
+    if (!target && step.fallback) {
+      target = document.querySelector(step.fallback);
+      if (target && !isVisible(target)) target = null;
+    }
 
     if (!target || step.position === 'center') {
       tooltipEl.classList.add('bos-center');
