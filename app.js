@@ -2722,7 +2722,7 @@ const App={
         hapticsVibrate('streak');
         this.celebrate();
         this.toast('Welcome, '+this.state.profile.name+'! 🚀','success');
-        setTimeout(() => window.StudyOSTour && window.StudyOSTour.start(), 3000);
+        setTimeout(() => window.BoardOSTour && window.BoardOSTour.startMicroTour(), 3000);
     },
 
     // NAV
@@ -2745,9 +2745,11 @@ const App={
         // so subsequent navigations to the same tab have zero async overhead.
         this._loadTabData(page).then(() => {
             this.renderPage(page);
+            window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         }).catch(() => {
             // Data fetch failed — render anyway with whatever state we have
             this.renderPage(page);
+            window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         });
 
         this.closeSidebar();document.getElementById('content').scrollTop=0;
@@ -4190,6 +4192,7 @@ const App={
         hapticsVibrate('success');this.save();this.closeModal('modal-log');this.render();this.toast(`📖 ${this.formatMin(time)} logged!`,'success');
         this.dismissStreakReminder(false);
         if (window.Backlog && cId && ch) Backlog.onSessionLogged(sub.name, ch.name);
+        window.BoardOSTour && window.BoardOSTour.notifySessionLogged();
     },
 
     renderLog(){
