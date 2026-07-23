@@ -281,8 +281,8 @@
       .bos-body strong { color: var(--color-text, #f1f5f9); }
       .bos-footer { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
       .bos-dots { display: flex; gap: 4px; align-items: center; flex-shrink: 0; }
-      .bos-dot { width: 5px; height: 5px; border-radius: 50%; background: rgba(255,255,255,0.15); transition: all 0.2s; flex-shrink: 0; }
-      .bos-dot.on { background: var(--color-warning, #f59e0b); width: 16px; border-radius: 3px; }
+      .bos-dot { width: 5px; height: 5px; border-radius: 50%; background: transparent; border: 1.5px solid var(--color-warning, #f59e0b); opacity: 0.35; transition: all 0.2s; flex-shrink: 0; box-sizing: border-box; }
+      .bos-dot.on { background: var(--color-warning, #f59e0b); border-color: var(--color-warning, #f59e0b); opacity: 1; width: 16px; border-radius: 3px; }
       .bos-btns { display: flex; gap: 6px; }
       .bos-btn {
         font-family: var(--font-body, 'Inter', sans-serif);
