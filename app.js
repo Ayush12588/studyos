@@ -2743,12 +2743,12 @@ const App={
         // PERF: fetch this tab's data lazily (no-op if already loaded), then render.
         // _loadTabData() resolves instantly for tabs with the loaded-guard set,
         // so subsequent navigations to the same tab have zero async overhead.
-        this._loadTabData(page).then(() => {
-            this.renderPage(page);
+        this._loadTabData(page).then(async () => {
+            await this.renderPage(page);
             window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
-        }).catch(() => {
+        }).catch(async () => {
             // Data fetch failed — render anyway with whatever state we have
-            this.renderPage(page);
+            await this.renderPage(page);
             window.BoardOSTour && window.BoardOSTour.maybeShowPageTip(page);
         });
 
@@ -2809,7 +2809,7 @@ const App={
             }else{ep.style.display='none'}
         }
     },
-    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage(),circles:()=>this.renderCircles()};if(r[p])r[p]()},
+    renderPage(p){const r={dashboard:()=>this.renderDashboard(),subjects:()=>this.renderSubjects(),log:()=>this.renderLog(),tasks:()=>this.renderTasks(),revisions:()=>this.renderRevisions(),exams:()=>this.renderExams(),doubts:()=>this.renderDoubts(),weekly:()=>this.renderWeekly(),pomodoro:()=>this.renderPomodoro(),notes:()=>this.renderNotes(),resources:()=>this.renderResources(),coach:()=>this.renderCoach(),rewards:()=>this.renderRewards(),settings:()=>this.renderSettings(),quiz:()=>this.renderQuiz(),backlog:()=>window.Backlog&&Backlog.renderPage(),circles:()=>this.renderCircles()};if(r[p])return r[p]()},
     renderCircles(){
         const el=document.getElementById('page-circles');
         if(!el)return;
